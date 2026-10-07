@@ -2,7 +2,6 @@ import {
   Geist,
   Inter,
   Montserrat,
-  Overpass_Mono,
   Poppins,
   Roboto,
   PT_Sans,
@@ -11,6 +10,7 @@ import {
   Kumbh_Sans,
   Outfit
 } from "next/font/google";
+import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -41,9 +41,15 @@ const poppins = Poppins({
   variable: "--font-poppins"
 });
 
-const overpass_mono = Overpass_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+// Overpass Mono loads from @fontsource rather than next/font/google: Turbopack fails the
+// build on the Google CSS some networks get for it ("next/font/google queries have exactly
+// one entry"), which broke CI. Same weights and CSS variable as the other fonts.
+const overpass_mono = localFont({
+  src: [
+    { path: "../node_modules/@fontsource/overpass-mono/files/overpass-mono-latin-400-normal.woff2", weight: "400" },
+    { path: "../node_modules/@fontsource/overpass-mono/files/overpass-mono-latin-500-normal.woff2", weight: "500" },
+    { path: "../node_modules/@fontsource/overpass-mono/files/overpass-mono-latin-700-normal.woff2", weight: "700" }
+  ],
   variable: "--font-overpass-mono"
 });
 
