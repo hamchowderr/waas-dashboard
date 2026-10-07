@@ -4,6 +4,7 @@ import { GithubIcon, ServerCogIcon } from "lucide-react";
 
 import { auth, isAllowed, signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { LoginMotion } from "@/components/admin/login-motion";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -40,6 +41,9 @@ export default async function LoginPage({
         <div className="flex items-center gap-2 font-semibold">
           <ServerCogIcon className="size-5" />
           WaaS Admin
+        </div>
+        <div className="flex flex-1 items-center justify-center py-10">
+          <LoginMotion className="max-w-md" />
         </div>
         <p className="text-muted-foreground max-w-sm text-sm">
           Health of the provisioning API, its background jobs, every store and its backups.

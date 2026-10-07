@@ -87,13 +87,20 @@ npx shadcn@latest add @shadcnuikit/<name>
 
 The key is only needed to add components; builds don't use it. Never commit the key, or any install link the kit's MCP server returns (they carry a token).
 
+## Sign-in motion
+
+The sign-in page shows a looping animation of a storefront being set up and going live (`components/admin/login-motion.tsx`). It is a Lottie file in a light and a dark version, `public/motion/login-{light,dark}.json` (about 19 KB each), built by `node scripts/motion/login-motion.mjs` with the [text-to-lottie](https://github.com/diffusionstudio/lottie) skill's conventions and checked in its Skottie player. The `.webp` stills next to them are frame 200, rendered from the JSON with lottie-web; after changing the animation, render them again.
+
+The still is in the server-rendered page, so there is no layout shift and it works without JavaScript. The animation replaces it once the page is idle, only on screens wide enough to show the panel, and never with "reduce motion" turned on. `proxy.ts` lets `/motion/*` through without a session, because the sign-in page needs it before anyone is signed in.
+
 ## Screenshots
 
 From a local run with sample data:
 
 | | |
 |---|---|
-| ![Sign in](docs/screenshots/0-login.png) | ![Stores](docs/screenshots/2-stores.png) |
+| ![Sign in](docs/screenshots/0-login.png) | ![Sign in, dark](docs/screenshots/0-login-dark.png) |
+| ![Stores](docs/screenshots/2-stores.png) | |
 | ![Store](docs/screenshots/3-store-detail.png) | ![Failed jobs](docs/screenshots/4-jobs.png) |
 | ![Backups](docs/screenshots/5-backups.png) | ![Versions](docs/screenshots/7-versions.png) |
 | ![New version](docs/screenshots/8-new-version-dialog.png) | ![Make production](docs/screenshots/9-confirm-production.png) |
