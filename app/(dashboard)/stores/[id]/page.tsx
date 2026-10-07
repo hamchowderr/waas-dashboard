@@ -125,7 +125,7 @@ export default async function StorePage({ params }: Params) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Taken</TableHead>
-                  <TableHead>Reason</TableHead>
+                  <TableHead className="max-sm:hidden">Reason</TableHead>
                   <TableHead className="text-end">Size</TableHead>
                   <TableHead className="text-end">Status</TableHead>
                 </TableRow>
@@ -140,8 +140,11 @@ export default async function StorePage({ params }: Params) {
                 ) : (
                   tenant.backups.map((backup) => (
                     <TableRow key={backup.id}>
-                      <TableCell>{formatDateTime(backup.dateCreated)}</TableCell>
-                      <TableCell className="capitalize">{backup.reason}</TableCell>
+                      <TableCell>
+                        {formatDateTime(backup.dateCreated)}
+                        <div className="text-muted-foreground text-xs capitalize sm:hidden">{backup.reason}</div>
+                      </TableCell>
+                      <TableCell className="capitalize max-sm:hidden">{backup.reason}</TableCell>
                       <TableCell className="text-end tabular-nums">{formatBytes(backup.sizeBytes)}</TableCell>
                       <TableCell className="text-end">
                         <StatusBadge statusCode={backup.statusCode} />
@@ -202,8 +205,8 @@ export default async function StorePage({ params }: Params) {
             <TableHeader>
               <TableRow>
                 <TableHead>Job</TableHead>
-                <TableHead>When</TableHead>
-                <TableHead>Error</TableHead>
+                <TableHead className="max-sm:hidden">When</TableHead>
+                <TableHead className="max-sm:hidden">Error</TableHead>
                 <TableHead className="text-end">State</TableHead>
               </TableRow>
             </TableHeader>
@@ -217,9 +220,18 @@ export default async function StorePage({ params }: Params) {
               ) : (
                 tenant.jobs.map((job) => (
                   <TableRow key={job.id}>
-                    <TableCell className="font-medium">{jobTypeLabel(job.type)}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatDateTime(job.failedAt ?? job.createdAt)}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-md truncate">{job.error ?? "—"}</TableCell>
+                    <TableCell className="whitespace-normal">
+                      <div className="font-medium">{jobTypeLabel(job.type)}</div>
+                      {/* Below sm, When and Error move under the job's name. */}
+                      <div className="text-muted-foreground space-y-0.5 text-xs sm:hidden">
+                        <div>{formatDateTime(job.failedAt ?? job.createdAt)}</div>
+                        {job.error && <div className="line-clamp-2 break-words">{job.error}</div>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap max-sm:hidden">
+                      {formatDateTime(job.failedAt ?? job.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground max-w-md truncate max-sm:hidden">{job.error ?? "—"}</TableCell>
                     <TableCell className="text-end">
                       <JobStateBadge state={job.state} />
                     </TableCell>

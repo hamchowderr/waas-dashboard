@@ -176,7 +176,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
             <>
               <DialogHeader>
                 <DialogTitle>{jobTypeLabel(viewing.type)}</DialogTitle>
-                <DialogDescription className="font-mono">{viewing.id}</DialogDescription>
+                <DialogDescription className="font-mono break-all">{viewing.id}</DialogDescription>
               </DialogHeader>
               {viewing.error && (
                 <div className="bg-destructive/5 border-destructive/20 rounded-xl border p-4">
