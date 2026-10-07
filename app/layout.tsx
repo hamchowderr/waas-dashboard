@@ -2,18 +2,15 @@ import React from "react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "next-themes";
-import { DM_Sans } from "next/font/google";
 
 import "./globals.css";
 
 import { cn } from "@/lib/utils";
-import { fontVariables } from "@/lib/fonts";
+import { dmSans, fontVariables } from "@/lib/fonts";
 import { ActiveThemeProvider } from "@/components/active-theme";
 import { DEFAULT_THEME, type ThemeType } from "@/lib/themes";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-
-const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: { default: "WaaS Admin", template: "%s · WaaS Admin" },

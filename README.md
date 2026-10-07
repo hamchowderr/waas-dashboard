@@ -79,6 +79,8 @@ npm run build
 
 The layout (`components/layout/`, `components/theme-customizer/`) is the kit's Dashboard Shell. The tables (`components/admin/data-table.tsx`) are adapted from the kit's Orders page and use its filter builder (`components/ui/filters/`). The Overview uses the kit's stat-card5 and chart39 blocks. Kit and shadcn/ui files are kept as shipped where possible, so `eslint.config.mjs` relaxes a few rules for those folders only.
 
+Fonts are local files from `@fontsource` loaded with `next/font/local` (`lib/fonts.ts`), never `next/font/google`: Turbopack intermittently fails builds on the CSS Google serves for a font, and a local file needs no network at build time.
+
 `components.json` has the kit's private registry. With `SHADCNUIKIT_API_KEY` in the environment:
 
 ```sh
