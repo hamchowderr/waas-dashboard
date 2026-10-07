@@ -134,3 +134,58 @@ export type BackupFilter = { productId?: string };
 export type JobFilter = { productId?: string };
 
 export type Listing<T> = { items: T[]; total: number };
+
+/** A storefront with its version count and production version, for the Versions page. */
+export type ProductDetail = Product & {
+  versionCount: number;
+  productionVersionId: string | null;
+};
+
+export type Version = {
+  id: string;
+  name: string;
+  isProduction: boolean;
+  statusCode: StatusCode;
+  /** Where the version's shared site runs, e.g. v1-…versions.waas.example */
+  domain: string;
+  dateCreated: string;
+  dateChanged: string;
+};
+
+/**
+ * A template (a WPCS base snapshot). A base template is what a new version starts from;
+ * a group template (isTenantSnapshot) is copied into versions as a starting point for stores.
+ */
+export type Template = {
+  id: string;
+  name: string;
+  comment: string;
+  isTenantSnapshot: boolean;
+  groupName: string | null;
+  isDefault: boolean;
+  /** Offered when creating a product's first version. */
+  showAsBaseSnapshot: boolean;
+};
+
+export type CreateVersionInput = {
+  name: string;
+  wordPressVersion: string;
+  phpVersion: string;
+  /** The base template to start from; omitted when uploading a custom archive. */
+  snapshotId?: string;
+  /** Group templates to copy into the version. */
+  snapshotIdsToCopy?: string[];
+  useCustomUpload?: boolean;
+  asZip?: boolean;
+};
+
+export type CreateTemplateInput = {
+  name: string;
+  comment: string;
+  isTenantSnapshot: boolean;
+  groupName?: string;
+  showInConsole: boolean;
+};
+
+/** Where to PUT the archive, when the operation needs one. */
+export type Created = { id: string; uploadUrl: string | null };

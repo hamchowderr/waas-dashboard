@@ -15,8 +15,16 @@ import {
   type Tenant,
   type TenantDetail,
   type TenantDomain,
-  type TenantFilter
+  type TenantFilter,
+  type Created,
+  type CreateTemplateInput,
+  type CreateVersionInput,
+  type ProductDetail,
+  type Template,
+  type Version
 } from "./types";
+import { AdminApiError } from "./http";
+import { FIXTURE_UPLOAD_URL } from "./upload";
 
 // Sample data for building and reviewing the UI before the admin endpoints exist.
 // The same data on every request, with timestamps relative to the current hour.
@@ -39,11 +47,40 @@ const products: Omit<Product, "tenantCount">[] = [
   { id: uuid(2, 1), name: "Staging storefront" }
 ];
 
-const versions = [
-  { id: uuid(1, 2), name: "v1.4 (production)", productId: products[0].id },
-  { id: uuid(2, 2), name: "v1.5-beta", productId: products[0].id },
-  { id: uuid(3, 2), name: "v1.4 (production)", productId: products[1].id }
-];
+type FixtureVersion = Version & { productId: string };
+
+const versions: FixtureVersion[] = [
+  { id: uuid(1, 2), name: "v1.4", productId: products[0].id, isProduction: true },
+  { id: uuid(2, 2), name: "v1.5-beta", productId: products[0].id, isProduction: false },
+  { id: uuid(3, 2), name: "v1.4", productId: products[1].id, isProduction: true },
+  { id: uuid(4, 2), name: "v1.3", productId: products[0].id, isProduction: false }
+].map((v, i) => ({
+  ...v,
+  statusCode: StatusCode.Done,
+  domain: `${v.name.replace(/\./g, "-")}-${v.id.slice(-8)}.versions.waas.example`,
+  dateCreated: iso(NOW - (90 - i * 20) * DAY),
+  dateChanged: iso(NOW - (60 - i * 15) * DAY)
+}));
+
+type FixtureTemplate = Template & { productId: string };
+
+const templates: FixtureTemplate[] = [
+  { name: "Starter template", comment: "WooCommerce, theme and the WaaS Client plugin", isTenantSnapshot: false, groupName: null, isDefault: true, showAsBaseSnapshot: true },
+  { name: "Catalog store", comment: "Catalog-only store without checkout", isTenantSnapshot: true, groupName: "catalog", isDefault: false, showAsBaseSnapshot: false },
+  { name: "Checkout store", comment: "Store with checkout, shipping and tax set up", isTenantSnapshot: true, groupName: "store", isDefault: false, showAsBaseSnapshot: false }
+].flatMap((t, i) =>
+  products.map((p, j) => ({ ...t, id: uuid(i * 10 + j + 1, 7), productId: p.id }))
+);
+
+
+class FixtureError extends AdminApiError {
+  constructor(status: number, message: string) {
+    super(status, "(sample data)", message);
+  }
+}
+
+const VERSION_NAME = /^[A-Za-z0-9.-]{1,30}$/;
+const TEMPLATE_NAME = /^[A-Za-z0-9 -]{5,50}$/;
 
 // Obviously fictional names and reserved .example domains: sample data must never look like a real business.
 const storeNames = Array.from({ length: 20 }, (_, i) => `Example Store ${i + 1}`);
@@ -226,10 +263,14 @@ const counts = (items: { statusCode: StatusCode }[]) => ({
   removing: items.filter((i) => i.statusCode === StatusCode.Removing).length
 });
 
-function toRow(t: FixtureTenant): Tenant {
-  const { domains: _domains, dateSuspended: _suspended, dateChanged: _changed, ...row } = t;
-  return row;
+/** A copy of `item` without the given keys (fixture records carry fields the list rows don't). */
+function without<T extends object, K extends keyof T>(item: T, ...keys: K[]): Omit<T, K> {
+  const copy = { ...item };
+  for (const key of keys) delete copy[key];
+  return copy;
 }
+
+const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended", "dateChanged");
 
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
@@ -272,7 +313,9 @@ export class FixtureAdminApi implements AdminApi {
 
   async jobs(filter: JobFilter = {}): Promise<JobsList> {
     const productName = products.find((p) => p.id === filter.productId)?.name;
-    const items = filter.productId ? jobs.filter((j) => j.productName === productName) : jobs;
+    // Like the API: retried failures leave the list (their new job is queued instead).
+    const listed = jobs.filter((j) => j.state === "queued" || j.state === "running" || j.state === "failed");
+    const items = filter.productId ? listed.filter((j) => j.productName === productName) : listed;
     return {
       items,
       counts: {
@@ -282,5 +325,105 @@ export class FixtureAdminApi implements AdminApi {
       },
       truncated: false
     };
+  }
+
+  async products(): Promise<ProductDetail[]> {
+    return products.map((p) => ({
+      ...p,
+      tenantCount: tenants.filter((t) => t.productId === p.id).length,
+      versionCount: versions.filter((v) => v.productId === p.id).length,
+      productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null
+    }));
+  }
+
+  private product(productId: string) {
+    const product = products.find((p) => p.id === productId);
+    if (!product) throw new FixtureError(404, `Product ${productId} not found`);
+    return product;
+  }
+
+  async versions(productId: string): Promise<Version[]> {
+    this.product(productId);
+    return versions.filter((v) => v.productId === productId).map((v) => without(v, "productId"));
+  }
+
+  async templates(productId: string): Promise<Template[]> {
+    this.product(productId);
+    return templates.filter((t) => t.productId === productId).map((t) => without(t, "productId"));
+  }
+
+  async retryFailure(failureId: string): Promise<void> {
+    const job = jobs.find((j) => j.id === failureId && (j.state === "failed" || j.state === "retried"));
+    if (!job) throw new FixtureError(404, `Failure ${failureId} not found`);
+    if (job.state === "retried") return;
+    job.state = "retried";
+    job.retriedAt = new Date().toISOString();
+    jobs.push({ ...job, id: uuid(jobs.length + 100, 5), state: "queued", createdAt: job.retriedAt, failedAt: null, error: null, retriedAt: null, attempts: 0 });
+  }
+
+  async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {
+    this.product(productId);
+    if (!VERSION_NAME.test(input.name))
+      throw new FixtureError(400, "The version name can be at most 30 characters: letters, digits, dashes and dots");
+    if (versions.some((v) => v.productId === productId && v.name === input.name))
+      throw new FixtureError(400, `A version named ${input.name} already exists`);
+    if (!input.useCustomUpload && !input.snapshotId) throw new FixtureError(400, "Choose a template or upload an archive");
+    const id = uuid(versions.length + 50, 2);
+    versions.push({
+      id,
+      productId,
+      name: input.name,
+      isProduction: false,
+      statusCode: input.useCustomUpload ? StatusCode.Pending : StatusCode.Done,
+      domain: `${input.name.replace(/\./g, "-")}-${id.slice(-8)}.versions.waas.example`,
+      dateCreated: new Date().toISOString(),
+      dateChanged: new Date().toISOString()
+    });
+    return { id, uploadUrl: input.useCustomUpload ? FIXTURE_UPLOAD_URL : null };
+  }
+
+  async setProductionVersion(productId: string, versionId: string): Promise<void> {
+    this.product(productId);
+    const version = versions.find((v) => v.productId === productId && v.id === versionId);
+    if (!version) throw new FixtureError(404, `Version ${versionId} not found`);
+    if (version.statusCode !== StatusCode.Done)
+      throw new FixtureError(400, `Version ${versionId} is ${version.statusCode === StatusCode.Pending ? "Pending" : "not Done"}, not Done`);
+    for (const v of versions) if (v.productId === productId) v.isProduction = v.id === versionId;
+  }
+
+  async deleteVersion(productId: string, versionId: string): Promise<void> {
+    this.product(productId);
+    const index = versions.findIndex((v) => v.productId === productId && v.id === versionId);
+    if (index < 0) throw new FixtureError(404, `Version ${versionId} not found`);
+    if (versions[index].isProduction) throw new FixtureError(400, "The production version cannot be removed");
+    if (tenants.some((t) => t.versionId === versionId))
+      throw new FixtureError(400, "Stores still run on this version; move them first");
+    versions.splice(index, 1);
+  }
+
+  async createTemplate(productId: string, input: CreateTemplateInput): Promise<Created> {
+    this.product(productId);
+    if (!TEMPLATE_NAME.test(input.name))
+      throw new FixtureError(400, "The template name must be 5 to 50 characters: letters, digits, spaces and dashes");
+    if (!input.isTenantSnapshot && input.groupName) throw new FixtureError(400, "Only a group template has a group name");
+    const id = uuid(templates.length + 50, 7);
+    templates.push({
+      id,
+      productId,
+      name: input.name,
+      comment: input.comment,
+      isTenantSnapshot: input.isTenantSnapshot,
+      groupName: input.isTenantSnapshot ? (input.groupName ?? null) : null,
+      isDefault: false,
+      showAsBaseSnapshot: input.showInConsole
+    });
+    return { id, uploadUrl: FIXTURE_UPLOAD_URL };
+  }
+
+  async deleteTemplate(productId: string, templateId: string): Promise<void> {
+    this.product(productId);
+    const index = templates.findIndex((t) => t.productId === productId && t.id === templateId);
+    if (index < 0) throw new FixtureError(404, `Template ${templateId} not found`);
+    templates.splice(index, 1);
   }
 }

@@ -108,3 +108,80 @@ export type WireTenantDetail = {
   recentJobs: WireJob[];
   failures: WireJobFailure[];
 };
+
+// Versions and templates (openapi/admin, waas-api-plu.3). Same bodies as the WPCS
+// operations in openapi/waas-provisioning-api.yaml.
+
+export type WireProduct = {
+  id: string;
+  name: string;
+  tenantCount: number;
+  versionCount: number;
+  productionVersionId: string | null;
+  dateCreated: string;
+};
+
+/** GetVersionQueryResult */
+export type WireVersion = {
+  id: string;
+  isProduction: boolean;
+  name: string;
+  dateChanged: string;
+  dateCreated: string;
+  statusCode: number;
+  statusName: string;
+  domain: string;
+};
+
+/** CreateVersionParams */
+export type WireCreateVersion = {
+  name: string;
+  wordPressVersion: string;
+  phpVersion: string;
+  snapshotId?: string;
+  snapshotIdsToCopy?: string[] | null;
+  useCustomUpload?: boolean;
+  asZip?: boolean;
+};
+
+/** CreateVersionCommandResult */
+export type WireCreatedVersion = {
+  id: string;
+  domainName: string;
+  name: string;
+  wordPressVersion: string;
+  phpVersion: string;
+  uploadUrl?: string;
+};
+
+/** GetBaseSnapshotsQueryResult */
+export type WireBaseSnapshot = {
+  id: string;
+  name: string;
+  comment?: string;
+  uri?: string;
+  isDefault?: boolean;
+  isTenantSnapshot?: boolean;
+  groupName?: string | null;
+  showAsBaseSnapshot?: boolean;
+};
+
+/** CreateBaseSnapshotParams */
+export type WireCreateBaseSnapshot = {
+  name: string;
+  comment: string;
+  isTenantSnapshot?: boolean;
+  groupName?: string;
+  showInConsole?: boolean;
+};
+
+/** CreateBaseSnapshotCommandResult */
+export type WireCreatedBaseSnapshot = {
+  id: string;
+  name: string;
+  comment: string;
+  showInConsole: boolean;
+  uploadUrl: string;
+};
+
+export type WireError = { statusCode: number; message: string };

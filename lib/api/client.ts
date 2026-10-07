@@ -4,6 +4,12 @@ import { cache } from "react";
 
 import type {
   Backup,
+  Created,
+  CreateTemplateInput,
+  CreateVersionInput,
+  ProductDetail,
+  Template,
+  Version,
   BackupFilter,
   JobFilter,
   JobsList,
@@ -27,6 +33,19 @@ export interface AdminApi {
   backups(filter?: BackupFilter): Promise<Listing<Backup>>;
   /** Queued, running and failed jobs (failed = used up its retries, not yet retried). */
   jobs(filter?: JobFilter): Promise<JobsList>;
+
+  products(): Promise<ProductDetail[]>;
+  versions(productId: string): Promise<Version[]>;
+  templates(productId: string): Promise<Template[]>;
+
+  // Changes. Each throws AdminApiError with the API's message when the API refuses.
+  /** Re-queues a failed job; the store or version goes back to Pending. */
+  retryFailure(failureId: string): Promise<void>;
+  createVersion(productId: string, input: CreateVersionInput): Promise<Created>;
+  setProductionVersion(productId: string, versionId: string): Promise<void>;
+  deleteVersion(productId: string, versionId: string): Promise<void>;
+  createTemplate(productId: string, input: CreateTemplateInput): Promise<Created>;
+  deleteTemplate(productId: string, templateId: string): Promise<void>;
 }
 
 /**

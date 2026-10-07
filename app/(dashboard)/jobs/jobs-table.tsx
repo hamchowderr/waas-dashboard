@@ -3,7 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { ListChecksIcon, SearchIcon, StoreIcon } from "lucide-react";
+import { ListChecksIcon, RotateCcwIcon, SearchIcon, StoreIcon } from "lucide-react";
+import { toast } from "sonner";
+
+import { retryFailures } from "../actions";
 
 import { SortableHeader } from "@/components/table-filter-helpers";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
@@ -95,8 +98,22 @@ const columns: ColumnDef<Job>[] = [
   }
 ];
 
+/** Retries failed jobs and reports the outcome; true when every one was accepted. */
+async function retry(ids: string[]): Promise<boolean> {
+  const result = await retryFailures(ids);
+  if (!result.ok) {
+    toast.error(result.error);
+    return false;
+  }
+  const { retried, errors } = result.data;
+  if (retried > 0) toast.success(retried === 1 ? "Job queued again" : `${retried} jobs queued again`);
+  for (const error of [...new Set(errors)]) toast.error(error);
+  return errors.length === 0;
+}
+
 export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: string }) {
   const [viewing, setViewing] = React.useState<Job | null>(null);
+  const [pending, startTransition] = React.useTransition();
 
   const filterFields: FilterField[] = [
     { id: "search", label: "Search", type: "text", placeholder: "Job, store, error...", icon: <SearchIcon /> },
@@ -137,6 +154,20 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
         initialSorting={[{ id: "when", desc: true }]}
         emptyText="No jobs here. Finished jobs are not listed."
         onRowClick={setViewing}
+        selectable={(job) => job.state === "failed"}
+        bulkActions={(selected, clear) => (
+          <Button
+            size="sm"
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                await retry(selected.map((job) => job.id));
+                clear();
+              })
+            }>
+            <RotateCcwIcon /> Retry {selected.length}
+          </Button>
+        )}
       />
 
       <Dialog open={!!viewing} onOpenChange={(open) => !open && setViewing(null)}>
@@ -152,6 +183,12 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
                   <div className="text-muted-foreground mb-1 text-sm">Error</div>
                   <p className="text-sm break-words">{viewing.error}</p>
                 </div>
+              )}
+              {viewing.state === "failed" && (
+                <p className="text-muted-foreground text-sm">
+                  Retry puts the {viewing.versionId && !viewing.tenantId ? "version" : "store"} back to Pending and
+                  runs the same job again.
+                </p>
               )}
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <dt className="text-muted-foreground">State</dt>
@@ -189,7 +226,19 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
                     <Link href={`/stores/${viewing.tenantId}`}>Open store</Link>
                   </Button>
                 )}
-                <Button onClick={() => setViewing(null)}>Close</Button>
+                {viewing.state === "failed" ? (
+                  <Button
+                    disabled={pending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        if (await retry([viewing.id])) setViewing(null);
+                      })
+                    }>
+                    <RotateCcwIcon /> Retry
+                  </Button>
+                ) : (
+                  <Button onClick={() => setViewing(null)}>Close</Button>
+                )}
               </DialogFooter>
             </>
           )}
