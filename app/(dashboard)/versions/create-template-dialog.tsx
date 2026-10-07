@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { uploadArchive } from "@/lib/upload-archive";
+import { uploadArchive, uploadSizeError } from "@/lib/upload-archive";
 import { ArchiveInput } from "@/components/admin/archive-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,7 +47,7 @@ export function CreateTemplateDialog({
 
   const isGroup = kind === "group";
   const nameError = name && !NAME.test(name) ? "5 to 50 characters: letters, digits, spaces and dashes." : null;
-  const ready = name && !nameError && comment.trim() && (!isGroup || groupName.trim()) && file;
+  const ready = name && !nameError && comment.trim() && (!isGroup || groupName.trim()) && file && !uploadSizeError(file);
 
   const submit = () =>
     startTransition(async () => {

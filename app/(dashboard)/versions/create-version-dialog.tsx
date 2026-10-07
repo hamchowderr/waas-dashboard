@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import type { Template } from "@/lib/api/types";
-import { uploadArchive } from "@/lib/upload-archive";
+import { uploadArchive, uploadSizeError } from "@/lib/upload-archive";
 import { ArchiveInput } from "@/components/admin/archive-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -68,7 +68,7 @@ export function CreateVersionDialog({
         ? "A version with this name already exists."
         : null;
   const ready =
-    name && !nameError && wordPressVersion && (source === "template" ? templateId : file !== null);
+    name && !nameError && wordPressVersion && (source === "template" ? templateId : file !== null && !uploadSizeError(file));
 
   const reset = () => {
     setName("");
