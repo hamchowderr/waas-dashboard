@@ -93,7 +93,11 @@ The key is only needed to add components; builds don't use it. Never commit the 
 
 The sign-in page shows a looping animation of a storefront being set up and going live (`components/admin/login-motion.tsx`). It is a Lottie file in a light and a dark version, `public/motion/login-{light,dark}.json` (about 19 KB each), built by `node scripts/motion/login-motion.mjs` with the [text-to-lottie](https://github.com/diffusionstudio/lottie) skill's conventions and checked in its Skottie player. The `.webp` stills next to them are frame 200, rendered from the JSON with lottie-web; after changing the animation, render them again.
 
-The still is in the server-rendered page, so there is no layout shift and it works without JavaScript. The animation replaces it once the page is idle, only on screens wide enough to show the panel, and never with "reduce motion" turned on. `proxy.ts` lets `/motion/*` through without a session, because the sign-in page needs it before anyone is signed in.
+The still is in the server-rendered page, so there is no layout shift and it works without JavaScript. The animation replaces it once the page is idle, and never with "reduce motion" turned on. Large screens show it in the panel beside the form; phones and tablets show a smaller copy above the form, and only the copy on screen loads the animation. `proxy.ts` lets `/motion/*` through without a session, because the sign-in page needs it before anyone is signed in.
+
+## Phones and tablets
+
+Below 1024px wide (`lg`), every list shows its rows as cards instead of a table, with the tabs as a select and the sortable columns in a sort menu (`components/admin/data-table.tsx`); the other tables move their secondary columns under the row's name on narrow screens. Dialogs fit the screen and scroll inside. On touch screens every control is at least 44px to tap: one rule in `app/globals.css` (`@media (pointer: coarse)`), so desktop keeps its compact sizes. Screenshots at 390px (before and after) and 768px are in `docs/screenshots/mobile/`.
 
 ## Screenshots
 

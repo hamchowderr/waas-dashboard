@@ -25,6 +25,10 @@ import { deleteTemplate, deleteVersion, setProductionVersion } from "../actions"
 import { CreateVersionDialog } from "./create-version-dialog";
 import { CreateTemplateDialog } from "./create-template-dialog";
 
+/** Below sm the header's button moves under its text instead of squeezing it. */
+const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
+const actionClass = "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start";
+
 const tableClass =
   "[&_td:first-child]:ps-(--card-spacing) [&_td:last-child]:pe-(--card-spacing) [&_th:first-child]:ps-(--card-spacing) [&_th:last-child]:pe-(--card-spacing)";
 
@@ -81,14 +85,14 @@ export function VersionsManager({
 
         <TabsContent value="versions">
           <Card>
-            <CardHeader>
+            <CardHeader className={headerClass}>
               <CardTitle>Versions</CardTitle>
               <CardDescription>
                 {production
                   ? `New stores are created on ${production.name}, the production version.`
                   : "No production version yet: the storefront can't create stores until one is set."}
               </CardDescription>
-              <CardAction>
+              <CardAction className={actionClass}>
                 <Button size="sm" onClick={() => setCreatingVersion(true)}>
                   <PlusIcon /> New version
                 </Button>
@@ -100,8 +104,8 @@ export function VersionsManager({
                   <TableRow>
                     <TableHead>Version</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Shared site</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead className="max-md:hidden">Shared site</TableHead>
+                    <TableHead className="max-sm:hidden">Created</TableHead>
                     <TableHead className="w-12">
                       <span className="sr-only">Actions</span>
                     </TableHead>
@@ -117,8 +121,8 @@ export function VersionsManager({
                   )}
                   {sortedVersions.map((version) => (
                     <TableRow key={version.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+                      <TableCell className="whitespace-normal">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="font-medium">{version.name}</span>
                           {version.isProduction && (
                             <Badge variant="success">
@@ -126,12 +130,17 @@ export function VersionsManager({
                             </Badge>
                           )}
                         </div>
+                        {/* The columns hidden on narrow screens, under the name instead. */}
+                        <div className="text-muted-foreground mt-0.5 space-y-0.5 text-xs md:hidden">
+                          <div className="break-all">{version.domain}</div>
+                          <div className="sm:hidden">Created {formatDate(version.dateCreated)}</div>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <StatusBadge statusCode={version.statusCode} />
                       </TableCell>
-                      <TableCell className="text-muted-foreground max-w-72 truncate">{version.domain}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                      <TableCell className="text-muted-foreground max-w-72 truncate max-md:hidden">{version.domain}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap max-sm:hidden">
                         {formatDate(version.dateCreated)}
                       </TableCell>
                       <TableCell>
@@ -271,11 +280,11 @@ function TemplatesCard({
 }) {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className={headerClass}>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
         {onAdd && (
-          <CardAction>
+          <CardAction className={actionClass}>
             <Button size="sm" onClick={onAdd}>
               <UploadIcon /> Upload template
             </Button>
@@ -287,7 +296,7 @@ function TemplatesCard({
           <TableHeader>
             <TableRow>
               <TableHead>Template</TableHead>
-              <TableHead>Group</TableHead>
+              <TableHead className="max-sm:hidden">Group</TableHead>
               <TableHead className="w-12">
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -304,14 +313,17 @@ function TemplatesCard({
             {templates.map((template) => (
               <TableRow key={template.id}>
                 <TableCell className="whitespace-normal">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-medium">{template.name}</span>
                     {template.isDefault && <Badge variant="outline">Default</Badge>}
                     {template.showAsBaseSnapshot && <Badge variant="info">Offered for first version</Badge>}
                   </div>
                   {template.comment && <p className="text-muted-foreground text-sm">{template.comment}</p>}
+                  {template.groupName && (
+                    <p className="text-muted-foreground text-xs sm:hidden">Group: {template.groupName}</p>
+                  )}
                 </TableCell>
-                <TableCell className="text-muted-foreground">{template.groupName ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground max-sm:hidden">{template.groupName ?? "—"}</TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon-sm" onClick={() => onDelete(template)}>
                     <span className="sr-only">Delete {template.name}</span>

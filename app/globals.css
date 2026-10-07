@@ -171,3 +171,44 @@
     @apply font-sans;
   }
 }
+
+/*
+ * Touch screens: every control is at least 44px to tap (Apple HIG, WCAG 2.5.5), without
+ * changing the compact desktop sizes. min-height/min-width rather than height/width, so
+ * the components' own size classes still apply and only grow. Unlayered on purpose: it
+ * has to win over the components' utility classes.
+ */
+@media (pointer: coarse) {
+  /* Buttons, and the menu/dialog triggers and close buttons that render a button
+     (asChild replaces its data-slot with theirs). */
+  [data-slot="button"],
+  :is(button, a)[data-slot$="-trigger"],
+  :is(button, a)[data-slot$="-close"],
+  [data-slot="select-trigger"],
+  [data-slot="input"],
+  [data-slot="sidebar-input"],
+  [data-slot="sidebar-menu-button"],
+  [data-slot="dropdown-menu-item"],
+  [data-slot="dropdown-menu-checkbox-item"],
+  [data-slot="dropdown-menu-radio-item"],
+  [data-slot="select-item"] {
+    min-height: 2.75rem;
+  }
+  /* A tab fills its list's height, a percentage of the list's fixed h-8: grow the list
+     by the 44px tab plus its 3px padding on each side. */
+  [data-slot="tabs-list"] {
+    min-height: calc(2.75rem + 6px);
+  }
+  [data-slot="tabs-trigger"] {
+    min-height: 2.75rem;
+  }
+  :is(button, a)[data-size^="icon"],
+  [data-slot="sidebar-trigger"] {
+    min-width: 2.75rem;
+  }
+  /* Checkboxes and radios keep their size and get a 44px hit area around them. */
+  [data-slot="checkbox"]::after,
+  [data-slot="radio-group-item"]::after {
+    inset: -14px;
+  }
+}

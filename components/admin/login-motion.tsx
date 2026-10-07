@@ -21,10 +21,21 @@ const STILL_FRAME = 200;
  *
  * The still frame renders on the server, in a box with a fixed aspect ratio, so the
  * page never shifts and works without JavaScript. The animation replaces it only
- * after the page is idle, only where the panel is shown (lg and up), and never under
- * prefers-reduced-motion. It never touches the sign-in form.
+ * after the page is idle, only while `media` matches (the page shows one copy on
+ * large screens and another on small ones, so only the visible one animates), and
+ * never under prefers-reduced-motion. It never touches the sign-in form.
  */
-export function LoginMotion({ className }: { className?: string }) {
+export function LoginMotion({
+  media,
+  sizes,
+  className
+}: {
+  /** Media query for when this copy is on screen. */
+  media: string;
+  /** The still's `sizes`: its width while shown, 1px otherwise, so a hidden copy costs a tiny image. */
+  sizes: string;
+  className?: string;
+}) {
   const { resolvedTheme } = useTheme();
   const theme = resolvedTheme === "dark" ? "dark" : "light";
   const [allowed, setAllowed] = useState(false);
@@ -34,19 +45,19 @@ export function LoginMotion({ className }: { className?: string }) {
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const wide = window.matchMedia("(min-width: 1024px)");
-    const update = () => setAllowed(!reduced.matches && wide.matches);
+    const shown = window.matchMedia(media);
+    const update = () => setAllowed(!reduced.matches && shown.matches);
     // Wait for idle so the animation never competes with the page's first paint.
     const idle = window.requestIdleCallback?.(update, { timeout: 1500 }) ?? window.setTimeout(update, 300);
     reduced.addEventListener("change", update);
-    wide.addEventListener("change", update);
+    shown.addEventListener("change", update);
     return () => {
       window.cancelIdleCallback?.(idle);
       window.clearTimeout(idle);
       reduced.removeEventListener("change", update);
-      wide.removeEventListener("change", update);
+      shown.removeEventListener("change", update);
     };
-  }, []);
+  }, [media]);
 
   useEffect(() => {
     if (!allowed || data?.theme === theme) return;
@@ -75,7 +86,7 @@ export function LoginMotion({ className }: { className?: string }) {
         alt=""
         fill
         priority
-        sizes="(min-width: 1024px) 40vw, 1px"
+        sizes={sizes}
         className={cn("object-contain transition-opacity duration-300 dark:hidden", animate && playing && "opacity-0")}
       />
       <Image
@@ -83,7 +94,7 @@ export function LoginMotion({ className }: { className?: string }) {
         alt=""
         fill
         priority
-        sizes="(min-width: 1024px) 40vw, 1px"
+        sizes={sizes}
         className={cn("hidden object-contain transition-opacity duration-300 dark:block", animate && playing && "opacity-0")}
       />
       {animate && (
