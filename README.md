@@ -26,7 +26,7 @@ All API calls run on the server (`lib/api/`). The browser never sees the API add
 
 With neither, pages show an error rather than sample data, so a missing variable is never mistaken for real data.
 
-`lib/api/types.ts` holds the response shapes. The admin endpoints are being built in the API repo (beads `waas-api-plu.1`); once they ship, the API's `openapi/admin/` spec is the source of truth and these types follow it.
+`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (v0.1.0, beads `waas-api-plu.1`). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200) and filtered in the browser.
 
 ## Sign-in
 

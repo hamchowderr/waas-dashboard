@@ -1,63 +1,33 @@
 /**
- * Response shapes of the provisioning API's admin endpoints (/admin/*).
- *
- * The admin API is being built in hamchowderr/waas-provisioning-api (beads waas-api-plu.1).
- * These types are the dashboard's proposal for its shapes; when the API ships, its
- * openapi/admin/ spec is the source of truth and these types follow it.
- *
- * Field names follow the API's existing conventions: camelCase, ISO 8601 timestamps,
- * and `statusCode` 0 Pending, 1 Done, 2 Failed, 3 Removing.
+ * What the dashboard's pages show. The admin API's own response bodies are in wire.ts;
+ * http.ts maps them to these types, joining names (store, storefront) the API returns
+ * only as ids. The sample data in fixtures.ts produces these types directly.
  */
 
 export const StatusCode = { Pending: 0, Done: 1, Failed: 2, Removing: 3 } as const;
 export type StatusCode = (typeof StatusCode)[keyof typeof StatusCode];
 
-export type Page<T> = {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
-
-/** GET /health (waas-api-9g2): 200 when healthy, 503 otherwise, same body. */
 export type Health = {
   ok: boolean;
-  checks: {
-    database: "up" | "down";
-    queue: "up" | "down";
-  };
+  checks: { database: "up" | "down"; queue: "up" | "down" };
   checkedAt: string;
 };
 
 /** A product is one storefront (one WordPress shop selling stores). */
-export type Product = {
-  id: string;
-  name: string;
-  tenantCount: number;
-};
+export type Product = { id: string; name: string; tenantCount: number };
 
-/** GET /admin/overview */
+export type StatusCounts = { pending: number; done: number; failed: number; removing: number };
+
 export type Overview = {
   health: Health;
   products: Product[];
-  tenants: {
-    total: number;
-    byStatus: { pending: number; done: number; failed: number; removing: number };
-    suspended: number;
-  };
-  versions: { total: number; failed: number };
-  backups: { total: number; failed: number; sizeBytes: number };
-  jobs: { queued: number; active: number; failedUnresolved: number };
-  generatedAt: string;
+  tenants: StatusCounts & { total: number; suspended: number };
+  versions: StatusCounts;
+  backups: StatusCounts & { total: number };
+  jobs: { queued: number; running: number; failed: number };
 };
 
-export type TenantDomain = {
-  domainName: string;
-  isMain: boolean;
-  isBase: boolean;
-};
-
-/** One row of GET /admin/tenants */
+/** One row of the stores list. */
 export type Tenant = {
   id: string;
   externalId: string;
@@ -66,40 +36,54 @@ export type Tenant = {
   productName: string;
   versionId: string;
   versionName: string;
+  mainDomain: string | null;
+  domainCount: number;
+  statusCode: StatusCode;
+  isSuspended: boolean;
+  latestBackupAt: string | null;
+  dateCreated: string;
+};
+
+export type TenantDomain = { domainName: string; isMain: boolean; isBase: boolean };
+
+/** One store's page. Option and constant names only, never their values. */
+export type TenantDetail = {
+  id: string;
+  externalId: string;
+  name: string;
+  productId: string;
+  productName: string;
+  versionId: string;
+  versionName: string;
+  snapshotName: string | null;
   statusCode: StatusCode;
   isSuspended: boolean;
   dateSuspended: string | null;
-  mainDomain: string;
+  dateCreated: string | null;
+  dateChanged: string | null;
+  mainDomain: string | null;
   domains: TenantDomain[];
-  latestBackupAt: string | null;
-  dateCreated: string;
-  dateChanged: string;
-};
-
-/** GET /admin/tenants/:id. Option and constant names only, never their values. */
-export type TenantDetail = Tenant & {
-  snapshotName: string;
-  wpOptionKeys: string[];
+  wpOptionNames: string[];
   phpConstantNames: string[];
   backups: Backup[];
+  /** Recent jobs (including finished ones) and failures, newest first. */
   jobs: Job[];
 };
 
-/** One row of GET /admin/backups. Deleted tenants' backups are included. */
 export type Backup = {
   id: string;
   productId: string;
   productName: string;
   tenantId: string;
   externalId: string;
-  /** Null when the tenant has been deleted and its name was not stamped on the backup. */
+  /** Null when the store is deleted (the API has no name for it then). */
   tenantName: string | null;
   reason: "manual" | "suspend";
   sizeBytes: number | null;
   statusCode: StatusCode;
   dateCreated: string;
   tenantDeletedAt: string | null;
-  /** tenantDeletedAt + BACKUP_RETENTION_DAYS; null while the tenant exists. */
+  /** When the backup is purged; null while its store exists. */
   expiresAt: string | null;
 };
 
@@ -116,53 +100,37 @@ export type JobType =
   | "tenant.backup"
   | "tenant.restore";
 
-export type JobState = "queued" | "active" | "failed";
+/** queued, running and failed are the Jobs page's tabs; the rest appear on a store's page. */
+export type JobState = "queued" | "running" | "failed" | "retried" | "done" | "cancelled";
 
-/**
- * One row of GET /admin/jobs. Queued and active jobs come from pg-boss; failed ones from
- * the job_failures table (the worker completes a job after its last failed attempt).
- */
 export type Job = {
+  /** pg-boss job id, or the job_failures id for failed and retried ones. */
   id: string;
   state: JobState;
-  type: JobType;
-  productId: string | null;
-  productName: string | null;
+  /** A JobType; kept as string so a new job type from the API still shows. */
+  type: string;
   tenantId: string | null;
   versionId: string | null;
-  /** Tenant or version name, for display. */
+  /** Store name when the job works on a store the dashboard can name. */
   targetName: string | null;
+  productName: string | null;
   attempts: number;
-  createdAt: string;
+  createdAt: string | null;
   startedAt: string | null;
   failedAt: string | null;
   error: string | null;
-  /** Set on failed jobs: the job_failures row id the retry endpoint takes. */
-  failureId: string | null;
   retriedAt: string | null;
 };
 
-export type JobsPage = Page<Job> & {
-  counts: { queued: number; active: number; failed: number };
+export type JobsList = {
+  items: Job[];
+  counts: { queued: number; running: number; failed: number };
+  /** True when there were more jobs than the dashboard loads. */
+  truncated: boolean;
 };
 
-export type TenantFilter = {
-  productId?: string;
-  page?: number;
-  pageSize?: number;
-};
+export type TenantFilter = { productId?: string };
+export type BackupFilter = { productId?: string };
+export type JobFilter = { productId?: string };
 
-export type BackupFilter = {
-  productId?: string;
-  tenantId?: string;
-  page?: number;
-  pageSize?: number;
-};
-
-export type JobFilter = {
-  productId?: string;
-  tenantId?: string;
-  state?: JobState;
-  page?: number;
-  pageSize?: number;
-};
+export type Listing<T> = { items: T[]; total: number };

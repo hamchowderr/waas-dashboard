@@ -4,15 +4,27 @@ import type { AdminApi } from "./client";
 import type {
   Backup,
   BackupFilter,
-  Health,
+  Job,
   JobFilter,
-  JobsPage,
+  JobState,
+  JobsList,
+  Listing,
   Overview,
-  Page,
+  StatusCode,
   Tenant,
   TenantDetail,
   TenantFilter
 } from "./types";
+import type {
+  WireBackup,
+  WireJob,
+  WireJobFailure,
+  WireJobsPage,
+  WireOverview,
+  WirePage,
+  WireTenantDetail,
+  WireTenantRow
+} from "./wire";
 
 export class AdminApiError extends Error {
   constructor(
@@ -23,18 +35,38 @@ export class AdminApiError extends Error {
   }
 }
 
-function query(params: Record<string, string | number | undefined>): string {
+/** The spec's largest page. */
+const PAGE_SIZE = 200;
+/** v1 loads lists whole and filters in the browser; this caps one list at 2,000 rows. */
+const MAX_PAGES = 10;
+
+type Query = Record<string, string | number | undefined>;
+
+function withQuery(path: string, params: Query): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== "") search.set(key, String(value));
   }
   const text = search.toString();
-  return text ? `?${text}` : "";
+  return text ? `${path}?${text}` : path;
 }
+
+const jobState: Record<WireJob["state"], JobState> = {
+  created: "queued",
+  retry: "queued",
+  active: "running",
+  completed: "done",
+  cancelled: "cancelled",
+  failed: "failed"
+};
+
+type TenantName = { name: string; productId: string; productName: string };
 
 /** Calls the admin endpoints with the admin token. Responses are never cached. */
 export class HttpAdminApi implements AdminApi {
   readonly isFixture = false;
+  private tenantIndex?: Promise<Map<string, TenantName>>;
+  private overviewBody?: Promise<WireOverview>;
 
   constructor(
     private readonly baseUrl: string,
@@ -52,44 +84,187 @@ export class HttpAdminApi implements AdminApi {
     return (await response.json()) as T;
   }
 
-  /** /health answers 503 with the same body when unhealthy; an unreachable API is down too. */
-  async health(): Promise<Health> {
-    try {
-      const response = await fetch(new URL("/health", this.baseUrl), {
-        cache: "no-store",
-        signal: AbortSignal.timeout(5_000)
-      });
-      const body = (await response.json()) as Partial<Health>;
-      const ok = response.ok && body.ok !== false;
-      // An API without per-check detail (the bare {ok:true}) reports through `ok` alone.
-      const fallback = ok ? "up" : "down";
-      return {
-        ok,
-        checks: body.checks ?? { database: fallback, queue: fallback },
-        checkedAt: body.checkedAt ?? new Date().toISOString()
-      };
-    } catch {
-      return { ok: false, checks: { database: "down", queue: "down" }, checkedAt: new Date().toISOString() };
+  /** Every page of a list, up to MAX_PAGES. */
+  private async getAll<T>(path: string, params: Query = {}): Promise<Listing<T> & { first: WirePage<T> }> {
+    const first = (await this.get<WirePage<T>>(withQuery(path, { ...params, page: 1, pageSize: PAGE_SIZE })))!;
+    const items = [...first.items];
+    const pages = Math.min(Math.ceil(first.total / PAGE_SIZE), MAX_PAGES);
+    for (let page = 2; page <= pages; page++) {
+      const next = (await this.get<WirePage<T>>(withQuery(path, { ...params, page, pageSize: PAGE_SIZE })))!;
+      items.push(...next.items);
     }
+    return { items, total: first.total, first };
+  }
+
+  private wireOverview(): Promise<WireOverview> {
+    this.overviewBody ??= this.get<WireOverview>("/admin/overview").then((body) => body!);
+    return this.overviewBody;
+  }
+
+  /** Store and storefront names by tenant id; the backups and jobs lists carry ids only. */
+  private tenantNames(): Promise<Map<string, TenantName>> {
+    this.tenantIndex ??= this.getAll<WireTenantRow>("/admin/tenants").then(
+      ({ items }) => new Map(items.map((t) => [t.id, { name: t.name, productId: t.productId, productName: t.productName }]))
+    );
+    return this.tenantIndex;
   }
 
   async overview(): Promise<Overview> {
-    return (await this.get<Overview>("/admin/overview"))!;
+    const o = await this.wireOverview();
+    const up = (check: "ok" | "down") => (check === "ok" ? "up" : "down");
+    const sum = (c: { pending: number; done: number; failed: number; removing: number }) =>
+      c.pending + c.done + c.failed + c.removing;
+    return {
+      health: {
+        ok: o.health.ok,
+        checks: { database: up(o.health.database), queue: up(o.health.queue) },
+        checkedAt: new Date().toISOString()
+      },
+      products: o.products,
+      tenants: { ...o.tenants, total: sum(o.tenants) },
+      versions: o.versions,
+      backups: { ...o.backups, total: sum(o.backups) },
+      jobs: o.jobs
+    };
   }
 
-  async tenants(filter: TenantFilter = {}): Promise<Page<Tenant>> {
-    return (await this.get<Page<Tenant>>(`/admin/tenants${query(filter)}`))!;
+  async tenants(filter: TenantFilter = {}): Promise<Listing<Tenant>> {
+    const { items, total } = await this.getAll<WireTenantRow>("/admin/tenants", { productId: filter.productId });
+    return {
+      total,
+      items: items.map((t) => ({
+        id: t.id,
+        externalId: t.externalId,
+        name: t.name,
+        productId: t.productId,
+        productName: t.productName,
+        versionId: t.versionId,
+        versionName: t.versionName,
+        mainDomain: t.mainDomain,
+        domainCount: t.domainCount,
+        statusCode: t.statusCode as StatusCode,
+        isSuspended: t.isSuspended,
+        latestBackupAt: t.latestBackupAt,
+        dateCreated: t.dateCreated
+      }))
+    };
   }
 
   async tenant(id: string): Promise<TenantDetail | null> {
-    return this.get<TenantDetail>(`/admin/tenants/${encodeURIComponent(id)}`, { allow404: true });
+    const t = await this.get<WireTenantDetail>(`/admin/tenants/${encodeURIComponent(id)}`, { allow404: true });
+    if (!t) return null;
+    const names = new Map([[t.id, { name: t.name, productId: t.productId, productName: t.productName }]]);
+    const products = new Map([[t.productId, t.productName]]);
+    // A job that used up its retries is also a completed pg-boss job; show it once, as the failure.
+    const failedJobIds = new Set(t.failures.map((f) => f.jobId));
+    const jobs = [
+      ...t.failures.map((f) => this.failureToJob(f, names)),
+      ...t.recentJobs.filter((j) => !failedJobIds.has(j.id)).map((j) => this.jobToJob(j, names))
+    ].sort((a, b) => (b.failedAt ?? b.createdAt ?? "").localeCompare(a.failedAt ?? a.createdAt ?? ""));
+    const main = t.domains.find((d) => d.isMainDomain);
+    return {
+      id: t.id,
+      externalId: t.externalId,
+      name: t.name,
+      productId: t.productId,
+      productName: t.productName,
+      versionId: t.versionId,
+      versionName: t.versionName,
+      snapshotName: t.snapshotName ?? null,
+      statusCode: t.statusCode as StatusCode,
+      isSuspended: t.isSuspended,
+      dateSuspended: t.dateSuspended ?? null,
+      dateCreated: t.dateCreated ?? null,
+      dateChanged: t.dateChanged ?? null,
+      mainDomain: main?.domainName ?? null,
+      domains: t.domains.map((d) => ({ domainName: d.domainName, isMain: d.isMainDomain, isBase: d.isBaseDomain })),
+      wpOptionNames: t.wpOptionNames,
+      phpConstantNames: t.phpConstantNames,
+      backups: t.backups.map((b) => this.toBackup(b, names, products)),
+      jobs
+    };
   }
 
-  async backups(filter: BackupFilter = {}): Promise<Page<Backup>> {
-    return (await this.get<Page<Backup>>(`/admin/backups${query(filter)}`))!;
+  async backups(filter: BackupFilter = {}): Promise<Listing<Backup>> {
+    const [{ items, total }, names, overview] = await Promise.all([
+      this.getAll<WireBackup>("/admin/backups", { productId: filter.productId }),
+      this.tenantNames(),
+      this.wireOverview()
+    ]);
+    const products = new Map(overview.products.map((p) => [p.id, p.name]));
+    return { total, items: items.map((b) => this.toBackup(b, names, products)) };
   }
 
-  async jobs(filter: JobFilter = {}): Promise<JobsPage> {
-    return (await this.get<JobsPage>(`/admin/jobs${query(filter)}`))!;
+  async jobs(filter: JobFilter = {}): Promise<JobsList> {
+    const states = ["queued", "running", "failed"] as const;
+    const [pages, names] = await Promise.all([
+      Promise.all(states.map((state) => this.getAll<WireJob | WireJobFailure>("/admin/jobs", { state }))),
+      this.tenantNames()
+    ]);
+    const counts = (pages[0].first as WireJobsPage).counts;
+    const items = pages
+      .flatMap((p) => p.items)
+      .map((j) => ("errorMessage" in j ? this.failureToJob(j, names) : this.jobToJob(j, names)))
+      .filter((j) => !filter.productId || (j.tenantId && names.get(j.tenantId)?.productId === filter.productId));
+    return {
+      items,
+      counts,
+      truncated: pages.some((p) => p.items.length < p.total)
+    };
+  }
+
+  private toBackup(b: WireBackup, names: Map<string, TenantName>, products: Map<string, string>): Backup {
+    return {
+      id: b.id,
+      productId: b.productId,
+      productName: products.get(b.productId) ?? b.productId,
+      tenantId: b.tenantId,
+      externalId: b.externalId,
+      tenantName: names.get(b.tenantId)?.name ?? null,
+      reason: b.reason,
+      sizeBytes: b.sizeBytes,
+      statusCode: b.statusCode as StatusCode,
+      dateCreated: b.dateCreated,
+      tenantDeletedAt: b.tenantDeletedAt,
+      expiresAt: b.expiresAt
+    };
+  }
+
+  private jobToJob(j: WireJob, names: Map<string, TenantName>): Job {
+    const tenant = j.tenantId ? names.get(j.tenantId) : undefined;
+    return {
+      id: j.id,
+      state: jobState[j.state],
+      type: j.type,
+      tenantId: j.tenantId,
+      versionId: j.versionId,
+      targetName: tenant?.name ?? null,
+      productName: tenant?.productName ?? null,
+      attempts: j.attempts,
+      createdAt: j.createdOn,
+      startedAt: j.startedOn ?? null,
+      failedAt: null,
+      error: null,
+      retriedAt: null
+    };
+  }
+
+  private failureToJob(f: WireJobFailure, names: Map<string, TenantName>): Job {
+    const tenant = f.tenantId ? names.get(f.tenantId) : undefined;
+    return {
+      id: f.id,
+      state: f.status === "retried" ? "retried" : "failed",
+      type: f.type,
+      tenantId: f.tenantId,
+      versionId: f.versionId,
+      targetName: tenant?.name ?? null,
+      productName: tenant?.productName ?? null,
+      attempts: f.attempts,
+      createdAt: null,
+      startedAt: null,
+      failedAt: f.failedAt,
+      error: f.errorMessage,
+      retriedAt: f.retriedAt
+    };
   }
 }

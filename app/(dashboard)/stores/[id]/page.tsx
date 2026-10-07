@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
 import { getAdminApi } from "@/lib/api/client";
-import { formatBytes, formatDate, formatDateTime, jobTypeLabels } from "@/lib/format";
+import { formatBytes, formatDate, formatDateTime, jobTypeLabel } from "@/lib/format";
 import { StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
 import { JobStateBadge } from "@/components/admin/job-state-badge";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +48,7 @@ export default async function StorePage({ params }: Params) {
         </Button>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-bold tracking-tight lg:text-2xl">{tenant.name}</h1>
-          <p className="text-muted-foreground truncate text-sm">{tenant.mainDomain}</p>
+          <p className="text-muted-foreground truncate text-sm">{tenant.mainDomain ?? "No main domain"}</p>
         </div>
         <div className="ms-auto flex items-center gap-1.5">
           <StatusBadge statusCode={tenant.statusCode} />
@@ -67,7 +67,7 @@ export default async function StorePage({ params }: Params) {
           <CardContent className="space-y-3">
             <Row label="Storefront">{tenant.productName}</Row>
             <Row label="Version">{tenant.versionName}</Row>
-            <Row label="Template">{tenant.snapshotName}</Row>
+            <Row label="Template">{tenant.snapshotName ?? "—"}</Row>
             <Separator />
             <Row label="Subscription (external id)">
               <span className="font-mono">{tenant.externalId}</span>
@@ -78,7 +78,6 @@ export default async function StorePage({ params }: Params) {
             <Separator />
             <Row label="Last changed">{formatDateTime(tenant.dateChanged)}</Row>
             {tenant.isSuspended && <Row label="Suspended">{formatDateTime(tenant.dateSuspended)}</Row>}
-            <Row label="Last backup">{formatDateTime(tenant.latestBackupAt)}</Row>
           </CardContent>
         </Card>
 
@@ -164,8 +163,8 @@ export default async function StorePage({ params }: Params) {
             <div className="space-y-2">
               <h3 className="font-medium">WordPress options</h3>
               <div className="flex flex-wrap gap-1.5">
-                {tenant.wpOptionKeys.length ? (
-                  tenant.wpOptionKeys.map((key) => (
+                {tenant.wpOptionNames.length ? (
+                  tenant.wpOptionNames.map((key) => (
                     <Badge key={key} variant="secondary" className="font-mono">
                       {key}
                     </Badge>
@@ -196,14 +195,14 @@ export default async function StorePage({ params }: Params) {
       <Card>
         <CardHeader>
           <CardTitle>Jobs</CardTitle>
-          <CardDescription>Work queued, running or failed for this store.</CardDescription>
+          <CardDescription>This store&apos;s recent jobs, newest first. Finished jobs are kept for 7 days.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table className={tableClass}>
             <TableHeader>
               <TableRow>
                 <TableHead>Job</TableHead>
-                <TableHead>Queued</TableHead>
+                <TableHead>When</TableHead>
                 <TableHead>Error</TableHead>
                 <TableHead className="text-end">State</TableHead>
               </TableRow>
@@ -212,14 +211,14 @@ export default async function StorePage({ params }: Params) {
               {tenant.jobs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-muted-foreground h-16 text-center">
-                    Nothing queued, running or failed.
+                    No recent jobs.
                   </TableCell>
                 </TableRow>
               ) : (
                 tenant.jobs.map((job) => (
                   <TableRow key={job.id}>
-                    <TableCell className="font-medium">{jobTypeLabels[job.type]}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatDateTime(job.createdAt)}</TableCell>
+                    <TableCell className="font-medium">{jobTypeLabel(job.type)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{formatDateTime(job.failedAt ?? job.createdAt)}</TableCell>
                     <TableCell className="text-muted-foreground max-w-md truncate">{job.error ?? "—"}</TableCell>
                     <TableCell className="text-end">
                       <JobStateBadge state={job.state} />

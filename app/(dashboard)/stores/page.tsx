@@ -6,13 +6,9 @@ import { StoresTable } from "./stores-table";
 
 export const metadata: Metadata = { title: "Stores" };
 
-// v1 loads one large page and filters in the browser; server-side paging comes when
-// the store count makes that slow.
-const PAGE_SIZE = 500;
-
 export default async function StoresPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const { product } = await searchParams;
-  const page = await getAdminApi().tenants({ productId: product, pageSize: PAGE_SIZE });
+  const page = await getAdminApi().tenants({ productId: product });
 
   return (
     <div className="space-y-4 lg:space-y-6">

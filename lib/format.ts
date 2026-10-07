@@ -26,6 +26,11 @@ export const jobTypeLabels: Record<JobType, string> = {
   "tenant.restore": "Restore store"
 };
 
+/** Label for a job type; an unknown type from a newer API shows as sent. */
+export function jobTypeLabel(type: string): string {
+  return jobTypeLabels[type as JobType] ?? type;
+}
+
 export function formatDate(value: string | null | undefined): string {
   return value ? format(parseISO(value), "MMM d, yyyy") : "—";
 }

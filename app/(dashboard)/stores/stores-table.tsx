@@ -31,7 +31,7 @@ const tabs: TableTab<Tenant>[] = [
 
 function readField(row: Tenant, path: string): unknown {
   if (path === "search")
-    return `${row.name} ${row.externalId} ${row.id} ${row.domains.map((d) => d.domainName).join(" ")}`;
+    return `${row.name} ${row.externalId} ${row.id} ${row.mainDomain ?? ""}`;
   return row[path as keyof Tenant];
 }
 
@@ -57,10 +57,10 @@ const columns: ColumnDef<Tenant>[] = [
     accessorKey: "mainDomain",
     header: "Domain",
     cell: ({ row }) => {
-      const others = row.original.domains.length - 1;
+      const others = row.original.domainCount - 1;
       return (
         <div className="flex items-center gap-1.5">
-          <span className="max-w-64 truncate">{row.original.mainDomain}</span>
+          <span className="max-w-64 truncate">{row.original.mainDomain ?? "—"}</span>
           {others > 0 && <span className="text-muted-foreground text-xs">+{others}</span>}
         </div>
       );

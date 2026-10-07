@@ -1,13 +1,14 @@
 import "server-only";
 
+import { cache } from "react";
+
 import type {
   Backup,
   BackupFilter,
-  Health,
   JobFilter,
-  JobsPage,
+  JobsList,
+  Listing,
   Overview,
-  Page,
   Tenant,
   TenantDetail,
   TenantFilter
@@ -19,21 +20,22 @@ import { HttpAdminApi } from "./http";
 export interface AdminApi {
   /** True when the data is sample data, not the live API. */
   readonly isFixture: boolean;
-  health(): Promise<Health>;
   overview(): Promise<Overview>;
-  tenants(filter?: TenantFilter): Promise<Page<Tenant>>;
+  tenants(filter?: TenantFilter): Promise<Listing<Tenant>>;
   /** Null when the tenant does not exist. */
   tenant(id: string): Promise<TenantDetail | null>;
-  backups(filter?: BackupFilter): Promise<Page<Backup>>;
-  jobs(filter?: JobFilter): Promise<JobsPage>;
+  backups(filter?: BackupFilter): Promise<Listing<Backup>>;
+  /** Queued, running and failed jobs (failed = used up its retries, not yet retried). */
+  jobs(filter?: JobFilter): Promise<JobsList>;
 }
 
 /**
  * The live API when WAAS_API_URL and WAAS_ADMIN_TOKEN are set, sample data when
  * WAAS_API_FIXTURES=1. Anything else is a configuration error, so a missing variable
- * never silently shows sample data in production.
+ * never silently shows sample data in production. One instance per request, so the
+ * layout and the page share what they load.
  */
-export function getAdminApi(): AdminApi {
+export const getAdminApi = cache((): AdminApi => {
   if (process.env.WAAS_API_FIXTURES === "1") return new FixtureAdminApi();
   const baseUrl = process.env.WAAS_API_URL;
   const token = process.env.WAAS_ADMIN_TOKEN;
@@ -41,4 +43,4 @@ export function getAdminApi(): AdminApi {
     throw new Error("Set WAAS_API_URL and WAAS_ADMIN_TOKEN, or WAAS_API_FIXTURES=1 for sample data.");
   }
   return new HttpAdminApi(baseUrl, token);
-}
+});

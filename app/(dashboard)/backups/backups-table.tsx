@@ -39,7 +39,7 @@ const columns: ColumnDef<Backup>[] = [
     header: ({ column }) => <SortableHeader column={column}>Store</SortableHeader>,
     cell: ({ row }) => {
       const b = row.original;
-      const name = b.tenantName ?? b.externalId;
+      const name = b.tenantName ?? (b.tenantDeletedAt ? "Deleted store" : b.externalId);
       return (
         <div className="min-w-0">
           {b.tenantDeletedAt ? (

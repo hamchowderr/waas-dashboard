@@ -8,13 +8,13 @@ import {
   type Health,
   type Job,
   type JobFilter,
-  type JobType,
-  type JobsPage,
+  type JobsList,
+  type Listing,
   type Overview,
-  type Page,
   type Product,
   type Tenant,
   type TenantDetail,
+  type TenantDomain,
   type TenantFilter
 } from "./types";
 
@@ -77,7 +77,13 @@ const seeds: TenantSeed[] = [
   { status: StatusCode.Done, custom: "silverline.shop" }
 ];
 
-const tenants: Tenant[] = seeds.map((seed, i) => {
+type FixtureTenant = Tenant & {
+  domains: TenantDomain[];
+  dateSuspended: string | null;
+  dateChanged: string;
+};
+
+const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   const version = versions[i % 5 === 4 ? 2 : i % 4 === 1 ? 1 : 0];
   const product = products.find((p) => p.id === version.productId)!;
   const id = uuid(i + 1, 3);
@@ -100,6 +106,7 @@ const tenants: Tenant[] = seeds.map((seed, i) => {
     isSuspended: !!seed.suspended,
     dateSuspended: seed.suspended ? iso(NOW - (3 + i) * DAY) : null,
     mainDomain: domains.find((d) => d.isMain)!.domainName,
+    domainCount: domains.length,
     domains,
     latestBackupAt: null,
     dateCreated: iso(created),
@@ -162,104 +169,92 @@ for (const tenant of tenants) {
 function job(
   n: number,
   state: Job["state"],
-  type: JobType,
+  type: string,
   tenant: Tenant,
   minutesAgo: number,
   extra: Partial<Job> = {}
 ): Job {
+  const failed = state === "failed";
   return {
-    id: uuid(n, 5),
+    id: uuid(n, failed ? 6 : 5),
     state,
     type,
-    productId: tenant.productId,
-    productName: tenant.productName,
     tenantId: tenant.id,
     versionId: null,
     targetName: tenant.name,
-    attempts: state === "failed" ? 4 : state === "active" ? 1 : 0,
-    createdAt: iso(NOW - minutesAgo * 60_000),
-    startedAt: state === "queued" ? null : iso(NOW - (minutesAgo - 1) * 60_000),
-    failedAt: null,
+    productName: tenant.productName,
+    attempts: failed ? 4 : state === "running" ? 1 : 0,
+    createdAt: failed ? null : iso(NOW - minutesAgo * 60_000),
+    startedAt: state === "running" ? iso(NOW - (minutesAgo - 1) * 60_000) : null,
+    failedAt: failed ? iso(NOW - minutesAgo * 60_000) : null,
     error: null,
-    failureId: null,
     retriedAt: null,
     ...extra
   };
 }
 
 const jobs: Job[] = [
-  job(1, "active", "tenant.create", tenants[3], 2),
+  job(1, "running", "tenant.create", tenants[3], 2),
   job(2, "queued", "tenant.create", tenants[13], 1),
   job(3, "queued", "tenant.domains", tenants[3], 1),
-  job(4, "active", "tenant.delete", tenants[10], 4),
-  job(5, "failed", "tenant.create", tenants[5], 190, {
-    failedAt: iso(NOW - 170 * 60_000),
-    error: "Provisioner: store host did not answer within 600 s (create container)",
-    failureId: uuid(1, 6)
+  job(4, "running", "tenant.delete", tenants[10], 4),
+  job(5, "failed", "tenant.create", tenants[5], 170, {
+    error: "Provisioner: store host did not answer within 600 s (create container)"
   }),
-  job(6, "failed", "tenant.domains", tenants[15], 52, {
-    failedAt: iso(NOW - 40 * 60_000),
-    error: "Provisioner: certificate request for ironwood.store rejected: DNS does not point at the store host",
-    failureId: uuid(2, 6)
+  job(6, "failed", "tenant.domains", tenants[15], 40, {
+    error: "Provisioner: certificate request for ironwood.store rejected: DNS does not point at the store host"
   }),
-  job(7, "failed", "tenant.backup", tenants[6], 2900, {
-    failedAt: iso(NOW - 2880 * 60_000),
-    error: "Provisioner: backup upload to object storage failed (403 AccessDenied)",
-    failureId: uuid(3, 6)
+  job(7, "failed", "tenant.backup", tenants[6], 2880, {
+    error: "Provisioner: backup upload to object storage failed (403 AccessDenied)"
   })
 ];
+
+/** Finished jobs, shown only on a store's page (the API's recentJobs). */
+const finishedJobs: Job[] = tenants.map((tenant, i) =>
+  job(50 + i, "done", "tenant.create", tenant, (60 - i * 2.5) * 24 * 60)
+);
 
 function health(): Health {
   return { ok: true, checks: { database: "up", queue: "up" }, checkedAt: new Date().toISOString() };
 }
 
-function paginate<T>(items: T[], page = 1, pageSize = 50): Page<T> {
-  const start = (page - 1) * pageSize;
-  return { items: items.slice(start, start + pageSize), total: items.length, page, pageSize };
-}
+const listing = <T,>(items: T[]): Listing<T> => ({ items, total: items.length });
 
 const byProduct = <T extends { productId: string | null }>(items: T[], productId?: string) =>
   productId ? items.filter((item) => item.productId === productId) : items;
 
+const counts = (items: { statusCode: StatusCode }[]) => ({
+  pending: items.filter((i) => i.statusCode === StatusCode.Pending).length,
+  done: items.filter((i) => i.statusCode === StatusCode.Done).length,
+  failed: items.filter((i) => i.statusCode === StatusCode.Failed).length,
+  removing: items.filter((i) => i.statusCode === StatusCode.Removing).length
+});
+
+function toRow(t: FixtureTenant): Tenant {
+  const { domains: _domains, dateSuspended: _suspended, dateChanged: _changed, ...row } = t;
+  return row;
+}
+
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
-  async health(): Promise<Health> {
-    return health();
-  }
-
   async overview(): Promise<Overview> {
-    const count = (status: StatusCode) => tenants.filter((t) => t.statusCode === status).length;
     return {
       health: health(),
       products: products.map((p) => ({ ...p, tenantCount: tenants.filter((t) => t.productId === p.id).length })),
-      tenants: {
-        total: tenants.length,
-        byStatus: {
-          pending: count(StatusCode.Pending),
-          done: count(StatusCode.Done),
-          failed: count(StatusCode.Failed),
-          removing: count(StatusCode.Removing)
-        },
-        suspended: tenants.filter((t) => t.isSuspended).length
-      },
-      versions: { total: versions.length, failed: 0 },
-      backups: {
-        total: backups.length,
-        failed: backups.filter((b) => b.statusCode === StatusCode.Failed).length,
-        sizeBytes: backups.reduce((sum, b) => sum + (b.sizeBytes ?? 0), 0)
-      },
+      tenants: { ...counts(tenants), total: tenants.length, suspended: tenants.filter((t) => t.isSuspended).length },
+      versions: { pending: 0, done: versions.length, failed: 0, removing: 0 },
+      backups: { ...counts(backups), total: backups.length },
       jobs: {
         queued: jobs.filter((j) => j.state === "queued").length,
-        active: jobs.filter((j) => j.state === "active").length,
-        failedUnresolved: jobs.filter((j) => j.state === "failed" && !j.retriedAt).length
-      },
-      generatedAt: iso(NOW)
+        running: jobs.filter((j) => j.state === "running").length,
+        failed: jobs.filter((j) => j.state === "failed").length
+      }
     };
   }
 
-  async tenants(filter: TenantFilter = {}): Promise<Page<Tenant>> {
-    return paginate(byProduct(tenants, filter.productId), filter.page, filter.pageSize);
+  async tenants(filter: TenantFilter = {}): Promise<Listing<Tenant>> {
+    return listing(byProduct(tenants, filter.productId).map(toRow));
   }
 
   async tenant(id: string): Promise<TenantDetail | null> {
@@ -268,28 +263,28 @@ export class FixtureAdminApi implements AdminApi {
     return {
       ...tenant,
       snapshotName: "Peptide shop starter",
-      wpOptionKeys: ["blogname", "admin_email", "woocommerce_currency"],
+      wpOptionNames: ["blogname", "admin_email", "woocommerce_currency"],
       phpConstantNames: ["WPCS_TENANT_ROLES", "WPCS_PUBLIC_KEY", "WPCS_TENANT_NO_ADMINISTRATOR_PLUGIN_CAPS"],
       backups: backups.filter((b) => b.tenantId === id),
-      jobs: jobs.filter((j) => j.tenantId === id)
+      jobs: [...jobs, ...finishedJobs].filter((j) => j.tenantId === id)
     };
   }
 
-  async backups(filter: BackupFilter = {}): Promise<Page<Backup>> {
-    const items = byProduct(backups, filter.productId).filter((b) => !filter.tenantId || b.tenantId === filter.tenantId);
-    return paginate(items, filter.page, filter.pageSize);
+  async backups(filter: BackupFilter = {}): Promise<Listing<Backup>> {
+    return listing(byProduct(backups, filter.productId));
   }
 
-  async jobs(filter: JobFilter = {}): Promise<JobsPage> {
-    const scoped = byProduct(jobs, filter.productId).filter((j) => !filter.tenantId || j.tenantId === filter.tenantId);
-    const items = scoped.filter((j) => !filter.state || j.state === filter.state);
+  async jobs(filter: JobFilter = {}): Promise<JobsList> {
+    const productName = products.find((p) => p.id === filter.productId)?.name;
+    const items = filter.productId ? jobs.filter((j) => j.productName === productName) : jobs;
     return {
-      ...paginate(items, filter.page, filter.pageSize),
+      items,
       counts: {
-        queued: scoped.filter((j) => j.state === "queued").length,
-        active: scoped.filter((j) => j.state === "active").length,
-        failed: scoped.filter((j) => j.state === "failed").length
-      }
+        queued: items.filter((j) => j.state === "queued").length,
+        running: items.filter((j) => j.state === "running").length,
+        failed: items.filter((j) => j.state === "failed").length
+      },
+      truncated: false
     };
   }
 }

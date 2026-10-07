@@ -19,26 +19,26 @@ import {
 } from "@/components/ui/dialog";
 import type { FilterField } from "@/components/ui/filters/filters-types";
 import type { Job } from "@/lib/api/types";
-import { formatAgo, formatDateTime, jobTypeLabels } from "@/lib/format";
+import { formatAgo, formatDateTime, jobTypeLabel, jobTypeLabels } from "@/lib/format";
 
 const columnLabels: Record<string, string> = {
   type: "Job",
   targetName: "Store or version",
   productName: "Storefront",
   attempts: "Attempts",
-  createdAt: "Queued",
+  when: "When",
   error: "Error",
   state: "State"
 };
 
 const tabs: TableTab<Job>[] = [
   { value: "queued", label: "Queued", match: (j) => j.state === "queued" },
-  { value: "active", label: "Running", match: (j) => j.state === "active" },
+  { value: "running", label: "Running", match: (j) => j.state === "running" },
   { value: "failed", label: "Failed", match: (j) => j.state === "failed" }
 ];
 
 function readField(row: Job, path: string): unknown {
-  if (path === "search") return `${jobTypeLabels[row.type]} ${row.type} ${row.targetName ?? ""} ${row.error ?? ""} ${row.id}`;
+  if (path === "search") return `${jobTypeLabel(row.type)} ${row.type} ${row.targetName ?? ""} ${row.error ?? ""} ${row.id}`;
   return row[path as keyof Job];
 }
 
@@ -48,7 +48,7 @@ const columns: ColumnDef<Job>[] = [
     header: "Job",
     cell: ({ row }) => (
       <div className="min-w-0">
-        <div className="font-medium">{jobTypeLabels[row.original.type]}</div>
+        <div className="font-medium">{jobTypeLabel(row.original.type)}</div>
         <div className="text-muted-foreground font-mono text-xs">{row.original.type}</div>
       </div>
     )
@@ -64,15 +64,22 @@ const columns: ColumnDef<Job>[] = [
           className="hover:text-primary hover:underline">
           {row.original.targetName ?? row.original.tenantId}
         </Link>
+      ) : row.original.versionId ? (
+        <span className="text-muted-foreground font-mono text-xs">version {row.original.versionId.slice(0, 8)}</span>
       ) : (
-        (row.original.targetName ?? "—")
+        "—"
       )
   },
   { accessorKey: "productName", header: "Storefront", cell: ({ row }) => row.original.productName ?? "—" },
   {
-    accessorKey: "createdAt",
-    header: ({ column }) => <SortableHeader column={column}>Queued</SortableHeader>,
-    cell: ({ row }) => <span className="text-muted-foreground whitespace-nowrap">{formatAgo(row.original.createdAt)}</span>
+    id: "when",
+    accessorFn: (job) => job.failedAt ?? job.createdAt,
+    header: ({ column }) => <SortableHeader column={column}>When</SortableHeader>,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground whitespace-nowrap">
+        {row.original.failedAt ? `failed ${formatAgo(row.original.failedAt)}` : `queued ${formatAgo(row.original.createdAt)}`}
+      </span>
+    )
   },
   {
     accessorKey: "error",
@@ -127,7 +134,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
         tabs={tabs}
         tabCounts
         initialTab={initialTab}
-        initialSorting={[{ id: "createdAt", desc: true }]}
+        initialSorting={[{ id: "when", desc: true }]}
         emptyText="No jobs here. Finished jobs are not listed."
         onRowClick={setViewing}
       />
@@ -137,7 +144,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
           {viewing && (
             <>
               <DialogHeader>
-                <DialogTitle>{jobTypeLabels[viewing.type]}</DialogTitle>
+                <DialogTitle>{jobTypeLabel(viewing.type)}</DialogTitle>
                 <DialogDescription className="font-mono">{viewing.id}</DialogDescription>
               </DialogHeader>
               {viewing.error && (
@@ -157,11 +164,19 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
                 <dd className="justify-self-end text-end">{viewing.productName ?? "—"}</dd>
                 <dt className="text-muted-foreground">Attempts</dt>
                 <dd className="justify-self-end tabular-nums">{viewing.attempts}</dd>
-                <dt className="text-muted-foreground">Queued</dt>
-                <dd className="justify-self-end tabular-nums">{formatDateTime(viewing.createdAt)}</dd>
-                <dt className="text-muted-foreground">Started</dt>
-                <dd className="justify-self-end tabular-nums">{formatDateTime(viewing.startedAt)}</dd>
-                {viewing.state === "failed" && (
+                {viewing.createdAt && (
+                  <>
+                    <dt className="text-muted-foreground">Queued</dt>
+                    <dd className="justify-self-end tabular-nums">{formatDateTime(viewing.createdAt)}</dd>
+                  </>
+                )}
+                {viewing.startedAt && (
+                  <>
+                    <dt className="text-muted-foreground">Started</dt>
+                    <dd className="justify-self-end tabular-nums">{formatDateTime(viewing.startedAt)}</dd>
+                  </>
+                )}
+                {viewing.failedAt && (
                   <>
                     <dt className="text-muted-foreground">Failed</dt>
                     <dd className="justify-self-end tabular-nums">{formatDateTime(viewing.failedAt)}</dd>
