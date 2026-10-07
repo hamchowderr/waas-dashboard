@@ -4,6 +4,12 @@ import type { AdminApi } from "./client";
 import type {
   Backup,
   BackupFilter,
+  Created,
+  CreateTemplateInput,
+  CreateVersionInput,
+  ProductDetail,
+  Template,
+  Version,
   Job,
   JobFilter,
   JobState,
@@ -16,6 +22,14 @@ import type {
   TenantFilter
 } from "./types";
 import type {
+  WireBaseSnapshot,
+  WireCreateBaseSnapshot,
+  WireCreatedBaseSnapshot,
+  WireCreatedVersion,
+  WireCreateVersion,
+  WireError,
+  WireProduct,
+  WireVersion,
   WireBackup,
   WireJob,
   WireJobFailure,
@@ -29,9 +43,20 @@ import type {
 export class AdminApiError extends Error {
   constructor(
     readonly status: number,
-    readonly path: string
+    readonly path: string,
+    /** The API's own message ({statusCode, message} body), when it sent one. */
+    readonly apiMessage: string | null = null
   ) {
-    super(`Provisioning API returned ${status} for ${path}`);
+    super(apiMessage ?? `Provisioning API returned ${status} for ${path}`);
+  }
+}
+
+async function apiMessage(response: Response): Promise<string | null> {
+  try {
+    const body = (await response.json()) as Partial<WireError>;
+    return typeof body.message === "string" ? body.message : null;
+  } catch {
+    return null;
   }
 }
 
@@ -80,8 +105,101 @@ export class HttpAdminApi implements AdminApi {
       signal: AbortSignal.timeout(10_000)
     });
     if (allow404 && response.status === 404) return null;
-    if (!response.ok) throw new AdminApiError(response.status, path);
+    if (!response.ok) throw new AdminApiError(response.status, path, await apiMessage(response));
     return (await response.json()) as T;
+  }
+
+  /** A change. Returns the JSON body, or null for the API's bodiless 200s. */
+  private async send<T>(method: "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T | null> {
+    const response = await fetch(new URL(path, this.baseUrl), {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/json",
+        ...(body === undefined ? {} : { "Content-Type": "application/json" })
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(30_000)
+    });
+    if (!response.ok) throw new AdminApiError(response.status, path, await apiMessage(response));
+    const text = await response.text();
+    return text ? (JSON.parse(text) as T) : null;
+  }
+
+  private productPath(productId: string, rest: string): string {
+    return `/admin/products/${encodeURIComponent(productId)}${rest}`;
+  }
+
+  async products(): Promise<ProductDetail[]> {
+    const products = (await this.get<WireProduct[]>("/admin/products"))!;
+    return products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      tenantCount: p.tenantCount,
+      versionCount: p.versionCount,
+      productionVersionId: p.productionVersionId
+    }));
+  }
+
+  async versions(productId: string): Promise<Version[]> {
+    const versions = (await this.get<WireVersion[]>(this.productPath(productId, "/versions")))!;
+    return versions.map((v) => ({
+      id: v.id,
+      name: v.name,
+      isProduction: v.isProduction,
+      statusCode: v.statusCode as StatusCode,
+      domain: v.domain,
+      dateCreated: v.dateCreated,
+      dateChanged: v.dateChanged
+    }));
+  }
+
+  async templates(productId: string): Promise<Template[]> {
+    const templates = (await this.get<WireBaseSnapshot[]>(this.productPath(productId, "/basesnapshots")))!;
+    return templates.map((t) => ({
+      id: t.id,
+      name: t.name,
+      comment: t.comment ?? "",
+      isTenantSnapshot: t.isTenantSnapshot ?? false,
+      groupName: t.groupName || null,
+      isDefault: t.isDefault ?? false,
+      showAsBaseSnapshot: t.showAsBaseSnapshot ?? false
+    }));
+  }
+
+  async retryFailure(failureId: string): Promise<void> {
+    await this.send("POST", `/admin/jobs/failures/${encodeURIComponent(failureId)}/retry`);
+  }
+
+  async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {
+    const body: WireCreateVersion = input;
+    const created = (await this.send<WireCreatedVersion>("POST", this.productPath(productId, "/versions"), body))!;
+    return { id: created.id, uploadUrl: created.uploadUrl || null };
+  }
+
+  async setProductionVersion(productId: string, versionId: string): Promise<void> {
+    await this.send("PUT", this.productPath(productId, `/versions/${encodeURIComponent(versionId)}/production`));
+  }
+
+  async deleteVersion(productId: string, versionId: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, `/versions/${encodeURIComponent(versionId)}`));
+  }
+
+  async createTemplate(productId: string, input: CreateTemplateInput): Promise<Created> {
+    const body: WireCreateBaseSnapshot = {
+      name: input.name,
+      comment: input.comment,
+      isTenantSnapshot: input.isTenantSnapshot,
+      showInConsole: input.showInConsole,
+      ...(input.isTenantSnapshot && input.groupName ? { groupName: input.groupName } : {})
+    };
+    const created = (await this.send<WireCreatedBaseSnapshot>("POST", this.productPath(productId, "/basesnapshots"), body))!;
+    return { id: created.id, uploadUrl: created.uploadUrl || null };
+  }
+
+  async deleteTemplate(productId: string, templateId: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, `/basesnapshots?id=${encodeURIComponent(templateId)}`));
   }
 
   /** Every page of a list, up to MAX_PAGES. */

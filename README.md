@@ -6,10 +6,12 @@ Admin dashboard for the WaaS platform. It reads the provisioning API ([`waas-pro
 - **Stores**: every store (tenant) across all storefronts, with storefront, version, domains, status and last backup. Each store has a page with its domains, backups, settings names and jobs.
 - **Jobs**: queued, running and failed background jobs, with the error of each failed one.
 - **Backups**: every backup, including those of deleted stores, with when each expires.
+- **Versions & templates** (per storefront; replaces the old WPCS console): list versions and templates, create a version from a base template or an uploaded archive (copying group templates into it), make a version production, delete versions and templates, and upload templates. Making a version production and every delete ask for confirmation first.
+- **Retry** failed jobs, one from its detail dialog or several at once from the Jobs list.
 
 The storefront switcher in the header narrows the pages to one storefront (`?product=<id>` in the URL).
 
-Version 1 is read-only: it changes nothing in the API.
+Changes to stores themselves (suspend, resume, backup, restore, domains) are not in the dashboard yet.
 
 Next.js 16 (App Router), React 19, Tailwind CSS v4 and the [Shadcn UI Kit](https://shadcnuikit.com) dashboard shell and pages. Hosted on Vercel.
 
@@ -17,7 +19,9 @@ Next.js 16 (App Router), React 19, Tailwind CSS v4 and the [Shadcn UI Kit](https
 
 ## How it gets its data
 
-All API calls run on the server (`lib/api/`). The browser never sees the API address or the admin token.
+All API calls run on the server (`lib/api/`). The browser never sees the API address or the admin token. Changes go through server actions (`app/(dashboard)/actions.ts`), and each one checks the signed-in user against the allowlist itself, because a server action can be called directly.
+
+Archives (version and template uploads) are the exception: the API returns an upload address, and the browser sends the file straight to it with one `PUT`, as WPCS did. The storage behind those addresses has to accept cross-origin `PUT`s from the dashboard's address (a CORS rule on the bucket) once a real store host is chosen; the fake provisioner's addresses accept nothing.
 
 | Source | When |
 |---|---|
@@ -26,7 +30,7 @@ All API calls run on the server (`lib/api/`). The browser never sees the API add
 
 With neither, pages show an error rather than sample data, so a missing variable is never mistaken for real data.
 
-`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (v0.1.0, beads `waas-api-plu.1`). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200) and filtered in the browser.
+`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (beads `waas-api-plu.1` and `waas-api-plu.3`; the version and template endpoints take the WPCS operations' bodies). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200) and filtered in the browser.
 
 ## Sign-in
 
@@ -91,4 +95,7 @@ From a local run with sample data:
 |---|---|
 | ![Sign in](docs/screenshots/0-login.png) | ![Stores](docs/screenshots/2-stores.png) |
 | ![Store](docs/screenshots/3-store-detail.png) | ![Failed jobs](docs/screenshots/4-jobs.png) |
-| ![Job detail](docs/screenshots/4b-job-dialog.png) | ![Backups](docs/screenshots/5-backups.png) |
+| ![Backups](docs/screenshots/5-backups.png) | ![Versions](docs/screenshots/7-versions.png) |
+| ![New version](docs/screenshots/8-new-version-dialog.png) | ![Make production](docs/screenshots/9-confirm-production.png) |
+| ![Templates](docs/screenshots/11-templates.png) | ![Upload a template](docs/screenshots/12-upload-template-dialog.png) |
+| ![Retry one job](docs/screenshots/13-job-retry-dialog.png) | ![Retry several](docs/screenshots/14-jobs-bulk-retry.png) |
