@@ -45,36 +45,32 @@ const versions = [
   { id: uuid(3, 2), name: "v1.4 (production)", productId: products[1].id }
 ];
 
-const storeNames = [
-  "Northwind Labs", "Blue Harbor Supply", "Cedar Wellness", "Atlas Research", "Lumen Co",
-  "Harbor Point", "Summit Peptides", "Kestrel Bio", "Oakline Health", "Riverstone",
-  "Meridian Shop", "Pinecrest", "Solace Labs", "Vantage Supply", "Willow & Co",
-  "Ironwood", "Brightside", "Coastal Compounds", "Evergreen Labs", "Silverline"
-];
+// Obviously fictional names and reserved .example domains: sample data must never look like a real business.
+const storeNames = Array.from({ length: 20 }, (_, i) => `Example Store ${i + 1}`);
 
 type TenantSeed = { status: StatusCode; suspended?: boolean; custom?: string; extra?: string[] };
 
 const seeds: TenantSeed[] = [
-  { status: StatusCode.Done, custom: "shop.northwindlabs.com", extra: ["northwindlabs.com"] },
+  { status: StatusCode.Done, custom: "shop.store1.example", extra: ["store1.example"] },
   { status: StatusCode.Done },
-  { status: StatusCode.Done, custom: "cedarwellness.co" },
+  { status: StatusCode.Done, custom: "store3.example" },
   { status: StatusCode.Pending },
   { status: StatusCode.Done, suspended: true },
   { status: StatusCode.Failed },
-  { status: StatusCode.Done, custom: "harborpoint.store" },
+  { status: StatusCode.Done, custom: "store7.example" },
   { status: StatusCode.Done },
-  { status: StatusCode.Done, suspended: true, custom: "kestrelbio.com" },
+  { status: StatusCode.Done, suspended: true, custom: "store9.example" },
   { status: StatusCode.Done },
   { status: StatusCode.Removing },
-  { status: StatusCode.Done, custom: "pinecrest.shop", extra: ["www.pinecrest.shop"] },
+  { status: StatusCode.Done, custom: "store12.example", extra: ["www.store12.example"] },
   { status: StatusCode.Done },
   { status: StatusCode.Pending },
   { status: StatusCode.Done },
-  { status: StatusCode.Pending, custom: "ironwood.store" },
+  { status: StatusCode.Pending, custom: "store16.example" },
   { status: StatusCode.Done },
   { status: StatusCode.Done },
   { status: StatusCode.Done },
-  { status: StatusCode.Done, custom: "silverline.shop" }
+  { status: StatusCode.Done, custom: "store20.example" }
 ];
 
 type FixtureTenant = Tenant & {
@@ -138,8 +134,8 @@ tenants.forEach((tenant, i) => {
 });
 // Two backups of stores that have since been deleted, kept for restore until they expire.
 for (const [n, name, deletedDaysAgo] of [
-  [1, "Copperleaf Labs", 12],
-  [2, "Driftwood Supply", 81]
+  [1, "Example Store 21", 12],
+  [2, "Example Store 22", 81]
 ] as const) {
   const deletedAt = NOW - deletedDaysAgo * DAY;
   backups.push({
@@ -202,7 +198,7 @@ const jobs: Job[] = [
     error: "Provisioner: store host did not answer within 600 s (create container)"
   }),
   job(6, "failed", "tenant.domains", tenants[15], 40, {
-    error: "Provisioner: certificate request for ironwood.store rejected: DNS does not point at the store host"
+    error: "Provisioner: certificate request for store16.example rejected: DNS does not point at the store host"
   }),
   job(7, "failed", "tenant.backup", tenants[6], 2880, {
     error: "Provisioner: backup upload to object storage failed (403 AccessDenied)"
@@ -262,7 +258,7 @@ export class FixtureAdminApi implements AdminApi {
     if (!tenant) return null;
     return {
       ...tenant,
-      snapshotName: "Peptide shop starter",
+      snapshotName: "Starter template",
       wpOptionNames: ["blogname", "admin_email", "woocommerce_currency"],
       phpConstantNames: ["WPCS_TENANT_ROLES", "WPCS_PUBLIC_KEY", "WPCS_TENANT_NO_ADMINISTRATOR_PLUGIN_CAPS"],
       backups: backups.filter((b) => b.tenantId === id),
