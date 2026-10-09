@@ -1,0 +1,10 @@
+# Beads configuration for waas-dashboard.
+# The dashboard shares the WaaS issue database with waas-plugins (chowderr/waas on DoltHub).
+# After cloning: run `bd bootstrap` to fetch the issues, then `bd list`.
+# Sync: `bd dolt pull` to get the latest, `bd dolt push` to publish yours.
+
+sync:
+    remote: chowderr/waas
+export:
+    auto: true
+    git-add: false
