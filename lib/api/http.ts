@@ -172,6 +172,10 @@ export class HttpAdminApi implements AdminApi {
     await this.send("POST", `/admin/jobs/failures/${encodeURIComponent(failureId)}/retry`);
   }
 
+  async setMainDomain(tenantId: string, domainName: string): Promise<void> {
+    await this.send("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/domains/main`, { domainName });
+  }
+
   async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {
     const body: WireCreateVersion = input;
     const created = (await this.send<WireCreatedVersion>("POST", this.productPath(productId, "/versions"), body))!;

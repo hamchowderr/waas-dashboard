@@ -352,6 +352,20 @@ export class FixtureAdminApi implements AdminApi {
     return templates.filter((t) => t.productId === productId).map((t) => without(t, "productId"));
   }
 
+  async setMainDomain(tenantId: string, domainName: string): Promise<void> {
+    const tenant = tenants.find((t) => t.id === tenantId);
+    if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const domain = domainName.trim().toLowerCase();
+    if (tenants.some((t) => t !== tenant && t.domains.some((d) => d.domainName === domain)))
+      throw new FixtureError(400, `Domain ${domain} is already in use`);
+    for (const d of tenant.domains) d.isMain = false;
+    const existing = tenant.domains.find((d) => d.domainName === domain);
+    if (existing) existing.isMain = true;
+    else tenant.domains.push({ domainName: domain, isMain: true, isBase: false });
+    tenant.mainDomain = domain;
+    tenant.domainCount = tenant.domains.length;
+  }
+
   async retryFailure(failureId: string): Promise<void> {
     const job = jobs.find((j) => j.id === failureId && (j.state === "failed" || j.state === "retried"));
     if (!job) throw new FixtureError(404, `Failure ${failureId} not found`);

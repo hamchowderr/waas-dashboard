@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ChangeAddress } from "./change-address";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -85,6 +86,9 @@ export default async function StorePage({ params }: Params) {
           <CardHeader>
             <CardTitle>Domains</CardTitle>
             <CardDescription>The main domain serves the store; the others redirect to it.</CardDescription>
+            <CardAction>
+              <ChangeAddress tenantId={tenant.id} mainDomain={tenant.mainDomain} />
+            </CardAction>
           </CardHeader>
           <CardContent className="p-0">
             <Table className={tableClass}>

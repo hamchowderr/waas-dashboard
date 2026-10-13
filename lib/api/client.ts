@@ -41,6 +41,8 @@ export interface AdminApi {
   // Changes. Each throws AdminApiError with the API's message when the API refuses.
   /** Re-queues a failed job; the store or version goes back to Pending. */
   retryFailure(failureId: string): Promise<void>;
+  /** Makes a domain the store's main address, adding it if new; the old main domain redirects to it. */
+  setMainDomain(tenantId: string, domainName: string): Promise<void>;
   createVersion(productId: string, input: CreateVersionInput): Promise<Created>;
   setProductionVersion(productId: string, versionId: string): Promise<void>;
   deleteVersion(productId: string, versionId: string): Promise<void>;

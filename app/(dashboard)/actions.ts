@@ -66,6 +66,22 @@ export async function retryFailures(
   }, ["/"]);
 }
 
+// A bare hostname, as the API stores it: letters, digits and hyphens, dot-separated.
+const DOMAIN = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
+
+/** Moves a store to a new main address; the old one keeps redirecting to it. */
+export async function setMainDomain(tenantId: string, domainName: string): Promise<ActionResult> {
+  return run(async () => {
+    const domain = text(domainName, "Address", 253)
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "");
+    if (!DOMAIN.test(domain)) throw new InputError("Enter an address like shop.example.com");
+    await getAdminApi().setMainDomain(uuid(tenantId, "store"), domain);
+    return undefined;
+  }, ["/stores", "/"]);
+}
+
 export async function createVersion(productId: string, input: CreateVersionInput): Promise<ActionResult<Created>> {
   return run(async () => {
     const product = uuid(productId, "storefront");
