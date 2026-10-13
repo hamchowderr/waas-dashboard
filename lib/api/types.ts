@@ -78,7 +78,7 @@ export type Backup = {
   externalId: string;
   /** Null when the store is deleted (the API has no name for it then). */
   tenantName: string | null;
-  reason: "manual" | "suspend";
+  reason: "manual" | "suspend" | "scheduled";
   sizeBytes: number | null;
   statusCode: StatusCode;
   dateCreated: string;

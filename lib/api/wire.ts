@@ -40,7 +40,7 @@ export type WireBackup = {
   tenantId: string;
   externalId: string;
   productId: string;
-  reason: "manual" | "suspend";
+  reason: "manual" | "suspend" | "scheduled";
   sizeBytes: number | null;
   statusCode: number;
   statusName: string;

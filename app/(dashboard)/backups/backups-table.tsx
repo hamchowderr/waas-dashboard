@@ -116,7 +116,8 @@ export function BackupsTable({ backups }: { backups: Backup[] }) {
       defaultOperator: "is_any_of",
       options: [
         { value: "manual", label: "Manual" },
-        { value: "suspend", label: "Suspend" }
+        { value: "suspend", label: "Suspend" },
+        { value: "scheduled", label: "Scheduled" }
       ],
       searchable: false,
       icon: <TagIcon />
