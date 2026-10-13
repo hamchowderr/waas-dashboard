@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth, isAllowed } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
-import type { Created, CreateTemplateInput, CreateVersionInput } from "@/lib/api/types";
+import type { Created, CreateTemplateInput, CreateVersionInput, MailDomain } from "@/lib/api/types";
 
 // Every change the dashboard makes goes through these actions. Server actions can be
 // called directly, not only from our pages, so each one checks the session itself.
@@ -80,6 +80,26 @@ export async function setMainDomain(tenantId: string, domainName: string): Promi
     await getAdminApi().setMainDomain(uuid(tenantId, "store"), domain);
     return undefined;
   }, ["/stores", "/"]);
+}
+
+/** Gives a store its own sending domain; it sends from it once toSend has verified the DNS records. */
+export async function setMailDomain(tenantId: string, domainName: string): Promise<ActionResult<MailDomain>> {
+  return run(async () => {
+    const domain = text(domainName, "Domain", 253)
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "");
+    if (!DOMAIN.test(domain)) throw new InputError("Enter a domain like shop.example.com");
+    return getAdminApi().setMailDomain(uuid(tenantId, "store"), domain);
+  }, ["/stores"]);
+}
+
+/** Moves a store back to sending from the platform's address. */
+export async function removeMailDomain(tenantId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().removeMailDomain(uuid(tenantId, "store"));
+    return undefined;
+  }, ["/stores"]);
 }
 
 export async function createVersion(productId: string, input: CreateVersionInput): Promise<ActionResult<Created>> {

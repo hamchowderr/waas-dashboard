@@ -14,6 +14,7 @@ import type {
   JobFilter,
   JobsList,
   Listing,
+  MailDomain,
   Overview,
   Tenant,
   TenantDetail,
@@ -43,6 +44,12 @@ export interface AdminApi {
   retryFailure(failureId: string): Promise<void>;
   /** Makes a domain the store's main address, adding it if new; the old main domain redirects to it. */
   setMainDomain(tenantId: string, domainName: string): Promise<void>;
+  /** The store's own sending domain with its DNS records; null when it sends from the platform's address. */
+  mailDomain(tenantId: string): Promise<MailDomain | null>;
+  /** Gives the store its own sending domain; it is used once toSend has verified its DNS records. */
+  setMailDomain(tenantId: string, domainName: string): Promise<MailDomain>;
+  /** Moves the store back to the platform's address (within 10 minutes) and drops its domain. */
+  removeMailDomain(tenantId: string): Promise<void>;
   createVersion(productId: string, input: CreateVersionInput): Promise<Created>;
   setProductionVersion(productId: string, versionId: string): Promise<void>;
   deleteVersion(productId: string, versionId: string): Promise<void>;

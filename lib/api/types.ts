@@ -189,3 +189,25 @@ export type CreateTemplateInput = {
 
 /** Where to PUT the archive, when the operation needs one. */
 export type Created = { id: string; uploadUrl: string | null };
+
+/** A record a store's owner adds at their DNS host for its sending domain. */
+export type DnsRecord = {
+  type: string;
+  /** Relative to the domain, as most DNS hosts want it. */
+  name: string;
+  /** The full hostname. */
+  host: string;
+  value: string;
+  priority: number | null;
+};
+
+/** A store's own sending domain: it sends email from no-reply@ this domain once toSend has verified it. */
+export type MailDomain = {
+  domainName: string;
+  /** pending: waiting for the DNS records; verified: the store sends from it; removing: moving back. */
+  status: "pending" | "verified" | "removing";
+  dateCreated: string;
+  dateVerified: string | null;
+  /** Null when the API could not reach toSend. */
+  records: DnsRecord[] | null;
+};

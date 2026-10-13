@@ -13,6 +13,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChangeAddress } from "./change-address";
+import { MailSender } from "./mail-sender";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -35,7 +36,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export default async function StorePage({ params }: Params) {
   const { id } = await params;
-  const tenant = await getAdminApi().tenant(id);
+  const [tenant, mailDomain] = await Promise.all([getAdminApi().tenant(id), getAdminApi().mailDomain(id).catch(() => null)]);
   if (!tenant) notFound();
 
   return (
@@ -115,6 +116,15 @@ export default async function StorePage({ params }: Params) {
                 ))}
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Email sender</CardTitle>
+            <CardDescription>Where the store&apos;s receipts and password resets come from.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MailSender tenantId={tenant.id} mailDomain={mailDomain} />
           </CardContent>
         </Card>
       </div>

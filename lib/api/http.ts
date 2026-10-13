@@ -15,6 +15,7 @@ import type {
   JobState,
   JobsList,
   Listing,
+  MailDomain,
   Overview,
   StatusCode,
   Tenant,
@@ -174,6 +175,24 @@ export class HttpAdminApi implements AdminApi {
 
   async setMainDomain(tenantId: string, domainName: string): Promise<void> {
     await this.send("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/domains/main`, { domainName });
+  }
+
+  async mailDomain(tenantId: string): Promise<MailDomain | null> {
+    const res = await this.get<{ mailDomain: MailDomain | null }>(`/admin/tenants/${encodeURIComponent(tenantId)}/mail-domain`, {
+      allow404: true
+    });
+    return res?.mailDomain ?? null;
+  }
+
+  async setMailDomain(tenantId: string, domainName: string): Promise<MailDomain> {
+    const res = await this.send<{ mailDomain: MailDomain }>("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/mail-domain`, {
+      domainName
+    });
+    return res!.mailDomain;
+  }
+
+  async removeMailDomain(tenantId: string): Promise<void> {
+    await this.send("DELETE", `/admin/tenants/${encodeURIComponent(tenantId)}/mail-domain`);
   }
 
   async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {

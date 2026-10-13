@@ -10,6 +10,7 @@ import {
   type JobFilter,
   type JobsList,
   type Listing,
+  type MailDomain,
   type Overview,
   type Product,
   type Tenant,
@@ -24,6 +25,9 @@ import {
   type Version
 } from "./types";
 import { AdminApiError } from "./http";
+
+/** Sample stores' own sending domains, by tenant id. */
+const mailDomains = new Map<string, MailDomain>();
 import { FIXTURE_UPLOAD_URL } from "./upload";
 
 // Sample data for building and reviewing the UI before the admin endpoints exist.
@@ -364,6 +368,38 @@ export class FixtureAdminApi implements AdminApi {
     else tenant.domains.push({ domainName: domain, isMain: true, isBase: false });
     tenant.mainDomain = domain;
     tenant.domainCount = tenant.domains.length;
+  }
+
+  async mailDomain(tenantId: string): Promise<MailDomain | null> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    return mailDomains.get(tenantId) ?? null;
+  }
+
+  async setMailDomain(tenantId: string, domainName: string): Promise<MailDomain> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const domain = domainName.trim().toLowerCase();
+    const existing = mailDomains.get(tenantId);
+    if (existing && existing.domainName === domain) return existing;
+    if (existing) throw new FixtureError(400, `This store already has the sending domain ${existing.domainName}; remove it first`);
+    const mailDomain: MailDomain = {
+      domainName: domain,
+      status: "pending",
+      dateCreated: new Date().toISOString(),
+      dateVerified: null,
+      records: [
+        { type: "TXT", name: "tosend._domainkey", host: `tosend._domainkey.${domain}`, value: "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7sample", priority: null },
+        { type: "MX", name: "send", host: `send.${domain}`, value: "feedback-smtp.us-east-1.amazonses.com", priority: 10 },
+        { type: "TXT", name: "send", host: `send.${domain}`, value: "v=spf1 include:amazonses.com ~all", priority: null }
+      ]
+    };
+    mailDomains.set(tenantId, mailDomain);
+    return mailDomain;
+  }
+
+  async removeMailDomain(tenantId: string): Promise<void> {
+    const existing = mailDomains.get(tenantId);
+    if (!existing) throw new FixtureError(404, "This store has no sending domain");
+    existing.status = "removing";
   }
 
   async retryFailure(failureId: string): Promise<void> {
