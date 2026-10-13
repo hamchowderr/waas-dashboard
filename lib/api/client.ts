@@ -14,6 +14,7 @@ import type {
   JobFilter,
   JobsList,
   Listing,
+  DomainConnectLink,
   MailDomain,
   Overview,
   Tenant,
@@ -55,6 +56,8 @@ export interface AdminApi {
   setMailDomain(tenantId: string, domainName: string): Promise<MailDomain>;
   /** Moves the store back to the platform's address (within 10 minutes) and drops its domain. */
   removeMailDomain(tenantId: string): Promise<void>;
+  /** A Domain Connect link for one of the store's domains (website) or its sending domain (email). */
+  domainConnect(tenantId: string, domainName: string, service: "website" | "email"): Promise<DomainConnectLink>;
   createVersion(productId: string, input: CreateVersionInput): Promise<Created>;
   setProductionVersion(productId: string, versionId: string): Promise<void>;
   deleteVersion(productId: string, versionId: string): Promise<void>;

@@ -15,6 +15,7 @@ import type {
   JobState,
   JobsList,
   Listing,
+  DomainConnectLink,
   MailDomain,
   Overview,
   StatusCode,
@@ -197,6 +198,11 @@ export class HttpAdminApi implements AdminApi {
 
   async removeMailDomain(tenantId: string): Promise<void> {
     await this.send("DELETE", `/admin/tenants/${encodeURIComponent(tenantId)}/mail-domain`);
+  }
+
+  async domainConnect(tenantId: string, domainName: string, service: "website" | "email"): Promise<DomainConnectLink> {
+    const query = new URLSearchParams({ domainName, service });
+    return (await this.get<DomainConnectLink>(`/admin/tenants/${encodeURIComponent(tenantId)}/domain-connect?${query}`))!;
   }
 
   async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {

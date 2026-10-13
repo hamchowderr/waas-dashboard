@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
-import type { MailDomain } from "@/lib/api/types";
+import type { DomainConnectLink, MailDomain } from "@/lib/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +46,16 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 }
 
 /** Which address the store's email comes from, and the DNS records its own domain needs. */
-export function MailSender({ tenantId, mailDomain }: { tenantId: string; mailDomain: MailDomain | null }) {
+export function MailSender({
+  tenantId,
+  mailDomain,
+  connect
+}: {
+  tenantId: string;
+  mailDomain: MailDomain | null;
+  /** Domain Connect for the domain's DNS host, when it can add the records itself. */
+  connect?: DomainConnectLink | null;
+}) {
   const router = useRouter();
   const [adding, setAdding] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
@@ -140,6 +149,14 @@ export function MailSender({ tenantId, mailDomain }: { tenantId: string; mailDom
           Add these records at the domain&apos;s DNS host. They are checked every 10 minutes; the store switches over
           on its own once they are found. Until then it sends from the platform&apos;s address.
         </p>
+      )}
+      {mailDomain.status === "pending" && connect?.supported && connect.url?.startsWith("https://") && (
+        <Button asChild size="sm">
+          <a href={connect.url} target="_blank" rel="noopener noreferrer">
+            Connect automatically at {connect.dnsProvider ?? "the DNS host"}
+            <ExternalLink />
+          </a>
+        </Button>
       )}
       {mailDomain.status !== "removing" &&
         (mailDomain.records ? (

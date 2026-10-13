@@ -202,6 +202,13 @@ export type DnsRecord = {
   priority: number | null;
 };
 
+/** A link that adds a domain's records at its DNS host (Domain Connect); url is null when the host can't. */
+export type DomainConnectLink = {
+  dnsProvider: string | null;
+  supported: boolean;
+  url: string | null;
+};
+
 /** A store's own sending domain: it sends email from no-reply@ this domain once toSend has verified it. */
 export type MailDomain = {
   domainName: string;

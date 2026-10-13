@@ -10,6 +10,7 @@ import {
   type JobFilter,
   type JobsList,
   type Listing,
+  type DomainConnectLink,
   type MailDomain,
   type Overview,
   type Product,
@@ -416,6 +417,16 @@ export class FixtureAdminApi implements AdminApi {
     const existing = mailDomains.get(tenantId);
     if (!existing) throw new FixtureError(404, "This store has no sending domain");
     existing.status = "removing";
+  }
+
+  async domainConnect(tenantId: string, domainName: string, service: "website" | "email"): Promise<DomainConnectLink> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const query = new URLSearchParams({ domain: domainName, ...(service === "email" ? { dkim: "p=sample" } : { ip: "203.0.113.7" }) });
+    return {
+      dnsProvider: "Example DNS",
+      supported: true,
+      url: `https://domainconnect.example.com/v2/domainTemplates/providers/anypress.io/services/${service}/apply?${query}`
+    };
   }
 
   async retryFailure(failureId: string): Promise<void> {

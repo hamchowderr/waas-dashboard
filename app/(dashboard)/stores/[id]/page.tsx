@@ -40,6 +40,10 @@ export default async function StorePage({ params }: Params) {
   const { id } = await params;
   const [tenant, mailDomain] = await Promise.all([getAdminApi().tenant(id), getAdminApi().mailDomain(id).catch(() => null)]);
   if (!tenant) notFound();
+  const connect =
+    mailDomain?.status === "pending"
+      ? await getAdminApi().domainConnect(id, mailDomain.domainName, "email").catch(() => null)
+      : null;
   // A store being removed or that failed can't be rolled back until it's fixed.
   const canRestore = tenant.statusCode !== StatusCode.Removing && tenant.statusCode !== StatusCode.Failed;
 
@@ -128,7 +132,7 @@ export default async function StorePage({ params }: Params) {
             <CardDescription>Where the store&apos;s receipts and password resets come from.</CardDescription>
           </CardHeader>
           <CardContent>
-            <MailSender tenantId={tenant.id} mailDomain={mailDomain} />
+            <MailSender tenantId={tenant.id} mailDomain={mailDomain} connect={connect} />
           </CardContent>
         </Card>
       </div>
