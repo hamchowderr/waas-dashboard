@@ -356,6 +356,22 @@ export class FixtureAdminApi implements AdminApi {
     return templates.filter((t) => t.productId === productId).map((t) => without(t, "productId"));
   }
 
+  async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
+    const tenant = tenants.find((t) => t.id === tenantId);
+    if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const backup = backups.find((b) => b.id === backupId && b.tenantId === tenantId && b.statusCode === StatusCode.Done);
+    if (!backup) throw new FixtureError(400, `Backup ${backupId} is not a Done backup of this store`);
+    if (takeBackup) {
+      backups.unshift({
+        ...backup,
+        id: uuid(200 + backups.length, 4),
+        reason: "before-restore",
+        dateCreated: new Date().toISOString()
+      });
+    }
+    tenant.dateChanged = new Date().toISOString();
+  }
+
   async setMainDomain(tenantId: string, domainName: string): Promise<void> {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);

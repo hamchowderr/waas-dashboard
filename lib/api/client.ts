@@ -44,6 +44,11 @@ export interface AdminApi {
   retryFailure(failureId: string): Promise<void>;
   /** Makes a domain the store's main address, adding it if new; the old main domain redirects to it. */
   setMainDomain(tenantId: string, domainName: string): Promise<void>;
+  /**
+   * Rolls a live store back to one of its Done backups, in place. With takeBackup, what it holds
+   * now is backed up first so the rollback can be undone.
+   */
+  restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void>;
   /** The store's own sending domain with its DNS records; null when it sends from the platform's address. */
   mailDomain(tenantId: string): Promise<MailDomain | null>;
   /** Gives the store its own sending domain; it is used once toSend has verified its DNS records. */

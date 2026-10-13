@@ -184,6 +184,10 @@ export class HttpAdminApi implements AdminApi {
     return res?.mailDomain ?? null;
   }
 
+  async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
+    await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/restore`, { backupId, takeBackup });
+  }
+
   async setMailDomain(tenantId: string, domainName: string): Promise<MailDomain> {
     const res = await this.send<{ mailDomain: MailDomain }>("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/mail-domain`, {
       domainName

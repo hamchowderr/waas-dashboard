@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { Badge } from "@/components/ui/badge";
 import type { FilterField } from "@/components/ui/filters/filters-types";
 import { StatusCode, type Backup } from "@/lib/api/types";
-import { formatBytes, formatDate, formatDateTime } from "@/lib/format";
+import { backupReasonLabel, formatBytes, formatDate, formatDateTime } from "@/lib/format";
 
 const columnLabels: Record<string, string> = {
   tenantName: "Store",
@@ -58,7 +58,7 @@ const columns: ColumnDef<Backup>[] = [
   {
     accessorKey: "reason",
     header: "Reason",
-    cell: ({ row }) => <span className="capitalize">{row.original.reason}</span>
+    cell: ({ row }) => backupReasonLabel(row.original.reason)
   },
   {
     accessorKey: "sizeBytes",
@@ -117,7 +117,8 @@ export function BackupsTable({ backups }: { backups: Backup[] }) {
       options: [
         { value: "manual", label: "Manual" },
         { value: "suspend", label: "Suspend" },
-        { value: "scheduled", label: "Scheduled" }
+        { value: "scheduled", label: "Scheduled" },
+        { value: "before-restore", label: "Before restore" }
       ],
       searchable: false,
       icon: <TagIcon />

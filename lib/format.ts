@@ -23,8 +23,21 @@ export const jobTypeLabels: Record<JobType, string> = {
   "tenant.suspend": "Suspend store",
   "tenant.resume": "Resume store",
   "tenant.backup": "Back up store",
-  "tenant.restore": "Restore store"
+  "tenant.restore": "Restore store",
+  "tenant.rollback": "Restore from backup"
 };
+
+const backupReasonLabels: Record<string, string> = {
+  manual: "Manual",
+  suspend: "Suspend",
+  scheduled: "Scheduled",
+  "before-restore": "Before restore"
+};
+
+/** Label for why a backup was taken; an unknown reason from a newer API shows as sent. */
+export function backupReasonLabel(reason: string): string {
+  return backupReasonLabels[reason] ?? reason;
+}
 
 /** Label for a job type; an unknown type from a newer API shows as sent. */
 export function jobTypeLabel(type: string): string {

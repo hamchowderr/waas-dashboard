@@ -102,6 +102,15 @@ export async function removeMailDomain(tenantId: string): Promise<ActionResult> 
   }, ["/stores"]);
 }
 
+/** Rolls a live store back to one of its backups; with takeBackup, its current state is backed up first. */
+export async function restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<ActionResult> {
+  return run(async () => {
+    if (typeof takeBackup !== "boolean") throw new InputError("Invalid choice");
+    await getAdminApi().restoreBackup(uuid(tenantId, "store"), uuid(backupId, "backup"), takeBackup);
+    return undefined;
+  }, ["/stores", "/backups", "/"]);
+}
+
 export async function createVersion(productId: string, input: CreateVersionInput): Promise<ActionResult<Created>> {
   return run(async () => {
     const product = uuid(productId, "storefront");

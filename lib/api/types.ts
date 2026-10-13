@@ -78,7 +78,7 @@ export type Backup = {
   externalId: string;
   /** Null when the store is deleted (the API has no name for it then). */
   tenantName: string | null;
-  reason: "manual" | "suspend" | "scheduled";
+  reason: "manual" | "suspend" | "scheduled" | "before-restore";
   sizeBytes: number | null;
   statusCode: StatusCode;
   dateCreated: string;
@@ -98,7 +98,8 @@ export type JobType =
   | "tenant.suspend"
   | "tenant.resume"
   | "tenant.backup"
-  | "tenant.restore";
+  | "tenant.restore"
+  | "tenant.rollback";
 
 /** queued, running and failed are the Jobs page's tabs; the rest appear on a store's page. */
 export type JobState = "queued" | "running" | "failed" | "retried" | "done" | "cancelled";

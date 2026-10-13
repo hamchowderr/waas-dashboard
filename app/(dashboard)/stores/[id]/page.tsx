@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
 import { getAdminApi } from "@/lib/api/client";
-import { formatBytes, formatDate, formatDateTime, jobTypeLabel } from "@/lib/format";
+import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel } from "@/lib/format";
+import { StatusCode } from "@/lib/api/types";
 import { StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
 import { JobStateBadge } from "@/components/admin/job-state-badge";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChangeAddress } from "./change-address";
 import { MailSender } from "./mail-sender";
+import { RestoreBackup } from "./restore-backup";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -38,6 +40,8 @@ export default async function StorePage({ params }: Params) {
   const { id } = await params;
   const [tenant, mailDomain] = await Promise.all([getAdminApi().tenant(id), getAdminApi().mailDomain(id).catch(() => null)]);
   if (!tenant) notFound();
+  // A store being removed or that failed can't be rolled back until it's fixed.
+  const canRestore = tenant.statusCode !== StatusCode.Removing && tenant.statusCode !== StatusCode.Failed;
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 lg:space-y-6">
@@ -133,6 +137,7 @@ export default async function StorePage({ params }: Params) {
         <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle>Backups</CardTitle>
+            <CardDescription>Restore puts the store back to how it was when the backup was taken.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Table className={tableClass}>
@@ -142,12 +147,15 @@ export default async function StorePage({ params }: Params) {
                   <TableHead className="max-sm:hidden">Reason</TableHead>
                   <TableHead className="text-end">Size</TableHead>
                   <TableHead className="text-end">Status</TableHead>
+                  <TableHead className="w-24">
+                    <span className="sr-only">Restore</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tenant.backups.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-muted-foreground h-16 text-center">
+                    <TableCell colSpan={5} className="text-muted-foreground h-16 text-center">
                       No backups yet.
                     </TableCell>
                   </TableRow>
@@ -156,12 +164,22 @@ export default async function StorePage({ params }: Params) {
                     <TableRow key={backup.id}>
                       <TableCell>
                         {formatDateTime(backup.dateCreated)}
-                        <div className="text-muted-foreground text-xs capitalize sm:hidden">{backup.reason}</div>
+                        <div className="text-muted-foreground text-xs sm:hidden">{backupReasonLabel(backup.reason)}</div>
                       </TableCell>
-                      <TableCell className="capitalize max-sm:hidden">{backup.reason}</TableCell>
+                      <TableCell className="max-sm:hidden">{backupReasonLabel(backup.reason)}</TableCell>
                       <TableCell className="text-end tabular-nums">{formatBytes(backup.sizeBytes)}</TableCell>
                       <TableCell className="text-end">
                         <StatusBadge statusCode={backup.statusCode} />
+                      </TableCell>
+                      <TableCell className="text-end">
+                        {canRestore && backup.statusCode === StatusCode.Done && (
+                          <RestoreBackup
+                            tenantId={tenant.id}
+                            storeName={tenant.name}
+                            backupId={backup.id}
+                            takenAt={backup.dateCreated}
+                          />
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
