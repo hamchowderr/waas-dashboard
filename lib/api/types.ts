@@ -136,6 +136,39 @@ export type JobFilter = { productId?: string };
 
 export type Listing<T> = { items: T[]; total: number };
 
+/** One call to the provisioning API: a product API call (v1) or an admin change. */
+export type ApiRequest = {
+  id: string;
+  at: string;
+  source: "v1" | "admin";
+  method: string;
+  path: string;
+  /** The query string without its "?". */
+  query: string | null;
+  status: number;
+  durationMs: number;
+  productId: string | null;
+  productName: string | null;
+  apiKeyId: string | null;
+  tenantId: string | null;
+  /** Null once the store is deleted, or when the call named no store. */
+  tenantName: string | null;
+  externalId: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  /** The API's error message for a 4xx or 5xx. */
+  error: string | null;
+};
+
+export type RequestOutcome = "ok" | "client-error" | "server-error" | "error";
+export type RequestFilter = { productId?: string; tenantId?: string; outcome?: RequestOutcome };
+
+export type RequestLog = Listing<ApiRequest> & {
+  last24Hours: { total: number; clientErrors: number; serverErrors: number };
+  /** Days the API keeps each request. */
+  retentionDays: number;
+};
+
 /** A storefront with its version count and production version, for the Versions page. */
 export type ProductDetail = Product & {
   versionCount: number;

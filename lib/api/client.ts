@@ -17,6 +17,8 @@ import type {
   DomainConnectLink,
   MailDomain,
   Overview,
+  RequestFilter,
+  RequestLog,
   Tenant,
   TenantDetail,
   TenantFilter
@@ -35,6 +37,8 @@ export interface AdminApi {
   backups(filter?: BackupFilter): Promise<Listing<Backup>>;
   /** Queued, running and failed jobs (failed = used up its retries, not yet retried). */
   jobs(filter?: JobFilter): Promise<JobsList>;
+  /** The newest API calls and admin changes, with counts for the last 24 hours. */
+  requests(filter?: RequestFilter): Promise<RequestLog>;
 
   products(): Promise<ProductDetail[]>;
   versions(productId: string): Promise<Version[]>;

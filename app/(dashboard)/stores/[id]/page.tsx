@@ -61,6 +61,9 @@ export default async function StorePage({ params }: Params) {
           <p className="text-muted-foreground truncate text-sm">{tenant.mainDomain ?? "No main domain"}</p>
         </div>
         <div className="ms-auto flex items-center gap-1.5">
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/requests?store=${tenant.id}`}>API requests</Link>
+          </Button>
           <StatusBadge statusCode={tenant.statusCode} />
           {tenant.isSuspended && <SuspendedBadge />}
         </div>

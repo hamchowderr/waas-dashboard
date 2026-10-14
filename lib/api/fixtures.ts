@@ -14,6 +14,9 @@ import {
   type MailDomain,
   type Overview,
   type Product,
+  type ApiRequest,
+  type RequestFilter,
+  type RequestLog,
   type Tenant,
   type TenantDetail,
   type TenantDomain,
@@ -252,6 +255,64 @@ const finishedJobs: Job[] = tenants.map((tenant, i) =>
   job(50 + i, "done", "tenant.create", tenant, (60 - i * 2.5) * 24 * 60)
 );
 
+// Sample request log: the storefront plugin's calls every few minutes, a few failures, and two
+// admin changes.
+const requestLog: ApiRequest[] = Array.from({ length: 80 }, (_, i): ApiRequest => {
+  const tenant = tenants[i % tenants.length];
+  const product = products.find((p) => p.id === tenant.productId)!;
+  const kind = i % 10;
+  const base = {
+    id: String(5000 - i),
+    at: iso(NOW + 50 * 60_000 - i * 17 * 60_000),
+    source: "v1" as const,
+    query: null,
+    productId: product.id,
+    productName: product.name,
+    apiKeyId: uuid(product === products[0] ? 1 : 2, 9),
+    tenantId: tenant.id,
+    tenantName: tenant.name,
+    externalId: null,
+    ip: "203.0.113.20",
+    userAgent: "WordPress/6.8; https://shop.example.com",
+    error: null
+  };
+  if (kind === 3)
+    return { ...base, method: "POST", path: "/v1/tenants", status: 400, durationMs: 12, tenantId: null, tenantName: null, error: "name is required" };
+  if (kind === 6)
+    return {
+      ...base,
+      method: "GET",
+      path: "/v1/tenants",
+      status: 403,
+      durationMs: 41,
+      productId: null,
+      productName: null,
+      tenantId: null,
+      tenantName: null,
+      ip: "198.51.100.7",
+      userAgent: "curl/8.7.1",
+      error: "Invalid API key or secret"
+    };
+  if (i === 44)
+    return { ...base, method: "POST", path: `/v1/tenants/${tenant.id}/backups`, status: 500, durationMs: 230, error: "Internal server error" };
+  if (i === 9 || i === 51)
+    return {
+      ...base,
+      source: "admin",
+      method: "PUT",
+      path: `/admin/tenants/${tenant.id}/domains/main`,
+      status: 200,
+      durationMs: 85,
+      productId: null,
+      productName: null,
+      apiKeyId: null,
+      userAgent: "node"
+    };
+  if (kind % 2 === 0)
+    return { ...base, method: "GET", path: "/v1/tenants", query: `externalId=sub_${1000 + i}`, externalId: `sub_${1000 + i}`, status: 200, durationMs: 9 + (i % 7), tenantId: null, tenantName: null };
+  return { ...base, method: "GET", path: "/v1/plugins/waas-host/update", query: "channel=stable&version=2.3.0", status: 200, durationMs: 18, tenantId: null, tenantName: null };
+});
+
 function health(): Health {
   return { ok: true, checks: { database: "up", queue: "up" }, checkedAt: new Date().toISOString() };
 }
@@ -314,6 +375,30 @@ export class FixtureAdminApi implements AdminApi {
 
   async backups(filter: BackupFilter = {}): Promise<Listing<Backup>> {
     return listing(byProduct(backups, filter.productId));
+  }
+
+  async requests(filter: RequestFilter = {}): Promise<RequestLog> {
+    const ranges = { ok: [0, 399], "client-error": [400, 499], "server-error": [500, 599], error: [400, 599] } as const;
+    const items = requestLog.filter((r) => {
+      if (filter.productId && r.productId !== filter.productId) return false;
+      if (filter.tenantId && r.tenantId !== filter.tenantId) return false;
+      if (filter.outcome) {
+        const [low, high] = ranges[filter.outcome];
+        if (r.status < low || r.status > high) return false;
+      }
+      return true;
+    });
+    const day = requestLog.filter((r) => Date.parse(r.at) > NOW + HOUR - DAY);
+    return {
+      items,
+      total: items.length,
+      last24Hours: {
+        total: day.length,
+        clientErrors: day.filter((r) => r.status >= 400 && r.status < 500).length,
+        serverErrors: day.filter((r) => r.status >= 500).length
+      },
+      retentionDays: 30
+    };
   }
 
   async jobs(filter: JobFilter = {}): Promise<JobsList> {

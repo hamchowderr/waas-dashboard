@@ -13,6 +13,7 @@ The admin dashboard for the [WaaS provisioning API](https://github.com/hamchowde
   - **Restore** a backup: roll the live website back to it, after first backing up what it holds now.
 - **Jobs:** queued, running and failed background jobs, with each failure's error. **Retry** one, or several at once.
 - **Backups:** every backup, including nightly ones and those of deleted websites, with when each expires.
+- **Requests:** every call the storefronts made to the API and every admin change, with status, timing, store and caller, kept 30 days. Errors show the API's message. Never bodies or secrets.
 - **Versions & templates** (per storefront): create a version from a template or an uploaded archive, make a version production, upload and delete templates. Making a version production and every delete ask first.
 
 The storefront switcher in the header narrows every page to one storefront. Suspending, resuming, a manual backup and deleting a website happen from the storefront, not here.
@@ -72,7 +73,7 @@ Archives (version and template uploads) are the exception: the API returns an up
 
 With neither, pages show an error rather than sample data, so a missing variable is never mistaken for real data.
 
-`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (the version and template endpoints take the WPCS operations' bodies). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200) and filtered in the browser.
+`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (the version and template endpoints take the WPCS operations' bodies). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200; the request log its newest 1,000) and filtered in the browser.
 
 Every page works on phones and tablets: lists turn into cards below 1024px wide.
 

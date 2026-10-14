@@ -1,3 +1,5 @@
+import type { ApiRequest } from "./types";
+
 /**
  * The admin API's response bodies, exactly as openapi/admin/admin-api.yaml (v0.1.0) in
  * hamchowderr/waas-provisioning-api defines them. http.ts maps these to the view types
@@ -185,3 +187,9 @@ export type WireCreatedBaseSnapshot = {
 };
 
 export type WireError = { statusCode: number; message: string };
+
+/** GET /admin/requests: the same fields the dashboard uses. */
+export type WireRequestsPage = WirePage<ApiRequest> & {
+  last24Hours: { total: number; clientErrors: number; serverErrors: number };
+  retentionDays: number;
+};

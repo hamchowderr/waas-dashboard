@@ -18,6 +18,8 @@ import type {
   DomainConnectLink,
   MailDomain,
   Overview,
+  RequestFilter,
+  RequestLog,
   StatusCode,
   Tenant,
   TenantDetail,
@@ -38,6 +40,7 @@ import type {
   WireJobsPage,
   WireOverview,
   WirePage,
+  WireRequestsPage,
   WireTenantDetail,
   WireTenantRow
 } from "./wire";
@@ -66,6 +69,8 @@ async function apiMessage(response: Response): Promise<string | null> {
 const PAGE_SIZE = 200;
 /** v1 loads lists whole and filters in the browser; this caps one list at 2,000 rows. */
 const MAX_PAGES = 10;
+/** The request log loads its newest 1,000 rows. */
+const REQUEST_PAGES = 5;
 
 type Query = Record<string, string | number | undefined>;
 
@@ -235,11 +240,11 @@ export class HttpAdminApi implements AdminApi {
     await this.send("DELETE", this.productPath(productId, `/basesnapshots?id=${encodeURIComponent(templateId)}`));
   }
 
-  /** Every page of a list, up to MAX_PAGES. */
-  private async getAll<T>(path: string, params: Query = {}): Promise<Listing<T> & { first: WirePage<T> }> {
+  /** Every page of a list, up to maxPages. */
+  private async getAll<T>(path: string, params: Query = {}, maxPages = MAX_PAGES): Promise<Listing<T> & { first: WirePage<T> }> {
     const first = (await this.get<WirePage<T>>(withQuery(path, { ...params, page: 1, pageSize: PAGE_SIZE })))!;
     const items = [...first.items];
-    const pages = Math.min(Math.ceil(first.total / PAGE_SIZE), MAX_PAGES);
+    const pages = Math.min(Math.ceil(first.total / PAGE_SIZE), maxPages);
     for (let page = 2; page <= pages; page++) {
       const next = (await this.get<WirePage<T>>(withQuery(path, { ...params, page, pageSize: PAGE_SIZE })))!;
       items.push(...next.items);
@@ -344,6 +349,17 @@ export class HttpAdminApi implements AdminApi {
     ]);
     const products = new Map(overview.products.map((p) => [p.id, p.name]));
     return { total, items: items.map((b) => this.toBackup(b, names, products)) };
+  }
+
+  async requests(filter: RequestFilter = {}): Promise<RequestLog> {
+    // The log can hold a month of calls: the newest 1,000 that match is plenty to browse.
+    const { items, total, first } = await this.getAll<WireRequestsPage["items"][number]>(
+      "/admin/requests",
+      { productId: filter.productId, tenantId: filter.tenantId, outcome: filter.outcome },
+      REQUEST_PAGES
+    );
+    const page = first as WireRequestsPage;
+    return { items, total, last24Hours: page.last24Hours, retentionDays: page.retentionDays };
   }
 
   async jobs(filter: JobFilter = {}): Promise<JobsList> {
