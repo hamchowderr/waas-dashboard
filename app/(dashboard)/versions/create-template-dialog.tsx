@@ -22,7 +22,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { createTemplate } from "../actions";
 
-// The API's rule for template names (WPCS createBaseSnapshot).
+// The API's rule for template names (createBaseSnapshot).
 const NAME = /^[A-Za-z0-9 -]{5,50}$/;
 
 /** Creates a template and uploads its archive to the address the API returns. */

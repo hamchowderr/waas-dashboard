@@ -64,7 +64,7 @@ npm run build
 
 All API calls run on the server (`lib/api/`). The browser never sees the API address or the admin token. Changes go through server actions (`app/(dashboard)/actions.ts`), and each one checks the signed-in user against the allowlist itself, because a server action can be called directly.
 
-Archives (version and template uploads) are the exception: the API returns an upload address, and the browser sends the file straight to it with one `PUT`, as WPCS did. The bucket behind those addresses has to accept cross-origin `PUT`s from the dashboard's address, so it needs a CORS rule allowing `PUT` from it. With the API's fake provisioner the addresses are placeholders and accept nothing.
+Archives (version and template uploads) are the exception: the API returns an upload address, and the browser sends the file straight to it with one `PUT`. The bucket behind those addresses has to accept cross-origin `PUT`s from the dashboard's address, so it needs a CORS rule allowing `PUT` from it. With the API's fake provisioner the addresses are placeholders and accept nothing.
 
 | Source | When |
 |---|---|
@@ -73,7 +73,7 @@ Archives (version and template uploads) are the exception: the API returns an up
 
 With neither, pages show an error rather than sample data, so a missing variable is never mistaken for real data.
 
-`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (the version and template endpoints take the WPCS operations' bodies). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200; the request log its newest 1,000) and filtered in the browser.
+`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (the version and template endpoints take the same bodies as the API's /v1 operations). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200; the request log its newest 1,000) and filtered in the browser.
 
 Every page works on phones and tablets: lists turn into cards below 1024px wide.
 

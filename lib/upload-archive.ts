@@ -1,7 +1,7 @@
 import { FIXTURE_UPLOAD_URL } from "@/lib/api/upload";
 import { formatBytes } from "@/lib/format";
 
-/** The API takes archives of at most 4 GB in one PUT (WPCS createVersion). */
+/** The API takes archives of at most 4 GB in one PUT (createVersion). */
 export const MAX_UPLOAD_BYTES = 4 * 1024 ** 3;
 
 /** Why a file can't be uploaded, checked before anything is created; null when it can. */
@@ -57,7 +57,7 @@ export function describeUnreachable(url: string, now = new Date()): string {
 
 /**
  * Sends an archive straight from the browser to the upload URL the API returned (a single
- * PUT, as WPCS uploads work), reporting progress from 0 to 1. With sample data the URL is
+ * PUT, as the API's uploads work), reporting progress from 0 to 1. With sample data the URL is
  * a placeholder and nothing is sent. Rejects with an Error whose message is ready to show.
  */
 export function uploadArchive(url: string, file: File, onProgress: (fraction: number) => void): Promise<void> {

@@ -111,7 +111,7 @@ export type WireTenantDetail = {
   failures: WireJobFailure[];
 };
 
-// Versions and templates (openapi/admin, waas-api-plu.3). Same bodies as the WPCS
+// Versions and templates (openapi/admin, waas-api-plu.3). Same bodies as the /v1
 // operations in openapi/waas-provisioning-api.yaml.
 
 export type WireProduct = {

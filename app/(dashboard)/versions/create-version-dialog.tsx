@@ -25,7 +25,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { createVersion } from "../actions";
 
 const PHP_VERSIONS = ["8.4", "8.3", "8.2", "8.1"];
-// The API's rule for version names (WPCS createVersion).
+// The API's rule for version names (createVersion).
 const NAME = /^[A-Za-z0-9.-]{1,30}$/;
 
 export function CreateVersionDialog({

@@ -187,7 +187,7 @@ export type Version = {
 };
 
 /**
- * A template (a WPCS base snapshot). A base template is what a new version starts from;
+ * A template (a base snapshot in the API). A base template is what a new version starts from;
  * a group template (isTenantSnapshot) is copied into versions as a starting point for stores.
  */
 export type Template = {
