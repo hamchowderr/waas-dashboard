@@ -252,3 +252,23 @@ export type MailDomain = {
   /** Null when the API could not reach toSend. */
   records: DnsRecord[] | null;
 };
+
+/** An API key's state: expiring is a rotated key that still works until revokedAt. */
+export type ApiKeyState = "active" | "expiring" | "revoked";
+
+/** A storefront's API key, never its secret. */
+export type ApiKey = {
+  id: string;
+  label: string | null;
+  state: ApiKeyState;
+  dateCreated: string;
+  lastUsedAt: string | null;
+  /** When it stops (stopped) working; null while active. */
+  revokedAt: string | null;
+};
+
+/** A key just created: its secret is here and nowhere else, shown once. */
+export type NewApiKey = ApiKey & { secret: string };
+
+export type NewAgencyInput = { name: string; maxTenants: number | null };
+export type NewAgency = { productId: string; name: string; key: NewApiKey };

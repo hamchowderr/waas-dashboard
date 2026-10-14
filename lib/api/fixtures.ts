@@ -3,6 +3,10 @@ import "server-only";
 import type { AdminApi } from "./client";
 import {
   StatusCode,
+  type ApiKey,
+  type NewAgency,
+  type NewAgencyInput,
+  type NewApiKey,
   type Backup,
   type BackupFilter,
   type Health,
@@ -80,6 +84,42 @@ const templates: FixtureTemplate[] = [
   products.map((p, j) => ({ ...t, id: uuid(i * 10 + j + 1, 7), productId: p.id }))
 );
 
+
+type FixtureKey = ApiKey & { productId: string };
+
+const apiKeys: FixtureKey[] = [
+  {
+    id: uuid(1, 9),
+    productId: products[0].id,
+    label: "Storefront",
+    state: "active",
+    dateCreated: iso(NOW - 40 * DAY),
+    lastUsedAt: iso(NOW - HOUR / 4),
+    revokedAt: null
+  },
+  {
+    id: uuid(2, 9),
+    productId: products[0].id,
+    label: "Old storefront key",
+    state: "revoked",
+    dateCreated: iso(NOW - 80 * DAY),
+    lastUsedAt: iso(NOW - 41 * DAY),
+    revokedAt: iso(NOW - 12 * DAY)
+  },
+  {
+    id: uuid(3, 9),
+    productId: products[1].id,
+    label: null,
+    state: "active",
+    dateCreated: iso(NOW - 20 * DAY),
+    lastUsedAt: null,
+    revokedAt: null
+  }
+];
+
+/** A made-up secret: sample data only. */
+const sampleSecret = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[b % 64]).join("").slice(0, 43);
 
 class FixtureError extends AdminApiError {
   constructor(status: number, message: string) {
@@ -587,5 +627,51 @@ export class FixtureAdminApi implements AdminApi {
     const index = templates.findIndex((t) => t.productId === productId && t.id === templateId);
     if (index < 0) throw new FixtureError(404, `Template ${templateId} not found`);
     templates.splice(index, 1);
+  }
+
+  async apiKeys(productId: string): Promise<ApiKey[]> {
+    this.product(productId);
+    return apiKeys
+      .filter((k) => k.productId === productId)
+      .sort((a, b) => b.dateCreated.localeCompare(a.dateCreated))
+      .map((k) => without(k, "productId"));
+  }
+
+  async createAgency(input: NewAgencyInput): Promise<NewAgency> {
+    const id = uuid(products.length + 1, 1);
+    products.push({ id, name: input.name });
+    return { productId: id, name: input.name, key: await this.createApiKey(id, "Storefront") };
+  }
+
+  async createApiKey(productId: string, label: string | null): Promise<NewApiKey> {
+    this.product(productId);
+    const key: FixtureKey = {
+      id: uuid(apiKeys.length + 1, 9),
+      productId,
+      label,
+      state: "active",
+      dateCreated: new Date().toISOString(),
+      lastUsedAt: null,
+      revokedAt: null
+    };
+    apiKeys.push(key);
+    return { ...without(key, "productId"), secret: sampleSecret() };
+  }
+
+  async rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<NewApiKey> {
+    const old = apiKeys.find((k) => k.productId === productId && k.id === keyId);
+    if (!old) throw new FixtureError(404, `API key ${keyId} not found`);
+    if (old.state !== "active") throw new FixtureError(409, "Only an active key can be rotated");
+    old.state = graceHours > 0 ? "expiring" : "revoked";
+    old.revokedAt = new Date(Date.now() + graceHours * HOUR).toISOString();
+    return this.createApiKey(productId, old.label);
+  }
+
+  async revokeApiKey(productId: string, keyId: string): Promise<void> {
+    const key = apiKeys.find((k) => k.productId === productId && k.id === keyId);
+    if (!key) throw new FixtureError(404, `API key ${keyId} not found`);
+    if (key.state === "revoked") return;
+    key.state = "revoked";
+    key.revokedAt = new Date().toISOString();
   }
 }

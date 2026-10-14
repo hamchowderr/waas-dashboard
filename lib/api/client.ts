@@ -3,6 +3,10 @@ import "server-only";
 import { cache } from "react";
 
 import type {
+  ApiKey,
+  NewAgency,
+  NewAgencyInput,
+  NewApiKey,
   Backup,
   Created,
   CreateTemplateInput,
@@ -67,6 +71,17 @@ export interface AdminApi {
   deleteVersion(productId: string, versionId: string): Promise<void>;
   createTemplate(productId: string, input: CreateTemplateInput): Promise<Created>;
   deleteTemplate(productId: string, templateId: string): Promise<void>;
+
+  // API keys. A secret comes back only from the call that creates the key; nothing keeps it.
+  /** A storefront's working keys and those revoked in the last 30 days, newest first. */
+  apiKeys(productId: string): Promise<ApiKey[]>;
+  /** A new storefront for an agency, with its first key. */
+  createAgency(input: NewAgencyInput): Promise<NewAgency>;
+  createApiKey(productId: string, label: string | null): Promise<NewApiKey>;
+  /** A new key with the same label; the old one keeps working for graceHours. */
+  rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<NewApiKey>;
+  /** Stops a key now; the storefront's last key included. */
+  revokeApiKey(productId: string, keyId: string): Promise<void>;
 }
 
 /**

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth, isAllowed } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
-import type { Created, CreateTemplateInput, CreateVersionInput, MailDomain } from "@/lib/api/types";
+import type { Created, CreateTemplateInput, CreateVersionInput, MailDomain, NewAgency, NewApiKey } from "@/lib/api/types";
 
 // Every change the dashboard makes goes through these actions. Server actions can be
 // called directly, not only from our pages, so each one checks the session itself.
@@ -162,4 +162,41 @@ export async function deleteTemplate(productId: string, templateId: string): Pro
     await getAdminApi().deleteTemplate(uuid(productId, "storefront"), uuid(templateId, "template"));
     return undefined;
   }, ["/versions"]);
+}
+
+// API keys. A secret comes back once, to the dialog that shows it; nothing here logs or keeps it.
+
+function keyLabel(value: unknown): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string") throw new InputError("Invalid label");
+  if (value.trim().length > 100) throw new InputError("The label can be at most 100 characters");
+  return value.trim() || null;
+}
+
+/** A new storefront for an agency, with its first API key. */
+export async function createAgency(name: string, maxTenants: number | null): Promise<ActionResult<NewAgency>> {
+  return run(async () => {
+    if (maxTenants !== null && !(Number.isInteger(maxTenants) && maxTenants >= 0 && maxTenants <= 100000))
+      throw new InputError("Store limit must be a whole number, 0 or more, or empty for no limit");
+    return getAdminApi().createAgency({ name: text(name, "Agency name", 100), maxTenants });
+  }, ["/keys", "/"]);
+}
+
+export async function createApiKey(productId: string, label: string): Promise<ActionResult<NewApiKey>> {
+  return run(async () => getAdminApi().createApiKey(uuid(productId, "storefront"), keyLabel(label)), ["/keys"]);
+}
+
+/** Replaces a key with a new one; the old key keeps working for graceHours. */
+export async function rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<ActionResult<NewApiKey>> {
+  return run(async () => {
+    if (!Number.isInteger(graceHours) || graceHours < 0 || graceHours > 720) throw new InputError("Invalid grace period");
+    return getAdminApi().rotateApiKey(uuid(productId, "storefront"), uuid(keyId, "key"), graceHours);
+  }, ["/keys"]);
+}
+
+export async function revokeApiKey(productId: string, keyId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().revokeApiKey(uuid(productId, "storefront"), uuid(keyId, "key"));
+    return undefined;
+  }, ["/keys"]);
 }

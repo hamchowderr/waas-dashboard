@@ -2,6 +2,10 @@ import "server-only";
 
 import type { AdminApi } from "./client";
 import type {
+  ApiKey,
+  NewAgency,
+  NewAgencyInput,
+  NewApiKey,
   Backup,
   BackupFilter,
   Created,
@@ -26,6 +30,10 @@ import type {
   TenantFilter
 } from "./types";
 import type {
+  WireApiKey,
+  WireCreatedProduct,
+  WireNewApiKey,
+  WireRotatedApiKey,
   WireBaseSnapshot,
   WireCreateBaseSnapshot,
   WireCreatedBaseSnapshot,
@@ -91,6 +99,17 @@ const jobState: Record<WireJob["state"], JobState> = {
   cancelled: "cancelled",
   failed: "failed"
 };
+
+const toApiKey = (k: WireApiKey): ApiKey => ({
+  id: k.id,
+  label: k.label,
+  state: k.state,
+  dateCreated: k.dateCreated,
+  lastUsedAt: k.lastUsedAt,
+  revokedAt: k.revokedAt
+});
+
+const toNewApiKey = (k: WireNewApiKey): NewApiKey => ({ ...toApiKey(k), secret: k.secret });
 
 type TenantName = { name: string; productId: string; productName: string };
 
@@ -238,6 +257,28 @@ export class HttpAdminApi implements AdminApi {
 
   async deleteTemplate(productId: string, templateId: string): Promise<void> {
     await this.send("DELETE", this.productPath(productId, `/basesnapshots?id=${encodeURIComponent(templateId)}`));
+  }
+
+  async apiKeys(productId: string): Promise<ApiKey[]> {
+    return (await this.get<WireApiKey[]>(this.productPath(productId, "/keys")))!.map(toApiKey);
+  }
+
+  async createAgency(input: NewAgencyInput): Promise<NewAgency> {
+    const created = (await this.send<WireCreatedProduct>("POST", "/admin/products", input))!;
+    return { productId: created.product.id, name: created.product.name, key: toNewApiKey(created.key) };
+  }
+
+  async createApiKey(productId: string, label: string | null): Promise<NewApiKey> {
+    return toNewApiKey((await this.send<WireNewApiKey>("POST", this.productPath(productId, "/keys"), { label }))!);
+  }
+
+  async rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<NewApiKey> {
+    const path = this.productPath(productId, `/keys/${encodeURIComponent(keyId)}/rotate`);
+    return toNewApiKey((await this.send<WireRotatedApiKey>("POST", path, { graceHours }))!.key);
+  }
+
+  async revokeApiKey(productId: string, keyId: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, `/keys/${encodeURIComponent(keyId)}`));
   }
 
   /** Every page of a list, up to maxPages. */

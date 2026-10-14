@@ -193,3 +193,20 @@ export type WireRequestsPage = WirePage<ApiRequest> & {
   last24Hours: { total: number; clientErrors: number; serverErrors: number };
   retentionDays: number;
 };
+
+// API keys (openapi/api-keys.yaml, admin paths in openapi/admin, waas-api-23c).
+
+export type WireApiKey = {
+  id: string;
+  label: string | null;
+  state: "active" | "expiring" | "revoked";
+  dateCreated: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+};
+
+export type WireNewApiKey = WireApiKey & { secret: string };
+
+export type WireCreatedProduct = { product: WireProduct; key: WireNewApiKey };
+
+export type WireRotatedApiKey = { key: WireNewApiKey; replaced: WireApiKey };
