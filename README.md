@@ -1,69 +1,52 @@
-# waas-dashboard
+# WaaS Dashboard
 
-Admin dashboard for the WaaS platform. It reads the provisioning API ([`waas-provisioning-api`](https://github.com/hamchowderr/waas-provisioning-api)) and shows:
-
-- **Overview**: whether the API, its database and its job queue are up, store counts by status, queued and failed background jobs, backup totals.
-- **Stores**: every store (tenant) across all storefronts, with storefront, version, domains, status and last backup. Each store has a page with its domains, backups, settings names and jobs.
-- **Jobs**: queued, running and failed background jobs, with the error of each failed one.
-- **Backups**: every backup, including those of deleted stores, with when each expires.
-- **Versions & templates** (per storefront; replaces the old WPCS console): list versions and templates, create a version from a base template or an uploaded archive (copying group templates into it), make a version production, delete versions and templates, and upload templates. Making a version production and every delete ask for confirmation first.
-- **Retry** failed jobs, one from its detail dialog or several at once from the Jobs list.
-
-The storefront switcher in the header narrows the pages to one storefront (`?product=<id>` in the URL).
-
-Changes to stores themselves (suspend, resume, backup, restore, domains) are not in the dashboard yet.
-
-Next.js 16 (App Router), React 19, Tailwind CSS v4 and the [Shadcn UI Kit](https://shadcnuikit.com) dashboard shell and pages. Hosted on Vercel.
+The admin dashboard for the [WaaS provisioning API](https://github.com/hamchowderr/waas-provisioning-api): one place to see and manage every customer website the API runs, across all your storefronts. It is the dashboard behind [AnyPress](https://anypress.io) and is open source under GPL-3.0.
 
 ![Overview](docs/screenshots/1-overview.png)
 
-## How it gets its data
+## What you can do
 
-All API calls run on the server (`lib/api/`). The browser never sees the API address or the admin token. Changes go through server actions (`app/(dashboard)/actions.ts`), and each one checks the signed-in user against the allowlist itself, because a server action can be called directly.
+- **Overview:** whether the API, its database and its job queue are up, website counts by status, queued and failed jobs, backup totals.
+- **Stores:** every customer website, with its storefront, version, domains, status and last backup. Each website has its own page, where you can:
+  - **Change address:** make another domain the website's main address. The old one keeps redirecting.
+  - **Email sender:** let the website send email from its owner's own domain, with the DNS records to add and whether they're verified. Where the domain's DNS host supports Domain Connect, **Connect automatically** adds the records for them.
+  - **Restore** a backup: roll the live website back to it, after first backing up what it holds now.
+- **Jobs:** queued, running and failed background jobs, with each failure's error. **Retry** one, or several at once.
+- **Backups:** every backup, including nightly ones and those of deleted websites, with when each expires.
+- **Versions & templates** (per storefront): create a version from a template or an uploaded archive, make a version production, upload and delete templates. Making a version production and every delete ask first.
 
-Archives (version and template uploads) are the exception: the API returns an upload address, and the browser sends the file straight to it with one `PUT`, as WPCS did. The storage behind those addresses has to accept cross-origin `PUT`s from the dashboard's address (a CORS rule on the bucket) once a real store host is chosen; the fake provisioner's addresses accept nothing.
+The storefront switcher in the header narrows every page to one storefront. Suspending, resuming, a manual backup and deleting a website happen from the storefront, not here.
 
-| Source | When |
-|---|---|
-| The live API's `/admin/*` endpoints, with `Authorization: Bearer $WAAS_ADMIN_TOKEN` | `WAAS_API_URL` and `WAAS_ADMIN_TOKEN` are set |
-| Built-in sample data (`lib/api/fixtures.ts`), with a "Sample data" badge in the header | `WAAS_API_FIXTURES=1` |
+## Set it up
 
-With neither, pages show an error rather than sample data, so a missing variable is never mistaken for real data.
+You need a running provisioning API with `ADMIN_TOKEN` set, and a GitHub account for each person who should sign in.
 
-`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (beads `waas-api-plu.1` and `waas-api-plu.3`; the version and template endpoints take the WPCS operations' bodies). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200) and filtered in the browser.
-
-## Sign-in
-
-[Auth.js](https://authjs.dev) with GitHub. Only the GitHub logins in `ALLOWED_GITHUB_LOGINS` can sign in, and the list is checked on every request, so removing a login locks it out straight away. Sessions are signed cookies (12 hours); there is no user database.
-
-To set it up, create a GitHub OAuth app (GitHub → Settings → Developer settings → OAuth Apps → New OAuth App):
-
-| Field | Value |
-|---|---|
-| Homepage URL | the dashboard's address, e.g. `https://waas-dashboard.vercel.app` |
-| Authorization callback URL | the same address + `/api/auth/callback/github` |
-
-Its Client ID goes in `AUTH_GITHUB_ID` and a generated client secret in `AUTH_GITHUB_SECRET`. GitHub allows one callback URL per OAuth app, so local development needs a second OAuth app with `http://localhost:3000` and `http://localhost:3000/api/auth/callback/github`.
-
-## Environment variables
+1. **Create a GitHub App for sign-in.** GitHub → Settings → Developer settings → GitHub Apps → New GitHub App. Set the callback URL to `https://<your dashboard>/api/auth/callback/github` (a GitHub App can hold several, so add `http://localhost:3000/api/auth/callback/github` too for local work). Turn the webhook off; no permissions are needed. Generate a client secret. (A GitHub OAuth app works as well, with one callback URL per app.)
+2. **Deploy.** Vercel works out of the box (import the repo). Any host with Node 22 or newer works too: `npm ci && npm run build && npm start`, with `AUTH_TRUST_HOST=true` set so sign-in accepts your address.
+3. **Set the environment variables** below, then redeploy (Vercel reads them when it builds).
+4. **Allow uploads.** Archive uploads go from the browser straight to the API's storage bucket, so add a CORS rule on the bucket allowing `PUT` from the dashboard's address.
 
 | Name | Needed for | Notes |
 |---|---|---|
-| `WAAS_API_URL` | live data | e.g. `https://waas-api.otakusolutions.io` |
+| `WAAS_API_URL` | live data | the API's address, e.g. `https://api.example.com` |
 | `WAAS_ADMIN_TOKEN` | live data | the API's `ADMIN_TOKEN`; server-side only |
-| `WAAS_API_FIXTURES` | sample data | `1` to use the built-in sample data |
 | `AUTH_SECRET` | sign-in | random, e.g. `openssl rand -base64 32` |
-| `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` | sign-in | from the GitHub OAuth app |
-| `ALLOWED_GITHUB_LOGINS` | sign-in | GitHub usernames, comma separated |
-| `SHADCNUIKIT_API_KEY` | adding kit components | development only, see below |
+| `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` | sign-in | the GitHub App's Client ID and client secret |
+| `ALLOWED_GITHUB_LOGINS` | sign-in | GitHub usernames allowed in, comma separated |
+| `AUTH_TRUST_HOST` | sign-in off Vercel | `true` on any host other than Vercel |
+| `WAAS_API_FIXTURES` | sample data | `1` to show built-in sample data instead of the API |
 
-`.env.example` lists them. Vercel reads its variables when it builds, so a changed variable takes effect on the next deployment.
+`.env.example` lists them. Only the logins in `ALLOWED_GITHUB_LOGINS` can sign in, and the list is checked on every request, so removing a login locks it out straight away. Sessions are signed cookies lasting 12 hours; there is no user database.
 
-## Develop
+To run the whole platform yourself (API, storefront and dashboard), see the API's [self-hosting guide](https://github.com/hamchowderr/waas-provisioning-api/blob/main/docs/self-hosting.md).
+
+## Development
+
+Next.js 16 (App Router), React 19, Tailwind CSS v4, Auth.js.
 
 ```sh
 npm install
-cp .env.example .env.local   # fill in, or set WAAS_API_FIXTURES=1
+cp .env.example .env.local   # fill in, or set WAAS_API_FIXTURES=1 to use sample data
 npm run dev
 ```
 
@@ -72,32 +55,30 @@ Checks (CI runs the same on every pull request):
 ```sh
 npm run typecheck
 npm run lint
+npm test
 npm run build
 ```
 
-## Shadcn UI Kit
+### How it gets its data
 
-The layout (`components/layout/`, `components/theme-customizer/`) is the kit's Dashboard Shell. The tables (`components/admin/data-table.tsx`) are adapted from the kit's Orders page and use its filter builder (`components/ui/filters/`). The Overview uses the kit's stat-card5 and chart39 blocks. Kit and shadcn/ui files are kept as shipped where possible, so `eslint.config.mjs` relaxes a few rules for those folders only.
+All API calls run on the server (`lib/api/`). The browser never sees the API address or the admin token. Changes go through server actions (`app/(dashboard)/actions.ts`), and each one checks the signed-in user against the allowlist itself, because a server action can be called directly.
 
-Fonts are local files from `@fontsource` loaded with `next/font/local` (`lib/fonts.ts`), never `next/font/google`: Turbopack intermittently fails builds on the CSS Google serves for a font, and a local file needs no network at build time.
+Archives (version and template uploads) are the exception: the API returns an upload address, and the browser sends the file straight to it with one `PUT`, as WPCS did. The bucket behind those addresses has to accept cross-origin `PUT`s from the dashboard's address, so it needs a CORS rule allowing `PUT` from it. With the API's fake provisioner the addresses are placeholders and accept nothing.
 
-`components.json` has the kit's private registry. With `SHADCNUIKIT_API_KEY` in the environment:
+| Source | When |
+|---|---|
+| The live API's `/admin/*` endpoints, with `Authorization: Bearer $WAAS_ADMIN_TOKEN` | `WAAS_API_URL` and `WAAS_ADMIN_TOKEN` are set |
+| Built-in sample data (`lib/api/fixtures.ts`), with a "Sample data" badge in the header | `WAAS_API_FIXTURES=1` |
 
-```sh
-npx shadcn@latest add @shadcnuikit/<name>
-```
+With neither, pages show an error rather than sample data, so a missing variable is never mistaken for real data.
 
-The key is only needed to add components; builds don't use it. Never commit the key, or any install link the kit's MCP server returns (they carry a token).
+`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (the version and template endpoints take the WPCS operations' bodies). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200) and filtered in the browser.
 
-## Sign-in motion
+Every page works on phones and tablets: lists turn into cards below 1024px wide.
 
-The sign-in page shows a looping animation of a storefront being set up and going live (`components/admin/login-motion.tsx`). It is a Lottie file in a light and a dark version, `public/motion/login-{light,dark}.json` (about 19 KB each), built by `node scripts/motion/login-motion.mjs` with the [text-to-lottie](https://github.com/diffusionstudio/lottie) skill's conventions and checked in its Skottie player. The `.webp` stills next to them are frame 200, rendered from the JSON with lottie-web; after changing the animation, render them again.
+Fonts are local files from `@fontsource` (`lib/fonts.ts`), so builds need no network for fonts.
 
-The still is in the server-rendered page, so there is no layout shift and it works without JavaScript. The animation replaces it once the page is idle, and never with "reduce motion" turned on. Large screens show it in the panel beside the form; phones and tablets show a smaller copy above the form, and only the copy on screen loads the animation. `proxy.ts` lets `/motion/*` through without a session, because the sign-in page needs it before anyone is signed in.
-
-## Phones and tablets
-
-Below 1024px wide (`lg`), every list shows its rows as cards instead of a table, with the tabs as a select and the sortable columns in a sort menu (`components/admin/data-table.tsx`); the other tables move their secondary columns under the row's name on narrow screens. Dialogs fit the screen and scroll inside. On touch screens every control is at least 44px to tap: one rule in `app/globals.css` (`@media (pointer: coarse)`), so desktop keeps its compact sizes. Screenshots at 390px (before and after) and 768px are in `docs/screenshots/mobile/`.
+The layout, tables and overview cards come from the [Shadcn UI Kit](https://shadcnuikit.com) (`components/layout/`, `components/theme-customizer/`, `components/ui/filters/`). Adding kit components needs a kit licence key in `SHADCNUIKIT_API_KEY`; building and running don't.
 
 ## Screenshots
 
@@ -112,3 +93,7 @@ From a local run with sample data:
 | ![New version](docs/screenshots/8-new-version-dialog.png) | ![Make production](docs/screenshots/9-confirm-production.png) |
 | ![Templates](docs/screenshots/11-templates.png) | ![Upload a template](docs/screenshots/12-upload-template-dialog.png) |
 | ![Retry one job](docs/screenshots/13-job-retry-dialog.png) | ![Retry several](docs/screenshots/14-jobs-bulk-retry.png) |
+
+## License
+
+GPL-3.0-or-later for this project's own code. See [LICENSE](LICENSE). Parts taken from the Shadcn UI Kit (the layout, tables and overview cards) stay under the kit's own license.
