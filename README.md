@@ -14,6 +14,7 @@ The admin dashboard for the [WaaS provisioning API](https://github.com/hamchowde
 - **Jobs:** queued, running and failed background jobs, with each failure's error. **Retry** one, or several at once.
 - **Backups:** every backup, including nightly ones and those of deleted websites, with when each expires.
 - **Requests:** every call the storefronts made to the API and every admin change, with status, timing, store and caller, kept 30 days. Errors show the API's message. Never bodies or secrets.
+- **Webhooks:** each storefront's webhook endpoints, with what they get and how the last 24 hours went, and the recent deliveries with each answer or error. **Add**, turn off or on, **send a test**, **rotate** a secret (shown once) or delete an endpoint; **retry** a delivery.
 - **Versions & templates** (per storefront): create a version from a template or an uploaded archive, make a version production, upload and delete templates. Making a version production and every delete ask first.
 
 The storefront switcher in the header narrows every page to one storefront. Suspending, resuming, a manual backup and deleting a website happen from the storefront, not here.

@@ -27,7 +27,13 @@ import type {
   StatusCode,
   Tenant,
   TenantDetail,
-  TenantFilter
+  TenantFilter,
+  WebhookDelivery,
+  WebhookEndpoint,
+  WebhookEndpointChange,
+  WebhookEndpointInput,
+  WebhookFilter,
+  WebhookSecret
 } from "./types";
 import type {
   WireApiKey,
@@ -50,7 +56,13 @@ import type {
   WirePage,
   WireRequestsPage,
   WireTenantDetail,
-  WireTenantRow
+  WireTenantRow,
+  WireAdminWebhookEndpoint,
+  WireWebhookDeliveriesPage,
+  WireWebhookDelivery,
+  WireWebhookEndpoint,
+  WireWebhookEndpointParams,
+  WireWebhookSecret
 } from "./wire";
 
 export class AdminApiError extends Error {
@@ -77,7 +89,7 @@ async function apiMessage(response: Response): Promise<string | null> {
 const PAGE_SIZE = 200;
 /** v1 loads lists whole and filters in the browser; this caps one list at 2,000 rows. */
 const MAX_PAGES = 10;
-/** The request log loads its newest 1,000 rows. */
+/** The request log and the webhook deliveries load their newest 1,000 rows. */
 const REQUEST_PAGES = 5;
 
 type Query = Record<string, string | number | undefined>;
@@ -257,6 +269,49 @@ export class HttpAdminApi implements AdminApi {
 
   async deleteTemplate(productId: string, templateId: string): Promise<void> {
     await this.send("DELETE", this.productPath(productId, `/basesnapshots?id=${encodeURIComponent(templateId)}`));
+  }
+
+  async webhooks(productId?: string): Promise<WebhookEndpoint[]> {
+    return (await this.get<WireAdminWebhookEndpoint[]>(withQuery("/admin/webhooks", { productId })))!;
+  }
+
+  async webhookDeliveries(filter: WebhookFilter = {}): Promise<Listing<WebhookDelivery>> {
+    const { items, total } = await this.getAll<WireWebhookDeliveriesPage["items"][number]>(
+      "/admin/webhooks/deliveries",
+      { productId: filter.productId, endpointId: filter.endpointId, status: filter.status, tenantId: filter.tenantId },
+      REQUEST_PAGES
+    );
+    return { items, total };
+  }
+
+  private webhookPath(id: string, rest = ""): string {
+    return `/admin/webhooks/${encodeURIComponent(id)}${rest}`;
+  }
+
+  async createWebhook(productId: string, input: WebhookEndpointInput): Promise<WebhookSecret> {
+    const body: WireWebhookEndpointParams = { productId, ...input };
+    return (await this.send<WireWebhookSecret>("POST", "/admin/webhooks", body))!;
+  }
+
+  async updateWebhook(id: string, change: WebhookEndpointChange): Promise<void> {
+    const body: WireWebhookEndpointParams = change;
+    await this.send<WireWebhookEndpoint>("PUT", this.webhookPath(id), body);
+  }
+
+  async deleteWebhook(id: string): Promise<void> {
+    await this.send<WireWebhookEndpoint>("DELETE", this.webhookPath(id));
+  }
+
+  async rotateWebhookSecret(id: string): Promise<string> {
+    return (await this.send<WireWebhookSecret>("POST", this.webhookPath(id, "/rotate-secret")))!.secret;
+  }
+
+  async testWebhook(id: string): Promise<void> {
+    await this.send<WireWebhookDelivery>("POST", this.webhookPath(id, "/test"));
+  }
+
+  async retryWebhookDelivery(id: string): Promise<void> {
+    await this.send<WireWebhookDelivery>("POST", `/admin/webhooks/deliveries/${encodeURIComponent(id)}/retry`);
   }
 
   async apiKeys(productId: string): Promise<ApiKey[]> {

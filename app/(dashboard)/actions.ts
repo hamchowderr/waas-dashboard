@@ -5,7 +5,19 @@ import { revalidatePath } from "next/cache";
 import { auth, isAllowed } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
-import type { Created, CreateTemplateInput, CreateVersionInput, MailDomain, NewAgency, NewApiKey } from "@/lib/api/types";
+import type {
+  Created,
+  CreateTemplateInput,
+  CreateVersionInput,
+  MailDomain,
+  NewAgency,
+  NewApiKey,
+  WebhookEndpointChange,
+  WebhookEndpointInput,
+  WebhookEventType,
+  WebhookSecret
+} from "@/lib/api/types";
+import { webhookEventLabels } from "@/lib/format";
 
 // Every change the dashboard makes goes through these actions. Server actions can be
 // called directly, not only from our pages, so each one checks the session itself.
@@ -162,6 +174,89 @@ export async function deleteTemplate(productId: string, templateId: string): Pro
     await getAdminApi().deleteTemplate(uuid(productId, "storefront"), uuid(templateId, "template"));
     return undefined;
   }, ["/versions"]);
+}
+
+// Webhooks. The API checks the address properly (https, public); these catch typos first.
+
+function webhookUrl(value: unknown): string {
+  const url = text(value, "URL", 2000);
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new InputError("Enter a URL like https://example.com/webhooks");
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new InputError("The URL must start with https://");
+  return url;
+}
+
+function webhookDescription(value: unknown): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string") throw new InputError("Invalid description");
+  if (value.length > 200) throw new InputError("Description is too long");
+  return value.trim() || null;
+}
+
+function webhookEvents(value: unknown): WebhookEventType[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 50) throw new InputError("Invalid events");
+  return value.map((type) => {
+    if (typeof type !== "string" || !Object.hasOwn(webhookEventLabels, type)) throw new InputError("Unknown event");
+    return type as WebhookEventType;
+  });
+}
+
+/** Adds a webhook endpoint to a storefront; the result holds its secret, shown once. */
+export async function createWebhook(productId: string, input: WebhookEndpointInput): Promise<ActionResult<WebhookSecret>> {
+  return run(async () => {
+    const body: WebhookEndpointInput = {
+      url: webhookUrl(input?.url),
+      description: webhookDescription(input?.description),
+      eventTypes: webhookEvents(input?.eventTypes)
+    };
+    return getAdminApi().createWebhook(uuid(productId, "storefront"), body);
+  }, ["/webhooks"]);
+}
+
+/** Turns an endpoint off or on, or changes its address, description or events. */
+export async function updateWebhook(id: string, change: WebhookEndpointChange): Promise<ActionResult> {
+  return run(async () => {
+    if (change?.enabled !== undefined && typeof change.enabled !== "boolean") throw new InputError("Invalid choice");
+    const body: WebhookEndpointChange = {
+      ...(change?.url !== undefined ? { url: webhookUrl(change.url) } : {}),
+      ...(change?.description !== undefined ? { description: webhookDescription(change.description) } : {}),
+      ...(change?.eventTypes !== undefined ? { eventTypes: webhookEvents(change.eventTypes) } : {}),
+      ...(change?.enabled !== undefined ? { enabled: change.enabled } : {})
+    };
+    await getAdminApi().updateWebhook(uuid(id, "endpoint"), body);
+    return undefined;
+  }, ["/webhooks"]);
+}
+
+export async function deleteWebhook(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().deleteWebhook(uuid(id, "endpoint"));
+    return undefined;
+  }, ["/webhooks"]);
+}
+
+/** Replaces an endpoint's signing secret; returns the new one, shown once. */
+export async function rotateWebhookSecret(id: string): Promise<ActionResult<string>> {
+  return run(() => getAdminApi().rotateWebhookSecret(uuid(id, "endpoint")), ["/webhooks"]);
+}
+
+export async function testWebhook(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().testWebhook(uuid(id, "endpoint"));
+    return undefined;
+  }, ["/webhooks"]);
+}
+
+export async function retryWebhookDelivery(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().retryWebhookDelivery(uuid(id, "delivery"));
+    return undefined;
+  }, ["/webhooks"]);
 }
 
 // API keys. A secret comes back once, to the dialog that shows it; nothing here logs or keeps it.

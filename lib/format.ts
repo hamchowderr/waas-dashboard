@@ -1,6 +1,6 @@
 import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
 
-import { StatusCode, type JobType } from "@/lib/api/types";
+import { StatusCode, type JobType, type WebhookEventType } from "@/lib/api/types";
 
 export const statusMeta: Record<
   StatusCode,
@@ -26,6 +26,30 @@ export const jobTypeLabels: Record<JobType, string> = {
   "tenant.restore": "Restore store",
   "tenant.rollback": "Restore from backup"
 };
+
+export const webhookEventLabels: Record<WebhookEventType, string> = {
+  "tenant.ready": "Store ready",
+  "tenant.updated": "Store updated",
+  "tenant.version_changed": "Store moved to a version",
+  "tenant.domains_changed": "Store domains changed",
+  "tenant.suspended": "Store suspended",
+  "tenant.resumed": "Store resumed",
+  "tenant.deleted": "Store deleted",
+  "tenant.restored": "Store restored",
+  "tenant.rolled_back": "Store restored from backup",
+  "tenant.backup_completed": "Backup finished",
+  "tenant.backup_failed": "Backup failed",
+  "tenant.failed": "Store job failed",
+  "version.ready": "Version ready",
+  "version.deleted": "Version deleted",
+  "version.failed": "Version failed",
+  "webhook.test": "Test"
+};
+
+/** Label for a webhook event type; an unknown type from a newer API shows as sent. */
+export function webhookEventLabel(type: string): string {
+  return webhookEventLabels[type as WebhookEventType] ?? type;
+}
 
 const backupReasonLabels: Record<string, string> = {
   manual: "Manual",

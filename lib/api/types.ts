@@ -253,6 +253,90 @@ export type MailDomain = {
   records: DnsRecord[] | null;
 };
 
+/** What a webhook is sent for (the API's WebhookEventType). */
+export type WebhookEventType =
+  | "tenant.ready"
+  | "tenant.updated"
+  | "tenant.version_changed"
+  | "tenant.domains_changed"
+  | "tenant.suspended"
+  | "tenant.resumed"
+  | "tenant.deleted"
+  | "tenant.restored"
+  | "tenant.rolled_back"
+  | "tenant.backup_completed"
+  | "tenant.backup_failed"
+  | "tenant.failed"
+  | "version.ready"
+  | "version.deleted"
+  | "version.failed"
+  | "webhook.test";
+
+/** An address a storefront gets webhooks at, as every list of them returns it. */
+export type WebhookEndpointInfo = {
+  id: string;
+  url: string;
+  description: string | null;
+  /** WebhookEventTypes, kept as strings so a new type from the API still shows. Empty is every event. */
+  eventTypes: string[];
+  enabled: boolean;
+  dateCreated: string;
+  dateChanged: string;
+};
+
+/** One row of the Webhooks page's endpoints, with how its deliveries have gone. */
+export type WebhookEndpoint = WebhookEndpointInfo & {
+  productId: string;
+  productName: string;
+  /** The storefront API key that registered it; null when it was added here. */
+  apiKeyId: string | null;
+  last24Hours: { sent: number; failed: number };
+  /** Deliveries still being sent or retried. */
+  pending: number;
+  lastAttemptAt: string | null;
+};
+
+/** An endpoint with its signing secret: returned only when it is created or its secret replaced. */
+export type WebhookSecret = WebhookEndpointInfo & { secret: string };
+
+export type WebhookEndpointInput = { url: string; description: string | null; eventTypes: WebhookEventType[] };
+export type WebhookEndpointChange = Partial<WebhookEndpointInput> & { enabled?: boolean };
+
+export type WebhookDeliveryStatus = "pending" | "delivered" | "failed";
+
+/** One event sent (or being sent) to one endpoint. */
+export type WebhookDelivery = {
+  id: string;
+  eventId: string;
+  /** A WebhookEventType; kept as string so a new type from the API still shows. */
+  eventType: string;
+  endpointId: string;
+  /** The endpoint's address. */
+  url: string;
+  productId: string;
+  productName: string;
+  tenantId: string | null;
+  /** Null once the store is deleted, or when the event is not about a store. */
+  tenantName: string | null;
+  versionId: string | null;
+  status: WebhookDeliveryStatus;
+  attempts: number;
+  /** The endpoint's HTTP status on the last try; null when it did not answer. */
+  responseStatus: number | null;
+  /** The start of the endpoint's answer. */
+  responseBody: string | null;
+  error: string | null;
+  durationMs: number | null;
+  dateCreated: string;
+  lastAttemptAt: string | null;
+};
+
+export type WebhookFilter = {
+  productId?: string;
+  endpointId?: string;
+  status?: WebhookDeliveryStatus;
+  tenantId?: string;
+};
 /** An API key's state: expiring is a rotated key that still works until revokedAt. */
 export type ApiKeyState = "active" | "expiring" | "revoked";
 

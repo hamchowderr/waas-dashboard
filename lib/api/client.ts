@@ -25,7 +25,13 @@ import type {
   RequestLog,
   Tenant,
   TenantDetail,
-  TenantFilter
+  TenantFilter,
+  WebhookDelivery,
+  WebhookEndpoint,
+  WebhookEndpointChange,
+  WebhookEndpointInput,
+  WebhookFilter,
+  WebhookSecret
 } from "./types";
 import { FixtureAdminApi } from "./fixtures";
 import { HttpAdminApi } from "./http";
@@ -47,6 +53,10 @@ export interface AdminApi {
   products(): Promise<ProductDetail[]>;
   versions(productId: string): Promise<Version[]>;
   templates(productId: string): Promise<Template[]>;
+  /** Every storefront's webhook endpoints (or one storefront's), with their last 24 hours. Never secrets. */
+  webhooks(productId?: string): Promise<WebhookEndpoint[]>;
+  /** The newest webhook deliveries, newest first. */
+  webhookDeliveries(filter?: WebhookFilter): Promise<Listing<WebhookDelivery>>;
 
   // Changes. Each throws AdminApiError with the API's message when the API refuses.
   /** Re-queues a failed job; the store or version goes back to Pending. */
@@ -71,6 +81,17 @@ export interface AdminApi {
   deleteVersion(productId: string, versionId: string): Promise<void>;
   createTemplate(productId: string, input: CreateTemplateInput): Promise<Created>;
   deleteTemplate(productId: string, templateId: string): Promise<void>;
+  /** Adds an endpoint to a storefront. The secret is in the result and is never shown again. */
+  createWebhook(productId: string, input: WebhookEndpointInput): Promise<WebhookSecret>;
+  /** Turns an endpoint off or on, or changes its address, description or events. */
+  updateWebhook(id: string, change: WebhookEndpointChange): Promise<void>;
+  deleteWebhook(id: string): Promise<void>;
+  /** A new signing secret; the old one stops working at once. Returns the new secret. */
+  rotateWebhookSecret(id: string): Promise<string>;
+  /** Sends a webhook.test event to the endpoint, even when it is off. */
+  testWebhook(id: string): Promise<void>;
+  /** Sends a delivered or failed delivery again, retries included. The API refuses a pending one. */
+  retryWebhookDelivery(id: string): Promise<void>;
 
   // API keys. A secret comes back only from the call that creates the key; nothing keeps it.
   /** A storefront's working keys and those revoked in the last 30 days, newest first. */

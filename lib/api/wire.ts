@@ -1,4 +1,4 @@
-import type { ApiRequest } from "./types";
+import type { ApiRequest, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
 
 /**
  * The admin API's response bodies, exactly as openapi/admin/admin-api.yaml (v0.1.0) in
@@ -194,6 +194,31 @@ export type WireRequestsPage = WirePage<ApiRequest> & {
   retentionDays: number;
 };
 
+// Webhooks (/admin/webhooks). The endpoint and delivery bodies are the dashboard's own types.
+
+/** WebhookEndpoint */
+export type WireWebhookEndpoint = WebhookEndpointInfo;
+
+/** AdminWebhookEndpoint (GET /admin/webhooks) */
+export type WireAdminWebhookEndpoint = WebhookEndpoint;
+
+/** The endpoint with its secret (POST /admin/webhooks, POST /admin/webhooks/{id}/rotate-secret). */
+export type WireWebhookSecret = WireWebhookEndpoint & { secret: string };
+
+/** WebhookEndpointParams, plus productId when creating. */
+export type WireWebhookEndpointParams = {
+  productId?: string;
+  url?: string;
+  description?: string | null;
+  eventTypes?: string[];
+  enabled?: boolean;
+};
+
+/** WebhookDelivery (POST /admin/webhooks/{id}/test, POST /admin/webhooks/deliveries/{id}/retry) */
+export type WireWebhookDelivery = Omit<WebhookDelivery, "url" | "productId" | "productName" | "tenantName">;
+
+/** GET /admin/webhooks/deliveries: each delivery with its endpoint's address and the names. */
+export type WireWebhookDeliveriesPage = WirePage<WebhookDelivery>;
 // API keys (openapi/api-keys.yaml, admin paths in openapi/admin, waas-api-23c).
 
 export type WireApiKey = {

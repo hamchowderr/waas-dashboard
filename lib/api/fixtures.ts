@@ -1,5 +1,7 @@
 import "server-only";
 
+import { randomBytes } from "node:crypto";
+
 import type { AdminApi } from "./client";
 import {
   StatusCode,
@@ -30,7 +32,14 @@ import {
   type CreateVersionInput,
   type ProductDetail,
   type Template,
-  type Version
+  type Version,
+  type WebhookDelivery,
+  type WebhookEndpoint,
+  type WebhookEndpointChange,
+  type WebhookEndpointInfo,
+  type WebhookEndpointInput,
+  type WebhookFilter,
+  type WebhookSecret
 } from "./types";
 import { AdminApiError } from "./http";
 
@@ -353,6 +362,115 @@ const requestLog: ApiRequest[] = Array.from({ length: 80 }, (_, i): ApiRequest =
   return { ...base, method: "GET", path: "/v1/plugins/waas-host/update", query: "channel=stable&version=2.3.0", status: 200, durationMs: 18, tenantId: null, tenantName: null };
 });
 
+// Sample webhooks: the test storefront's plugin gets every event, an alerts endpoint gets failures
+// and is answering 502 lately, and the staging storefront's endpoint is turned off.
+
+type FixtureWebhook = WebhookEndpointInfo & { productId: string; apiKeyId: string | null; secret: string };
+
+const newSecret = () => `whsec_${randomBytes(24).toString("base64")}`;
+
+const webhooks: FixtureWebhook[] = [
+  {
+    url: "https://shop.example.com/wp-json/waas/v1/webhook",
+    description: "Storefront plugin",
+    eventTypes: [],
+    enabled: true,
+    productId: products[0].id,
+    apiKeyId: uuid(1, 9)
+  },
+  {
+    url: "https://alerts.example.net/hooks/waas",
+    description: "Failure alerts",
+    eventTypes: ["tenant.failed", "tenant.backup_failed", "version.failed"],
+    enabled: true,
+    productId: products[0].id,
+    apiKeyId: null
+  },
+  {
+    url: "https://staging.example.com/wp-json/waas/v1/webhook",
+    description: null,
+    eventTypes: [],
+    enabled: false,
+    productId: products[1].id,
+    apiKeyId: uuid(2, 9)
+  }
+].map((w, i) => ({
+  ...w,
+  id: uuid(i + 1, 10),
+  secret: newSecret(),
+  dateCreated: iso(NOW - (40 - i * 10) * DAY),
+  dateChanged: iso(NOW - (20 - i * 5) * DAY)
+}));
+
+type DeliverySeed = {
+  endpoint: number;
+  type: string;
+  tenant?: number;
+  minutesAgo: number;
+  status: WebhookDelivery["status"];
+  attempts?: number;
+  responseStatus?: number | null;
+  responseBody?: string | null;
+  error?: string | null;
+};
+
+const deliverySeeds: DeliverySeed[] = [
+  { endpoint: 0, type: "tenant.ready", tenant: 3, minutesAgo: 3, status: "pending", attempts: 2, responseStatus: null, error: "The endpoint did not answer within 10 s" },
+  { endpoint: 0, type: "tenant.domains_changed", tenant: 0, minutesAgo: 25, status: "delivered" },
+  { endpoint: 1, type: "tenant.failed", tenant: 5, minutesAgo: 170, status: "pending", attempts: 6, responseStatus: 502, responseBody: "<html><body><h1>502 Bad Gateway</h1></body></html>" },
+  { endpoint: 0, type: "tenant.failed", tenant: 5, minutesAgo: 170, status: "delivered" },
+  { endpoint: 0, type: "tenant.suspended", tenant: 8, minutesAgo: 240, status: "delivered" },
+  { endpoint: 1, type: "tenant.backup_failed", tenant: 6, minutesAgo: 640, status: "failed", attempts: 11, responseStatus: 502, responseBody: "<html><body><h1>502 Bad Gateway</h1></body></html>" },
+  { endpoint: 0, type: "tenant.backup_failed", tenant: 6, minutesAgo: 640, status: "delivered" },
+  { endpoint: 0, type: "tenant.backup_completed", tenant: 0, minutesAgo: 600, status: "delivered" },
+  { endpoint: 0, type: "tenant.updated", tenant: 2, minutesAgo: 780, status: "failed", attempts: 11, responseStatus: 500, responseBody: "Internal Server Error" },
+  { endpoint: 0, type: "tenant.ready", tenant: 13, minutesAgo: 900, status: "delivered" },
+  { endpoint: 0, type: "version.ready", minutesAgo: 1300, status: "delivered" },
+  { endpoint: 0, type: "webhook.test", minutesAgo: 1500, status: "delivered" },
+  { endpoint: 1, type: "webhook.test", minutesAgo: 1510, status: "delivered" },
+  { endpoint: 0, type: "tenant.resumed", tenant: 4, minutesAgo: 2000, status: "delivered" },
+  { endpoint: 0, type: "tenant.deleted", tenant: 10, minutesAgo: 2600, status: "delivered", attempts: 3 },
+  { endpoint: 1, type: "version.failed", minutesAgo: 3100, status: "delivered" },
+  { endpoint: 0, type: "version.failed", minutesAgo: 3100, status: "delivered" },
+  { endpoint: 2, type: "tenant.ready", tenant: 4, minutesAgo: 7300, status: "delivered" },
+  { endpoint: 2, type: "tenant.updated", tenant: 9, minutesAgo: 8800, status: "failed", attempts: 11, responseStatus: null, error: "Could not connect: certificate has expired" },
+  { endpoint: 0, type: "tenant.version_changed", tenant: 1, minutesAgo: 9900, status: "delivered" }
+];
+
+const webhookDeliveries: WebhookDelivery[] = deliverySeeds.map((seed, i) => {
+  const endpoint = webhooks[seed.endpoint];
+  const product = products.find((p) => p.id === endpoint.productId)!;
+  const tenant = seed.tenant === undefined ? undefined : tenants[seed.tenant];
+  const at = NOW + 50 * 60_000 - seed.minutesAgo * 60_000;
+  const delivered = seed.status === "delivered";
+  const attempts = seed.attempts ?? (delivered ? 1 : 0);
+  return {
+    id: uuid(i + 1, 11),
+    eventId: uuid(i + 1, 12),
+    eventType: seed.type,
+    endpointId: endpoint.id,
+    url: endpoint.url,
+    productId: product.id,
+    productName: product.name,
+    tenantId: tenant?.id ?? null,
+    tenantName: tenant?.name ?? null,
+    versionId: seed.type.startsWith("version.") ? versions.find((v) => v.productId === product.id)!.id : null,
+    status: seed.status,
+    attempts,
+    responseStatus: seed.responseStatus === undefined ? (delivered ? 200 : null) : seed.responseStatus,
+    responseBody: seed.responseBody ?? (delivered ? '{"received":true}' : null),
+    error: seed.error ?? null,
+    durationMs: delivered ? 80 + ((i * 53) % 400) : seed.responseStatus ? 1200 : null,
+    dateCreated: iso(at),
+    // A failed delivery's last try is about seven hours after the first; a pending one's is a
+    // few minutes ago.
+    lastAttemptAt:
+      attempts === 0
+        ? null
+        : iso(seed.status === "failed" ? at + 7 * HOUR : seed.status === "pending" ? Math.max(at + (attempts - 1) * 60_000, NOW + 45 * 60_000) : at + (attempts - 1) * 60_000)
+  };
+});
+
 function health(): Health {
   return { ok: true, checks: { database: "up", queue: "up" }, checkedAt: new Date().toISOString() };
 }
@@ -627,6 +745,136 @@ export class FixtureAdminApi implements AdminApi {
     const index = templates.findIndex((t) => t.productId === productId && t.id === templateId);
     if (index < 0) throw new FixtureError(404, `Template ${templateId} not found`);
     templates.splice(index, 1);
+  }
+
+  private webhook(id: string): FixtureWebhook {
+    const webhook = webhooks.find((w) => w.id === id);
+    if (!webhook) throw new FixtureError(404, "Webhook endpoint not found");
+    return webhook;
+  }
+
+  async webhooks(productId?: string): Promise<WebhookEndpoint[]> {
+    const dayAgo = Date.now() - DAY;
+    return byProduct(webhooks, productId)
+      .map((w): WebhookEndpoint => {
+        const sent = webhookDeliveries.filter((d) => d.endpointId === w.id);
+        const recent = sent.filter((d) => Date.parse(d.dateCreated) > dayAgo);
+        return {
+          ...without(w, "secret"),
+          productName: products.find((p) => p.id === w.productId)!.name,
+          last24Hours: { sent: recent.length, failed: recent.filter((d) => d.status === "failed").length },
+          pending: sent.filter((d) => d.status === "pending").length,
+          lastAttemptAt:
+            sent
+              .map((d) => d.lastAttemptAt)
+              .filter((at): at is string => !!at)
+              .sort()
+              .at(-1) ?? null
+        };
+      })
+      .sort((a, b) => a.productName.localeCompare(b.productName) || a.dateCreated.localeCompare(b.dateCreated));
+  }
+
+  async webhookDeliveries(filter: WebhookFilter = {}): Promise<Listing<WebhookDelivery>> {
+    const items = webhookDeliveries
+      .filter(
+        (d) =>
+          (!filter.productId || d.productId === filter.productId) &&
+          (!filter.endpointId || d.endpointId === filter.endpointId) &&
+          (!filter.status || d.status === filter.status) &&
+          (!filter.tenantId || d.tenantId === filter.tenantId)
+      )
+      .sort((a, b) => b.dateCreated.localeCompare(a.dateCreated));
+    return listing(items);
+  }
+
+  private checkWebhookUrl(value: string): string {
+    let url: URL;
+    try {
+      url = new URL(value.trim());
+    } catch {
+      throw new FixtureError(400, "url is not a valid URL");
+    }
+    if (url.protocol !== "https:") throw new FixtureError(400, "url must start with https://");
+    return url.href;
+  }
+
+  async createWebhook(productId: string, input: WebhookEndpointInput): Promise<WebhookSecret> {
+    this.product(productId);
+    const url = this.checkWebhookUrl(input.url);
+    if (webhooks.filter((w) => w.productId === productId).length >= 10)
+      throw new FixtureError(400, "A storefront can have at most 10 webhook endpoints");
+    const now = new Date().toISOString();
+    const webhook: FixtureWebhook = {
+      id: uuid(webhooks.length + 50, 10),
+      url,
+      description: input.description,
+      eventTypes: [...new Set(input.eventTypes)],
+      enabled: true,
+      productId,
+      apiKeyId: null,
+      secret: newSecret(),
+      dateCreated: now,
+      dateChanged: now
+    };
+    webhooks.push(webhook);
+    return without(webhook, "productId", "apiKeyId");
+  }
+
+  async updateWebhook(id: string, change: WebhookEndpointChange): Promise<void> {
+    const webhook = this.webhook(id);
+    if (change.url !== undefined) webhook.url = this.checkWebhookUrl(change.url);
+    if (change.description !== undefined) webhook.description = change.description;
+    if (change.eventTypes !== undefined) webhook.eventTypes = [...new Set(change.eventTypes)];
+    if (change.enabled !== undefined) webhook.enabled = change.enabled;
+    webhook.dateChanged = new Date().toISOString();
+  }
+
+  async deleteWebhook(id: string): Promise<void> {
+    webhooks.splice(webhooks.indexOf(this.webhook(id)), 1);
+    for (let i = webhookDeliveries.length - 1; i >= 0; i--) if (webhookDeliveries[i].endpointId === id) webhookDeliveries.splice(i, 1);
+  }
+
+  async rotateWebhookSecret(id: string): Promise<string> {
+    const webhook = this.webhook(id);
+    webhook.secret = newSecret();
+    webhook.dateChanged = new Date().toISOString();
+    return webhook.secret;
+  }
+
+  async testWebhook(id: string): Promise<void> {
+    const webhook = this.webhook(id);
+    const product = products.find((p) => p.id === webhook.productId)!;
+    const now = new Date().toISOString();
+    // Sample endpoints answer at once.
+    webhookDeliveries.unshift({
+      id: uuid(webhookDeliveries.length + 100, 11),
+      eventId: uuid(webhookDeliveries.length + 100, 12),
+      eventType: "webhook.test",
+      endpointId: webhook.id,
+      url: webhook.url,
+      productId: product.id,
+      productName: product.name,
+      tenantId: null,
+      tenantName: null,
+      versionId: null,
+      status: "delivered",
+      attempts: 1,
+      responseStatus: 200,
+      responseBody: '{"received":true}',
+      error: null,
+      durationMs: 140,
+      dateCreated: now,
+      lastAttemptAt: now
+    });
+  }
+
+  async retryWebhookDelivery(id: string): Promise<void> {
+    const delivery = webhookDeliveries.find((d) => d.id === id);
+    if (!delivery) throw new FixtureError(404, "Delivery not found");
+    if (delivery.status === "pending") throw new FixtureError(400, "This delivery is still being sent");
+    delivery.status = "pending";
+    delivery.attempts = 0;
   }
 
   async apiKeys(productId: string): Promise<ApiKey[]> {
