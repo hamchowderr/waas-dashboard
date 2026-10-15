@@ -4,12 +4,12 @@ import { cn } from "@/lib/utils";
 // Every font is a local file from @fontsource (latin subset), never next/font/google:
 // Turbopack intermittently fails the build on the CSS Google serves for a font ("next/font/
 // google queries have exactly one entry"), on CI and on Vercel, and a local file needs no
-// network at build time. Same weights and CSS variables as the kit's next/font/google setup,
-// so its font picker (app/themes.css) is unchanged. next/font/local only accepts literal
+// network at build time. Each font sets a --font-* variable that the Appearance panel's font
+// choices point at (lib/appearance.ts). next/font/local only accepts literal
 // options, hence one call per font. Variable fonts (Inter, Geist, DM Sans) use the
 // @fontsource-variable file with their full weight range.
 
-/** The default UI font (the kit's DM Sans), --font-sans. */
+/** The default UI font, --font-sans. */
 export const dmSans = localFont({
   src: "../node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2",
   weight: "100 1000",
