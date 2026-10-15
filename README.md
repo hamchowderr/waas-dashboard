@@ -19,32 +19,38 @@ The admin dashboard for the [WaaS provisioning API](https://github.com/hamchowde
 
 The storefront switcher in the header narrows every page to one storefront. Suspending, resuming, a manual backup and deleting a website happen from the storefront, not here.
 
+## Who signs in
+
+- **Platform admins** are listed by email address in `ALLOWED_ADMIN_EMAILS` (or by GitHub login in `ALLOWED_GITHUB_LOGINS`), and they see every storefront.
+- **A storefront's own people** (an agency and its staff) sign in with a link emailed to them, or with GitHub or Google when those are turned on. They see only their own storefront: its stores, jobs, backups, request log, versions, API keys and webhooks. Owners and admins can make changes, and members can only look. They join through an invitation link the platform admin sends (the API's [accounts guide](https://github.com/hamchowderr/waas-provisioning-api/blob/main/docs/accounts.md)).
+
+Sign-in runs on the provisioning API (Better Auth). The dashboard passes `/api/auth/*` through to it, so the session cookie belongs to the dashboard alone. The API checks every request and narrows what a storefront's people see. The list of admins is checked on every request, so removing a login locks it out at once.
+
 ## Set it up
 
-You need a running provisioning API with `ADMIN_TOKEN` set, and a GitHub account for each person who should sign in.
+You need a running provisioning API with `ADMIN_TOKEN` set and sign-in turned on (`AUTH_URL` set to this dashboard's address, `AUTH_SECRET`, and the GitHub App's ID and secret). The API's [accounts guide](https://github.com/hamchowderr/waas-provisioning-api/blob/main/docs/accounts.md) lists them.
 
-1. **Create a GitHub App for sign-in.** GitHub → Settings → Developer settings → GitHub Apps → New GitHub App. Set the callback URL to `https://<your dashboard>/api/auth/callback/github` (a GitHub App can hold several, so add `http://localhost:3000/api/auth/callback/github` too for local work). Turn the webhook off; no permissions are needed. Generate a client secret. (A GitHub OAuth app works as well, with one callback URL per app.)
-2. **Deploy.** Vercel works out of the box (import the repo). Any host with Node 22 or newer works too: `npm ci && npm run build && npm start`, with `AUTH_TRUST_HOST=true` set so sign-in accepts your address.
+1. **Create a GitHub App for sign-in.** GitHub → Settings → Developer settings → GitHub Apps → New GitHub App. Set the callback URL to `https://<your dashboard>/api/auth/callback/github` (a GitHub App can hold several, so add `http://localhost:3000/api/auth/callback/github` too for local work). Turn the webhook off. Under account permissions, give it **Email addresses: read-only**. Generate a client secret, then put the Client ID and secret on the API, not here.
+2. **Deploy.** Vercel works out of the box (import the repo). Any host with Node 22 or newer works too: `npm ci && npm run build && npm start`.
 3. **Set the environment variables** below, then redeploy (Vercel reads them when it builds).
 4. **Allow uploads.** Archive uploads go from the browser straight to the API's storage bucket, so add a CORS rule on the bucket allowing `PUT` from the dashboard's address.
 
 | Name | Needed for | Notes |
 |---|---|---|
-| `WAAS_API_URL` | live data | the API's address, e.g. `https://api.example.com` |
-| `WAAS_ADMIN_TOKEN` | live data | the API's `ADMIN_TOKEN`; server-side only |
-| `AUTH_SECRET` | sign-in | random, e.g. `openssl rand -base64 32` |
-| `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` | sign-in | the GitHub App's Client ID and client secret |
-| `ALLOWED_GITHUB_LOGINS` | sign-in | GitHub usernames allowed in, comma separated |
-| `AUTH_TRUST_HOST` | sign-in off Vercel | `true` on any host other than Vercel |
-| `WAAS_API_FIXTURES` | sample data | `1` to show built-in sample data instead of the API |
+| `WAAS_API_URL` | live data and sign-in | the API's address, e.g. `https://api.example.com` |
+| `WAAS_ADMIN_TOKEN` | platform admins | the API's `ADMIN_TOKEN`; server-side only |
+| `ALLOWED_ADMIN_EMAILS` | platform admins | email addresses that see every storefront, comma separated |
+| `ALLOWED_GITHUB_LOGINS` | platform admins | GitHub usernames that see every storefront, comma separated |
+| `AUTH_PROVIDERS` | sign-in | ways to sign in: `email` (default, an emailed link), plus `github` or `google` once the API has those set up, e.g. `email,github` |
+| `WAAS_API_FIXTURES` | sample data | `1` to show built-in sample data instead of the API, with no sign-in |
 
-`.env.example` lists them. Only the logins in `ALLOWED_GITHUB_LOGINS` can sign in, and the list is checked on every request, so removing a login locks it out straight away. Sessions are signed cookies lasting 12 hours; there is no user database.
+`.env.example` lists them.
 
 To run the whole platform yourself (API, storefront and dashboard), see the API's [self-hosting guide](https://github.com/hamchowderr/waas-provisioning-api/blob/main/docs/self-hosting.md).
 
 ## Development
 
-Next.js 16 (App Router), React 19, Tailwind CSS v4, Auth.js.
+Next.js 16 (App Router), React 19, Tailwind CSS v4. Sign-in is Better Auth, on the API.
 
 ```sh
 npm install
@@ -63,7 +69,7 @@ npm run build
 
 ### How it gets its data
 
-All API calls run on the server (`lib/api/`). The browser never sees the API address or the admin token. Changes go through server actions (`app/(dashboard)/actions.ts`), and each one checks the signed-in user against the allowlist itself, because a server action can be called directly.
+All API calls run on the server (`lib/api/`). The browser never sees the API address or the admin token. Changes go through server actions (`app/(dashboard)/actions.ts`), and each one checks who is signed in itself, because a server action can be called directly. A platform admin's calls go to the API's `/admin` routes with the admin token. A storefront's people reach `/account` with their session, where the API serves the same routes narrowed to their storefront.
 
 Archives (version and template uploads) are the exception: the API returns an upload address, and the browser sends the file straight to it with one `PUT`. The bucket behind those addresses has to accept cross-origin `PUT`s from the dashboard's address, so it needs a CORS rule allowing `PUT` from it. With the API's fake provisioner the addresses are placeholders and accept nothing.
 

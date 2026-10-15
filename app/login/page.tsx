@@ -1,17 +1,34 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { GithubIcon, ServerCogIcon } from "lucide-react";
+import { ServerCogIcon } from "lucide-react";
 
-import { auth, isAllowed, signIn } from "@/auth";
-import { Button } from "@/components/ui/button";
+import { getViewer } from "@/auth";
+import { SignInButtons } from "@/components/auth/sign-in-buttons";
 import { LoginMotion } from "@/components/admin/login-motion";
+import type { Provider } from "@/lib/auth-client";
 
 export const metadata: Metadata = { title: "Sign in" };
 
+// Better Auth's error codes, as it sends them back here.
 const errors: Record<string, string> = {
-  AccessDenied: "This GitHub account is not on the dashboard's allowlist.",
-  Configuration: "Sign-in is not configured yet. Check the GitHub OAuth app settings."
+  email_not_found: "GitHub didn't share an email address for this account. Add a verified email on GitHub and try again.",
+  account_not_linked: "This email already signs in another way. Use the button you used before.",
+  state_mismatch: "Sign-in took too long or was opened in another tab. Try again.",
+  please_restart_the_process: "Sign-in took too long. Try again.",
+  invalid_token: "That sign-in link has already been used or isn't valid. Ask for a new one.",
+  expired_token: "That sign-in link has expired. Ask for a new one.",
+  attempts_exceeded: "That sign-in link has already been used. Ask for a new one."
 };
+
+/**
+ * Ways to sign in, from AUTH_PROVIDERS (default email: an emailed link). The API must have each one
+ * set up: email needs its toSend key, github and google their client id and secret.
+ */
+function providers(): Provider[] {
+  const listed = (process.env.AUTH_PROVIDERS ?? "email").split(/[\s,]+/).map((p) => p.trim().toLowerCase());
+  const known = listed.filter((p): p is Provider => p === "email" || p === "github" || p === "google");
+  return known.length ? [...new Set(known)] : ["email"];
+}
 
 /** Keeps only the path of the page to return to, so sign-in can't bounce to another site. */
 function samePath(callbackUrl: string | undefined): string {
@@ -30,18 +47,17 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 }) {
   const { error, callbackUrl } = await searchParams;
-  const session = await auth();
-  if (isAllowed(session?.user?.login)) redirect("/");
-
   const redirectTo = samePath(callbackUrl);
+  // Signed in already: carry on. Someone without a storefront yet sees what to do from the layout.
+  if (await getViewer().catch(() => null)) redirect(redirectTo);
 
   const brand = (
     <div className="flex items-center gap-2 font-semibold">
       <ServerCogIcon className="size-5" />
-      WaaS Admin
+      AnyPress
     </div>
   );
-  const blurb = "Health of the provisioning API, its background jobs, every store and its backups.";
+  const blurb = "Your stores, their backups and versions, API keys, webhooks and every call your storefront makes.";
 
   // Large screens: the motion panel beside the form. Smaller ones: one centred column
   // (brand, a smaller motion, the form) with the blurb at the bottom. Each layout has
@@ -70,26 +86,17 @@ export default async function LoginPage({
           <div className="text-center">
             <h2 className="text-3xl font-bold lg:mt-6">Sign in</h2>
             <p className="text-muted-foreground mt-2 text-sm">
-              Use the GitHub account that has access to this dashboard.
+              Use the email address your invitation was sent to.
             </p>
           </div>
 
           {error && (
             <p role="alert" className="bg-destructive/10 text-destructive rounded-md border border-destructive/20 p-3 text-sm">
-              {errors[error] ?? "Sign-in failed. Try again."}
+              {errors[error.toLowerCase()] ?? "Sign-in failed. Try again."}
             </p>
           )}
 
-          <form
-            action={async () => {
-              "use server";
-              await signIn("github", { redirectTo });
-            }}>
-            <Button type="submit" variant="outline" className="h-11 w-full lg:h-8">
-              <GithubIcon />
-              Continue with GitHub
-            </Button>
-          </form>
+          <SignInButtons providers={providers()} returnTo={redirectTo} />
         </div>
         <p className="text-muted-foreground mx-auto mt-8 max-w-xs text-center text-xs lg:hidden">{blurb}</p>
       </main>

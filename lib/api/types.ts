@@ -136,11 +136,14 @@ export type JobFilter = { productId?: string };
 
 export type Listing<T> = { items: T[]; total: number };
 
-/** One call to the provisioning API: a product API call (v1) or an admin change. */
+/**
+ * One call to the provisioning API: a product API call (v1), an admin change, or a change a
+ * storefront's signed-in people made from this dashboard (account).
+ */
 export type ApiRequest = {
   id: string;
   at: string;
-  source: "v1" | "admin";
+  source: "v1" | "admin" | "account";
   method: string;
   path: string;
   /** The query string without its "?". */

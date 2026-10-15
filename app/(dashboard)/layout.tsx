@@ -2,22 +2,27 @@ import React from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { auth, isAllowed, signOut } from "@/auth";
+import { canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import type { StorefrontOption } from "@/components/layout/header/store-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { SiteHeader } from "@/components/layout/header";
+import { SessionKeepAlive } from "@/components/auth/session-keep-alive";
+import { NoStorefront } from "@/components/auth/no-storefront";
+
+const roleNames = { owner: "Owner", admin: "Admin", member: "Can view" } as const;
 
 export default async function DashboardLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // proxy.ts already guards these routes; checked again here so a page never renders
-  // for a session outside the allowlist, whatever the proxy matcher says.
-  const session = await auth();
-  if (!session?.user || !isAllowed(session.user.login)) redirect("/login");
+  // proxy.ts only checks that a session cookie is there; this asks the API whose it is.
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  // Signed in, but not a platform admin and not (yet) in a storefront's organization.
+  if (!canUseDashboard(viewer)) return <NoStorefront viewer={viewer} />;
 
   const cookieStore = await cookies();
   const defaultOpen =
@@ -26,18 +31,33 @@ export default async function DashboardLayout({
 
   const api = getAdminApi();
   // The storefront switcher should not take the whole page down when the API is
-  // unreachable; the page itself shows that error.
-  let storefronts: StorefrontOption[] = [];
-  try {
-    storefronts = (await api.overview()).products;
-  } catch {
-    storefronts = [];
+  // unreachable; the page itself shows that error. Customers see one storefront: no switcher.
+  let storefronts: StorefrontOption[] | null = null;
+  if (viewer.isAdmin) {
+    try {
+      storefronts = (await api.overview()).products;
+    } catch {
+      storefronts = [];
+    }
   }
 
-  async function signOutAction() {
-    "use server";
-    await signOut({ redirectTo: "/login" });
-  }
+  const active = viewer.active;
+  const user = {
+    name: viewer.user.name || viewer.user.email,
+    detail: active
+      ? `${active.productName} · ${roleNames[active.role as keyof typeof roleNames] ?? active.role}`
+      : viewer.user.githubLogin
+        ? `@${viewer.user.githubLogin}`
+        : viewer.user.email,
+    image: viewer.user.image
+  };
+  const memberships = viewer.isAdmin
+    ? []
+    : viewer.memberships.map((m) => ({
+        organizationId: m.organizationId,
+        productName: m.productName,
+        active: m.organizationId === active?.organizationId
+      }));
 
   return (
     <SidebarProvider
@@ -52,18 +72,10 @@ export default async function DashboardLayout({
             "calc(100vh - var(--header-height) - (var(--content-padding) * 2.2) - (var(--content-margin) * 2.2))"
         } as React.CSSProperties
       }>
+      {!api.isFixture && <SessionKeepAlive />}
       <AppSidebar />
       <SidebarInset>
-        <SiteHeader
-          storefronts={storefronts}
-          isFixture={api.isFixture}
-          user={{
-            login: session.user.login,
-            name: session.user.name ?? null,
-            image: session.user.image ?? null
-          }}
-          signOutAction={signOutAction}
-        />
+        <SiteHeader storefronts={storefronts} isFixture={api.isFixture} user={user} memberships={memberships} />
         <div className="flex flex-1 flex-col">
           <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:w-full xl:group-data-[theme-content-layout=centered]/layout:max-w-7xl">
             {children}

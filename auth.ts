@@ -1,7 +1,21 @@
-import NextAuth from "next-auth";
-import GitHub from "next-auth/providers/github";
+import "server-only";
 
-/** GitHub logins allowed to sign in, from ALLOWED_GITHUB_LOGINS (comma or space separated). */
+import { cache } from "react";
+import { cookies } from "next/headers";
+
+/**
+ * Sign-in runs on the provisioning API (Better Auth, the API's docs/accounts.md). The dashboard
+ * passes /api/auth/* through to it (app/api/auth/[...all]/route.ts), so the session cookie is the
+ * dashboard's own. On the server, the cookie goes on to the API to find out who is signed in.
+ *
+ * Two kinds of people sign in:
+ * - platform admins: GitHub logins listed in ALLOWED_GITHUB_LOGINS, or email addresses listed in
+ *   ALLOWED_ADMIN_EMAILS. They see every storefront, through the API's /admin routes and the admin token.
+ * - customers: members of a storefront's organization. They see their own storefront only,
+ *   through the API's /account routes with their session; the API does the narrowing.
+ */
+
+/** GitHub logins of the platform admins, from ALLOWED_GITHUB_LOGINS (comma or space separated). */
 export function allowedLogins(): Set<string> {
   return new Set(
     (process.env.ALLOWED_GITHUB_LOGINS ?? "")
@@ -15,35 +29,90 @@ export function isAllowed(login: unknown): boolean {
   return typeof login === "string" && allowedLogins().has(login.toLowerCase());
 }
 
-declare module "next-auth" {
-  interface Session {
-    user: { login: string; name?: string | null; email?: string | null; image?: string | null };
-  }
+/** Email addresses of the platform admins, from ALLOWED_ADMIN_EMAILS (comma or space separated). */
+export function allowedAdminEmails(): Set<string> {
+  return new Set(
+    (process.env.ALLOWED_ADMIN_EMAILS ?? "")
+      .split(/[\s,]+/)
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean)
+  );
 }
 
-// GitHub OAuth app credentials come from AUTH_GITHUB_ID and AUTH_GITHUB_SECRET, the
-// session cookie is signed with AUTH_SECRET. Sessions are stateless JWTs: no database.
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [GitHub],
-  pages: { signIn: "/login", error: "/login" },
-  session: { strategy: "jwt", maxAge: 12 * 60 * 60 },
-  callbacks: {
-    // Refuses anyone outside the allowlist at sign-in.
-    signIn({ profile }) {
-      return isAllowed(profile?.login);
-    },
-    jwt({ token, profile }) {
-      if (profile?.login) token.login = profile.login;
-      return token;
-    },
-    session({ session, token }) {
-      session.user.login = typeof token.login === "string" ? token.login : "";
-      return session;
-    },
-    // Checked on every request by proxy.ts, so removing a login from the allowlist
-    // locks it out without waiting for its session to expire.
-    authorized({ auth }) {
-      return isAllowed(auth?.user?.login);
-    }
-  }
+/** A platform admin: by GitHub login, or by an email address the API has verified. */
+export function isPlatformAdmin(user: { githubLogin: string | null; email: string; emailVerified?: boolean }): boolean {
+  if (isAllowed(user.githubLogin)) return true;
+  return user.emailVerified === true && allowedAdminEmails().has(user.email.toLowerCase());
+}
+
+export type OrgRole = "owner" | "admin" | "member";
+
+export interface Membership {
+  organizationId: string;
+  organizationName: string;
+  productId: string;
+  productName: string;
+  role: OrgRole;
+}
+
+export interface Viewer {
+  user: { id: string; name: string; email: string; emailVerified?: boolean; image: string | null; githubLogin: string | null };
+  /** True for a platform admin, who sees every storefront. */
+  isAdmin: boolean;
+  memberships: Membership[];
+  /** The storefront a customer acts for; null for an admin, or a customer who must pick one. */
+  active: Membership | null;
+  /** The Better Auth cookies, to pass on to the API for a customer. */
+  cookie: string;
+}
+
+const fixtureViewer: Viewer = {
+  user: { id: "fixture", name: "Sample Admin", email: "admin@example.com", image: null, githubLogin: "sample-admin" },
+  isAdmin: true,
+  memberships: [],
+  active: null,
+  cookie: ""
+};
+
+/** Better Auth's cookies from this request, as a Cookie header; empty when there are none. */
+export async function authCookieHeader(): Promise<string> {
+  const store = await cookies();
+  return store
+    .getAll()
+    .filter((c) => c.name.startsWith("better-auth.") || c.name.startsWith("__Secure-better-auth."))
+    .map((c) => `${c.name}=${c.value}`)
+    .join("; ");
+}
+
+/**
+ * Who is signed in, or null. Asks the API once per request (GET /account). An API that is down
+ * throws, so a page shows its error instead of sending the person back to sign in.
+ */
+export const getViewer = cache(async (): Promise<Viewer | null> => {
+  if (process.env.WAAS_API_FIXTURES === "1") return fixtureViewer;
+  const baseUrl = process.env.WAAS_API_URL;
+  if (!baseUrl) throw new Error("Set WAAS_API_URL, or WAAS_API_FIXTURES=1 for sample data.");
+  const cookie = await authCookieHeader();
+  if (!cookie) return null;
+  const response = await fetch(new URL("/account", baseUrl), {
+    headers: { Cookie: cookie, Accept: "application/json" },
+    cache: "no-store",
+    signal: AbortSignal.timeout(10_000)
+  });
+  if (response.status === 403) return null;
+  if (!response.ok) throw new Error(`Provisioning API returned ${response.status} for /account`);
+  const body = (await response.json()) as Pick<Viewer, "user" | "memberships" | "active">;
+  const isAdmin = isPlatformAdmin(body.user);
+  return { ...body, isAdmin, active: isAdmin ? null : body.active, cookie };
 });
+
+/** Whether the viewer may use the dashboard's pages: an admin, or a customer with a storefront. */
+export function canUseDashboard(viewer: Viewer | null): viewer is Viewer {
+  return !!viewer && (viewer.isAdmin || !!viewer.active);
+}
+
+/** Owners and admins of a storefront may make changes; members may only look. */
+export function canChange(viewer: Viewer): boolean {
+  if (viewer.isAdmin) return true;
+  return (viewer.active?.role ?? "").split(",").some((r) => r.trim() === "owner" || r.trim() === "admin");
+}

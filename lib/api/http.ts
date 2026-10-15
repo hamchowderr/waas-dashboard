@@ -125,7 +125,13 @@ const toNewApiKey = (k: WireNewApiKey): NewApiKey => ({ ...toApiKey(k), secret: 
 
 type TenantName = { name: string; productId: string; productName: string };
 
-/** Calls the admin endpoints with the admin token. Responses are never cached. */
+/**
+ * How to reach the API: the admin token on /admin for a platform admin, or a customer's session
+ * on /account, where the API answers the same routes narrowed to their storefront.
+ */
+export type ApiAccess = { prefix: "/admin" | "/account"; headers: Record<string, string> };
+
+/** Calls the admin endpoints (or their /account twins). Responses are never cached. */
 export class HttpAdminApi implements AdminApi {
   readonly isFixture = false;
   private tenantIndex?: Promise<Map<string, TenantName>>;
@@ -133,12 +139,19 @@ export class HttpAdminApi implements AdminApi {
 
   constructor(
     private readonly baseUrl: string,
-    private readonly token: string
+    private readonly access: () => Promise<ApiAccess>
   ) {}
 
+  /** The request's URL and headers; paths below are written as /admin/… */
+  private async target(path: string): Promise<{ url: URL; headers: Record<string, string> }> {
+    const { prefix, headers } = await this.access();
+    return { url: new URL(prefix + path.replace(/^\/admin/, ""), this.baseUrl), headers };
+  }
+
   private async get<T>(path: string, { allow404 = false } = {}): Promise<T | null> {
-    const response = await fetch(new URL(path, this.baseUrl), {
-      headers: { Authorization: `Bearer ${this.token}`, Accept: "application/json" },
+    const { url, headers } = await this.target(path);
+    const response = await fetch(url, {
+      headers: { ...headers, Accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(10_000)
     });
@@ -149,10 +162,11 @@ export class HttpAdminApi implements AdminApi {
 
   /** A change. Returns the JSON body, or null for the API's bodiless 200s. */
   private async send<T>(method: "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T | null> {
-    const response = await fetch(new URL(path, this.baseUrl), {
+    const { url, headers } = await this.target(path);
+    const response = await fetch(url, {
       method,
       headers: {
-        Authorization: `Bearer ${this.token}`,
+        ...headers,
         Accept: "application/json",
         ...(body === undefined ? {} : { "Content-Type": "application/json" })
       },

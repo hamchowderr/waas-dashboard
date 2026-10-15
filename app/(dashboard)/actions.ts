@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { auth, isAllowed } from "@/auth";
+import { canChange, canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
 import type {
@@ -20,15 +20,17 @@ import type {
 import { webhookEventLabels } from "@/lib/format";
 
 // Every change the dashboard makes goes through these actions. Server actions can be
-// called directly, not only from our pages, so each one checks the session itself.
+// called directly, not only from our pages, so each one checks the session itself. A customer's
+// changes go to the API's /account routes, which only reach their own storefront.
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function run<T>(work: () => Promise<T>, revalidate: string[]): Promise<ActionResult<T>> {
-  const session = await auth();
-  if (!isAllowed(session?.user?.login)) return { ok: false, error: "You are signed out. Sign in again." };
+  const viewer = await getViewer().catch(() => null);
+  if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
+  if (!canChange(viewer)) return { ok: false, error: "You can view this storefront but not change it. Ask an owner or admin." };
   try {
     const data = await work();
     for (const path of revalidate) revalidatePath(path, "layout");

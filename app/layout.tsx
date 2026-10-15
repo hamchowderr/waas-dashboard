@@ -13,7 +13,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
-  title: { default: "WaaS Admin", template: "%s · WaaS Admin" },
+  title: { default: "AnyPress", template: "%s · AnyPress" },
   description: "Operations dashboard for the WaaS provisioning API.",
   robots: { index: false, follow: false }
 };

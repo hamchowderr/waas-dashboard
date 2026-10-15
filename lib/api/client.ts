@@ -34,7 +34,8 @@ import type {
   WebhookSecret
 } from "./types";
 import { FixtureAdminApi } from "./fixtures";
-import { HttpAdminApi } from "./http";
+import { getViewer } from "@/auth";
+import { AdminApiError, HttpAdminApi, type ApiAccess } from "./http";
 
 /** Read-only view of the provisioning API's admin endpoints. Server code only. */
 export interface AdminApi {
@@ -106,17 +107,26 @@ export interface AdminApi {
 }
 
 /**
- * The live API when WAAS_API_URL and WAAS_ADMIN_TOKEN are set, sample data when
- * WAAS_API_FIXTURES=1. Anything else is a configuration error, so a missing variable
- * never silently shows sample data in production. One instance per request, so the
- * layout and the page share what they load.
+ * The live API when WAAS_API_URL is set, sample data when WAAS_API_FIXTURES=1. Anything else is
+ * a configuration error, so a missing variable never silently shows sample data in production.
+ * A platform admin reaches /admin with WAAS_ADMIN_TOKEN; a signed-in customer reaches /account
+ * with their session, and the API shows them their storefront only. One instance per request,
+ * so the layout and the page share what they load.
  */
 export const getAdminApi = cache((): AdminApi => {
   if (process.env.WAAS_API_FIXTURES === "1") return new FixtureAdminApi();
   const baseUrl = process.env.WAAS_API_URL;
-  const token = process.env.WAAS_ADMIN_TOKEN;
-  if (!baseUrl || !token) {
-    throw new Error("Set WAAS_API_URL and WAAS_ADMIN_TOKEN, or WAAS_API_FIXTURES=1 for sample data.");
-  }
-  return new HttpAdminApi(baseUrl, token);
+  if (!baseUrl) throw new Error("Set WAAS_API_URL, or WAAS_API_FIXTURES=1 for sample data.");
+  return new HttpAdminApi(baseUrl, access);
 });
+
+async function access(): Promise<ApiAccess> {
+  const viewer = await getViewer();
+  if (!viewer) throw new AdminApiError(403, "/account", "You are signed out. Sign in again.");
+  if (viewer.isAdmin) {
+    const token = process.env.WAAS_ADMIN_TOKEN;
+    if (!token) throw new Error("Set WAAS_ADMIN_TOKEN so platform admins can see every storefront.");
+    return { prefix: "/admin", headers: { Authorization: `Bearer ${token}` } };
+  }
+  return { prefix: "/account", headers: { Cookie: viewer.cookie, "X-Session-Auth": "1" } };
+}

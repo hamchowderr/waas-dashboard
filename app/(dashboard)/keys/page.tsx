@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, StoreIcon } from "lucide-react";
 
+import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +19,9 @@ export default async function KeysPage({
   const { product: productId } = await searchParams;
   const api = getAdminApi();
   const products = await api.products();
-  const product = products.find((p) => p.id === productId);
+  // A customer has one storefront, so their pages open on it.
+  const onlyOne = !(await getViewer())?.isAdmin && products.length === 1 ? products[0] : undefined;
+  const product = products.find((p) => p.id === productId) ?? onlyOne;
 
   // Keys belong to one storefront: pick one first, or set up a new agency.
   if (!product) {

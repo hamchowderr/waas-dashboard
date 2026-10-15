@@ -24,7 +24,7 @@ const columnLabels: Record<string, string> = {
 const tabs: TableTab<ApiRequest>[] = [
   { value: "errors", label: "Errors", match: (r) => r.status >= 400 },
   { value: "v1", label: "Storefront calls", match: (r) => r.source === "v1" },
-  { value: "admin", label: "Admin changes", match: (r) => r.source === "admin" }
+  { value: "admin", label: "Dashboard changes", match: (r) => r.source !== "v1" }
 ];
 
 function readField(row: ApiRequest, path: string): unknown {
@@ -88,7 +88,7 @@ const columns: ColumnDef<ApiRequest>[] = [
   {
     accessorKey: "productName",
     header: "Storefront",
-    cell: ({ row }) => row.original.productName ?? <span className="text-muted-foreground">{row.original.source === "admin" ? "Admin" : "Unknown key"}</span>
+    cell: ({ row }) => row.original.productName ?? <span className="text-muted-foreground">{row.original.source === "v1" ? "Unknown key" : "Admin"}</span>
   },
   {
     accessorKey: "durationMs",
