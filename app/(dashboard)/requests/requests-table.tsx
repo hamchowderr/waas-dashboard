@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { GlobeIcon, StoreIcon, TagIcon } from "lucide-react";
+import { CircleAlertIcon, GlobeIcon, KeyRoundIcon, ShoppingBagIcon, StoreIcon, TagIcon } from "lucide-react";
 
 import { SortableHeader } from "@/components/admin/sortable-header";
 import type { TableFacet } from "@/components/admin/table-filters";
@@ -10,12 +10,14 @@ import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { Badge } from "@/components/ui/badge";
 import type { ApiRequest } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
+import { madeWith } from "@/lib/requests";
 
 const columnLabels: Record<string, string> = {
   at: "Time",
   path: "Request",
   status: "Status",
   tenantName: "Store",
+  madeWith: "Made with",
   productName: "Storefront",
   durationMs: "Took",
   ip: "Caller"
@@ -23,13 +25,15 @@ const columnLabels: Record<string, string> = {
 
 const tabs: TableTab<ApiRequest>[] = [
   { value: "errors", label: "Errors", match: (r) => r.status >= 400 },
-  { value: "v1", label: "Storefront calls", match: (r) => r.source === "v1" },
+  { value: "v1", label: "API calls", match: (r) => r.source === "v1" },
   { value: "admin", label: "Dashboard changes", match: (r) => r.source !== "v1" }
 ];
 
 function readField(row: ApiRequest, path: string): unknown {
   if (path === "search")
-    return `${row.path} ${row.query ?? ""} ${row.tenantName ?? ""} ${row.externalId ?? ""} ${row.error ?? ""} ${row.ip ?? ""} ${row.apiKeyId ?? ""}`;
+    return `${row.path} ${row.query ?? ""} ${row.tenantName ?? ""} ${row.externalId ?? ""} ${row.error ?? ""} ${row.ip ?? ""} ${row.apiKeyId ?? ""} ${row.apiKeyLabel ?? ""}`;
+  if (path === "madeWith") return madeWith(row);
+  if (path === "store") return row.tenantName ?? "";
   return row[path as keyof ApiRequest];
 }
 
@@ -86,6 +90,16 @@ const columns: ColumnDef<ApiRequest>[] = [
     }
   },
   {
+    id: "madeWith",
+    accessorFn: (r) => madeWith(r),
+    header: "Made with",
+    cell: ({ row }) => (
+      <span className="whitespace-nowrap" title={row.original.apiKeyId ?? undefined}>
+        {madeWith(row.original)}
+      </span>
+    )
+  },
+  {
     accessorKey: "productName",
     header: "Storefront",
     cell: ({ row }) => row.original.productName ?? <span className="text-muted-foreground">{row.original.source === "v1" ? "Unknown key" : "Admin"}</span>
@@ -111,22 +125,26 @@ const columns: ColumnDef<ApiRequest>[] = [
   },
 ];
 
-export function RequestsTable({ requests }: { requests: ApiRequest[] }) {
+/** `showStorefront`: the platform admin's view of every storefront; an agency sees only its own. */
+export function RequestsTable({ requests, showStorefront = true }: { requests: ApiRequest[]; showStorefront?: boolean }) {
+  const values = (pick: (r: ApiRequest) => string | null | undefined) =>
+    [...new Set(requests.map(pick).filter((v): v is string => !!v))].sort().map((v) => ({ value: v, label: v }));
   const facets: TableFacet[] = [
+    { id: "store", label: "Store", options: values((r) => r.tenantName), icon: <ShoppingBagIcon /> },
+    {
+      id: "status",
+      label: "Status",
+      options: [...new Set(requests.map((r) => r.status))].sort((a, b) => a - b).map((v) => ({ value: String(v), label: String(v) })),
+      icon: <CircleAlertIcon />
+    },
+    { id: "madeWith", label: "Made with", options: values(madeWith), icon: <KeyRoundIcon /> },
     {
       id: "method",
       label: "Method",
       options: [...new Set(requests.map((r) => r.method))].sort().map((v) => ({ value: v, label: v })),
       icon: <TagIcon />
     },
-    {
-      id: "productName",
-      label: "Storefront",
-      options: [...new Set(requests.map((r) => r.productName).filter((v): v is string => !!v))]
-        .sort()
-        .map((v) => ({ value: v, label: v })),
-      icon: <StoreIcon />
-    },
+    ...(showStorefront ? [{ id: "productName", label: "Storefront", options: values((r) => r.productName), icon: <StoreIcon /> }] : []),
     {
       id: "ip",
       label: "Caller IP",
@@ -138,10 +156,10 @@ export function RequestsTable({ requests }: { requests: ApiRequest[] }) {
   return (
     <AdminDataTable
       data={requests}
-      columns={columns}
+      columns={showStorefront ? columns : columns.filter((c) => !("accessorKey" in c && c.accessorKey === "productName"))}
       columnLabels={columnLabels}
       getRowId={(r) => r.id}
-      searchPlaceholder="Path, store, error, IP..."
+      searchPlaceholder="Path, store, key, error, IP..."
       facets={facets}
       readField={readField}
       tabs={tabs}

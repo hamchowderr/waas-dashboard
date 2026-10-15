@@ -81,7 +81,7 @@ Archives (version and template uploads) are the exception: the API returns an up
 
 With neither, pages show an error rather than sample data, so a missing variable is never mistaken for real data.
 
-`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (the version and template endpoints take the same bodies as the API's /v1 operations). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200; the request log its newest 1,000) and filtered in the browser.
+`lib/api/wire.ts` mirrors the API's `openapi/admin/admin-api.yaml` (the version and template endpoints take the same bodies as the API's /v1 operations). `lib/api/http.ts` maps those bodies to the page types in `lib/api/types.ts`, and adds the store and storefront names that the backups and jobs lists carry only as ids. Lists are read whole (up to 2,000 rows each, in pages of 200; the request log its newest 1,000 in the chosen time range) and filtered in the browser.
 
 Every page works on phones and tablets: lists turn into cards below 1024px wide.
 

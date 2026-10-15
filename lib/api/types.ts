@@ -153,8 +153,12 @@ export type ApiRequest = {
   productId: string | null;
   productName: string | null;
   apiKeyId: string | null;
+  /** The key's label, when it has one. */
+  apiKeyLabel: string | null;
+  /** The signed-in person who made the call from this dashboard, or through an AI app they connected. */
+  userId: string | null;
   tenantId: string | null;
-  /** Null once the store is deleted, or when the call named no store. */
+  /** Null once the store is deleted, or when the call named no store (or another storefront's). */
   tenantName: string | null;
   externalId: string | null;
   ip: string | null;
@@ -164,7 +168,13 @@ export type ApiRequest = {
 };
 
 export type RequestOutcome = "ok" | "client-error" | "server-error" | "error";
-export type RequestFilter = { productId?: string; tenantId?: string; outcome?: RequestOutcome };
+export type RequestFilter = {
+  productId?: string;
+  tenantId?: string;
+  outcome?: RequestOutcome;
+  /** Only calls at or after this ISO time. */
+  from?: string;
+};
 
 export type RequestLog = Listing<ApiRequest> & {
   last24Hours: { total: number; clientErrors: number; serverErrors: number };
