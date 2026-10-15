@@ -321,6 +321,8 @@ const requestLog: ApiRequest[] = Array.from({ length: 80 }, (_, i): ApiRequest =
     productId: product.id,
     productName: product.name,
     apiKeyId: uuid(product === products[0] ? 1 : 2, 9),
+    apiKeyLabel: "Storefront plugin",
+    userId: null,
     tenantId: tenant.id,
     tenantName: tenant.name,
     externalId: null,
@@ -358,6 +360,7 @@ const requestLog: ApiRequest[] = Array.from({ length: 80 }, (_, i): ApiRequest =
       productId: null,
       productName: null,
       apiKeyId: null,
+      apiKeyLabel: null,
       userAgent: "node"
     };
   if (kind % 2 === 0)
@@ -569,7 +572,10 @@ export class FixtureAdminApi implements AdminApi {
   async requests(filter: RequestFilter = {}): Promise<RequestLog> {
     const ranges = { ok: [0, 399], "client-error": [400, 499], "server-error": [500, 599], error: [400, 599] } as const;
     const items = requestLog.filter((r) => {
-      if (filter.productId && r.productId !== filter.productId) return false;
+      // A storefront's log also has failed sign-ins with its keys, which carry no storefront.
+      const ownKey = r.productId === null && requestLog.some((o) => o.productId === filter.productId && o.apiKeyId === r.apiKeyId);
+      if (filter.productId && r.productId !== filter.productId && !ownKey) return false;
+      if (filter.from && r.at < filter.from) return false;
       if (filter.tenantId && r.tenantId !== filter.tenantId) return false;
       if (filter.outcome) {
         const [low, high] = ranges[filter.outcome];

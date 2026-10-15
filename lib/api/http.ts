@@ -500,11 +500,13 @@ export class HttpAdminApi implements AdminApi {
     // The log can hold a month of calls: the newest 1,000 that match is plenty to browse.
     const { items, total, first } = await this.getAll<WireRequestsPage["items"][number]>(
       "/admin/requests",
-      { productId: filter.productId, tenantId: filter.tenantId, outcome: filter.outcome },
+      { productId: filter.productId, tenantId: filter.tenantId, outcome: filter.outcome, from: filter.from },
       REQUEST_PAGES
     );
     const page = first as WireRequestsPage;
-    return { items, total, last24Hours: page.last24Hours, retentionDays: page.retentionDays };
+    // An older API sends no key labels or user ids.
+    const rows = items.map((r) => ({ ...r, apiKeyLabel: r.apiKeyLabel ?? null, userId: r.userId ?? null }));
+    return { items: rows, total, last24Hours: page.last24Hours, retentionDays: page.retentionDays };
   }
 
   async jobs(filter: JobFilter = {}): Promise<JobsList> {
