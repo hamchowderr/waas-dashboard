@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 
 import { canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import type { StorefrontOption } from "@/components/layout/header/store-switcher";
+import type { StorefrontOption } from "@/components/shell/storefront-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
-import { SiteHeader } from "@/components/layout/header";
+import { AppSidebar } from "@/components/shell/app-sidebar";
+import { SiteHeader } from "@/components/shell/site-header";
 import { SessionKeepAlive } from "@/components/auth/session-keep-alive";
 import { NoStorefront } from "@/components/auth/no-storefront";
 

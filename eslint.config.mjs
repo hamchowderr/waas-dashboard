@@ -5,10 +5,10 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // Vendored code from shadcn/ui and the Shadcn UI Kit, kept as shipped so kit updates
-  // apply cleanly. Our own code keeps the full rule set.
+  // Vendored code from shadcn/ui, kept as shipped so registry updates apply cleanly.
+  // Our own code keeps the full rule set.
   {
-    files: ["components/ui/**", "components/theme-customizer/**", "components/layout/**", "hooks/**"],
+    files: ["components/ui/**", "hooks/**"],
     rules: {
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/refs": "off",
