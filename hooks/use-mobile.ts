@@ -23,7 +23,7 @@ export function useIsMobile() {
   return useBelow(MOBILE_BREAKPOINT)
 }
 
-/** Below the lg breakpoint; the kit's sidebar collapses there. */
+/** Below the lg breakpoint, where the sidebar collapses to icons. */
 export function useIsTablet() {
   return useBelow(TABLET_BREAKPOINT)
 }

@@ -87,7 +87,7 @@ Every page works on phones and tablets: lists turn into cards below 1024px wide.
 
 Fonts are local files from `@fontsource` (`lib/fonts.ts`), so builds need no network for fonts.
 
-The layout, tables and overview cards come from the [Shadcn UI Kit](https://shadcnuikit.com) (`components/layout/`, `components/theme-customizer/`). Adding kit components needs a kit licence key in `SHADCNUIKIT_API_KEY`; building and running don't.
+Building blocks in `components/ui/` come from [shadcn/ui](https://ui.shadcn.com) and are added with its CLI (`npx shadcn add <name>`). The sidebar, header and search are in `components/shell/`, the list toolbar in `components/admin/`, and the Appearance panel (the palette icon in the header) in `components/shell/appearance-panel.tsx`. [DESIGN.md](DESIGN.md) describes the look.
 
 ## Screenshots
 
@@ -105,4 +105,4 @@ From a local run with sample data:
 
 ## License
 
-GPL-3.0-or-later for this project's own code. See [LICENSE](LICENSE). Parts taken from the Shadcn UI Kit (the layout, tables and overview cards) stay under the kit's own license.
+GPL-3.0-or-later. See [LICENSE](LICENSE). The shadcn/ui components in `components/ui/` stay under shadcn/ui's MIT license.
