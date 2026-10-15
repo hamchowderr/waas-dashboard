@@ -103,6 +103,10 @@ From a local run with sample data:
 | ![Templates](docs/screenshots/11-templates.png) | ![Upload a template](docs/screenshots/12-upload-template-dialog.png) |
 | ![Retry one job](docs/screenshots/13-job-retry-dialog.png) | ![Retry several](docs/screenshots/14-jobs-bulk-retry.png) |
 
+## History
+
+Every pull request so far, with its description and Beads issue, is listed in [docs/history.md](docs/history.md).
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE). The shadcn/ui components in `components/ui/` stay under shadcn/ui's MIT license.
