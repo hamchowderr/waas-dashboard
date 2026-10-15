@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { GlobeIcon, SearchIcon, StoreIcon, TagIcon } from "lucide-react";
+import { GlobeIcon, StoreIcon, TagIcon } from "lucide-react";
 
-import { SortableHeader } from "@/components/table-filter-helpers";
+import { SortableHeader } from "@/components/admin/sortable-header";
+import type { TableFacet } from "@/components/admin/table-filters";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { Badge } from "@/components/ui/badge";
-import type { FilterField } from "@/components/ui/filters/filters-types";
 import type { ApiRequest } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 
@@ -112,35 +112,25 @@ const columns: ColumnDef<ApiRequest>[] = [
 ];
 
 export function RequestsTable({ requests }: { requests: ApiRequest[] }) {
-  const filterFields: FilterField[] = [
-    { id: "search", label: "Search", type: "text", placeholder: "Path, store, error, IP...", icon: <SearchIcon /> },
+  const facets: TableFacet[] = [
     {
       id: "method",
       label: "Method",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: [...new Set(requests.map((r) => r.method))].sort().map((v) => ({ value: v, label: v })),
-      searchable: false,
       icon: <TagIcon />
     },
     {
       id: "productName",
       label: "Storefront",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: [...new Set(requests.map((r) => r.productName).filter((v): v is string => !!v))]
         .sort()
         .map((v) => ({ value: v, label: v })),
-      searchable: false,
       icon: <StoreIcon />
     },
     {
       id: "ip",
       label: "Caller IP",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: [...new Set(requests.map((r) => r.ip).filter((v): v is string => !!v))].sort().map((v) => ({ value: v, label: v })),
-      searchable: true,
       icon: <GlobeIcon />
     }
   ];
@@ -151,7 +141,8 @@ export function RequestsTable({ requests }: { requests: ApiRequest[] }) {
       columns={columns}
       columnLabels={columnLabels}
       getRowId={(r) => r.id}
-      filterFields={filterFields}
+      searchPlaceholder="Path, store, error, IP..."
+      facets={facets}
       readField={readField}
       tabs={tabs}
       tabCounts

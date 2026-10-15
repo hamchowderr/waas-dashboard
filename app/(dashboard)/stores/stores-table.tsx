@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { ArchiveIcon, GitBranchIcon, GlobeIcon, SearchIcon, StoreIcon } from "lucide-react";
+import { GitBranchIcon, StoreIcon } from "lucide-react";
 
-import { SortableHeader } from "@/components/table-filter-helpers";
+import { SortableHeader } from "@/components/admin/sortable-header";
+import type { TableFacet } from "@/components/admin/table-filters";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
-import type { FilterField } from "@/components/ui/filters/filters-types";
 import { StatusCode, type Tenant } from "@/lib/api/types";
-import { formatAgo, formatDate, statusMeta } from "@/lib/format";
+import { formatAgo, formatDate } from "@/lib/format";
 
 const columnLabels: Record<string, string> = {
   name: "Store",
@@ -96,36 +96,19 @@ export function StoresTable({ tenants }: { tenants: Tenant[] }) {
   const router = useRouter();
   const unique = (values: string[]) => [...new Set(values)].sort();
 
-  const filterFields: FilterField[] = [
-    { id: "search", label: "Search", type: "text", placeholder: "Name, subscription, domain...", icon: <SearchIcon /> },
+  const facets: TableFacet[] = [
     {
       id: "productName",
       label: "Storefront",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: unique(tenants.map((t) => t.productName)).map((v) => ({ value: v, label: v })),
-      searchable: false,
       icon: <StoreIcon />
     },
     {
       id: "versionName",
       label: "Version",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: unique(tenants.map((t) => t.versionName)).map((v) => ({ value: v, label: v })),
-      searchable: false,
       icon: <GitBranchIcon />
-    },
-    {
-      id: "statusCode",
-      label: "Status",
-      type: "select",
-      defaultOperator: "is_any_of",
-      options: Object.entries(statusMeta).map(([value, meta]) => ({ value, label: meta.label })),
-      searchable: false,
-      icon: <ArchiveIcon />
-    },
-    { id: "mainDomain", label: "Domain", type: "text", placeholder: "example.com", icon: <GlobeIcon /> }
+    }
   ];
 
   return (
@@ -134,7 +117,8 @@ export function StoresTable({ tenants }: { tenants: Tenant[] }) {
       columns={columns}
       columnLabels={columnLabels}
       getRowId={(t) => t.id}
-      filterFields={filterFields}
+      searchPlaceholder="Name, subscription, domain..."
+      facets={facets}
       readField={readField}
       tabs={tabs}
       tabCounts

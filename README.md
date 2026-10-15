@@ -87,7 +87,7 @@ Every page works on phones and tablets: lists turn into cards below 1024px wide.
 
 Fonts are local files from `@fontsource` (`lib/fonts.ts`), so builds need no network for fonts.
 
-The layout, tables and overview cards come from the [Shadcn UI Kit](https://shadcnuikit.com) (`components/layout/`, `components/theme-customizer/`, `components/ui/filters/`). Adding kit components needs a kit licence key in `SHADCNUIKIT_API_KEY`; building and running don't.
+The layout, tables and overview cards come from the [Shadcn UI Kit](https://shadcnuikit.com) (`components/layout/`, `components/theme-customizer/`). Adding kit components needs a kit licence key in `SHADCNUIKIT_API_KEY`; building and running don't.
 
 ## Screenshots
 

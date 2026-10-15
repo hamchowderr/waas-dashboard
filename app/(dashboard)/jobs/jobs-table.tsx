@@ -3,12 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { ListChecksIcon, RotateCcwIcon, SearchIcon, StoreIcon } from "lucide-react";
+import { ListChecksIcon, RotateCcwIcon, StoreIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { retryFailures } from "../actions";
 
-import { SortableHeader } from "@/components/table-filter-helpers";
+import { SortableHeader } from "@/components/admin/sortable-header";
+import type { TableFacet } from "@/components/admin/table-filters";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { JobStateBadge } from "@/components/admin/job-state-badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,6 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import type { FilterField } from "@/components/ui/filters/filters-types";
 import type { Job } from "@/lib/api/types";
 import { formatAgo, formatDateTime, jobTypeLabel, jobTypeLabels } from "@/lib/format";
 
@@ -115,26 +115,19 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
   const [viewing, setViewing] = React.useState<Job | null>(null);
   const [pending, startTransition] = React.useTransition();
 
-  const filterFields: FilterField[] = [
-    { id: "search", label: "Search", type: "text", placeholder: "Job, store, error...", icon: <SearchIcon /> },
+  const facets: TableFacet[] = [
     {
       id: "type",
       label: "Job type",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: Object.entries(jobTypeLabels).map(([value, label]) => ({ value, label })),
-      searchable: false,
       icon: <ListChecksIcon />
     },
     {
       id: "productName",
       label: "Storefront",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: [...new Set(jobs.map((j) => j.productName).filter((v): v is string => !!v))]
         .sort()
         .map((v) => ({ value: v, label: v })),
-      searchable: false,
       icon: <StoreIcon />
     }
   ];
@@ -146,7 +139,8 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
         columns={columns}
         columnLabels={columnLabels}
         getRowId={(j) => j.id}
-        filterFields={filterFields}
+        searchPlaceholder="Job, store, error..."
+      facets={facets}
         readField={readField}
         tabs={tabs}
         tabCounts

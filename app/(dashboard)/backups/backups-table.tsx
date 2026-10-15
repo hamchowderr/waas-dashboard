@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { SearchIcon, StoreIcon, TagIcon } from "lucide-react";
+import { StoreIcon, TagIcon } from "lucide-react";
 
-import { SortableHeader } from "@/components/table-filter-helpers";
+import { SortableHeader } from "@/components/admin/sortable-header";
+import type { TableFacet } from "@/components/admin/table-filters";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Badge } from "@/components/ui/badge";
-import type { FilterField } from "@/components/ui/filters/filters-types";
 import { StatusCode, type Backup } from "@/lib/api/types";
 import { backupReasonLabel, formatBytes, formatDate, formatDateTime } from "@/lib/format";
 
@@ -98,29 +98,22 @@ const columns: ColumnDef<Backup>[] = [
 ];
 
 export function BackupsTable({ backups }: { backups: Backup[] }) {
-  const filterFields: FilterField[] = [
-    { id: "search", label: "Search", type: "text", placeholder: "Store, subscription...", icon: <SearchIcon /> },
+  const facets: TableFacet[] = [
     {
       id: "productName",
       label: "Storefront",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: [...new Set(backups.map((b) => b.productName))].sort().map((v) => ({ value: v, label: v })),
-      searchable: false,
       icon: <StoreIcon />
     },
     {
       id: "reason",
       label: "Reason",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: [
         { value: "manual", label: "Manual" },
         { value: "suspend", label: "Suspend" },
         { value: "scheduled", label: "Scheduled" },
         { value: "before-restore", label: "Before restore" }
       ],
-      searchable: false,
       icon: <TagIcon />
     }
   ];
@@ -131,7 +124,8 @@ export function BackupsTable({ backups }: { backups: Backup[] }) {
       columns={columns}
       columnLabels={columnLabels}
       getRowId={(b) => b.id}
-      filterFields={filterFields}
+      searchPlaceholder="Store, subscription..."
+      facets={facets}
       readField={readField}
       tabs={tabs}
       tabCounts

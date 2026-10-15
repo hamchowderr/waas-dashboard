@@ -3,17 +3,17 @@
 import * as React from "react";
 import Link from "next/link";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { LinkIcon, RotateCcwIcon, SearchIcon, StoreIcon, TagIcon } from "lucide-react";
+import { LinkIcon, RotateCcwIcon, StoreIcon, TagIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { retryWebhookDelivery } from "../actions";
 
-import { SortableHeader } from "@/components/table-filter-helpers";
+import { SortableHeader } from "@/components/admin/sortable-header";
+import type { TableFacet } from "@/components/admin/table-filters";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import type { FilterField } from "@/components/ui/filters/filters-types";
 import type { WebhookDelivery } from "@/lib/api/types";
 import { formatDateTime, webhookEventLabel, webhookEventLabels } from "@/lib/format";
 
@@ -168,33 +168,23 @@ const columns: ColumnDef<WebhookDelivery>[] = [
 ];
 
 export function DeliveriesTable({ deliveries }: { deliveries: WebhookDelivery[] }) {
-  const filterFields: FilterField[] = [
-    { id: "search", label: "Search", type: "text", placeholder: "Event, endpoint, store, error...", icon: <SearchIcon /> },
+  const facets: TableFacet[] = [
     {
       id: "eventType",
       label: "Event",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: Object.entries(webhookEventLabels).map(([value, label]) => ({ value, label })),
-      searchable: false,
       icon: <TagIcon />
     },
     {
       id: "productName",
       label: "Storefront",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: [...new Set(deliveries.map((d) => d.productName))].sort().map((v) => ({ value: v, label: v })),
-      searchable: false,
       icon: <StoreIcon />
     },
     {
       id: "url",
       label: "Endpoint",
-      type: "select",
-      defaultOperator: "is_any_of",
       options: [...new Set(deliveries.map((d) => d.url))].sort().map((v) => ({ value: v, label: v })),
-      searchable: true,
       icon: <LinkIcon />
     }
   ];
@@ -205,7 +195,8 @@ export function DeliveriesTable({ deliveries }: { deliveries: WebhookDelivery[] 
       columns={columns}
       columnLabels={columnLabels}
       getRowId={(d) => d.id}
-      filterFields={filterFields}
+      searchPlaceholder="Event, endpoint, store, error..."
+      facets={facets}
       readField={readField}
       tabs={tabs}
       tabCounts
