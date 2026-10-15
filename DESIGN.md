@@ -98,7 +98,7 @@ components:
 
 # Design System: AnyPress Dashboard
 
-This file pins **today's look** as the authority. The UI-kit code underneath is being replaced; the result must be visually indistinguishable from the screenshots in `dashboard-kit/before/` (light, dark, phone). When code and this file disagree, the current rendered UI wins and this file gets corrected.
+This file pins the dashboard's look as the authority. Changes must keep pages visually consistent with the screenshots in `docs/screenshots/`. When code and this file disagree, the current rendered UI wins and this file gets corrected.
 
 ## Overview
 
@@ -108,7 +108,7 @@ A calm, monochrome operations console. Everything structural (surfaces, text, bo
 
 Density is moderate: 14px body text, 32px controls, generous 24px page padding, and hairline borders instead of shadows. Pages follow one rhythm: a bold page title with a one-line muted summary, then cards.
 
-The default theme is canonical. A theme panel (palette icon in the header) still exposes kit presets, accent colors, chart palettes, radius, scale, fonts, sidebar variant and content width (`app/themes.css`, `lib/themes.ts`); those controls must keep working, but nothing new should be designed against them. Default = preset `default`, sidebar `inset` + collapsible to `icon`, content layout `full`, font DM Sans, light mode.
+The default theme is canonical. The Appearance panel (palette icon in the header) offers accent colors, chart colors, fonts, radius, text size, page width and sidebar style (`lib/appearance.ts`, `components/shell/appearance-panel.tsx`); those controls must keep working, but nothing new should be designed against them. Default = every setting on Default, sidebar `inset` + collapsible to `icon`, page width `full`, font DM Sans, light mode.
 
 **Key Characteristics:**
 - Neutral oklch greyscale (zero chroma) for all chrome; color only for status.
@@ -236,4 +236,4 @@ Sidebar items: 16px icon + 14px label, muted foreground; hover and active use `s
 - **Don't** use solid red or solid green buttons; destructive is a tint.
 - **Don't** introduce a second typeface or larger-than-24px page titles.
 - **Don't** hide table columns on phone; reflow them into row cards instead.
-- **Don't** let vendor kit naming leak into new code or copy; name components by what they do.
+- **Don't** name components after where an idea came from; name them by what they do.

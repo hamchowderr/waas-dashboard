@@ -28,7 +28,7 @@ function gray(l) {
 }
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
 
-// Tokens: card, border, muted, chart-*, primary; green as in the kit's status badges.
+// Tokens: card, border, muted, chart-*, primary; green as in the status badges.
 const PALETTES = {
   light: {
     window: gray(1), // --card
