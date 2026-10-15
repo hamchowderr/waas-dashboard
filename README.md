@@ -15,6 +15,7 @@ The admin dashboard for the [WaaS provisioning API](https://github.com/hamchowde
 - **Backups:** every backup, including nightly ones and those of deleted websites, with when each expires.
 - **Requests:** every call the storefronts made to the API and every admin change, with status, timing, store and caller, kept 30 days. Errors show the API's message. Never bodies or secrets.
 - **Webhooks:** each storefront's webhook endpoints, with what they get and how the last 24 hours went, and the recent deliveries with each answer or error. **Add**, turn off or on, **send a test**, **rotate** a secret (shown once) or delete an endpoint; **retry** a delivery.
+- **Team** (per storefront): who can sign in, and as what. **Invite** someone by email (the API emails them the link, and it can be copied to send by hand), change their role, or remove them. Owners and admins make changes, members only look, and only owners touch owners.
 - **Versions & templates** (per storefront): create a version from a template or an uploaded archive, make a version production, upload and delete templates. Making a version production and every delete ask first.
 
 The storefront switcher in the header narrows every page to one storefront. Suspending, resuming, a manual backup and deleting a website happen from the storefront, not here.
@@ -22,7 +23,7 @@ The storefront switcher in the header narrows every page to one storefront. Susp
 ## Who signs in
 
 - **Platform admins** are listed by email address in `ALLOWED_ADMIN_EMAILS` (or by GitHub login in `ALLOWED_GITHUB_LOGINS`), and they see every storefront.
-- **A storefront's own people** (an agency and its staff) sign in with a link emailed to them, or with GitHub or Google when those are turned on. They see only their own storefront: its stores, jobs, backups, request log, versions, API keys and webhooks. Owners and admins can make changes, and members can only look. They join through an invitation link the platform admin sends (the API's [accounts guide](https://github.com/hamchowderr/waas-provisioning-api/blob/main/docs/accounts.md)).
+- **A storefront's own people** (an agency and its staff) sign in with a link emailed to them, or with GitHub or Google when those are turned on. They see only their own storefront: its stores, jobs, backups, request log, versions, API keys and webhooks. Owners and admins can make changes, and members can only look. The platform admin invites a storefront's first owner from its Team page, and from then on its owners and admins invite the rest (the API's [accounts guide](https://github.com/hamchowderr/waas-provisioning-api/blob/main/docs/accounts.md)).
 
 Sign-in runs on the provisioning API (Better Auth). The dashboard passes `/api/auth/*` through to it, so the session cookie belongs to the dashboard alone. The API checks every request and narrows what a storefront's people see. The list of admins is checked on every request, so removing a login locks it out at once.
 

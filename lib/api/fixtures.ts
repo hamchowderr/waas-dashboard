@@ -9,6 +9,9 @@ import {
   type NewAgency,
   type NewAgencyInput,
   type NewApiKey,
+  type NewInvitation,
+  type Team,
+  type TeamRole,
   type Backup,
   type BackupFilter,
   type Health,
@@ -496,6 +499,30 @@ function without<T extends object, K extends keyof T>(item: T, ...keys: K[]): Om
 
 const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended", "dateChanged");
 
+type FixtureTeam = Team & { productId: string };
+
+const teams: FixtureTeam[] = [
+  {
+    productId: products[0].id,
+    organization: { id: uuid(1, 12), name: products[0].name },
+    members: [
+      { id: uuid(1, 13), userId: uuid(1, 14), name: "Dana Rivers", email: "dana@northwind.example", role: "owner", dateCreated: iso(NOW - 30 * DAY) },
+      { id: uuid(2, 13), userId: uuid(2, 14), name: "Sam Ortiz", email: "sam@northwind.example", role: "admin", dateCreated: iso(NOW - 12 * DAY) },
+      { id: uuid(3, 13), userId: uuid(3, 14), name: "Lee Park", email: "lee@northwind.example", role: "member", dateCreated: iso(NOW - 2 * DAY) }
+    ],
+    invitations: [
+      {
+        id: uuid(1, 15),
+        email: "alex@northwind.example",
+        role: "member",
+        expiresAt: iso(NOW + 5 * DAY),
+        dateCreated: iso(NOW - 2 * DAY),
+        acceptUrl: `https://app.example.com/invite/${uuid(1, 15)}`
+      }
+    ]
+  }
+];
+
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
@@ -925,5 +952,60 @@ export class FixtureAdminApi implements AdminApi {
     if (key.state === "revoked") return;
     key.state = "revoked";
     key.revokedAt = new Date().toISOString();
+  }
+
+  private teamOf(productId: string): FixtureTeam {
+    const product = this.product(productId);
+    let team = teams.find((t) => t.productId === productId);
+    if (!team) {
+      team = { productId, organization: null, members: [], invitations: [] };
+      teams.push(team);
+    }
+    team.organization ??= { id: uuid(teams.length, 12), name: product.name };
+    return team;
+  }
+
+  async team(productId: string): Promise<Team> {
+    this.product(productId);
+    const team = teams.find((t) => t.productId === productId);
+    return team ? structuredClone(without(team, "productId")) : { organization: null, members: [], invitations: [] };
+  }
+
+  async invite(productId: string, email: string, role: TeamRole): Promise<NewInvitation> {
+    const team = this.teamOf(productId);
+    if (team.members.some((m) => m.email === email)) throw new FixtureError(409, `${email} is already a member`);
+    team.invitations = team.invitations.filter((i) => i.email !== email);
+    const id = uuid(100 + team.invitations.length, 15);
+    const invitation = {
+      id,
+      email,
+      role,
+      expiresAt: new Date(Date.now() + 7 * DAY).toISOString(),
+      dateCreated: new Date().toISOString(),
+      acceptUrl: `https://app.example.com/invite/${id}`
+    };
+    team.invitations.unshift(invitation);
+    return { ...invitation, emailed: true };
+  }
+
+  async cancelInvitation(productId: string, invitationId: string): Promise<void> {
+    const team = this.teamOf(productId);
+    if (!team.invitations.some((i) => i.id === invitationId)) throw new FixtureError(404, `Pending invitation ${invitationId} not found`);
+    team.invitations = team.invitations.filter((i) => i.id !== invitationId);
+  }
+
+  async setMemberRole(productId: string, memberId: string, role: TeamRole): Promise<void> {
+    const team = this.teamOf(productId);
+    const member = team.members.find((m) => m.id === memberId);
+    if (!member) throw new FixtureError(404, `Member ${memberId} not found`);
+    if (member.role === "owner" && role !== "owner" && team.members.filter((m) => m.role === "owner").length === 1)
+      throw new FixtureError(409, "A team needs at least one owner.");
+    member.role = role;
+  }
+
+  async removeMember(productId: string, memberId: string): Promise<void> {
+    const team = this.teamOf(productId);
+    if (!team.members.some((m) => m.id === memberId)) throw new FixtureError(404, `Member ${memberId} not found`);
+    team.members = team.members.filter((m) => m.id !== memberId);
   }
 }

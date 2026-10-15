@@ -235,3 +235,22 @@ export type WireNewApiKey = WireApiKey & { secret: string };
 export type WireCreatedProduct = { product: WireProduct; key: WireNewApiKey };
 
 export type WireRotatedApiKey = { key: WireNewApiKey; replaced: WireApiKey };
+
+// Teams: a product's organization (GET /admin/products/{id}/organization, docs/accounts.md).
+
+export type WireInvitation = {
+  id: string;
+  email: string;
+  role: "owner" | "admin" | "member";
+  expiresAt: string;
+  dateCreated: string;
+  acceptUrl: string | null;
+  /** Only on the answer to POST …/invitations. */
+  emailed?: boolean;
+};
+
+export type WireOrganizationView = {
+  organization: { id: string; name: string; productId: string; dateCreated: string } | null;
+  members: { id: string; userId: string; name: string; email: string; role: "owner" | "admin" | "member"; dateCreated: string }[];
+  invitations: WireInvitation[];
+};

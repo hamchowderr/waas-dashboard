@@ -6,6 +6,9 @@ import type {
   NewAgency,
   NewAgencyInput,
   NewApiKey,
+  NewInvitation,
+  Team,
+  TeamRole,
   Backup,
   BackupFilter,
   Created,
@@ -40,6 +43,8 @@ import type {
   WireCreatedProduct,
   WireNewApiKey,
   WireRotatedApiKey,
+  WireInvitation,
+  WireOrganizationView,
   WireBaseSnapshot,
   WireCreateBaseSnapshot,
   WireCreatedBaseSnapshot,
@@ -123,6 +128,8 @@ const toApiKey = (k: WireApiKey): ApiKey => ({
 
 const toNewApiKey = (k: WireNewApiKey): NewApiKey => ({ ...toApiKey(k), secret: k.secret });
 
+const toInvitation = ({ id, email, role, expiresAt, dateCreated, acceptUrl }: WireInvitation) => ({ id, email, role, expiresAt, dateCreated, acceptUrl });
+
 type TenantName = { name: string; productId: string; productName: string };
 
 /**
@@ -161,7 +168,7 @@ export class HttpAdminApi implements AdminApi {
   }
 
   /** A change. Returns the JSON body, or null for the API's bodiless 200s. */
-  private async send<T>(method: "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T | null> {
+  private async send<T>(method: "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<T | null> {
     const { url, headers } = await this.target(path);
     const response = await fetch(url, {
       method,
@@ -348,6 +355,32 @@ export class HttpAdminApi implements AdminApi {
 
   async revokeApiKey(productId: string, keyId: string): Promise<void> {
     await this.send("DELETE", this.productPath(productId, `/keys/${encodeURIComponent(keyId)}`));
+  }
+
+  async team(productId: string): Promise<Team> {
+    const view = (await this.get<WireOrganizationView>(this.productPath(productId, "/organization")))!;
+    return {
+      organization: view.organization && { id: view.organization.id, name: view.organization.name },
+      members: view.members,
+      invitations: view.invitations.map(toInvitation)
+    };
+  }
+
+  async invite(productId: string, email: string, role: TeamRole): Promise<NewInvitation> {
+    const created = (await this.send<WireInvitation>("POST", this.productPath(productId, "/invitations"), { email, role }))!;
+    return { ...toInvitation(created), emailed: created.emailed === true };
+  }
+
+  async cancelInvitation(productId: string, invitationId: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, `/invitations/${encodeURIComponent(invitationId)}`));
+  }
+
+  async setMemberRole(productId: string, memberId: string, role: TeamRole): Promise<void> {
+    await this.send("PATCH", this.productPath(productId, `/members/${encodeURIComponent(memberId)}`), { role });
+  }
+
+  async removeMember(productId: string, memberId: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, `/members/${encodeURIComponent(memberId)}`));
   }
 
   /** Every page of a list, up to maxPages. */

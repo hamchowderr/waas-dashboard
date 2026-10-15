@@ -12,6 +12,8 @@ import type {
   MailDomain,
   NewAgency,
   NewApiKey,
+  NewInvitation,
+  TeamRole,
   WebhookEndpointChange,
   WebhookEndpointInput,
   WebhookEventType,
@@ -296,4 +298,43 @@ export async function revokeApiKey(productId: string, keyId: string): Promise<Ac
     await getAdminApi().revokeApiKey(uuid(productId, "storefront"), uuid(keyId, "key"));
     return undefined;
   }, ["/keys"]);
+}
+
+// Teams. The API decides who may change what (only owners touch owners, nobody removes themselves).
+
+const TEAM_ROLES: readonly TeamRole[] = ["owner", "admin", "member"];
+
+function teamRole(value: unknown): TeamRole {
+  if (!TEAM_ROLES.includes(value as TeamRole)) throw new InputError("Choose owner, admin or member");
+  return value as TeamRole;
+}
+
+/** Invites someone by email; the API emails them the link. */
+export async function inviteTeammate(productId: string, email: string, role: TeamRole): Promise<ActionResult<NewInvitation>> {
+  return run(async () => {
+    const address = text(email, "Email address", 254).toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) throw new InputError("Enter an email address");
+    return getAdminApi().invite(uuid(productId, "storefront"), address, teamRole(role));
+  }, ["/team"]);
+}
+
+export async function cancelInvitation(productId: string, invitationId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().cancelInvitation(uuid(productId, "storefront"), uuid(invitationId, "invitation"));
+    return undefined;
+  }, ["/team"]);
+}
+
+export async function setMemberRole(productId: string, memberId: string, role: TeamRole): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().setMemberRole(uuid(productId, "storefront"), uuid(memberId, "member"), teamRole(role));
+    return undefined;
+  }, ["/team"]);
+}
+
+export async function removeMember(productId: string, memberId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().removeMember(uuid(productId, "storefront"), uuid(memberId, "member"));
+    return undefined;
+  }, ["/team"]);
 }

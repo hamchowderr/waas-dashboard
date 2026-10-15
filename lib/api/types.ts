@@ -358,4 +358,29 @@ export type ApiKey = {
 export type NewApiKey = ApiKey & { secret: string };
 
 export type NewAgencyInput = { name: string; maxTenants: number | null };
+
+/** A storefront team role: owners and admins make changes, members only look. */
+export type TeamRole = "owner" | "admin" | "member";
+
+export type TeamMember = { id: string; userId: string; name: string; email: string; role: TeamRole; dateCreated: string };
+
+export type TeamInvitation = {
+  id: string;
+  email: string;
+  role: TeamRole;
+  expiresAt: string;
+  dateCreated: string;
+  /** Where they accept; send it yourself when the email didn't go. */
+  acceptUrl: string | null;
+};
+
+/** A storefront's team: null organization until someone is first invited. */
+export type Team = {
+  organization: { id: string; name: string } | null;
+  members: TeamMember[];
+  invitations: TeamInvitation[];
+};
+
+/** An invitation just made, and whether the API emailed it. */
+export type NewInvitation = TeamInvitation & { emailed: boolean };
 export type NewAgency = { productId: string; name: string; key: NewApiKey };

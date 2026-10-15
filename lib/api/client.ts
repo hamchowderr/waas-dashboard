@@ -7,6 +7,9 @@ import type {
   NewAgency,
   NewAgencyInput,
   NewApiKey,
+  NewInvitation,
+  Team,
+  TeamRole,
   Backup,
   Created,
   CreateTemplateInput,
@@ -105,6 +108,13 @@ export interface AdminApi {
   rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<NewApiKey>;
   /** Stops a key now; the storefront's last key included. */
   revokeApiKey(productId: string, keyId: string): Promise<void>;
+
+  // Teams: who can sign in to a storefront. The API emails invitations and enforces who may change what.
+  team(productId: string): Promise<Team>;
+  invite(productId: string, email: string, role: TeamRole): Promise<NewInvitation>;
+  cancelInvitation(productId: string, invitationId: string): Promise<void>;
+  setMemberRole(productId: string, memberId: string, role: TeamRole): Promise<void>;
+  removeMember(productId: string, memberId: string): Promise<void>;
 }
 
 /**
