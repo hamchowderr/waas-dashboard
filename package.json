@@ -59,6 +59,10 @@
     "vitest": "^3.2.7"
   },
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "unrs-resolver": true
   }
 }
