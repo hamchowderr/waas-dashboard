@@ -499,17 +499,21 @@ const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
-  async overview(): Promise<Overview> {
+  async overview(productId?: string): Promise<Overview> {
+    const mine = byProduct(tenants, productId);
+    const ids = new Set(mine.map((t) => t.id));
+    const myBackups = productId ? backups.filter((b) => ids.has(b.tenantId)) : backups;
+    const myJobs = productId ? jobs.filter((j) => j.tenantId && ids.has(j.tenantId)) : jobs;
     return {
       health: health(),
       products: products.map((p) => ({ ...p, tenantCount: tenants.filter((t) => t.productId === p.id).length })),
-      tenants: { ...counts(tenants), total: tenants.length, suspended: tenants.filter((t) => t.isSuspended).length },
+      tenants: { ...counts(mine), total: mine.length, suspended: mine.filter((t) => t.isSuspended).length },
       versions: { pending: 0, done: versions.length, failed: 0, removing: 0 },
-      backups: { ...counts(backups), total: backups.length },
+      backups: { ...counts(myBackups), total: myBackups.length },
       jobs: {
-        queued: jobs.filter((j) => j.state === "queued").length,
-        running: jobs.filter((j) => j.state === "running").length,
-        failed: jobs.filter((j) => j.state === "failed").length
+        queued: myJobs.filter((j) => j.state === "queued").length,
+        running: myJobs.filter((j) => j.state === "running").length,
+        failed: myJobs.filter((j) => j.state === "failed").length
       }
     };
   }

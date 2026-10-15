@@ -375,8 +375,10 @@ export class HttpAdminApi implements AdminApi {
     return this.tenantIndex;
   }
 
-  async overview(): Promise<Overview> {
-    const o = await this.wireOverview();
+  async overview(productId?: string): Promise<Overview> {
+    const o = productId
+      ? (await this.get<WireOverview>(`/admin/overview?${new URLSearchParams({ productId })}`))!
+      : await this.wireOverview();
     const up = (check: "ok" | "down") => (check === "ok" ? "up" : "down");
     const sum = (c: { pending: number; done: number; failed: number; removing: number }) =>
       c.pending + c.done + c.failed + c.removing;

@@ -41,7 +41,8 @@ import { AdminApiError, HttpAdminApi, type ApiAccess } from "./http";
 export interface AdminApi {
   /** True when the data is sample data, not the live API. */
   readonly isFixture: boolean;
-  overview(): Promise<Overview>;
+  /** Counts for one storefront when given; `products` always lists every storefront. */
+  overview(productId?: string): Promise<Overview>;
   tenants(filter?: TenantFilter): Promise<Listing<Tenant>>;
   /** Null when the tenant does not exist. */
   tenant(id: string): Promise<TenantDetail | null>;
