@@ -701,6 +701,15 @@ export class FixtureAdminApi implements AdminApi {
 
   async domainConnect(tenantId: string, domainName: string, service: "website" | "email"): Promise<DomainConnectLink> {
     if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    // A domain that already has another DKIM key: no link, the reason instead (as the API answers).
+    if (service === "email" && domainName.startsWith("conflict.")) {
+      return {
+        dnsProvider: "Example DNS",
+        supported: false,
+        url: null,
+        conflict: `tosend._domainkey.${domainName} already has a different email signing (DKIM) key. Replace it with the one below by hand: one-click setup would add a second key next to it, and email would fail its checks.`
+      };
+    }
     const query = new URLSearchParams({ domain: domainName, ...(service === "email" ? { dkim: "p=sample" } : { ip: "203.0.113.7" }) });
     return {
       dnsProvider: "Example DNS",

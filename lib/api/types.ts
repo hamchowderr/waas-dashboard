@@ -253,6 +253,8 @@ export type DomainConnectLink = {
   dnsProvider: string | null;
   supported: boolean;
   url: string | null;
+  /** Why there is no link though the DNS host could make one (an older DKIM key on the domain, say), written for the store's owner. */
+  conflict?: string;
 };
 
 /** A store's own sending domain: it sends email from no-reply@ this domain once toSend has verified it. */
