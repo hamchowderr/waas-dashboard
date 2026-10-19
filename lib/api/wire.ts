@@ -234,6 +234,9 @@ export type WireNewApiKey = WireApiKey & { secret: string };
 
 export type WireCreatedProduct = { product: WireProduct; key: WireNewApiKey };
 
+/** A store as GET /v1/tenants answers it: here a ready-made storefront (GET /admin/products/{id}/storefront). */
+export type WireStorefront = { id: string; name: string; domainName: string; statusCode: number; statusName: string };
+
 export type WireRotatedApiKey = { key: WireNewApiKey; replaced: WireApiKey };
 
 // Teams: a product's organization (GET /admin/products/{id}/organization, docs/accounts.md).

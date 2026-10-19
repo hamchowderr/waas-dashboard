@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
 import { NewAgencyButton } from "./new-agency-dialog";
+import { StorefrontCard } from "./storefront-card";
 
 export const metadata: Metadata = { title: "API keys" };
 
@@ -20,7 +21,8 @@ export default async function KeysPage({
   const api = getAdminApi();
   const products = await api.products();
   // A customer has one storefront, so their pages open on it.
-  const onlyOne = !(await getViewer())?.isAdmin && products.length === 1 ? products[0] : undefined;
+  const isAdmin = (await getViewer())?.isAdmin === true;
+  const onlyOne = !isAdmin && products.length === 1 ? products[0] : undefined;
   const product = products.find((p) => p.id === productId) ?? onlyOne;
 
   // Keys belong to one storefront: pick one first, or set up a new agency.
@@ -67,13 +69,19 @@ export default async function KeysPage({
     );
   }
 
-  const keys = await api.apiKeys(product.id);
+  const [keys, storefront] = await Promise.all([api.apiKeys(product.id), api.storefront(product.id)]);
 
   return (
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="API keys"
         description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}
+      />
+      <StorefrontCard
+        productId={product.id}
+        productName={product.name}
+        storefront={storefront}
+        canBuild={isAdmin}
       />
       <KeysManager
         productId={product.id}

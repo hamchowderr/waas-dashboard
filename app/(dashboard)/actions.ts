@@ -13,6 +13,8 @@ import type {
   NewAgency,
   NewApiKey,
   NewInvitation,
+  NewStorefrontInput,
+  ReadyStorefront,
   TeamRole,
   WebhookEndpointChange,
   WebhookEndpointInput,
@@ -273,12 +275,48 @@ function keyLabel(value: unknown): string | null {
 }
 
 /** A new storefront for an agency, with its first API key. */
-export async function createAgency(name: string, maxTenants: number | null): Promise<ActionResult<NewAgency>> {
+/** A ready-made storefront's owner email and address, checked here so a bad one stops before the agency is made. */
+export type StorefrontRequest = { email: string; subdomain: string };
+
+function storefrontInput(name: string, request: StorefrontRequest): NewStorefrontInput {
+  const email = text(request?.email, "Owner email", 254).toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new InputError("Enter the owner's email address");
+  const subdomain = typeof request?.subdomain === "string" ? request.subdomain.trim().toLowerCase() : "";
+  if (subdomain && !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(subdomain))
+    throw new InputError("The address can only use letters, digits and dashes");
+  return { name, email, ...(subdomain ? { subdomain } : {}) };
+}
+
+/** A new agency with its first key, and with `storefront`, a ready-made storefront built for it. */
+export async function createAgency(
+  name: string,
+  maxTenants: number | null,
+  storefront: StorefrontRequest | null = null
+): Promise<ActionResult<NewAgency>> {
   return run(async () => {
     if (maxTenants !== null && !(Number.isInteger(maxTenants) && maxTenants >= 0 && maxTenants <= 100000))
       throw new InputError("Store limit must be a whole number, 0 or more, or empty for no limit");
-    return getAdminApi().createAgency({ name: text(name, "Agency name", 100), maxTenants });
+    const agencyName = text(name, "Agency name", 100);
+    const input = storefront ? storefrontInput(agencyName, storefront) : null;
+    const api = getAdminApi();
+    const agency = await api.createAgency({ name: agencyName, maxTenants });
+    if (!input) return agency;
+    // The agency exists now; a storefront that can't be built is reported, not a failed action.
+    try {
+      return { ...agency, storefront: await api.createStorefront(agency.productId, input) };
+    } catch (error) {
+      if (!(error instanceof AdminApiError)) throw error;
+      return { ...agency, storefrontError: error.apiMessage ?? error.message };
+    }
   }, ["/keys", "/"]);
+}
+
+/** Builds a ready-made storefront for an existing agency. */
+export async function buildStorefront(productId: string, name: string, request: StorefrontRequest): Promise<ActionResult<ReadyStorefront>> {
+  return run(
+    async () => getAdminApi().createStorefront(uuid(productId, "storefront"), storefrontInput(text(name, "Storefront name", 100), request)),
+    ["/keys"]
+  );
 }
 
 export async function createApiKey(productId: string, label: string): Promise<ActionResult<NewApiKey>> {

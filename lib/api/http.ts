@@ -5,6 +5,8 @@ import type {
   ApiKey,
   NewAgency,
   NewAgencyInput,
+  NewStorefrontInput,
+  ReadyStorefront,
   NewApiKey,
   NewInvitation,
   Team,
@@ -41,6 +43,7 @@ import type {
 import type {
   WireApiKey,
   WireCreatedProduct,
+  WireStorefront,
   WireNewApiKey,
   WireRotatedApiKey,
   WireInvitation,
@@ -344,6 +347,16 @@ export class HttpAdminApi implements AdminApi {
     return { productId: created.product.id, name: created.product.name, key: toNewApiKey(created.key) };
   }
 
+  async storefront(productId: string): Promise<ReadyStorefront | null> {
+    // 404 from an API without ready-made storefronts: none.
+    const storefront = await this.get<WireStorefront | null>(this.productPath(productId, "/storefront"), { allow404: true });
+    return storefront ? toStorefront(storefront) : null;
+  }
+
+  async createStorefront(productId: string, input: NewStorefrontInput): Promise<ReadyStorefront> {
+    return toStorefront((await this.send<WireStorefront>("POST", this.productPath(productId, "/storefront"), input))!);
+  }
+
   async createApiKey(productId: string, label: string | null): Promise<NewApiKey> {
     return toNewApiKey((await this.send<WireNewApiKey>("POST", this.productPath(productId, "/keys"), { label }))!);
   }
@@ -581,4 +594,8 @@ export class HttpAdminApi implements AdminApi {
       retriedAt: f.retriedAt
     };
   }
+}
+
+function toStorefront(s: WireStorefront): ReadyStorefront {
+  return { id: s.id, name: s.name, domain: s.domainName, statusCode: s.statusCode as StatusCode, statusName: s.statusName };
 }
