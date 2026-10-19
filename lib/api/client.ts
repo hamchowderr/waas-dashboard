@@ -6,6 +6,8 @@ import type {
   ApiKey,
   NewAgency,
   NewAgencyInput,
+  NewStorefrontInput,
+  ReadyStorefront,
   NewApiKey,
   NewInvitation,
   Team,
@@ -103,6 +105,10 @@ export interface AdminApi {
   apiKeys(productId: string): Promise<ApiKey[]>;
   /** A new storefront for an agency, with its first key. */
   createAgency(input: NewAgencyInput): Promise<NewAgency>;
+  /** The product's ready-made storefront, or null. */
+  storefront(productId: string): Promise<ReadyStorefront | null>;
+  /** Builds the product's ready-made storefront, connected with a new key of the product. Platform admin only. */
+  createStorefront(productId: string, input: NewStorefrontInput): Promise<ReadyStorefront>;
   createApiKey(productId: string, label: string | null): Promise<NewApiKey>;
   /** A new key with the same label; the old one keeps working for graceHours. */
   rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<NewApiKey>;

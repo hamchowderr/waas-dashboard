@@ -395,4 +395,18 @@ export type Team = {
 
 /** An invitation just made, and whether the API emailed it. */
 export type NewInvitation = TeamInvitation & { emailed: boolean };
-export type NewAgency = { productId: string; name: string; key: NewApiKey };
+export type NewAgency = {
+  productId: string;
+  name: string;
+  key: NewApiKey;
+  /** The ready-made storefront being built, when one was asked for. */
+  storefront?: ReadyStorefront;
+  /** Why it couldn't be built; the agency and its key exist anyway. */
+  storefrontError?: string;
+};
+
+/** A ready-made storefront: a WordPress site with WaaS Host that the platform built and connected for a product. */
+export type ReadyStorefront = { id: string; name: string; domain: string; statusCode: StatusCode; statusName: string };
+
+/** The owner signs in to WordPress with this email; the site answers on <subdomain>.<platform domain>. */
+export type NewStorefrontInput = { name: string; email: string; subdomain?: string };

@@ -8,6 +8,8 @@ import {
   type ApiKey,
   type NewAgency,
   type NewAgencyInput,
+  type NewStorefrontInput,
+  type ReadyStorefront,
   type NewApiKey,
   type NewInvitation,
   type Team,
@@ -98,6 +100,9 @@ const templates: FixtureTemplate[] = [
 
 
 type FixtureKey = ApiKey & { productId: string };
+
+/** Ready-made storefronts by product; none in the sample data. */
+const storefronts = new Map<string, ReadyStorefront>();
 
 const apiKeys: FixtureKey[] = [
   {
@@ -935,6 +940,26 @@ export class FixtureAdminApi implements AdminApi {
     const id = uuid(products.length + 1, 1);
     products.push({ id, name: input.name });
     return { productId: id, name: input.name, key: await this.createApiKey(id, "Storefront") };
+  }
+
+  async storefront(productId: string): Promise<ReadyStorefront | null> {
+    this.product(productId);
+    return storefronts.get(productId) ?? null;
+  }
+
+  async createStorefront(productId: string, input: NewStorefrontInput): Promise<ReadyStorefront> {
+    this.product(productId);
+    if (storefronts.has(productId)) throw new Error("This product already has a ready-made storefront");
+    await this.createApiKey(productId, "Ready-made storefront");
+    const storefront: ReadyStorefront = {
+      id: uuid(storefronts.size + 1, 8),
+      name: input.name,
+      domain: input.subdomain ? `${input.subdomain}.anypress.site` : `t-${productId.slice(0, 8)}.stores.anypress.site`,
+      statusCode: 0,
+      statusName: "Pending"
+    };
+    storefronts.set(productId, storefront);
+    return storefront;
   }
 
   async createApiKey(productId: string, label: string | null): Promise<NewApiKey> {
