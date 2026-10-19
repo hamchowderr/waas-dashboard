@@ -158,6 +158,11 @@ export function MailSender({
           </a>
         </Button>
       )}
+      {mailDomain.status === "pending" && connect?.conflict && (
+        <p className="rounded-md border border-orange-400 bg-orange-50 p-2.5 text-orange-800 dark:bg-orange-900/70 dark:text-white/80">
+          <span className="font-medium">One-click setup is off for this domain.</span> {connect.conflict}
+        </p>
+      )}
       {mailDomain.status !== "removing" &&
         (mailDomain.records ? (
           <div className="space-y-2">
