@@ -68,7 +68,24 @@ export type TenantDetail = {
   backups: Backup[];
   /** Recent jobs (including finished ones) and failures, newest first. */
   jobs: Job[];
+  /** A site moved in from another host keeps its own plugins and themes. */
+  keepsOwnCode: boolean;
+  /** Only for a store made to move a site in. It waits for the site while startedAt is null. */
+  moveIn: MoveIn | null;
 };
+
+export type MoveIn = {
+  /** When the import code stops working if the move hasn't started. */
+  expiresAt: string;
+  startedAt: string | null;
+  /** What the export plugin told about the old site. */
+  source: { home?: string; wordPressVersion?: string; phpVersion?: string; uploadedBytes?: number } | null;
+};
+
+/** A store waiting for its site: the code to paste into the AnyPress Export plugin, and where to get the plugin. */
+export type ImportCode = { tenantId: string; externalId: string; importCode: string; pluginUrl: string };
+
+export type StoreSize = "small" | "medium" | "large";
 
 export type Backup = {
   id: string;

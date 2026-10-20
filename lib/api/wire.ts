@@ -109,6 +109,8 @@ export type WireTenantDetail = {
   backups: WireBackup[];
   recentJobs: WireJob[];
   failures: WireJobFailure[];
+  keepsOwnCode?: boolean;
+  moveIn?: { expiresAt: string; startedAt: string | null; source: Record<string, unknown> | null };
 };
 
 // Versions and templates (openapi/admin, waas-api-plu.3). Same bodies as the /v1

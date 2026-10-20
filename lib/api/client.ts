@@ -27,6 +27,8 @@ import type {
   JobsList,
   Listing,
   DomainConnectLink,
+  ImportCode,
+  StoreSize,
   MailDomain,
   Overview,
   RequestFilter,
@@ -78,6 +80,10 @@ export interface AdminApi {
    * now is backed up first so the rollback can be undone.
    */
   restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void>;
+  /** Makes a store that waits for a site moved in from another host, and answers its import code. */
+  moveSiteIn(productId: string, input: { name: string; size: StoreSize }): Promise<ImportCode>;
+  /** A new import code for a store still waiting for its site; the old one stops working. */
+  renewImportCode(tenantId: string): Promise<ImportCode>;
   /** The store's own sending domain with its DNS records; null when it sends from the platform's address. */
   mailDomain(tenantId: string): Promise<MailDomain | null>;
   /** Gives the store its own sending domain; it is used once toSend has verified its DNS records. */

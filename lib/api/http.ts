@@ -2,6 +2,9 @@ import "server-only";
 
 import type { AdminApi } from "./client";
 import type {
+  ImportCode,
+  MoveIn,
+  StoreSize,
   ApiKey,
   ApplicationStatus,
   ApprovedApplication,
@@ -247,6 +250,14 @@ export class HttpAdminApi implements AdminApi {
       allow404: true
     });
     return res?.mailDomain ?? null;
+  }
+
+  async moveSiteIn(productId: string, input: { name: string; size: StoreSize }): Promise<ImportCode> {
+    return (await this.send<ImportCode>("POST", this.productPath(productId, "/imports"), input))!;
+  }
+
+  async renewImportCode(tenantId: string): Promise<ImportCode> {
+    return (await this.send<ImportCode>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/import-code`))!;
   }
 
   async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
@@ -521,7 +532,9 @@ export class HttpAdminApi implements AdminApi {
       wpOptionNames: t.wpOptionNames,
       phpConstantNames: t.phpConstantNames,
       backups: t.backups.map((b) => this.toBackup(b, names, products)),
-      jobs
+      jobs,
+      keepsOwnCode: t.keepsOwnCode ?? false,
+      moveIn: t.moveIn ? { expiresAt: t.moveIn.expiresAt, startedAt: t.moveIn.startedAt, source: t.moveIn.source as MoveIn["source"] } : null
     };
   }
 
