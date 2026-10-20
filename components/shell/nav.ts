@@ -1,6 +1,7 @@
 import {
   ActivityIcon,
   ArchiveIcon,
+  ContactIcon,
   GaugeIcon,
   HandshakeIcon,
   InboxIcon,
@@ -22,6 +23,7 @@ export const NAV: { title: string; links: NavLink[] }[] = [
     title: "Operations",
     links: [
       { title: "Overview", href: "/", icon: GaugeIcon },
+      { title: "Clients", href: "/clients", icon: ContactIcon, adminOnly: true },
       { title: "Stores", href: "/stores", icon: StoreIcon },
       { title: "Jobs", href: "/jobs", icon: ListChecksIcon },
       { title: "Backups", href: "/backups", icon: ArchiveIcon },
