@@ -33,7 +33,7 @@ export default async function KeysPage({
           title="API keys"
           description="Each storefront signs in to the API with its own keys. Choose a storefront, or set up a new agency."
         >
-          <NewAgencyButton />
+          <NewAgencyButton storefronts={products} />
         </PageHeader>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {products.map((p) => (

@@ -444,7 +444,12 @@ export type ApiKey = {
 /** A key just created: its secret is here and nowhere else, shown once. */
 export type NewApiKey = ApiKey & { secret: string };
 
-export type NewAgencyInput = { name: string; maxTenants: number | null };
+export type NewAgencyInput = {
+  name: string;
+  maxTenants: number | null;
+  /** A storefront whose production version and newest template the new one starts with. */
+  startFrom?: string | null;
+};
 
 /** A storefront team role: owners and admins make changes, members only look. */
 export type TeamRole = "owner" | "admin" | "member";

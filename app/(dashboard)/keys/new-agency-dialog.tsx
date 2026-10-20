@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import type { NewAgency } from "@/lib/api/types";
 import { createAgency } from "../actions";
@@ -31,8 +38,15 @@ import {
  * "New agency": creates the agency's storefront and its first API key, then shows the secret once. With "Build a
  * storefront for them", the platform also builds them a WordPress site with WaaS Host, already connected.
  */
-export function NewAgencyButton() {
+export function NewAgencyButton({
+  storefronts,
+}: {
+  storefronts: { id: string; name: string; tenantCount: number }[];
+}) {
   const router = useRouter();
+  // New accounts start ready from the busiest storefront (the shop) unless another is picked.
+  const busiest = [...storefronts].sort((a, b) => b.tenantCount - a.tenantCount)[0];
+  const [startFrom, setStartFrom] = React.useState(busiest?.id ?? "none");
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState("");
   const [limit, setLimit] = React.useState("");
@@ -49,7 +63,12 @@ export function NewAgencyButton() {
 
   const submit = () =>
     startTransition(async () => {
-      const result = await createAgency(name, limit ? Number(limit) : null, buildSite ? site : null);
+      const result = await createAgency(
+        name,
+        limit ? Number(limit) : null,
+        buildSite ? site : null,
+        startFrom === "none" ? null : startFrom
+      );
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -106,6 +125,26 @@ export function NewAgencyButton() {
               >
                 {limitError ??
                   "The most stores the agency can create. Leave empty for no limit."}
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="agency-start-from">Start ready from</Label>
+              <Select value={startFrom} onValueChange={setStartFrom}>
+                <SelectTrigger id="agency-start-from" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {storefronts.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="none">Nothing: start empty</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-sm">
+                Copies that storefront&apos;s WordPress version and starter
+                template, so New site works as soon as it has built.
               </p>
             </div>
             <div className="flex items-start gap-2">
