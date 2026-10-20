@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ExternalLinkIcon } from "lucide-react";
 
 import { getAdminApi } from "@/lib/api/client";
 import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel } from "@/lib/format";
@@ -47,6 +47,8 @@ export default async function StorePage({ params }: Params) {
       : null;
   // A store being removed or that failed can't be rolled back until it's fixed.
   const canRestore = tenant.statusCode !== StatusCode.Removing && tenant.statusCode !== StatusCode.Failed;
+  // Links to the site only once it is up.
+  const siteUrl = tenant.mainDomain && tenant.statusCode === StatusCode.Done ? `https://${tenant.mainDomain}/` : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 lg:space-y-6">
@@ -58,19 +60,37 @@ export default async function StorePage({ params }: Params) {
           </Link>
         </Button>
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-bold tracking-tight lg:text-2xl">{tenant.name}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="truncate text-xl font-bold tracking-tight lg:text-2xl">{tenant.name}</h1>
+            <StatusBadge statusCode={tenant.statusCode} />
+            {tenant.isSuspended && <SuspendedBadge />}
+          </div>
           <p className="text-muted-foreground truncate text-sm">{tenant.mainDomain ?? "No main domain"}</p>
         </div>
-        <div className="ms-auto flex items-center gap-1.5">
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/requests?store=${tenant.id}`}>API requests</Link>
-          </Button>
-          <StatusBadge statusCode={tenant.statusCode} />
-          {tenant.isSuspended && <SuspendedBadge />}
-        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {siteUrl && (
+          <>
+            <Button asChild size="sm">
+              <a href={siteUrl} target="_blank" rel="noreferrer">
+                Visit site
+                <ExternalLinkIcon />
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a href={`${siteUrl}wp-admin/`} target="_blank" rel="noreferrer">
+                WordPress admin
+                <ExternalLinkIcon />
+              </a>
+            </Button>
+          </>
+        )}
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/requests?store=${tenant.id}`}>API requests</Link>
+        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:gap-6">
+      <div className="grid items-start gap-4 md:grid-cols-2 lg:gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Store</CardTitle>
@@ -96,62 +116,64 @@ export default async function StorePage({ params }: Params) {
           </CardContent>
         </Card>
 
-        {tenant.moveIn && (
+        <div className="grid gap-4 lg:gap-6">
+          {tenant.moveIn && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Moving the site in</CardTitle>
+                <CardDescription>This store is built from a WordPress site sent with the AnyPress Export plugin.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MoveInStatus tenantId={tenant.id} moveIn={tenant.moveIn} />
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
-              <CardTitle>Moving the site in</CardTitle>
-              <CardDescription>This store is built from a WordPress site sent with the AnyPress Export plugin.</CardDescription>
+              <CardTitle>Domains</CardTitle>
+              <CardDescription>The main domain serves the store; the others redirect to it.</CardDescription>
+              <CardAction>
+                <ChangeAddress tenantId={tenant.id} mainDomain={tenant.mainDomain} />
+              </CardAction>
             </CardHeader>
-            <CardContent>
-              <MoveInStatus tenantId={tenant.id} moveIn={tenant.moveIn} />
+            <CardContent className="p-0">
+              <Table className={tableClass}>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Domain</TableHead>
+                    <TableHead className="w-32 text-end">Role</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tenant.domains.map((domain) => (
+                    <TableRow key={domain.domainName}>
+                      <TableCell className="font-medium break-all whitespace-normal">{domain.domainName}</TableCell>
+                      <TableCell className="text-end">
+                        <div className="flex justify-end gap-1">
+                          {domain.isMain && <Badge variant="success">Main</Badge>}
+                          {domain.isBase && <Badge variant="outline">Base</Badge>}
+                          {!domain.isMain && !domain.isBase && (
+                            <span className="text-muted-foreground text-sm">Redirect</span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Domains</CardTitle>
-            <CardDescription>The main domain serves the store; the others redirect to it.</CardDescription>
-            <CardAction>
-              <ChangeAddress tenantId={tenant.id} mainDomain={tenant.mainDomain} />
-            </CardAction>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table className={tableClass}>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Domain</TableHead>
-                  <TableHead className="w-32 text-end">Role</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tenant.domains.map((domain) => (
-                  <TableRow key={domain.domainName}>
-                    <TableCell className="font-medium break-all whitespace-normal">{domain.domainName}</TableCell>
-                    <TableCell className="text-end">
-                      <div className="flex justify-end gap-1">
-                        {domain.isMain && <Badge variant="success">Main</Badge>}
-                        {domain.isBase && <Badge variant="outline">Base</Badge>}
-                        {!domain.isMain && !domain.isBase && (
-                          <span className="text-muted-foreground text-sm">Redirect</span>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Email sender</CardTitle>
-            <CardDescription>Where the store&apos;s receipts and password resets come from.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MailSender tenantId={tenant.id} mailDomain={mailDomain} connect={connect} />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Email sender</CardTitle>
+              <CardDescription>Where the store&apos;s receipts and password resets come from.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MailSender tenantId={tenant.id} mailDomain={mailDomain} connect={connect} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid items-start gap-4 lg:gap-6 xl:grid-cols-3">
@@ -213,7 +235,7 @@ export default async function StorePage({ params }: Params) {
         <Card>
           <CardHeader>
             <CardTitle>Settings</CardTitle>
-            <CardDescription>Names only; values stay in the API.</CardDescription>
+            <CardDescription>The settings this store was made with. Only their names show here.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="space-y-2">

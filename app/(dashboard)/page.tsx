@@ -29,7 +29,8 @@ const levelStyle: Record<Level, { icon: LucideIcon; box: string; text: string }>
   critical: { icon: AlertTriangle, box: "bg-red-500 text-white", text: "text-red-800 dark:text-red-500" }
 };
 
-type Stat = { name: string; stat: string; note: string; level: Level; status: string; href: string };
+/** action: what the link at the bottom of the card opens. */
+type Stat = { name: string; stat: string; note: string; level: Level; status: string; action: string; href: string };
 
 /** Links keep the chosen storefront, so the next page shows the same one. */
 function withProduct(href: string, product?: string): string {
@@ -45,34 +46,51 @@ function stats(o: Overview): Stat[] {
       stat: o.health.ok ? "Up" : "Down",
       note: `Checked ${formatAgo(o.health.checkedAt)}`,
       level: o.health.ok ? "within" : "critical",
-      status: o.health.ok ? "healthy" : "unhealthy",
+      status: o.health.ok ? "Healthy" : "Not answering",
+      action: "See status",
       href: "#health"
     },
     {
       name: "Stores",
       stat: String(o.tenants.total),
-      note: `${t.done} ready · ${t.pending + t.removing} pending · ${o.tenants.suspended} suspended`,
+      note: storeNote(o),
       level: t.failed > 0 ? "critical" : t.pending + t.removing > 0 ? "observe" : "within",
-      status: t.failed > 0 ? `${t.failed} failed` : "none failed",
-      href: "/stores"
+      status: t.failed > 0 ? `${t.failed} failed` : "None failed",
+      action: "See stores",
+      href: t.failed > 0 ? "/stores?state=failed" : "/stores"
     },
     {
       name: "Background jobs",
       stat: String(o.jobs.queued + o.jobs.running),
       note: `${o.jobs.queued} queued · ${o.jobs.running} running`,
       level: o.jobs.failed > 0 ? "critical" : "within",
-      status: o.jobs.failed > 0 ? `${o.jobs.failed} failed` : "none failed",
+      status: o.jobs.failed > 0 ? `${o.jobs.failed} failed` : "None failed",
+      action: "See jobs",
       href: o.jobs.failed > 0 ? "/jobs?state=failed" : "/jobs"
     },
     {
       name: "Backups",
       stat: String(o.backups.total),
       note: `${o.backups.done} ready · ${o.backups.pending} in progress`,
-      level: o.backups.failed > 0 ? "observe" : "within",
-      status: o.backups.failed > 0 ? `${o.backups.failed} failed` : "none failed",
+      level: o.backups.failed > 0 ? "critical" : o.backups.pending > 0 ? "observe" : "within",
+      status: o.backups.failed > 0 ? `${o.backups.failed} failed` : "None failed",
+      action: "See backups",
       href: "/backups"
     }
   ];
+}
+
+/** Ready, suspended, pending and failed add up to the total; a suspended store is a ready one that is switched off. */
+function readyCount(o: Overview): number {
+  return Math.max(o.tenants.done - o.tenants.suspended, 0);
+}
+
+function storeNote(o: Overview): string {
+  const t = o.tenants;
+  const parts = [`${readyCount(o)} ready`];
+  if (t.suspended > 0) parts.push(`${t.suspended} suspended`);
+  if (t.pending + t.removing > 0) parts.push(`${t.pending + t.removing} in progress`);
+  return parts.join(" · ");
 }
 
 const services: { key: "api" | "database" | "queue"; name: string; icon: LucideIcon }[] = [
@@ -91,7 +109,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const serviceUp = { api: health.ok, database: health.checks.database === "up", queue: health.checks.queue === "up" };
   const t = overview.tenants;
   const breakdown = [
-    { label: "Ready", value: t.done, bar: "bg-green-600 dark:bg-green-400" },
+    { label: "Ready", value: readyCount(overview), bar: "bg-green-600 dark:bg-green-400" },
+    { label: "Suspended", value: t.suspended, bar: "bg-zinc-400 dark:bg-zinc-500" },
     { label: "Pending", value: t.pending, bar: "bg-orange-500 dark:bg-orange-400" },
     { label: "Removing", value: t.removing, bar: "bg-blue-500 dark:bg-blue-400" },
     { label: "Failed", value: t.failed, bar: "bg-rose-600 dark:bg-rose-400" }
@@ -134,7 +153,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         <Card>
           <CardHeader>
             <CardTitle>Stores by status</CardTitle>
-            <CardDescription>{overview.tenants.suspended} of {overview.tenants.total} suspended</CardDescription>
+            <CardDescription>
+              {overview.tenants.total} {overview.tenants.total === 1 ? "store" : "stores"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex h-3 w-full overflow-hidden rounded-full">
@@ -170,8 +191,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           <CardAction>
             <Link
               href={withProduct("/jobs?state=failed", product)}
-              className="inline-flex items-center text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11">
-              All jobs
+              className="text-primary inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline pointer-coarse:min-h-11">
+              All failed jobs
+              <ChevronRight className="size-4" aria-hidden />
             </Link>
           </CardAction>
         </CardHeader>
@@ -228,8 +250,8 @@ function StatCard({ stat, href }: { stat: Stat; href: string }) {
           <Icon className="size-4" aria-hidden />
         </span>
         <span className="min-w-0 flex-1 truncate text-sm">
-          <span className="text-muted-foreground block">Open</span>
           <span className={cn("block font-medium", text)}>{stat.status}</span>
+          <span className="text-muted-foreground block">{stat.action}</span>
         </span>
         <ChevronRight className="text-muted-foreground/60 group-hover:text-muted-foreground size-5 shrink-0" aria-hidden />
       </Link>

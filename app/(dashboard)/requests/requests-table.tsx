@@ -58,7 +58,7 @@ const columns: ColumnDef<ApiRequest>[] = [
     cell: ({ row }) => {
       const r = row.original;
       return (
-        <div className="max-w-md min-w-0">
+        <div className="max-w-xs min-w-0 2xl:max-w-md">
           <div className="flex items-center gap-1.5">
             <Badge variant="outline" className="font-mono">
               {r.method}
@@ -165,6 +165,7 @@ export function RequestsTable({ requests, showStorefront = true }: { requests: A
       tabs={tabs}
       tabCounts
       initialSorting={[{ id: "at", desc: true }]}
+      hideBelow={{ madeWith: "2xl", ip: "2xl" }}
       emptyText="No requests match these filters."
     />
   );

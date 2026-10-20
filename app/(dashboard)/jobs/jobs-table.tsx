@@ -34,6 +34,13 @@ const columnLabels: Record<string, string> = {
   state: "State"
 };
 
+/** The latest thing that happened to a job, in words. */
+function whenText(job: Job): string {
+  if (job.failedAt) return `failed ${formatAgo(job.failedAt)}`;
+  if (job.state === "running" && job.startedAt) return `started ${formatAgo(job.startedAt)}`;
+  return `queued ${formatAgo(job.createdAt)}`;
+}
+
 const tabs: TableTab<Job>[] = [
   { value: "queued", label: "Queued", match: (j) => j.state === "queued" },
   { value: "running", label: "Running", match: (j) => j.state === "running" },
@@ -80,7 +87,7 @@ const columns: ColumnDef<Job>[] = [
     header: ({ column }) => <SortableHeader column={column}>When</SortableHeader>,
     cell: ({ row }) => (
       <span className="text-muted-foreground whitespace-nowrap">
-        {row.original.failedAt ? `failed ${formatAgo(row.original.failedAt)}` : `queued ${formatAgo(row.original.createdAt)}`}
+        {whenText(row.original)}
       </span>
     )
   },

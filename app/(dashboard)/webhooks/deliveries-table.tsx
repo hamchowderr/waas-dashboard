@@ -23,9 +23,7 @@ const columnLabels: Record<string, string> = {
   tenantName: "Store",
   url: "Endpoint",
   status: "Status",
-  attempts: "Attempts",
-  responseStatus: "Answer",
-  details: "Details",
+  details: "Answer",
   retry: "Send again"
 };
 
@@ -101,7 +99,7 @@ const columns: ColumnDef<WebhookDelivery>[] = [
     accessorKey: "url",
     header: "Endpoint",
     cell: ({ row }) => (
-      <div className="max-w-64 min-w-0">
+      <div className="max-w-48 min-w-0 2xl:max-w-64">
         <div className="truncate font-mono text-xs" title={row.original.url}>
           {row.original.url}
         </div>
@@ -113,50 +111,46 @@ const columns: ColumnDef<WebhookDelivery>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const badge = statusBadge[row.original.status];
-      return <Badge variant={badge.variant}>{badge.label}</Badge>;
-    }
-  },
-  {
-    accessorKey: "attempts",
-    header: ({ column }) => <SortableHeader column={column}>Attempts</SortableHeader>,
-    cell: ({ row }) => <span className="tabular-nums">{row.original.attempts}</span>
-  },
-  {
-    accessorKey: "responseStatus",
-    header: "Answer",
-    cell: ({ row }) => {
-      const status = row.original.responseStatus;
-      if (status === null) return <span className="text-muted-foreground">None</span>;
+      const d = row.original;
+      const badge = statusBadge[d.status];
       return (
-        <Badge variant={status >= 500 ? "destructive" : status >= 300 ? "warning" : "success"} className="tabular-nums">
-          {status}
-        </Badge>
+        <div className="flex flex-col items-start gap-1">
+          <Badge variant={badge.variant}>{badge.label}</Badge>
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {d.attempts === 1 ? "1 try" : `${d.attempts} tries`}
+          </span>
+        </div>
       );
     }
   },
   {
     id: "details",
     accessorFn: (d) => d.error ?? d.responseBody,
-    header: "Details",
+    header: "Answer",
     enableSorting: false,
     cell: ({ row }) => {
       const d = row.original;
-      if (d.error)
-        return (
-          <span className="text-destructive line-clamp-2 block max-w-72 text-xs whitespace-normal" title={d.error}>
-            {d.error}
-          </span>
-        );
-      if (d.responseBody)
-        return (
-          <span
-            className="text-muted-foreground line-clamp-2 block max-w-72 font-mono text-xs break-all whitespace-normal"
-            title={d.responseBody}>
-            {d.responseBody}
-          </span>
-        );
-      return <span className="text-muted-foreground">—</span>;
+      const status = d.responseStatus;
+      return (
+        <div className="flex w-56 flex-col items-start gap-1 whitespace-normal xl:w-64">
+          {status === null ? (
+            <span className="text-muted-foreground text-xs">No answer</span>
+          ) : (
+            <Badge variant={status >= 500 ? "destructive" : status >= 300 ? "warning" : "success"} className="tabular-nums">
+              {status}
+            </Badge>
+          )}
+          {d.error ? (
+            <span className="text-destructive line-clamp-2 text-xs break-words" title={d.error}>
+              {d.error}
+            </span>
+          ) : d.responseBody ? (
+            <span className="text-muted-foreground line-clamp-2 font-mono text-xs break-all" title={d.responseBody}>
+              {d.responseBody}
+            </span>
+          ) : null}
+        </div>
+      );
     }
   },
   {
