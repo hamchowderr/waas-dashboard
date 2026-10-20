@@ -33,12 +33,12 @@ export default async function DashboardLayout({
   // The storefront switcher should not take the whole page down when the API is
   // unreachable; the page itself shows that error. Customers see one storefront: no switcher.
   let storefronts: StorefrontOption[] | null = null;
+  let pendingApplications = 0;
   if (viewer.isAdmin) {
-    try {
-      storefronts = (await api.overview()).products;
-    } catch {
-      storefronts = [];
-    }
+    const [overview, pending] = await Promise.allSettled([api.overview(), api.applications("pending")]);
+    storefronts = overview.status === "fulfilled" ? overview.value.products : [];
+    // An API without applications yet answers 404: none waiting.
+    pendingApplications = pending.status === "fulfilled" ? pending.value.length : 0;
   }
 
   const active = viewer.active;
@@ -73,7 +73,7 @@ export default async function DashboardLayout({
         } as React.CSSProperties
       }>
       {!api.isFixture && <SessionKeepAlive />}
-      <AppSidebar />
+      <AppSidebar isAdmin={viewer.isAdmin} pendingApplications={pendingApplications} />
       <SidebarInset>
         <SiteHeader storefronts={storefronts} isFixture={api.isFixture} user={user} memberships={memberships} />
         <div className="flex flex-1 flex-col">

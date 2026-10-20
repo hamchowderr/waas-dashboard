@@ -10,6 +10,7 @@ import type {
   CreateTemplateInput,
   CreateVersionInput,
   MailDomain,
+  ApprovedApplication,
   NewAgency,
   NewApiKey,
   NewInvitation,
@@ -309,6 +310,33 @@ export async function createAgency(
       return { ...agency, storefrontError: error.apiMessage ?? error.message };
     }
   }, ["/keys", "/"]);
+}
+
+/** Approves an application to sell: its storefront with maxTenants stores, the applicant invited as owner. Platform admin only. */
+export async function approveApplication(
+  id: string,
+  maxTenants: number | null,
+  storefront: boolean
+): Promise<ActionResult<ApprovedApplication>> {
+  return run(async () => {
+    await adminOnly();
+    if (maxTenants !== null && !(Number.isInteger(maxTenants) && maxTenants >= 0 && maxTenants <= 100000))
+      throw new InputError("Store limit must be a whole number, 0 or more, or empty for no limit");
+    return getAdminApi().approveApplication(uuid(id, "application"), { maxTenants, storefront: storefront === true });
+  }, ["/applications", "/keys", "/"]);
+}
+
+/** Declines an application to sell; the API emails the applicant. Platform admin only. */
+export async function declineApplication(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly();
+    await getAdminApi().declineApplication(uuid(id, "application"));
+    return undefined;
+  }, ["/applications"]);
+}
+
+async function adminOnly() {
+  if (!(await getViewer())?.isAdmin) throw new InputError("Only the platform admin can review applications.");
 }
 
 /** Builds a ready-made storefront for an existing agency. */

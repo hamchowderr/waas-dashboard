@@ -15,15 +15,17 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar
 } from "@/components/ui/sidebar";
 import { BrandMark } from "@/components/shell/brand-mark";
 import { CommandSearch } from "@/components/shell/command-search";
-import { isCurrent, NAV } from "@/components/shell/nav";
+import { isCurrent, navFor } from "@/components/shell/nav";
 
-export function AppSidebar() {
+/** pendingApplications: shown beside Applications when some are waiting (platform admin only). */
+export function AppSidebar({ isAdmin, pendingApplications = 0 }: { isAdmin: boolean; pendingApplications?: number }) {
   const pathname = usePathname();
   const { appearance } = useAppearance();
   const { isMobile, setOpen, setOpenMobile } = useSidebar();
@@ -58,11 +60,11 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <CommandSearch />
+        <CommandSearch isAdmin={isAdmin} />
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="h-full [&>[data-slot=scroll-area-viewport]]:scroll-fade">
-          {NAV.map((group) => (
+          {navFor(isAdmin).map((group) => (
             <SidebarGroup key={group.title}>
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
@@ -75,6 +77,9 @@ export function AppSidebar() {
                           <span>{link.title}</span>
                         </Link>
                       </SidebarMenuButton>
+                      {link.href === "/applications" && pendingApplications > 0 && (
+                        <SidebarMenuBadge>{pendingApplications}</SidebarMenuBadge>
+                      )}
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>

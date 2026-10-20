@@ -237,6 +237,14 @@ export type WireCreatedProduct = { product: WireProduct; key: WireNewApiKey };
 /** A store as GET /v1/tenants answers it: here a ready-made storefront (GET /admin/products/{id}/storefront). */
 export type WireStorefront = { id: string; name: string; domainName: string; statusCode: number; statusName: string };
 
+/** POST /admin/applications/{id}/approve. The application itself is SellerApplication's shape. */
+export type WireApprovedApplication = {
+  productId: string;
+  invitation: { id: string; acceptUrl: string; expiresAt: string; emailed: boolean };
+  storefront: WireStorefront | null;
+  storefrontError: string | null;
+};
+
 export type WireRotatedApiKey = { key: WireNewApiKey; replaced: WireApiKey };
 
 // Teams: a product's organization (GET /admin/products/{id}/organization, docs/accounts.md).

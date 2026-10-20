@@ -23,10 +23,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { NAV } from "@/components/shell/nav";
+import { navFor } from "@/components/shell/nav";
 
 /** The sidebar's search box: opens a page finder, also on ⌘K / Ctrl+K. */
-export function CommandSearch() {
+export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
 
@@ -81,7 +81,7 @@ export function CommandSearch() {
           <CommandInput placeholder="Go to a page..." />
           <CommandList>
             <CommandEmpty>No page matches.</CommandEmpty>
-            {NAV.map((group, index) => (
+            {navFor(isAdmin).map((group, index) => (
               <React.Fragment key={group.title}>
                 {index > 0 && <CommandSeparator />}
                 <CommandGroup heading={group.title}>

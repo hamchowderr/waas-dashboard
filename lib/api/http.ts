@@ -3,6 +3,9 @@ import "server-only";
 import type { AdminApi } from "./client";
 import type {
   ApiKey,
+  ApplicationStatus,
+  ApprovedApplication,
+  SellerApplication,
   NewAgency,
   NewAgencyInput,
   NewStorefrontInput,
@@ -44,6 +47,7 @@ import type {
   WireApiKey,
   WireCreatedProduct,
   WireStorefront,
+  WireApprovedApplication,
   WireNewApiKey,
   WireRotatedApiKey,
   WireInvitation,
@@ -368,6 +372,28 @@ export class HttpAdminApi implements AdminApi {
 
   async revokeApiKey(productId: string, keyId: string): Promise<void> {
     await this.send("DELETE", this.productPath(productId, `/keys/${encodeURIComponent(keyId)}`));
+  }
+
+  async applications(status?: ApplicationStatus): Promise<SellerApplication[]> {
+    return (await this.get<SellerApplication[]>(`/admin/applications${status ? `?status=${status}` : ""}`))!;
+  }
+
+  async application(id: string): Promise<SellerApplication | null> {
+    return this.get<SellerApplication>(`/admin/applications/${encodeURIComponent(id)}`, { allow404: true });
+  }
+
+  async approveApplication(id: string, input: { maxTenants: number | null; storefront: boolean }): Promise<ApprovedApplication> {
+    const approved = (await this.send<WireApprovedApplication>("POST", `/admin/applications/${encodeURIComponent(id)}/approve`, input))!;
+    return {
+      productId: approved.productId,
+      invitation: { acceptUrl: approved.invitation.acceptUrl, emailed: approved.invitation.emailed },
+      ...(approved.storefront ? { storefront: toStorefront(approved.storefront) } : {}),
+      ...(approved.storefrontError ? { storefrontError: approved.storefrontError } : {})
+    };
+  }
+
+  async declineApplication(id: string): Promise<void> {
+    await this.send("POST", `/admin/applications/${encodeURIComponent(id)}/decline`);
   }
 
   async team(productId: string): Promise<Team> {
