@@ -122,6 +122,23 @@ export type WireProduct = {
   tenantCount: number;
   versionCount: number;
   productionVersionId: string | null;
+  /** Added with reseller accounts; absent from an older API. */
+  resellerId?: string | null;
+  resellerName?: string | null;
+  dateCreated: string;
+};
+
+/** Reseller (admin API) */
+export type WireReseller = {
+  id: string;
+  name: string;
+  maxProducts: number | null;
+  maxTenants: number | null;
+  wholesalePercent: number;
+  billingEmail: string | null;
+  products: { id: string; name: string; tenantCount: number }[];
+  tenantCount: number;
+  liveTenantCount: number;
   dateCreated: string;
 };
 

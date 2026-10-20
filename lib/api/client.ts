@@ -20,6 +20,9 @@ import type {
   CreateTemplateInput,
   CreateVersionInput,
   ProductDetail,
+  Reseller,
+  ResellerSettings,
+  ResellerUsage,
   Template,
   Version,
   BackupFilter,
@@ -133,6 +136,21 @@ export interface AdminApi {
   approveApplication(id: string, input: { maxTenants: number | null; storefront: boolean }): Promise<ApprovedApplication>;
   /** Declines and emails the applicant. */
   declineApplication(id: string): Promise<void>;
+
+  // Reseller accounts: storefronts grouped under one partner. Platform admin only.
+  resellers(): Promise<Reseller[]>;
+  /** Null when there is no such reseller. */
+  reseller(id: string): Promise<Reseller | null>;
+  /** Store-days per size from `from` up to `to` (ISO dates). */
+  resellerUsage(id: string, from: string, to: string): Promise<ResellerUsage>;
+  /** A new reseller, with those storefronts moved into it. */
+  createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller>;
+  /** Changes only the settings given. */
+  updateReseller(id: string, settings: Partial<ResellerSettings>): Promise<Reseller>;
+  /** Only a reseller with no storefronts. */
+  deleteReseller(id: string): Promise<void>;
+  addResellerProduct(id: string, productId: string): Promise<void>;
+  removeResellerProduct(id: string, productId: string): Promise<void>;
 
   // Teams: who can sign in to a storefront. The API emails invitations and enforces who may change what.
   team(productId: string): Promise<Team>;

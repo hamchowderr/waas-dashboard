@@ -2,6 +2,7 @@ import {
   ActivityIcon,
   ArchiveIcon,
   GaugeIcon,
+  HandshakeIcon,
   InboxIcon,
   KeyRoundIcon,
   LayersIcon,
@@ -32,6 +33,7 @@ export const NAV: { title: string; links: NavLink[] }[] = [
     title: "Storefronts",
     links: [
       { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true },
+      { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true },
       { title: "Versions & templates", href: "/versions", icon: LayersIcon },
       { title: "API keys", href: "/keys", icon: KeyRoundIcon },
       { title: "Team", href: "/team", icon: UsersIcon }
