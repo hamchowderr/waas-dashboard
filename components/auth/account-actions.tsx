@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { acceptInvitation, setActiveOrganization, signOut } from "@/lib/auth-client";
+import { acceptInvitation, pickStorefront, signOut } from "@/lib/auth-client";
 
 function useAction() {
   const router = useRouter();
@@ -48,18 +48,18 @@ export function SignOutButton({ variant = "outline", then = "/login" }: { varian
 }
 
 /** One button per storefront, for someone in several who hasn't picked one. */
-export function StorefrontPicker({ storefronts }: { storefronts: { organizationId: string; productName: string }[] }) {
+export function StorefrontPicker({ storefronts }: { storefronts: { organizationId: string; productId: string; productName: string }[] }) {
   const { pending, error, run } = useAction();
   return (
     <div className="space-y-2">
       <ErrorNote error={error} />
       {storefronts.map((s) => (
         <Button
-          key={s.organizationId}
+          key={s.productId}
           className="w-full"
           disabled={pending !== null}
-          onClick={() => void run(s.organizationId, () => setActiveOrganization(s.organizationId), "/")}>
-          {pending === s.organizationId ? "Opening…" : s.productName}
+          onClick={() => void run(s.productId, () => pickStorefront(s), "/")}>
+          {pending === s.productId ? "Opening…" : s.productName}
         </Button>
       ))}
     </div>

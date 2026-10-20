@@ -19,6 +19,7 @@ import {
   type NewApiKey,
   type NewInvitation,
   type Team,
+  type TeamOf,
   type TeamRole,
   type Backup,
   type BackupFilter,
@@ -579,11 +580,13 @@ function without<T extends object, K extends keyof T>(item: T, ...keys: K[]): Om
 
 const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended", "dateChanged");
 
-type FixtureTeam = Team & { productId: string };
+/** key: the product id, or "reseller:<id>" for a reseller's team. */
+type FixtureTeam = Team & { key: string };
+const teamKey = (of: TeamOf) => (typeof of === "string" ? of : `reseller:${of.resellerId}`);
 
 const teams: FixtureTeam[] = [
   {
-    productId: products[0].id,
+    key: products[0].id,
     organization: { id: uuid(1, 12), name: products[0].name },
     members: [
       { id: uuid(1, 13), userId: uuid(1, 14), name: "Dana Rivers", email: "dana@northwind.example", role: "owner", dateCreated: iso(NOW - 30 * DAY) },
@@ -1124,14 +1127,15 @@ export class FixtureAdminApi implements AdminApi {
     key.revokedAt = new Date().toISOString();
   }
 
-  private teamOf(productId: string): FixtureTeam {
-    const product = this.product(productId);
-    let team = teams.find((t) => t.productId === productId);
+  private teamOf(of: TeamOf): FixtureTeam {
+    const name = this.teamName(of);
+    const key = teamKey(of);
+    let team = teams.find((t) => t.key === key);
     if (!team) {
-      team = { productId, organization: null, members: [], invitations: [] };
+      team = { key, organization: null, members: [], invitations: [] };
       teams.push(team);
     }
-    team.organization ??= { id: uuid(teams.length, 12), name: product.name };
+    team.organization ??= { id: uuid(teams.length, 12), name };
     return team;
   }
 
@@ -1354,14 +1358,19 @@ export class FixtureAdminApi implements AdminApi {
     await this.revokeApiKey(id, keyId);
   }
 
-  async team(productId: string): Promise<Team> {
-    this.product(productId);
-    const team = teams.find((t) => t.productId === productId);
-    return team ? structuredClone(without(team, "productId")) : { organization: null, members: [], invitations: [] };
+  /** The team's default name; throws when the storefront or reseller isn't there. */
+  private teamName(of: TeamOf): string {
+    return typeof of === "string" ? this.product(of).name : this.findReseller(of.resellerId).name;
   }
 
-  async invite(productId: string, email: string, role: TeamRole): Promise<NewInvitation> {
-    const team = this.teamOf(productId);
+  async team(of: TeamOf): Promise<Team> {
+    this.teamName(of);
+    const team = teams.find((t) => t.key === teamKey(of));
+    return team ? structuredClone(without(team, "key")) : { organization: null, members: [], invitations: [] };
+  }
+
+  async invite(of: TeamOf, email: string, role: TeamRole): Promise<NewInvitation> {
+    const team = this.teamOf(of);
     if (team.members.some((m) => m.email === email)) throw new FixtureError(409, `${email} is already a member`);
     team.invitations = team.invitations.filter((i) => i.email !== email);
     const id = uuid(100 + team.invitations.length, 15);
@@ -1377,14 +1386,14 @@ export class FixtureAdminApi implements AdminApi {
     return { ...invitation, emailed: true };
   }
 
-  async cancelInvitation(productId: string, invitationId: string): Promise<void> {
-    const team = this.teamOf(productId);
+  async cancelInvitation(of: TeamOf, invitationId: string): Promise<void> {
+    const team = this.teamOf(of);
     if (!team.invitations.some((i) => i.id === invitationId)) throw new FixtureError(404, `Pending invitation ${invitationId} not found`);
     team.invitations = team.invitations.filter((i) => i.id !== invitationId);
   }
 
-  async setMemberRole(productId: string, memberId: string, role: TeamRole): Promise<void> {
-    const team = this.teamOf(productId);
+  async setMemberRole(of: TeamOf, memberId: string, role: TeamRole): Promise<void> {
+    const team = this.teamOf(of);
     const member = team.members.find((m) => m.id === memberId);
     if (!member) throw new FixtureError(404, `Member ${memberId} not found`);
     if (member.role === "owner" && role !== "owner" && team.members.filter((m) => m.role === "owner").length === 1)
@@ -1392,8 +1401,8 @@ export class FixtureAdminApi implements AdminApi {
     member.role = role;
   }
 
-  async removeMember(productId: string, memberId: string): Promise<void> {
-    const team = this.teamOf(productId);
+  async removeMember(of: TeamOf, memberId: string): Promise<void> {
+    const team = this.teamOf(of);
     if (!team.members.some((m) => m.id === memberId)) throw new FixtureError(404, `Member ${memberId} not found`);
     team.members = team.members.filter((m) => m.id !== memberId);
   }

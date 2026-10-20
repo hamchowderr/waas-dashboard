@@ -3,6 +3,8 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 
+import { STOREFRONT_COOKIE } from "@/lib/storefront-cookie";
+
 /**
  * Sign-in runs on the provisioning API (Better Auth, the API's docs/accounts.md). The dashboard
  * passes /api/auth/* through to it (app/api/auth/[...all]/route.ts), so the session cookie is the
@@ -11,8 +13,9 @@ import { cookies } from "next/headers";
  * Two kinds of people sign in:
  * - platform admins: GitHub logins listed in ALLOWED_GITHUB_LOGINS, or email addresses listed in
  *   ALLOWED_ADMIN_EMAILS. They see every storefront, through the API's /admin routes and the admin token.
- * - customers: members of a storefront's organization. They see their own storefront only,
- *   through the API's /account routes with their session; the API does the narrowing.
+ * - customers: members of a storefront's organization, or of a reseller's (all its storefronts). They
+ *   see the storefront they act for only, through the API's /account routes with their session; the
+ *   API does the narrowing. The storefront picked in the switcher goes along as X-Product-Id.
  */
 
 /** GitHub logins of the platform admins, from ALLOWED_GITHUB_LOGINS (comma or space separated). */
@@ -53,6 +56,8 @@ export interface Membership {
   productId: string;
   productName: string;
   role: OrgRole;
+  /** Set when the membership comes from a reseller's team, which reaches all the reseller's storefronts. */
+  resellerId: string | null;
 }
 
 export interface Viewer {
@@ -84,6 +89,12 @@ export async function authCookieHeader(): Promise<string> {
     .join("; ");
 }
 
+/** The session headers for the API: the cookies, and the storefront picked in the switcher. */
+export async function sessionHeaders(cookie: string): Promise<Record<string, string>> {
+  const picked = (await cookies()).get(STOREFRONT_COOKIE)?.value;
+  return { Cookie: cookie, ...(picked && /^[0-9a-f-]{36}$/i.test(picked) ? { "X-Product-Id": picked } : {}) };
+}
+
 /**
  * Who is signed in, or null. Asks the API once per request (GET /account). An API that is down
  * throws, so a page shows its error instead of sending the person back to sign in.
@@ -95,7 +106,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const cookie = await authCookieHeader();
   if (!cookie) return null;
   const response = await fetch(new URL("/account", baseUrl), {
-    headers: { Cookie: cookie, Accept: "application/json" },
+    headers: { ...(await sessionHeaders(cookie)), Accept: "application/json" },
     cache: "no-store",
     signal: AbortSignal.timeout(10_000)
   });

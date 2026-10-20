@@ -28,7 +28,7 @@ export async function answerConnection(id: string, answer: ConnectAnswer): Promi
   try {
     const response = await fetch(new URL(`/account/oauth/requests/${id}`, process.env.WAAS_API_URL), {
       method: "POST",
-      headers: { ...connectHeaders(viewer), "Content-Type": "application/json" },
+      headers: { ...(await connectHeaders(viewer)), "Content-Type": "application/json" },
       body: JSON.stringify(body),
       cache: "no-store",
       signal: AbortSignal.timeout(10_000)

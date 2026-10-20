@@ -13,6 +13,7 @@ import type {
   ReadyStorefront,
   NewApiKey,
   NewInvitation,
+  TeamOf,
   Team,
   TeamRole,
   Backup,
@@ -49,7 +50,7 @@ import type {
   WebhookSecret
 } from "./types";
 import { FixtureAdminApi } from "./fixtures";
-import { getViewer } from "@/auth";
+import { getViewer, sessionHeaders } from "@/auth";
 import { AdminApiError, HttpAdminApi, type ApiAccess } from "./http";
 
 /** Read-only view of the provisioning API's admin endpoints. Server code only. */
@@ -168,12 +169,13 @@ export interface AdminApi {
   rotatePartnerKey(id: string, keyId: string, graceHours: number): Promise<NewApiKey>;
   revokePartnerKey(id: string, keyId: string): Promise<void>;
 
-  // Teams: who can sign in to a storefront. The API emails invitations and enforces who may change what.
-  team(productId: string): Promise<Team>;
-  invite(productId: string, email: string, role: TeamRole): Promise<NewInvitation>;
-  cancelInvitation(productId: string, invitationId: string): Promise<void>;
-  setMemberRole(productId: string, memberId: string, role: TeamRole): Promise<void>;
-  removeMember(productId: string, memberId: string): Promise<void>;
+  // Teams: who can sign in to a storefront, or to all of a reseller's. The API emails invitations and
+  // enforces who may change what.
+  team(of: TeamOf): Promise<Team>;
+  invite(of: TeamOf, email: string, role: TeamRole): Promise<NewInvitation>;
+  cancelInvitation(of: TeamOf, invitationId: string): Promise<void>;
+  setMemberRole(of: TeamOf, memberId: string, role: TeamRole): Promise<void>;
+  removeMember(of: TeamOf, memberId: string): Promise<void>;
 }
 
 /**
@@ -198,5 +200,5 @@ async function access(): Promise<ApiAccess> {
     if (!token) throw new Error("Set WAAS_ADMIN_TOKEN so platform admins can see every storefront.");
     return { prefix: "/admin", headers: { Authorization: `Bearer ${token}` } };
   }
-  return { prefix: "/account", headers: { Cookie: viewer.cookie, "X-Session-Auth": "1" } };
+  return { prefix: "/account", headers: { ...(await sessionHeaders(viewer.cookie)), "X-Session-Auth": "1" } };
 }

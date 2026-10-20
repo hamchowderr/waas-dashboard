@@ -485,7 +485,13 @@ export type TeamInvitation = {
   acceptUrl: string | null;
 };
 
-/** A storefront's team: null organization until someone is first invited. */
+/**
+ * Whose team: a storefront's (its product id), or a reseller's, whose people reach every storefront
+ * the reseller has. Only the platform admin manages a reseller's team.
+ */
+export type TeamOf = string | { resellerId: string };
+
+/** A storefront's or reseller's team: null organization until someone is first invited. */
 export type Team = {
   organization: { id: string; name: string } | null;
   members: TeamMember[];

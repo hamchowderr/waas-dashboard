@@ -55,8 +55,9 @@ export default async function DashboardLayout({
     ? []
     : viewer.memberships.map((m) => ({
         organizationId: m.organizationId,
+        productId: m.productId,
         productName: m.productName,
-        active: m.organizationId === active?.organizationId
+        active: m.productId === active?.productId
       }));
 
   return (

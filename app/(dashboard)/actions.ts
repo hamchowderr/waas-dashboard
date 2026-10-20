@@ -20,6 +20,7 @@ import type {
   ReadyStorefront,
   Reseller,
   ResellerSettings,
+  TeamOf,
   TeamRole,
   WebhookEndpointChange,
   WebhookEndpointInput,
@@ -522,32 +523,44 @@ function teamRole(value: unknown): TeamRole {
   return value as TeamRole;
 }
 
-/** Invites someone by email; the API emails them the link. */
-export async function inviteTeammate(productId: string, email: string, role: TeamRole): Promise<ActionResult<NewInvitation>> {
+/**
+ * Runs a team change and refreshes the team's page. The team is a storefront's id, or a reseller's,
+ * which only the platform admin manages.
+ */
+async function teamChange<T>(of: TeamOf, work: (checked: TeamOf) => Promise<T>): Promise<ActionResult<T>> {
+  if (typeof of === "string") return run(() => work(uuid(of, "storefront")), ["/team"]);
   return run(async () => {
+    await adminOnly("manage resellers");
+    return work({ resellerId: uuid(of?.resellerId, "reseller") });
+  }, ["/resellers"]);
+}
+
+/** Invites someone by email; the API emails them the link. */
+export async function inviteTeammate(of: TeamOf, email: string, role: TeamRole): Promise<ActionResult<NewInvitation>> {
+  return teamChange(of, (checked) => {
     const address = text(email, "Email address", 254).toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) throw new InputError("Enter an email address");
-    return getAdminApi().invite(uuid(productId, "storefront"), address, teamRole(role));
-  }, ["/team"]);
+    return getAdminApi().invite(checked, address, teamRole(role));
+  });
 }
 
-export async function cancelInvitation(productId: string, invitationId: string): Promise<ActionResult> {
-  return run(async () => {
-    await getAdminApi().cancelInvitation(uuid(productId, "storefront"), uuid(invitationId, "invitation"));
+export async function cancelInvitation(of: TeamOf, invitationId: string): Promise<ActionResult> {
+  return teamChange(of, async (checked) => {
+    await getAdminApi().cancelInvitation(checked, uuid(invitationId, "invitation"));
     return undefined;
-  }, ["/team"]);
+  });
 }
 
-export async function setMemberRole(productId: string, memberId: string, role: TeamRole): Promise<ActionResult> {
-  return run(async () => {
-    await getAdminApi().setMemberRole(uuid(productId, "storefront"), uuid(memberId, "member"), teamRole(role));
+export async function setMemberRole(of: TeamOf, memberId: string, role: TeamRole): Promise<ActionResult> {
+  return teamChange(of, async (checked) => {
+    await getAdminApi().setMemberRole(checked, uuid(memberId, "member"), teamRole(role));
     return undefined;
-  }, ["/team"]);
+  });
 }
 
-export async function removeMember(productId: string, memberId: string): Promise<ActionResult> {
-  return run(async () => {
-    await getAdminApi().removeMember(uuid(productId, "storefront"), uuid(memberId, "member"));
+export async function removeMember(of: TeamOf, memberId: string): Promise<ActionResult> {
+  return teamChange(of, async (checked) => {
+    await getAdminApi().removeMember(checked, uuid(memberId, "member"));
     return undefined;
-  }, ["/team"]);
+  });
 }
