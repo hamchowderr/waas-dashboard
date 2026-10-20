@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { getViewer } from "@/auth";
 import { AccountCard } from "@/components/auth/account-card";
 import { SignOutButton } from "@/components/auth/account-actions";
+import type { ScopeArea } from "@/lib/connect-scopes";
+import { connectHeaders } from "./headers";
 import { ConnectForm } from "./connect-form";
 
 export const metadata: Metadata = { title: "Connect an app" };
@@ -15,19 +17,25 @@ type ConnectRequest = {
   clientName: string;
   returnTo: string;
   wantsWrite: boolean;
+  readOnly: boolean;
+  /** One per area (stores, backups, domains, email, versions, site): a box to see and a box to change. */
+  areas: ScopeArea[];
+  /** True when the API took this person as a platform admin: every storefront is listed. */
+  asAdmin?: boolean;
   storefronts: { productId: string; name: string; role: string; canChange: boolean }[];
 };
 
 /**
  * Where an AI app's connection lands when the person chooses to sign in (the API's approve page
- * sends them here): they pick a storefront and approve, and go back to the app.
+ * sends them here): they pick a storefront, tick what the app may see and change, approve, and go
+ * back to the app. A platform admin can pick any storefront.
  */
 export default async function ConnectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const viewer = await getViewer();
   if (!viewer) redirect(`/login?callbackUrl=${encodeURIComponent(`/connect/${id}`)}`);
 
-  const request = UUID.test(id) && process.env.WAAS_API_URL ? await load(id, viewer.cookie) : null;
+  const request = UUID.test(id) && process.env.WAAS_API_URL ? await load(id, viewer) : null;
   if (!request) {
     return (
       <AccountCard title="This link has expired" description="Go back to the app and connect again. Each link works once, for 10 minutes.">
@@ -60,14 +68,14 @@ export default async function ConnectPage({ params }: { params: Promise<{ id: st
           <code>{request.returnTo}</code>.
         </>
       }>
-      <ConnectForm id={request.id} wantsWrite={request.wantsWrite} storefronts={request.storefronts} />
+      <ConnectForm id={request.id} areas={request.areas ?? []} storefronts={request.storefronts} asAdmin={request.asAdmin === true} />
     </AccountCard>
   );
 }
 
-async function load(id: string, cookie: string): Promise<ConnectRequest | null> {
+async function load(id: string, viewer: { cookie: string; isAdmin: boolean }): Promise<ConnectRequest | null> {
   const response = await fetch(new URL(`/account/oauth/requests/${id}`, process.env.WAAS_API_URL), {
-    headers: { Cookie: cookie, "X-Session-Auth": "1", Accept: "application/json" },
+    headers: connectHeaders(viewer),
     cache: "no-store",
     signal: AbortSignal.timeout(10_000)
   });
