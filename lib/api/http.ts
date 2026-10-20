@@ -16,6 +16,7 @@ import type {
   NewApiKey,
   NewInvitation,
   Team,
+  TeamOf,
   TeamRole,
   Backup,
   BackupFilter,
@@ -512,8 +513,12 @@ export class HttpAdminApi implements AdminApi {
     await this.send("DELETE", this.resellerPath(id, `/keys/${encodeURIComponent(keyId)}`));
   }
 
-  async team(productId: string): Promise<Team> {
-    const view = (await this.get<WireOrganizationView>(this.productPath(productId, "/organization")))!;
+  private teamPath(of: TeamOf, rest: string): string {
+    return typeof of === "string" ? this.productPath(of, rest) : this.resellerPath(of.resellerId, rest);
+  }
+
+  async team(of: TeamOf): Promise<Team> {
+    const view = (await this.get<WireOrganizationView>(this.teamPath(of, "/organization")))!;
     return {
       organization: view.organization && { id: view.organization.id, name: view.organization.name },
       members: view.members,
@@ -521,21 +526,21 @@ export class HttpAdminApi implements AdminApi {
     };
   }
 
-  async invite(productId: string, email: string, role: TeamRole): Promise<NewInvitation> {
-    const created = (await this.send<WireInvitation>("POST", this.productPath(productId, "/invitations"), { email, role }))!;
+  async invite(of: TeamOf, email: string, role: TeamRole): Promise<NewInvitation> {
+    const created = (await this.send<WireInvitation>("POST", this.teamPath(of, "/invitations"), { email, role }))!;
     return { ...toInvitation(created), emailed: created.emailed === true };
   }
 
-  async cancelInvitation(productId: string, invitationId: string): Promise<void> {
-    await this.send("DELETE", this.productPath(productId, `/invitations/${encodeURIComponent(invitationId)}`));
+  async cancelInvitation(of: TeamOf, invitationId: string): Promise<void> {
+    await this.send("DELETE", this.teamPath(of, `/invitations/${encodeURIComponent(invitationId)}`));
   }
 
-  async setMemberRole(productId: string, memberId: string, role: TeamRole): Promise<void> {
-    await this.send("PATCH", this.productPath(productId, `/members/${encodeURIComponent(memberId)}`), { role });
+  async setMemberRole(of: TeamOf, memberId: string, role: TeamRole): Promise<void> {
+    await this.send("PATCH", this.teamPath(of, `/members/${encodeURIComponent(memberId)}`), { role });
   }
 
-  async removeMember(productId: string, memberId: string): Promise<void> {
-    await this.send("DELETE", this.productPath(productId, `/members/${encodeURIComponent(memberId)}`));
+  async removeMember(of: TeamOf, memberId: string): Promise<void> {
+    await this.send("DELETE", this.teamPath(of, `/members/${encodeURIComponent(memberId)}`));
   }
 
   /** Every page of a list, up to maxPages. */

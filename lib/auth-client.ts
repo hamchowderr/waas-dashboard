@@ -1,5 +1,7 @@
 "use client";
 
+import { STOREFRONT_COOKIE } from "./storefront-cookie";
+
 // Browser calls to Better Auth's routes, served on this dashboard's address (app/api/auth).
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -51,9 +53,19 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
   await post("/organization/accept-invitation", { invitationId });
 }
 
-/** Picks the storefront to act for, for someone in more than one. */
+/** Picks the organization the session acts for, for someone in more than one. */
 export async function setActiveOrganization(organizationId: string): Promise<void> {
   await post("/organization/set-active", { organizationId });
+}
+
+/**
+ * Picks the storefront to act for, for someone with more than one. A reseller's team has one
+ * organization for all its storefronts, so the storefront itself goes in a cookie too.
+ */
+export async function pickStorefront(storefront: { organizationId: string; productId: string }): Promise<void> {
+  await setActiveOrganization(storefront.organizationId);
+  const secure = window.location.protocol === "https:" ? "; secure" : "";
+  document.cookie = `${STOREFRONT_COOKIE}=${encodeURIComponent(storefront.productId)}; path=/; max-age=31536000; samesite=lax${secure}`;
 }
 
 /** Keeps the session going: the API extends it, and sends the cookie back with its new expiry. */

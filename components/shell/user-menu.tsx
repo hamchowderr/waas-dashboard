@@ -17,13 +17,13 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import { setActiveOrganization, signOut } from "@/lib/auth-client";
+import { pickStorefront, signOut } from "@/lib/auth-client";
 
 /** `detail`: the GitHub login or email, and for a customer their storefront and role. */
 export type SignedInUser = { name: string; detail: string; image: string | null };
 
 /** Storefronts someone belongs to, when there is more than one to switch between. */
-export type StorefrontMembership = { organizationId: string; productName: string; active: boolean };
+export type StorefrontMembership = { organizationId: string; productId: string; productName: string; active: boolean };
 
 export function UserMenu({ user, memberships = [] }: { user: SignedInUser; memberships?: StorefrontMembership[] }) {
   const { theme, setTheme } = useTheme();
@@ -44,9 +44,9 @@ export function UserMenu({ user, memberships = [] }: { user: SignedInUser; membe
     router.refresh();
   }
 
-  async function switchTo(organizationId: string) {
+  async function switchTo(storefront: StorefrontMembership) {
     try {
-      await setActiveOrganization(organizationId);
+      await pickStorefront(storefront);
       router.replace("/");
       router.refresh();
     } catch (e) {
@@ -100,7 +100,7 @@ export function UserMenu({ user, memberships = [] }: { user: SignedInUser; membe
             <DropdownMenuGroup>
               <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">Storefronts</DropdownMenuLabel>
               {memberships.map((m) => (
-                <DropdownMenuItem key={m.organizationId} disabled={m.active} onSelect={() => void switchTo(m.organizationId)}>
+                <DropdownMenuItem key={m.productId} disabled={m.active} onSelect={() => void switchTo(m)}>
                   {m.productName}
                   {m.active && <CheckIcon className="ms-auto" />}
                 </DropdownMenuItem>

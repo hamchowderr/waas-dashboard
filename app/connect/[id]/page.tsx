@@ -75,7 +75,7 @@ export default async function ConnectPage({ params }: { params: Promise<{ id: st
 
 async function load(id: string, viewer: { cookie: string; isAdmin: boolean }): Promise<ConnectRequest | null> {
   const response = await fetch(new URL(`/account/oauth/requests/${id}`, process.env.WAAS_API_URL), {
-    headers: connectHeaders(viewer),
+    headers: await connectHeaders(viewer),
     cache: "no-store",
     signal: AbortSignal.timeout(10_000)
   });

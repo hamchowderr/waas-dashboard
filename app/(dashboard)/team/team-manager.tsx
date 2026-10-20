@@ -4,7 +4,7 @@ import * as React from "react";
 import { Check, Copy, MailIcon, MoreHorizontalIcon, UserPlusIcon, UserMinusIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import type { Team, TeamInvitation, TeamMember, TeamRole } from "@/lib/api/types";
+import type { Team, TeamInvitation, TeamMember, TeamOf, TeamRole } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { Badge } from "@/components/ui/badge";
@@ -75,17 +75,24 @@ function CopyLink({ url }: { url: string }) {
   );
 }
 
+/**
+ * A storefront's team, or with `reseller` a reseller's (productId and productName are then the
+ * reseller's), whose people sign in to every storefront the reseller has.
+ */
 export function TeamManager({
   productId,
   productName,
   team,
   me,
+  reseller = false,
 }: {
   productId: string;
   productName: string;
   team: Team;
   me: Me;
+  reseller?: boolean;
 }) {
+  const of: TeamOf = reseller ? { resellerId: productId } : productId;
   const myRole = me.role === null ? null : topRole(me.role);
   const canChange = myRole !== "member";
   const isOwner = myRole === null || myRole === "owner";
@@ -110,7 +117,7 @@ export function TeamManager({
 
   const invite = () =>
     startTransition(async () => {
-      const result = await inviteTeammate(productId, email, role);
+      const result = await inviteTeammate(of, email, role);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -123,7 +130,7 @@ export function TeamManager({
 
   const changeRole = (m: TeamMember, next: TeamRole) =>
     startTransition(async () => {
-      const result = await setMemberRole(productId, m.id, next);
+      const result = await setMemberRole(of, m.id, next);
       if (result.ok) toast.success(`${m.name || m.email} is now ${roleLabel(next).toLowerCase()}`);
       else toast.error(result.error);
     });
@@ -132,10 +139,11 @@ export function TeamManager({
     <>
       <Card>
         <CardHeader className={headerClass}>
-          <CardTitle>People</CardTitle>
+          <CardTitle>{reseller ? "Team" : "People"}</CardTitle>
           <CardDescription>
+            {reseller && "Everyone here signs in to all of this reseller's storefronts. "}
             {team.members.length === 0
-              ? `Nobody can sign in to ${productName} yet. Invite its owner first.`
+              ? `Nobody can sign in ${reseller ? "for" : "to"} ${productName} yet. Invite its owner first.`
               : "Owners and admins can make changes. Members can only look."}
           </CardDescription>
           {canChange && (
@@ -361,14 +369,14 @@ export function TeamManager({
         title={`Remove ${removing ? removing.name || removing.email : "them"}?`}
         description={
           <p>
-            They can no longer sign in to {productName}. Their account stays, and you can invite them again later.
+            They can no longer sign in {reseller ? "for" : "to"} {productName}. Their account stays, and you can invite them again later.
           </p>
         }
         confirmLabel="Remove"
         destructive
         onConfirm={async () => {
           if (!removing) return false;
-          const result = await removeMember(productId, removing.id);
+          const result = await removeMember(of, removing.id);
           if (result.ok) toast.success(`${removing.name || removing.email} removed`);
           else toast.error(result.error);
           return result.ok;
@@ -384,7 +392,7 @@ export function TeamManager({
         destructive
         onConfirm={async () => {
           if (!cancelling) return false;
-          const result = await cancelInvitation(productId, cancelling.id);
+          const result = await cancelInvitation(of, cancelling.id);
           if (result.ok) toast.success("Invitation cancelled");
           else toast.error(result.error);
           return result.ok;

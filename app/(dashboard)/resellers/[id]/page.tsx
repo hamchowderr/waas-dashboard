@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { KeysManager } from "../../keys/keys-manager";
+import { TeamManager } from "../../team/team-manager";
 import { formatDays, formatMoney, monthRange } from "../usage";
 import { BillDownload } from "./bill-download";
 import { DeleteReseller } from "./delete-reseller";
@@ -22,13 +23,19 @@ export const metadata: Metadata = { title: "Reseller" };
 const SIZE_LABELS: Record<StoreSize, string> = { small: "Small", medium: "Medium", large: "Large" };
 
 export default async function ResellerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ month?: string }> }) {
-  if (!(await getViewer())?.isAdmin) notFound();
+  const viewer = await getViewer();
+  if (!viewer?.isAdmin) notFound();
   const { id } = await params;
   const api = getAdminApi();
   const reseller = /^[0-9a-f-]{36}$/i.test(id) ? await api.reseller(id) : null;
   if (!reseller) notFound();
   const month = monthRange((await searchParams).month);
-  const [bill, products, keys] = await Promise.all([api.resellerBill(reseller.id, month.month), api.products(), api.partnerKeys(reseller.id)]);
+  const [bill, products, keys, team] = await Promise.all([
+    api.resellerBill(reseller.id, month.month),
+    api.products(),
+    api.partnerKeys(reseller.id),
+    api.team({ resellerId: reseller.id })
+  ]);
   const current = monthRange(undefined).month;
 
   return (
@@ -131,6 +138,9 @@ export default async function ResellerPage({ params, searchParams }: { params: P
         </Card>
         <div className="lg:col-span-3">
           <KeysManager partner productId={reseller.id} productName={reseller.name} keys={keys} />
+        </div>
+        <div className="space-y-4 lg:col-span-3 lg:space-y-6">
+          <TeamManager reseller productId={reseller.id} productName={reseller.name} team={team} me={{ userId: viewer.user.id, role: null }} />
         </div>
         <Card className="lg:col-span-2">
           <CardHeader>
