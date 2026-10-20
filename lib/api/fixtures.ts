@@ -716,8 +716,18 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async moveSiteIn(productId: string, input: { name: string; size: StoreSize }): Promise<ImportCode> {
+    const id = this.addTenant(productId, input.name, { expiresAt: new Date(Date.now() + 7 * DAY).toISOString(), startedAt: null, source: null });
+    return this.importCode(id);
+  }
+
+  async createStore(productId: string, input: { name: string; size: StoreSize }): Promise<{ tenantId: string }> {
+    return { tenantId: this.addTenant(productId, input.name) };
+  }
+
+  /** A new store of the product, being built; `moveIn` when it waits for a site moved in. */
+  private addTenant(productId: string, rawName: string, moveIn?: (typeof tenants)[number]["moveIn"]): string {
     const product = this.product(productId);
-    const name = input.name.trim();
+    const name = rawName.trim();
     if (!name) throw new FixtureError(400, "name is required");
     const id = uuid(500 + tenants.length, 3);
     const base = `t-${id.slice(-8)}.stores.waas.example`;
@@ -739,9 +749,9 @@ export class FixtureAdminApi implements AdminApi {
       latestBackupAt: null,
       dateCreated: now,
       dateChanged: now,
-      moveIn: { expiresAt: new Date(Date.now() + 7 * DAY).toISOString(), startedAt: null, source: null }
+      ...(moveIn && { moveIn })
     });
-    return this.importCode(id);
+    return id;
   }
 
   async renewImportCode(tenantId: string): Promise<ImportCode> {

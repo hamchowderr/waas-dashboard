@@ -277,6 +277,11 @@ export class HttpAdminApi implements AdminApi {
     return (await this.send<ImportCode>("POST", this.productPath(productId, "/imports"), input))!;
   }
 
+  async createStore(productId: string, input: { name: string; size: StoreSize }): Promise<{ tenantId: string }> {
+    const made = (await this.send<{ tenantId: string }>("POST", this.productPath(productId, "/tenants"), input))!;
+    return { tenantId: made.tenantId };
+  }
+
   async renewImportCode(tenantId: string): Promise<ImportCode> {
     return (await this.send<ImportCode>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/import-code`))!;
   }
