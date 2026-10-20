@@ -92,7 +92,7 @@ const columns: ColumnDef<Tenant>[] = [
   }
 ];
 
-export function StoresTable({ tenants }: { tenants: Tenant[] }) {
+export function StoresTable({ tenants, initialTab }: { tenants: Tenant[]; initialTab?: string }) {
   const router = useRouter();
   const unique = (values: string[]) => [...new Set(values)].sort();
 
@@ -122,6 +122,7 @@ export function StoresTable({ tenants }: { tenants: Tenant[] }) {
       readField={readField}
       tabs={tabs}
       tabCounts
+      initialTab={initialTab && tabs.some((t) => t.value === initialTab) ? initialTab : "all"}
       initialSorting={[{ id: "dateCreated", desc: true }]}
       emptyText="No stores match these filters."
       onRowClick={(t) => router.push(`/stores/${t.id}`)}

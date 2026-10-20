@@ -631,7 +631,7 @@ export class FixtureAdminApi implements AdminApi {
       ...tenant,
       snapshotName: "Starter template",
       wpOptionNames: ["blogname", "admin_email", "woocommerce_currency"],
-      phpConstantNames: ["WPCS_TENANT_ROLES", "WPCS_PUBLIC_KEY", "WPCS_TENANT_NO_ADMINISTRATOR_PLUGIN_CAPS"],
+      phpConstantNames: ["WP_MEMORY_LIMIT", "DISALLOW_FILE_EDIT", "WP_AUTO_UPDATE_CORE"],
       backups: backups.filter((b) => b.tenantId === id),
       jobs: [...jobs, ...finishedJobs].filter((j) => j.tenantId === id),
       ...(tenant.moveIn && { snapshotName: "Moved in", wpOptionNames: [], phpConstantNames: [] }),

@@ -8,8 +8,8 @@ import { canChange, getViewer } from "@/auth";
 
 export const metadata: Metadata = { title: "Stores" };
 
-export default async function StoresPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
-  const { product } = await searchParams;
+export default async function StoresPage({ searchParams }: { searchParams: Promise<{ product?: string; state?: string }> }) {
+  const { product, state } = await searchParams;
   const [page, products, viewer] = await Promise.all([
     getAdminApi().tenants({ productId: product }),
     getAdminApi().products(),
@@ -30,7 +30,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
       >
         {viewer && canChange(viewer) && <MoveSiteIn products={choices} />}
       </PageHeader>
-      <StoresTable tenants={page.items} />
+      <StoresTable tenants={page.items} initialTab={state} />
     </div>
   );
 }

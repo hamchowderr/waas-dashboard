@@ -68,7 +68,13 @@ export type AdminDataTableProps<T extends RowData> = {
   selectable?: (row: T) => boolean;
   /** The toolbar shown while rows are selected. */
   bulkActions?: (selected: T[], clearSelection: () => void) => React.ReactNode;
+  /** Columns left out of the table below a screen width, so it fits without scrolling sideways. */
+  hideBelow?: Record<string, "xl" | "2xl">;
 };
+
+function hiddenBelow(width: "xl" | "2xl" | undefined) {
+  return width === "xl" ? "max-xl:hidden" : width === "2xl" ? "max-2xl:hidden" : undefined;
+}
 
 export function AdminDataTable<T extends RowData>({
   data,
@@ -85,7 +91,8 @@ export function AdminDataTable<T extends RowData>({
   emptyText,
   onRowClick,
   selectable,
-  bulkActions
+  bulkActions,
+  hideBelow = {}
 }: AdminDataTableProps<T>) {
   const [filters, setFilters] = React.useState<TableFilterState>(EMPTY_FILTERS);
   const [tab, setTab] = React.useState(initialTab);
@@ -329,7 +336,7 @@ export function AdminDataTable<T extends RowData>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className={hiddenBelow(hideBelow[header.column.id])}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -347,7 +354,7 @@ export function AdminDataTable<T extends RowData>({
                   className={onRowClick ? "cursor-pointer" : undefined}
                   onClick={onRowClick ? () => onRowClick(row.original) : undefined}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className={hiddenBelow(hideBelow[cell.column.id])}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
