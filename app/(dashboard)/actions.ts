@@ -366,6 +366,11 @@ function limit(value: unknown, what: string): number | null {
   throw new InputError(`${what} must be a whole number, 0 or more, or empty for no limit`);
 }
 
+function listPrice(value: unknown, what: string): number {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 1_000_000) return value;
+  throw new InputError(`${what} price must be from $0 to $10,000 a month`);
+}
+
 function resellerSettings(input: ResellerSettings): ResellerSettings {
   const wholesale = input.wholesalePercent;
   if (!(typeof wholesale === "number" && Number.isInteger(wholesale) && wholesale >= 0 && wholesale <= 100))
@@ -377,7 +382,12 @@ function resellerSettings(input: ResellerSettings): ResellerSettings {
     maxProducts: limit(input.maxProducts, "Storefront limit"),
     maxTenants: limit(input.maxTenants, "Store limit"),
     wholesalePercent: wholesale,
-    billingEmail: email || null
+    billingEmail: email || null,
+    listPriceCents: {
+      small: listPrice(input.listPriceCents?.small, "Small"),
+      medium: listPrice(input.listPriceCents?.medium, "Medium"),
+      large: listPrice(input.listPriceCents?.large, "Large")
+    }
   };
 }
 

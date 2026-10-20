@@ -43,6 +43,7 @@ import {
   type CreateVersionInput,
   type ProductDetail,
   type Reseller,
+  type ResellerBill,
   type ResellerSettings,
   type ResellerUsage,
   type StoreDays,
@@ -86,7 +87,7 @@ const products: Omit<Product, "tenantCount">[] = [
 /** Reseller accounts, and which reseller each storefront belongs to. */
 type FixtureReseller = ResellerSettings & { id: string; dateCreated: string };
 const resellers: FixtureReseller[] = [
-  { id: uuid(1, 13), name: "Sample partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", dateCreated: iso(NOW - 40 * DAY) }
+  { id: uuid(1, 13), name: "Sample partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", listPriceCents: { small: 1200, medium: 2400, large: 4800 }, dateCreated: iso(NOW - 40 * DAY) }
 ];
 const resellerOf = new Map<string, string>([[products[1].id, resellers[0].id]]);
 
@@ -1197,6 +1198,34 @@ export class FixtureAdminApi implements AdminApi {
     });
     storeDays.small = Math.round(storeDays.small * 100) / 100;
     return { from: new Date(start).toISOString(), to: new Date(Date.parse(to)).toISOString(), storeDays, products: perProduct.filter((p) => p.storeDays.small > 0) };
+  }
+
+  async resellerBill(id: string, month: string): Promise<ResellerBill> {
+    const reseller = this.findReseller(id);
+    const from = new Date(`${month}-01T00:00:00Z`);
+    const to = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 1, 1));
+    const monthDays = (to.getTime() - from.getTime()) / DAY;
+    const usage = await this.resellerUsage(id, from.toISOString(), to.toISOString());
+    const listPriceCents = reseller.listPriceCents.small;
+    const wholesalePriceCents = Math.round((listPriceCents * (100 - reseller.wholesalePercent)) / 100);
+    const lines = usage.products.map((p) => ({
+      productId: p.productId,
+      name: p.name,
+      size: "small" as const,
+      storeDays: p.storeDays.small,
+      stores: Math.round((p.storeDays.small / monthDays) * 100) / 100,
+      listPriceCents,
+      wholesalePriceCents,
+      amountCents: Math.round((p.storeDays.small / monthDays) * wholesalePriceCents)
+    }));
+    return {
+      month,
+      complete: to.getTime() <= Date.now(),
+      wholesalePercent: reseller.wholesalePercent,
+      billingEmail: reseller.billingEmail,
+      lines,
+      totalCents: lines.reduce((sum, l) => sum + l.amountCents, 0)
+    };
   }
 
   async createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller> {

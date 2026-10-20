@@ -21,6 +21,7 @@ import type {
   CreateVersionInput,
   ProductDetail,
   Reseller,
+  ResellerBill,
   ResellerSettings,
   ResellerUsage,
   Template,
@@ -143,6 +144,8 @@ export interface AdminApi {
   reseller(id: string): Promise<Reseller | null>;
   /** Store-days per size from `from` up to `to` (ISO dates). */
   resellerUsage(id: string, from: string, to: string): Promise<ResellerUsage>;
+  /** The wholesale bill for one calendar month, YYYY-MM. */
+  resellerBill(id: string, month: string): Promise<ResellerBill>;
   /** A new reseller, with those storefronts moved into it. */
   createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller>;
   /** Changes only the settings given. */

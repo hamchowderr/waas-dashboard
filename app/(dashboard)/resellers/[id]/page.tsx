@@ -10,18 +10,15 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDays, monthRange, totalDays } from "../usage";
+import { formatDays, formatMoney, monthRange } from "../usage";
+import { BillDownload } from "./bill-download";
 import { DeleteReseller } from "./delete-reseller";
 import { ResellerSettingsForm } from "./settings-form";
 import { ResellerStorefronts } from "./storefronts";
 
 export const metadata: Metadata = { title: "Reseller" };
 
-const SIZES: { size: StoreSize; label: string }[] = [
-  { size: "small", label: "Small" },
-  { size: "medium", label: "Medium" },
-  { size: "large", label: "Large" }
-];
+const SIZE_LABELS: Record<StoreSize, string> = { small: "Small", medium: "Medium", large: "Large" };
 
 export default async function ResellerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ month?: string }> }) {
   if (!(await getViewer())?.isAdmin) notFound();
@@ -30,7 +27,7 @@ export default async function ResellerPage({ params, searchParams }: { params: P
   const reseller = /^[0-9a-f-]{36}$/i.test(id) ? await api.reseller(id) : null;
   if (!reseller) notFound();
   const month = monthRange((await searchParams).month);
-  const [usage, products] = await Promise.all([api.resellerUsage(reseller.id, month.from, month.to), api.products()]);
+  const [bill, products] = await Promise.all([api.resellerBill(reseller.id, month.month), api.products()]);
   const current = monthRange(undefined).month;
 
   return (
@@ -47,13 +44,17 @@ export default async function ResellerPage({ params, searchParams }: { params: P
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-start justify-between gap-2">
             <div className="space-y-1.5">
-              <CardTitle>Usage in {month.label}</CardTitle>
+              <CardTitle>
+                Bill for {month.label}
+                {!bill.complete && <span className="text-muted-foreground font-normal"> (so far)</span>}
+              </CardTitle>
               <CardDescription>
-                Days each store was live, by size: a store live all month counts the month&apos;s days. Suspended stores don&apos;t count. Its
-                bill is list price less {reseller.wholesalePercent}%.
+                Each store pays its size&apos;s list price less {bill.wholesalePercent}%, for the days it was live. Suspended stores don&apos;t
+                count.{bill.billingEmail && <> Send it to {bill.billingEmail}.</>}
               </CardDescription>
             </div>
             <div className="flex gap-1">
+              <BillDownload resellerName={reseller.name} bill={bill} />
               <Button asChild variant="outline" size="icon" aria-label="Previous month">
                 <Link href={`/resellers/${reseller.id}?month=${month.previous}`}>
                   <ChevronLeftIcon />
@@ -73,27 +74,26 @@ export default async function ResellerPage({ params, searchParams }: { params: P
               <TableHeader>
                 <TableRow>
                   <TableHead className="pl-6">Storefront</TableHead>
-                  {SIZES.map((s) => (
-                    <TableHead key={s.size} className="text-right">
-                      {s.label}
-                    </TableHead>
-                  ))}
-                  <TableHead className="pr-6 text-right">Store-days</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead className="text-right">Store-days</TableHead>
+                  <TableHead className="text-right">Price each</TableHead>
+                  <TableHead className="pr-6 text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usage.products.map((p) => (
-                  <TableRow key={p.productId}>
-                    <TableCell className="pl-6">{p.name ?? <span className="text-muted-foreground">Deleted storefront</span>}</TableCell>
-                    {SIZES.map((s) => (
-                      <TableCell key={s.size} className="text-right tabular-nums">
-                        {formatDays(p.storeDays[s.size])}
-                      </TableCell>
-                    ))}
-                    <TableCell className="pr-6 text-right tabular-nums">{formatDays(totalDays(p.storeDays))}</TableCell>
+                {bill.lines.map((l) => (
+                  <TableRow key={`${l.productId}-${l.size}`}>
+                    <TableCell className="pl-6">{l.name ?? <span className="text-muted-foreground">Deleted storefront</span>}</TableCell>
+                    <TableCell>{SIZE_LABELS[l.size]}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatDays(l.storeDays)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatMoney(l.wholesalePriceCents)}
+                      <span className="text-muted-foreground"> of {formatMoney(l.listPriceCents)}</span>
+                    </TableCell>
+                    <TableCell className="pr-6 text-right tabular-nums">{formatMoney(l.amountCents)}</TableCell>
                   </TableRow>
                 ))}
-                {usage.products.length === 0 && (
+                {bill.lines.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-muted-foreground py-8 text-center">
                       No live stores this month.
@@ -101,16 +101,13 @@ export default async function ResellerPage({ params, searchParams }: { params: P
                   </TableRow>
                 )}
               </TableBody>
-              {usage.products.length > 1 && (
+              {bill.lines.length > 0 && (
                 <TableFooter>
                   <TableRow>
-                    <TableCell className="pl-6 font-medium">Total</TableCell>
-                    {SIZES.map((s) => (
-                      <TableCell key={s.size} className="text-right tabular-nums">
-                        {formatDays(usage.storeDays[s.size])}
-                      </TableCell>
-                    ))}
-                    <TableCell className="pr-6 text-right font-medium tabular-nums">{formatDays(totalDays(usage.storeDays))}</TableCell>
+                    <TableCell className="pl-6 font-medium" colSpan={4}>
+                      Total
+                    </TableCell>
+                    <TableCell className="pr-6 text-right font-medium tabular-nums">{formatMoney(bill.totalCents)}</TableCell>
                   </TableRow>
                 </TableFooter>
               )}
