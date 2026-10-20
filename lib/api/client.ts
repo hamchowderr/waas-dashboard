@@ -161,6 +161,12 @@ export interface AdminApi {
   deleteReseller(id: string): Promise<void>;
   addResellerProduct(id: string, productId: string): Promise<void>;
   removeResellerProduct(id: string, productId: string): Promise<void>;
+  /** Partner keys: the reseller's own API keys, which work on every storefront it has. */
+  partnerKeys(id: string): Promise<ApiKey[]>;
+  createPartnerKey(id: string, label: string | null): Promise<NewApiKey>;
+  /** The new key; the old one keeps working for graceHours. */
+  rotatePartnerKey(id: string, keyId: string, graceHours: number): Promise<NewApiKey>;
+  revokePartnerKey(id: string, keyId: string): Promise<void>;
 
   // Teams: who can sign in to a storefront. The API emails invitations and enforces who may change what.
   team(productId: string): Promise<Team>;

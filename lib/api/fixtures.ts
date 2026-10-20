@@ -1317,6 +1317,43 @@ export class FixtureAdminApi implements AdminApi {
     resellerOf.delete(productId);
   }
 
+  // Partner keys share the key list, owned by the reseller's id instead of a product's.
+  async partnerKeys(id: string): Promise<ApiKey[]> {
+    this.findReseller(id);
+    return apiKeys
+      .filter((k) => k.productId === id)
+      .sort((a, b) => b.dateCreated.localeCompare(a.dateCreated))
+      .map((k) => without(k, "productId"));
+  }
+
+  async createPartnerKey(id: string, label: string | null): Promise<NewApiKey> {
+    this.findReseller(id);
+    const key: FixtureKey = {
+      id: uuid(apiKeys.length + 1, 9),
+      productId: id,
+      label,
+      state: "active",
+      dateCreated: new Date().toISOString(),
+      lastUsedAt: null,
+      revokedAt: null
+    };
+    apiKeys.push(key);
+    return { ...without(key, "productId"), secret: sampleSecret() };
+  }
+
+  async rotatePartnerKey(id: string, keyId: string, graceHours: number): Promise<NewApiKey> {
+    const old = apiKeys.find((k) => k.productId === id && k.id === keyId);
+    if (!old) throw new FixtureError(404, `API key ${keyId} not found`);
+    if (old.state !== "active") throw new FixtureError(409, "Only an active key can be rotated");
+    old.state = graceHours > 0 ? "expiring" : "revoked";
+    old.revokedAt = new Date(Date.now() + graceHours * HOUR).toISOString();
+    return this.createPartnerKey(id, old.label);
+  }
+
+  async revokePartnerKey(id: string, keyId: string): Promise<void> {
+    await this.revokeApiKey(id, keyId);
+  }
+
   async team(productId: string): Promise<Team> {
     this.product(productId);
     const team = teams.find((t) => t.productId === productId);

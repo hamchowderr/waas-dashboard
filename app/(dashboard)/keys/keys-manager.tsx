@@ -55,7 +55,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createApiKey, revokeApiKey, rotateApiKey } from "../actions";
+import {
+  createApiKey,
+  createPartnerKey,
+  revokeApiKey,
+  revokePartnerKey,
+  rotateApiKey,
+  rotatePartnerKey,
+} from "../actions";
 import { SecretDialog } from "./secret-dialog";
 
 /** Below sm the header's button moves under its text instead of squeezing it. */
@@ -88,31 +95,51 @@ type Shown = {
   keyId: string;
   secret: string;
   note?: string;
+  usage?: string;
 } | null;
 
 const keyName = (key: ApiKey) => key.label ?? `Key ${key.id.slice(0, 8)}`;
 
+/**
+ * A storefront's API keys or, with `partner`, a reseller's partner keys (productId is then the
+ * reseller's id): the same list, with the reseller's actions.
+ */
 export function KeysManager({
   productId,
   productName,
   keys,
+  partner = false,
 }: {
   productId: string;
   productName: string;
   keys: ApiKey[];
+  partner?: boolean;
 }) {
   const [creating, setCreating] = React.useState(false);
   const [label, setLabel] = React.useState("");
   const [rotating, setRotating] = React.useState<ApiKey | null>(null);
   const [grace, setGrace] = React.useState("24");
   const [revoking, setRevoking] = React.useState<ApiKey | null>(null);
-  const [shown, setShown] = React.useState<Shown>(null);
+  const [shown, setShownState] = React.useState<Shown>(null);
+  const setShown = (next: Shown) =>
+    setShownState(
+      next && partner
+        ? {
+            ...next,
+            usage:
+              "Give these to the partner for their own app. A partner key isn't entered on a storefront: each call names the storefront with ?productId=.",
+          }
+        : next,
+    );
   const [pending, startTransition] = React.useTransition();
   const activeCount = keys.filter((k) => k.state === "active").length;
+  const actions = partner
+    ? { create: createPartnerKey, rotate: rotatePartnerKey, revoke: revokePartnerKey }
+    : { create: createApiKey, rotate: rotateApiKey, revoke: revokeApiKey };
 
   const create = () =>
     startTransition(async () => {
-      const result = await createApiKey(productId, label);
+      const result = await actions.create(productId, label);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -120,7 +147,7 @@ export function KeysManager({
       setCreating(false);
       setLabel("");
       setShown({
-        title: "New API key",
+        title: partner ? "New partner key" : "New API key",
         keyId: result.data.id,
         secret: result.data.secret,
       });
@@ -130,7 +157,7 @@ export function KeysManager({
     startTransition(async () => {
       if (!rotating) return;
       const hours = Number(grace);
-      const result = await rotateApiKey(productId, rotating.id, hours);
+      const result = await actions.rotate(productId, rotating.id, hours);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -152,11 +179,13 @@ export function KeysManager({
     <>
       <Card>
         <CardHeader className={headerClass}>
-          <CardTitle>Keys</CardTitle>
+          <CardTitle>{partner ? "Partner keys" : "Keys"}</CardTitle>
           <CardDescription>
-            {activeCount === 0
-              ? "No active key: the storefront can't reach the API."
-              : `${activeCount} active ${activeCount === 1 ? "key" : "keys"}. Secrets are shown once, when a key is created.`}
+            {partner
+              ? "One key for every storefront in this account: each API call names the storefront with ?productId=. Secrets are shown once."
+              : activeCount === 0
+                ? "No active key: the storefront can't reach the API."
+                : `${activeCount} active ${activeCount === 1 ? "key" : "keys"}. Secrets are shown once, when a key is created.`}
           </CardDescription>
           <CardAction className={actionClass}>
             <Button size="sm" onClick={() => setCreating(true)}>
@@ -266,7 +295,7 @@ export function KeysManager({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New API key</DialogTitle>
+            <DialogTitle>{partner ? "New partner key" : "New API key"}</DialogTitle>
             <DialogDescription>
               A key for {productName}. Its secret is shown once, right after
               it&apos;s created.
@@ -348,7 +377,7 @@ export function KeysManager({
         description={
           <>
             <p>It stops working at once. This can&apos;t be undone.</p>
-            {revoking?.state === "active" && activeCount === 1 && (
+            {!partner && revoking?.state === "active" && activeCount === 1 && (
               <p className="text-destructive font-medium">
                 This is {productName}&apos;s last active key: its storefront
                 will lose access to the API until it gets a new one.
@@ -360,7 +389,7 @@ export function KeysManager({
         destructive
         onConfirm={async () => {
           if (!revoking) return false;
-          const result = await revokeApiKey(productId, revoking.id);
+          const result = await actions.revoke(productId, revoking.id);
           if (result.ok) toast.success(`${keyName(revoking)} revoked`);
           else toast.error(result.error);
           return result.ok;

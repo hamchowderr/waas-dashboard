@@ -56,6 +56,8 @@ export function SecretDialog({
     keyId: string;
     secret: string;
     note?: string;
+    /** Where the key goes; by default, the storefront's connection settings. */
+    usage?: string;
   } | null;
   onClose: () => void;
 }) {
@@ -71,8 +73,8 @@ export function SecretDialog({
         <DialogHeader>
           <DialogTitle>{secret?.title}</DialogTitle>
           <DialogDescription>
-            Enter these in WaaS → Settings → Connection on the storefront, or
-            wherever the key is used.
+            {secret?.usage ??
+              "Enter these in WaaS → Settings → Connection on the storefront, or wherever the key is used."}
           </DialogDescription>
         </DialogHeader>
         {secret && (

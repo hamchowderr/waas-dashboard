@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { KeysManager } from "../../keys/keys-manager";
 import { formatDays, formatMoney, monthRange } from "../usage";
 import { BillDownload } from "./bill-download";
 import { DeleteReseller } from "./delete-reseller";
@@ -27,7 +28,7 @@ export default async function ResellerPage({ params, searchParams }: { params: P
   const reseller = /^[0-9a-f-]{36}$/i.test(id) ? await api.reseller(id) : null;
   if (!reseller) notFound();
   const month = monthRange((await searchParams).month);
-  const [bill, products] = await Promise.all([api.resellerBill(reseller.id, month.month), api.products()]);
+  const [bill, products, keys] = await Promise.all([api.resellerBill(reseller.id, month.month), api.products(), api.partnerKeys(reseller.id)]);
   const current = monthRange(undefined).month;
 
   return (
@@ -128,6 +129,9 @@ export default async function ResellerPage({ params, searchParams }: { params: P
             />
           </CardContent>
         </Card>
+        <div className="lg:col-span-3">
+          <KeysManager partner productId={reseller.id} productName={reseller.name} keys={keys} />
+        </div>
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Settings</CardTitle>
