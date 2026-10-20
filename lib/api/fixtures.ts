@@ -42,6 +42,10 @@ import {
   type CreateTemplateInput,
   type CreateVersionInput,
   type ProductDetail,
+  type Reseller,
+  type ResellerSettings,
+  type ResellerUsage,
+  type StoreDays,
   type Template,
   type Version,
   type WebhookDelivery,
@@ -78,6 +82,13 @@ const products: Omit<Product, "tenantCount">[] = [
   { id: uuid(1, 1), name: "Test storefront" },
   { id: uuid(2, 1), name: "Staging storefront" }
 ];
+
+/** Reseller accounts, and which reseller each storefront belongs to. */
+type FixtureReseller = ResellerSettings & { id: string; dateCreated: string };
+const resellers: FixtureReseller[] = [
+  { id: uuid(1, 13), name: "Sample partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", dateCreated: iso(NOW - 40 * DAY) }
+];
+const resellerOf = new Map<string, string>([[products[1].id, resellers[0].id]]);
 
 type FixtureVersion = Version & { productId: string };
 
@@ -681,7 +692,9 @@ export class FixtureAdminApi implements AdminApi {
       ...p,
       tenantCount: tenants.filter((t) => t.productId === p.id).length,
       versionCount: versions.filter((v) => v.productId === p.id).length,
-      productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null
+      productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null,
+      resellerId: resellerOf.get(p.id) ?? null,
+      resellerName: resellers.find((r) => r.id === resellerOf.get(p.id))?.name ?? null
     }));
   }
 
@@ -1137,6 +1150,96 @@ export class FixtureAdminApi implements AdminApi {
     if (!application) throw new AdminApiError(404, `/admin/applications/${id}`, `Application ${id} not found`);
     if (application.status !== "pending") throw new AdminApiError(409, `/admin/applications/${id}`, "This application was already decided");
     return application;
+  }
+
+  private toReseller(r: FixtureReseller): Reseller {
+    const mine = products.filter((p) => resellerOf.get(p.id) === r.id);
+    const stores = tenants.filter((t) => mine.some((p) => p.id === t.productId));
+    return {
+      ...r,
+      products: mine.map((p) => ({ ...p, tenantCount: stores.filter((t) => t.productId === p.id).length })),
+      tenantCount: stores.length,
+      liveTenantCount: stores.filter((t) => !t.isSuspended && t.statusCode !== StatusCode.Removing).length
+    };
+  }
+
+  private findReseller(id: string): FixtureReseller {
+    const reseller = resellers.find((r) => r.id === id);
+    if (!reseller) throw new FixtureError(404, `Reseller ${id} not found`);
+    return reseller;
+  }
+
+  async resellers(): Promise<Reseller[]> {
+    return [...resellers].sort((a, b) => a.name.localeCompare(b.name)).map((r) => this.toReseller(r));
+  }
+
+  async reseller(id: string): Promise<Reseller | null> {
+    const reseller = resellers.find((r) => r.id === id);
+    return reseller ? this.toReseller(reseller) : null;
+  }
+
+  // Sample data has no size history: every store counts as small from when it was made, unless suspended.
+  async resellerUsage(id: string, from: string, to: string): Promise<ResellerUsage> {
+    const reseller = this.toReseller(this.findReseller(id));
+    const start = Date.parse(from);
+    const end = Math.min(Date.parse(to), Date.now());
+    const zero = (): StoreDays => ({ small: 0, medium: 0, large: 0 });
+    const storeDays = zero();
+    const perProduct = reseller.products.map((p) => {
+      const days = zero();
+      for (const t of tenants.filter((t) => t.productId === p.id && !t.isSuspended)) {
+        const live = end - Math.max(start, Date.parse(t.dateCreated));
+        if (live > 0) days.small += live / DAY;
+      }
+      days.small = Math.round(days.small * 100) / 100;
+      storeDays.small += days.small;
+      return { productId: p.id, name: p.name, storeDays: days };
+    });
+    storeDays.small = Math.round(storeDays.small * 100) / 100;
+    return { from: new Date(start).toISOString(), to: new Date(Date.parse(to)).toISOString(), storeDays, products: perProduct.filter((p) => p.storeDays.small > 0) };
+  }
+
+  async createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller> {
+    for (const productId of input.productIds) {
+      this.product(productId);
+      if (resellerOf.has(productId)) throw new FixtureError(409, "This storefront belongs to another reseller; remove it from that one first");
+    }
+    const { productIds, ...settings } = input;
+    const reseller: FixtureReseller = { ...settings, id: uuid(resellers.length + 1, 13), dateCreated: new Date().toISOString() };
+    resellers.push(reseller);
+    for (const productId of productIds) resellerOf.set(productId, reseller.id);
+    return this.toReseller(reseller);
+  }
+
+  async updateReseller(id: string, settings: Partial<ResellerSettings>): Promise<Reseller> {
+    const reseller = this.findReseller(id);
+    Object.assign(reseller, settings);
+    return this.toReseller(reseller);
+  }
+
+  async deleteReseller(id: string): Promise<void> {
+    const reseller = this.findReseller(id);
+    if ([...resellerOf.values()].includes(id)) throw new FixtureError(409, "Move its storefronts out first");
+    resellers.splice(resellers.indexOf(reseller), 1);
+  }
+
+  async addResellerProduct(id: string, productId: string): Promise<void> {
+    const reseller = this.findReseller(id);
+    this.product(productId);
+    const current = resellerOf.get(productId);
+    if (current === id) return;
+    if (current) throw new FixtureError(409, "This storefront belongs to another reseller; remove it from that one first");
+    const count = [...resellerOf.values()].filter((r) => r === id).length;
+    if (reseller.maxProducts !== null && count >= reseller.maxProducts) {
+      throw new FixtureError(400, `This reseller has reached its limit of ${reseller.maxProducts} storefronts`);
+    }
+    resellerOf.set(productId, id);
+  }
+
+  async removeResellerProduct(id: string, productId: string): Promise<void> {
+    this.findReseller(id);
+    if (resellerOf.get(productId) !== id) throw new FixtureError(404, `Product ${productId} is not one of this reseller's storefronts`);
+    resellerOf.delete(productId);
   }
 
   async team(productId: string): Promise<Team> {

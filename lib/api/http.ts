@@ -23,6 +23,9 @@ import type {
   CreateTemplateInput,
   CreateVersionInput,
   ProductDetail,
+  Reseller,
+  ResellerSettings,
+  ResellerUsage,
   Template,
   Version,
   Job,
@@ -62,6 +65,7 @@ import type {
   WireCreateVersion,
   WireError,
   WireProduct,
+  WireReseller,
   WireVersion,
   WireBackup,
   WireJob,
@@ -136,6 +140,19 @@ const toApiKey = (k: WireApiKey): ApiKey => ({
   revokedAt: k.revokedAt
 });
 
+const toReseller = (r: WireReseller): Reseller => ({
+  id: r.id,
+  name: r.name,
+  maxProducts: r.maxProducts,
+  maxTenants: r.maxTenants,
+  wholesalePercent: r.wholesalePercent,
+  billingEmail: r.billingEmail,
+  products: r.products.map(({ id, name, tenantCount }) => ({ id, name, tenantCount })),
+  tenantCount: r.tenantCount,
+  liveTenantCount: r.liveTenantCount,
+  dateCreated: r.dateCreated
+});
+
 const toNewApiKey = (k: WireNewApiKey): NewApiKey => ({ ...toApiKey(k), secret: k.secret });
 
 const toInvitation = ({ id, email, role, expiresAt, dateCreated, acceptUrl }: WireInvitation) => ({ id, email, role, expiresAt, dateCreated, acceptUrl });
@@ -207,7 +224,9 @@ export class HttpAdminApi implements AdminApi {
       name: p.name,
       tenantCount: p.tenantCount,
       versionCount: p.versionCount,
-      productionVersionId: p.productionVersionId
+      productionVersionId: p.productionVersionId,
+      resellerId: p.resellerId ?? null,
+      resellerName: p.resellerName ?? null
     }));
   }
 
@@ -405,6 +424,45 @@ export class HttpAdminApi implements AdminApi {
 
   async declineApplication(id: string): Promise<void> {
     await this.send("POST", `/admin/applications/${encodeURIComponent(id)}/decline`);
+  }
+
+  private resellerPath(id: string, rest = ""): string {
+    return `/admin/resellers/${encodeURIComponent(id)}${rest}`;
+  }
+
+  async resellers(): Promise<Reseller[]> {
+    return (await this.get<WireReseller[]>("/admin/resellers"))!.map(toReseller);
+  }
+
+  async reseller(id: string): Promise<Reseller | null> {
+    const reseller = await this.get<WireReseller>(this.resellerPath(id), { allow404: true });
+    return reseller && toReseller(reseller);
+  }
+
+  async resellerUsage(id: string, from: string, to: string): Promise<ResellerUsage> {
+    const query = new URLSearchParams({ from, to });
+    const usage = (await this.get<ResellerUsage>(this.resellerPath(id, `/usage?${query}`)))!;
+    return { from: usage.from, to: usage.to, storeDays: usage.storeDays, products: usage.products };
+  }
+
+  async createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller> {
+    return toReseller((await this.send<WireReseller>("POST", "/admin/resellers", input))!);
+  }
+
+  async updateReseller(id: string, settings: Partial<ResellerSettings>): Promise<Reseller> {
+    return toReseller((await this.send<WireReseller>("PUT", this.resellerPath(id), settings))!);
+  }
+
+  async deleteReseller(id: string): Promise<void> {
+    await this.send("DELETE", this.resellerPath(id));
+  }
+
+  async addResellerProduct(id: string, productId: string): Promise<void> {
+    await this.send("PUT", this.resellerPath(id, `/products/${encodeURIComponent(productId)}`));
+  }
+
+  async removeResellerProduct(id: string, productId: string): Promise<void> {
+    await this.send("DELETE", this.resellerPath(id, `/products/${encodeURIComponent(productId)}`));
   }
 
   async team(productId: string): Promise<Team> {

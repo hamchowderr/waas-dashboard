@@ -203,6 +203,41 @@ export type RequestLog = Listing<ApiRequest> & {
 export type ProductDetail = Product & {
   versionCount: number;
   productionVersionId: string | null;
+  /** The reseller it belongs to; null for a storefront of its own. */
+  resellerId: string | null;
+  resellerName: string | null;
+};
+
+/** A partner that sells stores from one or more storefronts and pays a wholesale price for each live store. */
+export type Reseller = ResellerSettings & {
+  id: string;
+  products: Product[];
+  /** Stores across its storefronts. */
+  tenantCount: number;
+  /** Stores counting toward its bill now. */
+  liveTenantCount: number;
+  dateCreated: string;
+};
+
+export type ResellerSettings = {
+  name: string;
+  /** Storefronts it may have; null is no limit. */
+  maxProducts: number | null;
+  /** Stores across all its storefronts; null is no limit. */
+  maxTenants: number | null;
+  /** Discount off list price on its bill. */
+  wholesalePercent: number;
+  billingEmail: string | null;
+};
+
+/** Days a store was live, per size: a store live all of a 30-day month is 30. */
+export type StoreDays = Record<StoreSize, number>;
+
+export type ResellerUsage = {
+  from: string;
+  to: string;
+  storeDays: StoreDays;
+  products: { productId: string; name: string | null; storeDays: StoreDays }[];
 };
 
 export type Version = {

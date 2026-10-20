@@ -18,6 +18,8 @@ import type {
   NewInvitation,
   NewStorefrontInput,
   ReadyStorefront,
+  Reseller,
+  ResellerSettings,
   TeamRole,
   WebhookEndpointChange,
   WebhookEndpointInput,
@@ -352,8 +354,69 @@ export async function declineApplication(id: string): Promise<ActionResult> {
   }, ["/applications"]);
 }
 
-async function adminOnly() {
-  if (!(await getViewer())?.isAdmin) throw new InputError("Only the platform admin can review applications.");
+async function adminOnly(what = "review applications") {
+  if (!(await getViewer())?.isAdmin) throw new InputError(`Only the platform admin can ${what}.`);
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function limit(value: unknown, what: string): number | null {
+  if (value === null) return null;
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 100000) return value;
+  throw new InputError(`${what} must be a whole number, 0 or more, or empty for no limit`);
+}
+
+function resellerSettings(input: ResellerSettings): ResellerSettings {
+  const wholesale = input.wholesalePercent;
+  if (!(typeof wholesale === "number" && Number.isInteger(wholesale) && wholesale >= 0 && wholesale <= 100))
+    throw new InputError("Wholesale discount must be a whole number from 0 to 100");
+  const email = typeof input.billingEmail === "string" ? input.billingEmail.trim() : "";
+  if (email && (email.length > 254 || !EMAIL.test(email))) throw new InputError("Billing email is not an email address");
+  return {
+    name: text(input.name, "Name", 100),
+    maxProducts: limit(input.maxProducts, "Storefront limit"),
+    maxTenants: limit(input.maxTenants, "Store limit"),
+    wholesalePercent: wholesale,
+    billingEmail: email || null
+  };
+}
+
+/** A new reseller account, with those storefronts moved into it. Platform admin only. */
+export async function createReseller(input: ResellerSettings, productIds: string[]): Promise<ActionResult<Reseller>> {
+  return run(async () => {
+    await adminOnly("manage resellers");
+    if (!Array.isArray(productIds) || productIds.length > 100) throw new InputError("Choose up to 100 storefronts");
+    const settings = resellerSettings(input);
+    return getAdminApi().createReseller({ ...settings, productIds: productIds.map((id) => uuid(id, "storefront")) });
+  }, ["/resellers", "/keys"]);
+}
+
+/** Saves a reseller's settings. Platform admin only. */
+export async function updateReseller(id: string, input: ResellerSettings): Promise<ActionResult<Reseller>> {
+  return run(async () => {
+    await adminOnly("manage resellers");
+    return getAdminApi().updateReseller(uuid(id, "reseller"), resellerSettings(input));
+  }, ["/resellers"]);
+}
+
+/** Deletes a reseller with no storefronts. Platform admin only. */
+export async function deleteReseller(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("manage resellers");
+    await getAdminApi().deleteReseller(uuid(id, "reseller"));
+    return undefined;
+  }, ["/resellers"]);
+}
+
+/** Moves a storefront into (add) or out of a reseller. Platform admin only. */
+export async function setResellerStorefront(id: string, productId: string, add: boolean): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("manage resellers");
+    const api = getAdminApi();
+    if (add) await api.addResellerProduct(uuid(id, "reseller"), uuid(productId, "storefront"));
+    else await api.removeResellerProduct(uuid(id, "reseller"), uuid(productId, "storefront"));
+    return undefined;
+  }, ["/resellers", "/keys"]);
 }
 
 /** Builds a ready-made storefront for an existing agency. */
