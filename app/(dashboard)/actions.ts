@@ -135,6 +135,14 @@ export async function moveSiteIn(productId: string, name: string, size: string):
   }, ["/stores", "/"]);
 }
 
+/** A new store of the storefront, built from its production version and latest template. */
+export async function createStore(productId: string, name: string, size: string): Promise<ActionResult<{ tenantId: string }>> {
+  return run(async () => {
+    if (!SIZES.includes(size as StoreSize)) throw new InputError("Invalid size");
+    return getAdminApi().createStore(uuid(productId, "storefront"), { name: text(name, "Name", 30), size: size as StoreSize });
+  }, ["/stores", "/"]);
+}
+
 /** A new import code for a store still waiting for its site; the old one stops working. */
 export async function renewImportCode(tenantId: string): Promise<ActionResult<ImportCode>> {
   return run(() => getAdminApi().renewImportCode(uuid(tenantId, "store")), ["/stores"]);

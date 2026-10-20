@@ -4,6 +4,7 @@ import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { StoresTable } from "./stores-table";
 import { MoveSiteIn } from "./move-site-in";
+import { NewSite } from "./new-site";
 import { canChange, getViewer } from "@/auth";
 
 export const metadata: Metadata = { title: "Stores" };
@@ -15,7 +16,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
     getAdminApi().products(),
     getViewer().catch(() => null)
   ]);
-  // On one storefront's list, a site moved in goes to that storefront.
+  // On one storefront's list, a new site or one moved in goes to that storefront.
   const choices = (product ? products.filter((p) => p.id === product) : products).map((p) => ({ id: p.id, name: p.name }));
 
   return (
@@ -28,7 +29,12 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
             : `${page.total} stores across ${product ? "this storefront" : "all storefronts"}.`
         }
       >
-        {viewer && canChange(viewer) && <MoveSiteIn products={choices} />}
+        {viewer && canChange(viewer) && (
+          <div className="flex gap-2">
+            <MoveSiteIn products={choices} />
+            <NewSite products={choices} />
+          </div>
+        )}
       </PageHeader>
       <StoresTable tenants={page.items} initialTab={state} />
     </div>

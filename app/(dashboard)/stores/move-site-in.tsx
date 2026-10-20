@@ -75,7 +75,7 @@ export function MoveSiteIn({
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Move a site in</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>Move a site in</Button>
       <Dialog open={open} onOpenChange={close}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
