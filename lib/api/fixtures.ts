@@ -6,6 +6,9 @@ import type { AdminApi } from "./client";
 import {
   StatusCode,
   type ApiKey,
+  type ApplicationStatus,
+  type ApprovedApplication,
+  type SellerApplication,
   type NewAgency,
   type NewAgencyInput,
   type NewStorefrontInput,
@@ -103,6 +106,55 @@ type FixtureKey = ApiKey & { productId: string };
 
 /** Ready-made storefronts by product; none in the sample data. */
 const storefronts = new Map<string, ReadyStorefront>();
+
+/** Applications to sell, as the marketing site's form sends them. */
+const applications: SellerApplication[] = [
+  {
+    id: "a1b2c3d4-0000-4000-8000-000000000001",
+    name: "Maya Ortiz",
+    email: "maya@brightsideweb.example",
+    business: "Brightside Web Studio",
+    website: "https://brightsideweb.example/",
+    clients: "Restaurants, salons and small shops in Tucson. Most want online booking and a menu they can change themselves.",
+    expectedSites: "10-24",
+    wantsStorefront: false,
+    storefrontSubdomain: null,
+    status: "pending",
+    productId: null,
+    dateDecided: null,
+    dateCreated: new Date(Date.now() - 3 * 3600_000).toISOString()
+  },
+  {
+    id: "a1b2c3d4-0000-4000-8000-000000000002",
+    name: "Darnell Brooks",
+    email: "darnell@eastsidechamber.example",
+    business: "Eastside Chamber of Commerce",
+    website: null,
+    clients: "Our member businesses. Many of them still have no website at all.",
+    expectedSites: "25+",
+    wantsStorefront: true,
+    storefrontSubdomain: "eastside-chamber",
+    status: "pending",
+    productId: null,
+    dateDecided: null,
+    dateCreated: new Date(Date.now() - 26 * 3600_000).toISOString()
+  },
+  {
+    id: "a1b2c3d4-0000-4000-8000-000000000003",
+    name: "Quick Sites",
+    email: "sales@quick-sites.example",
+    business: "Quick Sites 4 U",
+    website: "https://quick-sites.example/",
+    clients: "anyone",
+    expectedSites: "25+",
+    wantsStorefront: false,
+    storefrontSubdomain: null,
+    status: "declined",
+    productId: null,
+    dateDecided: new Date(Date.now() - 50 * 3600_000).toISOString(),
+    dateCreated: new Date(Date.now() - 72 * 3600_000).toISOString()
+  }
+];
 
 const apiKeys: FixtureKey[] = [
   {
@@ -1003,6 +1055,39 @@ export class FixtureAdminApi implements AdminApi {
     }
     team.organization ??= { id: uuid(teams.length, 12), name: product.name };
     return team;
+  }
+
+  async applications(status?: ApplicationStatus): Promise<SellerApplication[]> {
+    return applications.filter((a) => !status || a.status === status).sort((a, b) => b.dateCreated.localeCompare(a.dateCreated));
+  }
+
+  async application(id: string): Promise<SellerApplication | null> {
+    return applications.find((a) => a.id === id) ?? null;
+  }
+
+  async approveApplication(id: string, input: { maxTenants: number | null; storefront: boolean }): Promise<ApprovedApplication> {
+    const application = this.pendingApplication(id);
+    const agency = await this.createAgency({ name: application.business, maxTenants: input.maxTenants });
+    Object.assign(application, { status: "approved", productId: agency.productId, dateDecided: new Date().toISOString() });
+    const storefront = input.storefront
+      ? await this.createStorefront(agency.productId, {
+          name: application.business,
+          email: application.email,
+          subdomain: application.storefrontSubdomain ?? undefined
+        })
+      : undefined;
+    return { productId: agency.productId, invitation: { acceptUrl: `https://app.anypress.io/invite/${id}`, emailed: true }, storefront };
+  }
+
+  async declineApplication(id: string): Promise<void> {
+    Object.assign(this.pendingApplication(id), { status: "declined", dateDecided: new Date().toISOString() });
+  }
+
+  private pendingApplication(id: string): SellerApplication {
+    const application = applications.find((a) => a.id === id);
+    if (!application) throw new AdminApiError(404, `/admin/applications/${id}`, `Application ${id} not found`);
+    if (application.status !== "pending") throw new AdminApiError(409, `/admin/applications/${id}`, "This application was already decided");
+    return application;
   }
 
   async team(productId: string): Promise<Team> {

@@ -410,3 +410,36 @@ export type ReadyStorefront = { id: string; name: string; domain: string; status
 
 /** The owner signs in to WordPress with this email; the site answers on <subdomain>.<platform domain>. */
 export type NewStorefrontInput = { name: string; email: string; subdomain?: string };
+
+/** An application to sell websites, sent from the marketing site's form and waiting for the platform admin. */
+export type ApplicationStatus = "pending" | "approved" | "declined";
+
+export type SellerApplication = {
+  id: string;
+  name: string;
+  email: string;
+  business: string;
+  website: string | null;
+  /** Who they sell websites to, in their words. */
+  clients: string;
+  /** Websites they expect to sell in their first year: 1-2, 3-9, 10-24 or 25+. */
+  expectedSites: string;
+  /** They have no WordPress site to sell from and want a ready-made storefront. */
+  wantsStorefront: boolean;
+  storefrontSubdomain: string | null;
+  status: ApplicationStatus;
+  /** The storefront made when it was approved. */
+  productId: string | null;
+  dateDecided: string | null;
+  dateCreated: string;
+};
+
+/** What approving an application made. */
+export type ApprovedApplication = {
+  productId: string;
+  /** The applicant's owner invitation; emailed false means send acceptUrl yourself. */
+  invitation: { acceptUrl: string; emailed: boolean };
+  storefront?: ReadyStorefront;
+  /** Why the ready-made storefront couldn't be built; the approval stands anyway. */
+  storefrontError?: string;
+};

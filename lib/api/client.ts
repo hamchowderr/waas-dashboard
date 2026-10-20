@@ -4,6 +4,9 @@ import { cache } from "react";
 
 import type {
   ApiKey,
+  ApplicationStatus,
+  ApprovedApplication,
+  SellerApplication,
   NewAgency,
   NewAgencyInput,
   NewStorefrontInput,
@@ -114,6 +117,16 @@ export interface AdminApi {
   rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<NewApiKey>;
   /** Stops a key now; the storefront's last key included. */
   revokeApiKey(productId: string, keyId: string): Promise<void>;
+
+  // Applications to sell, from the marketing site's form. Platform admin only.
+  /** Newest first; every status when none is given. */
+  applications(status?: ApplicationStatus): Promise<SellerApplication[]>;
+  /** Null when there is no such application. */
+  application(id: string): Promise<SellerApplication | null>;
+  /** Makes the storefront with maxTenants stores, invites the applicant as owner and builds their ready-made storefront when asked. */
+  approveApplication(id: string, input: { maxTenants: number | null; storefront: boolean }): Promise<ApprovedApplication>;
+  /** Declines and emails the applicant. */
+  declineApplication(id: string): Promise<void>;
 
   // Teams: who can sign in to a storefront. The API emails invitations and enforces who may change what.
   team(productId: string): Promise<Team>;
