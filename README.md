@@ -17,6 +17,7 @@ The admin dashboard for the [WaaS provisioning API](https://github.com/hamchowde
 - **Webhooks:** each storefront's webhook endpoints, with what they get and how the last 24 hours went, and the recent deliveries with each answer or error. **Add**, turn off or on, **send a test**, **rotate** a secret (shown once) or delete an endpoint; **retry** a delivery.
 - **Team** (per storefront): who can sign in, and as what. **Invite** someone by email (the API emails them the link, and it can be copied to send by hand), change their role, or remove them. Owners and admins make changes, members only look, and only owners touch owners.
 - **Versions & templates** (per storefront): create a version from a template or an uploaded archive, make a version production, upload and delete templates. Making a version production and every delete ask first.
+- **Connect an app** (`/connect/…`): where "Sign in to AnyPress" on the AnyPress connector lands, for Claude, ChatGPT and other AI apps. Pick a storefront and tick what the app may see and change: stores, backups, domains, email, versions, and website pages and design. No client id or secret to copy. Someone who can only look can only let the app look. Platform admins can connect any storefront.
 
 The storefront switcher in the header narrows every page to one storefront. Suspending, resuming, a manual backup and deleting a website happen from the storefront, not here.
 
