@@ -228,6 +228,8 @@ export type ResellerSettings = {
   /** Discount off list price on its bill. */
   wholesalePercent: number;
   billingEmail: string | null;
+  /** Monthly list price of one store of each size, in US cents, before the discount. */
+  listPriceCents: Record<StoreSize, number>;
 };
 
 /** Days a store was live, per size: a store live all of a 30-day month is 30. */
@@ -238,6 +240,27 @@ export type ResellerUsage = {
   to: string;
   storeDays: StoreDays;
   products: { productId: string; name: string | null; storeDays: StoreDays }[];
+};
+
+/** A reseller's wholesale bill for one calendar month (UTC). Amounts are US cents. */
+export type ResellerBill = {
+  month: string;
+  /** False while the month is not over yet. */
+  complete: boolean;
+  wholesalePercent: number;
+  billingEmail: string | null;
+  lines: {
+    productId: string;
+    name: string | null;
+    size: StoreSize;
+    storeDays: number;
+    /** Store-months: store-days over the days in the month. */
+    stores: number;
+    listPriceCents: number;
+    wholesalePriceCents: number;
+    amountCents: number;
+  }[];
+  totalCents: number;
 };
 
 export type Version = {

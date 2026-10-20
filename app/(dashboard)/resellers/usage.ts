@@ -21,3 +21,5 @@ export function monthRange(month: string | undefined, now = new Date()) {
 export const totalDays = (days: StoreDays) => Math.round((days.small + days.medium + days.large) * 100) / 100;
 
 export const formatDays = (days: number) => days.toLocaleString("en-US", { maximumFractionDigits: 2 });
+
+export const formatMoney = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });

@@ -24,6 +24,7 @@ import type {
   CreateVersionInput,
   ProductDetail,
   Reseller,
+  ResellerBill,
   ResellerSettings,
   ResellerUsage,
   Template,
@@ -147,6 +148,7 @@ const toReseller = (r: WireReseller): Reseller => ({
   maxTenants: r.maxTenants,
   wholesalePercent: r.wholesalePercent,
   billingEmail: r.billingEmail,
+  listPriceCents: { small: r.listPriceCents.small, medium: r.listPriceCents.medium, large: r.listPriceCents.large },
   products: r.products.map(({ id, name, tenantCount }) => ({ id, name, tenantCount })),
   tenantCount: r.tenantCount,
   liveTenantCount: r.liveTenantCount,
@@ -443,6 +445,18 @@ export class HttpAdminApi implements AdminApi {
     const query = new URLSearchParams({ from, to });
     const usage = (await this.get<ResellerUsage>(this.resellerPath(id, `/usage?${query}`)))!;
     return { from: usage.from, to: usage.to, storeDays: usage.storeDays, products: usage.products };
+  }
+
+  async resellerBill(id: string, month: string): Promise<ResellerBill> {
+    const bill = (await this.get<ResellerBill>(this.resellerPath(id, `/bill?month=${encodeURIComponent(month)}`)))!;
+    return {
+      month: bill.month,
+      complete: bill.complete,
+      wholesalePercent: bill.wholesalePercent,
+      billingEmail: bill.billingEmail,
+      lines: bill.lines.map((l) => ({ ...l })),
+      totalCents: bill.totalCents
+    };
   }
 
   async createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller> {

@@ -5,9 +5,33 @@ import { Label } from "@/components/ui/label";
 import type { ResellerSettings } from "@/lib/api/types";
 
 /** The reseller settings form as typed: limits empty for no limit. */
-export type ResellerForm = { name: string; maxProducts: string; maxTenants: string; wholesalePercent: string; billingEmail: string };
+export type ResellerForm = {
+  name: string;
+  maxProducts: string;
+  maxTenants: string;
+  wholesalePercent: string;
+  billingEmail: string;
+  /** Monthly list prices in dollars, as typed. */
+  priceSmall: string;
+  priceMedium: string;
+  priceLarge: string;
+};
 
-export const EMPTY_RESELLER: ResellerForm = { name: "", maxProducts: "1", maxTenants: "", wholesalePercent: "40", billingEmail: "" };
+// The default list prices are the Website plan's: Small $12, Medium 2x, Large 4x.
+export const EMPTY_RESELLER: ResellerForm = {
+  name: "",
+  maxProducts: "1",
+  maxTenants: "",
+  wholesalePercent: "40",
+  billingEmail: "",
+  priceSmall: "12",
+  priceMedium: "24",
+  priceLarge: "48"
+};
+
+const dollars = (cents: number) => (cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2));
+const cents = (dollars: string) => Math.round(Number(dollars) * 100);
+const PRICE = /^\d{1,5}(\.\d{1,2})?$/;
 
 export function toForm(r: ResellerSettings): ResellerForm {
   return {
@@ -15,7 +39,10 @@ export function toForm(r: ResellerSettings): ResellerForm {
     maxProducts: r.maxProducts === null ? "" : String(r.maxProducts),
     maxTenants: r.maxTenants === null ? "" : String(r.maxTenants),
     wholesalePercent: String(r.wholesalePercent),
-    billingEmail: r.billingEmail ?? ""
+    billingEmail: r.billingEmail ?? "",
+    priceSmall: dollars(r.listPriceCents.small),
+    priceMedium: dollars(r.listPriceCents.medium),
+    priceLarge: dollars(r.listPriceCents.large)
   };
 }
 
@@ -25,18 +52,24 @@ export function toSettings(f: ResellerForm): ResellerSettings {
     maxProducts: f.maxProducts === "" ? null : Number(f.maxProducts),
     maxTenants: f.maxTenants === "" ? null : Number(f.maxTenants),
     wholesalePercent: Number(f.wholesalePercent),
-    billingEmail: f.billingEmail.trim() || null
+    billingEmail: f.billingEmail.trim() || null,
+    listPriceCents: { small: cents(f.priceSmall), medium: cents(f.priceMedium), large: cents(f.priceLarge) }
   };
 }
 
 const WHOLE = /^\d{1,6}$/;
+
+const priceError = (value: string) => (!PRICE.test(value) || Number(value) > 10000 ? "Dollars, up to $10,000." : null);
 
 function errors(f: ResellerForm) {
   return {
     maxProducts: f.maxProducts && !WHOLE.test(f.maxProducts) ? "A whole number, or empty for no limit." : null,
     maxTenants: f.maxTenants && !WHOLE.test(f.maxTenants) ? "A whole number, or empty for no limit." : null,
     wholesalePercent: !/^\d{1,3}$/.test(f.wholesalePercent) || Number(f.wholesalePercent) > 100 ? "A whole number from 0 to 100." : null,
-    billingEmail: f.billingEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.billingEmail.trim()) ? "Not an email address." : null
+    billingEmail: f.billingEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.billingEmail.trim()) ? "Not an email address." : null,
+    priceSmall: priceError(f.priceSmall),
+    priceMedium: priceError(f.priceMedium),
+    priceLarge: priceError(f.priceLarge)
   };
 }
 
@@ -67,6 +100,14 @@ export function ResellerFields({ value, onChange, idPrefix }: { value: ResellerF
       </div>
       {field("wholesalePercent", "Wholesale discount (%)", "Off list price, for every live store on its bill.", { inputMode: "numeric" })}
       {field("billingEmail", "Billing email", "Where its monthly bill goes.", { type: "email", placeholder: "billing@partner.example" })}
+      <div className="space-y-2">
+        <p className="text-sm font-medium">List price per store, per month ($)</p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {field("priceSmall", "Small", "Before the discount.", { inputMode: "decimal" })}
+          {field("priceMedium", "Medium", "Before the discount.", { inputMode: "decimal" })}
+          {field("priceLarge", "Large", "Before the discount.", { inputMode: "decimal" })}
+        </div>
+      </div>
     </div>
   );
 }

@@ -136,6 +136,7 @@ export type WireReseller = {
   maxTenants: number | null;
   wholesalePercent: number;
   billingEmail: string | null;
+  listPriceCents: { small: number; medium: number; large: number };
   products: { id: string; name: string; tenantCount: number }[];
   tenantCount: number;
   liveTenantCount: number;
