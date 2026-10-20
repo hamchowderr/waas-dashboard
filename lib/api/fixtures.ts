@@ -1062,6 +1062,7 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async createAgency(input: NewAgencyInput): Promise<NewAgency> {
+    if (input.startFrom) this.product(input.startFrom);
     const id = uuid(products.length + 1, 1);
     products.push({ id, name: input.name });
     return { productId: id, name: input.name, key: await this.createApiKey(id, "Storefront") };

@@ -319,7 +319,8 @@ function storefrontInput(name: string, request: StorefrontRequest): NewStorefron
 export async function createAgency(
   name: string,
   maxTenants: number | null,
-  storefront: StorefrontRequest | null = null
+  storefront: StorefrontRequest | null = null,
+  startFrom: string | null = null
 ): Promise<ActionResult<NewAgency>> {
   return run(async () => {
     if (maxTenants !== null && !(Number.isInteger(maxTenants) && maxTenants >= 0 && maxTenants <= 100000))
@@ -327,7 +328,11 @@ export async function createAgency(
     const agencyName = text(name, "Agency name", 100);
     const input = storefront ? storefrontInput(agencyName, storefront) : null;
     const api = getAdminApi();
-    const agency = await api.createAgency({ name: agencyName, maxTenants });
+    const agency = await api.createAgency({
+      name: agencyName,
+      maxTenants,
+      ...(startFrom ? { startFrom: uuid(startFrom, "storefront") } : {})
+    });
     if (!input) return agency;
     // The agency exists now; a storefront that can't be built is reported, not a failed action.
     try {
