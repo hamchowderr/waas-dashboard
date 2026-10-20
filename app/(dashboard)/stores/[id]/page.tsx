@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ChangeAddress } from "./change-address";
 import { MailSender } from "./mail-sender";
 import { RestoreBackup } from "./restore-backup";
+import { MoveInStatus } from "./move-in";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -81,6 +82,7 @@ export default async function StorePage({ params }: Params) {
             <Row label="Storefront">{tenant.productName}</Row>
             <Row label="Version">{tenant.versionName}</Row>
             <Row label="Template">{tenant.snapshotName ?? "—"}</Row>
+            {tenant.keepsOwnCode && <Row label="Plugins and themes">Its own (moved in)</Row>}
             <Separator />
             <Row label="Subscription (external id)">
               <span className="font-mono">{tenant.externalId}</span>
@@ -93,6 +95,18 @@ export default async function StorePage({ params }: Params) {
             {tenant.isSuspended && <Row label="Suspended">{formatDateTime(tenant.dateSuspended)}</Row>}
           </CardContent>
         </Card>
+
+        {tenant.moveIn && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Moving the site in</CardTitle>
+              <CardDescription>This store is built from a WordPress site sent with the AnyPress Export plugin.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MoveInStatus tenantId={tenant.id} moveIn={tenant.moveIn} />
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

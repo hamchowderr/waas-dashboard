@@ -5,6 +5,9 @@ import { randomBytes } from "node:crypto";
 import type { AdminApi } from "./client";
 import {
   StatusCode,
+  type ImportCode,
+  type MoveIn,
+  type StoreSize,
   type ApiKey,
   type ApplicationStatus,
   type ApprovedApplication,
@@ -231,6 +234,7 @@ type FixtureTenant = Tenant & {
   domains: TenantDomain[];
   dateSuspended: string | null;
   dateChanged: string;
+  moveIn?: MoveIn;
 };
 
 const tenants: FixtureTenant[] = seeds.map((seed, i) => {
@@ -618,7 +622,10 @@ export class FixtureAdminApi implements AdminApi {
       wpOptionNames: ["blogname", "admin_email", "woocommerce_currency"],
       phpConstantNames: ["WPCS_TENANT_ROLES", "WPCS_PUBLIC_KEY", "WPCS_TENANT_NO_ADMINISTRATOR_PLUGIN_CAPS"],
       backups: backups.filter((b) => b.tenantId === id),
-      jobs: [...jobs, ...finishedJobs].filter((j) => j.tenantId === id)
+      jobs: [...jobs, ...finishedJobs].filter((j) => j.tenantId === id),
+      ...(tenant.moveIn && { snapshotName: "Moved in", wpOptionNames: [], phpConstantNames: [] }),
+      keepsOwnCode: !!tenant.moveIn,
+      moveIn: tenant.moveIn ?? null
     };
   }
 
@@ -692,6 +699,48 @@ export class FixtureAdminApi implements AdminApi {
   async templates(productId: string): Promise<Template[]> {
     this.product(productId);
     return templates.filter((t) => t.productId === productId).map((t) => without(t, "productId"));
+  }
+
+  async moveSiteIn(productId: string, input: { name: string; size: StoreSize }): Promise<ImportCode> {
+    const product = this.product(productId);
+    const name = input.name.trim();
+    if (!name) throw new FixtureError(400, "name is required");
+    const id = uuid(500 + tenants.length, 3);
+    const base = `t-${id.slice(-8)}.stores.waas.example`;
+    const now = new Date().toISOString();
+    tenants.push({
+      id,
+      externalId: id,
+      name,
+      productId: product.id,
+      productName: product.name,
+      versionId: versions.find((v) => v.productId === product.id && v.isProduction)?.id ?? versions[0].id,
+      versionName: versions.find((v) => v.productId === product.id && v.isProduction)?.name ?? versions[0].name,
+      statusCode: StatusCode.Pending,
+      isSuspended: false,
+      dateSuspended: null,
+      mainDomain: base,
+      domainCount: 1,
+      domains: [{ domainName: base, isMain: true, isBase: true }],
+      latestBackupAt: null,
+      dateCreated: now,
+      dateChanged: now,
+      moveIn: { expiresAt: new Date(Date.now() + 7 * DAY).toISOString(), startedAt: null, source: null }
+    });
+    return this.importCode(id);
+  }
+
+  async renewImportCode(tenantId: string): Promise<ImportCode> {
+    const tenant = tenants.find((t) => t.id === tenantId);
+    if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    if (!tenant.moveIn || tenant.moveIn.startedAt) throw new FixtureError(400, "This store is not waiting for a site to be moved in");
+    tenant.moveIn.expiresAt = new Date(Date.now() + 7 * DAY).toISOString();
+    return this.importCode(tenantId);
+  }
+
+  private importCode(tenantId: string): ImportCode {
+    const code = Buffer.from(JSON.stringify({ u: "https://api.example", t: randomBytes(24).toString("base64url") })).toString("base64url");
+    return { tenantId, externalId: tenantId, importCode: `AP1.${code}`, pluginUrl: "https://api.example/imports/plugin.zip" };
   }
 
   async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {

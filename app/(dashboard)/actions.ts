@@ -9,7 +9,9 @@ import type {
   Created,
   CreateTemplateInput,
   CreateVersionInput,
+  ImportCode,
   MailDomain,
+  StoreSize,
   ApprovedApplication,
   NewAgency,
   NewApiKey,
@@ -119,6 +121,21 @@ export async function removeMailDomain(tenantId: string): Promise<ActionResult> 
     await getAdminApi().removeMailDomain(uuid(tenantId, "store"));
     return undefined;
   }, ["/stores"]);
+}
+
+const SIZES = ["small", "medium", "large"] as const;
+
+/** Makes a store that waits for a site moved in from another host; answers the code for the AnyPress Export plugin. */
+export async function moveSiteIn(productId: string, name: string, size: string): Promise<ActionResult<ImportCode>> {
+  return run(async () => {
+    if (!SIZES.includes(size as StoreSize)) throw new InputError("Invalid size");
+    return getAdminApi().moveSiteIn(uuid(productId, "storefront"), { name: text(name, "Name", 30), size: size as StoreSize });
+  }, ["/stores", "/"]);
+}
+
+/** A new import code for a store still waiting for its site; the old one stops working. */
+export async function renewImportCode(tenantId: string): Promise<ActionResult<ImportCode>> {
+  return run(() => getAdminApi().renewImportCode(uuid(tenantId, "store")), ["/stores"]);
 }
 
 /** Rolls a live store back to one of its backups; with takeBackup, its current state is backed up first. */
