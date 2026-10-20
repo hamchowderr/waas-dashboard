@@ -91,7 +91,7 @@ const clients: Client[] = [];
 /** Reseller accounts, and which reseller each storefront belongs to. */
 type FixtureReseller = ResellerSettings & { id: string; dateCreated: string };
 const resellers: FixtureReseller[] = [
-  { id: uuid(1, 13), name: "Sample partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", listPriceCents: { small: 1200, medium: 2400, large: 4800 }, dateCreated: iso(NOW - 40 * DAY) }
+  { id: uuid(1, 13), name: "Sample partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", brandName: "Sample Partner Sites", brandUrl: "https://partner.example", listPriceCents: { small: 1200, medium: 2400, large: 4800 }, dateCreated: iso(NOW - 40 * DAY) }
 ];
 const resellerOf = new Map<string, string>([[products[1].id, resellers[0].id]]);
 

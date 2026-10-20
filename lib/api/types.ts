@@ -244,6 +244,9 @@ export type ResellerSettings = {
   /** Discount off list price on its bill. */
   wholesalePercent: number;
   billingEmail: string | null;
+  /** Its own name, and a link on it, on the "website unavailable" page of its suspended stores; null uses the platform's. */
+  brandName: string | null;
+  brandUrl: string | null;
   /** Monthly list price of one store of each size, in US cents, before the discount. */
   listPriceCents: Record<StoreSize, number>;
 };
