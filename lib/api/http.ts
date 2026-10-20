@@ -149,6 +149,8 @@ const toReseller = (r: WireReseller): Reseller => ({
   maxTenants: r.maxTenants,
   wholesalePercent: r.wholesalePercent,
   billingEmail: r.billingEmail,
+  brandName: r.brandName,
+  brandUrl: r.brandUrl,
   listPriceCents: { small: r.listPriceCents.small, medium: r.listPriceCents.medium, large: r.listPriceCents.large },
   products: r.products.map(({ id, name, tenantCount }) => ({ id, name, tenantCount })),
   tenantCount: r.tenantCount,

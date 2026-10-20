@@ -402,12 +402,18 @@ function resellerSettings(input: ResellerSettings): ResellerSettings {
     throw new InputError("Wholesale discount must be a whole number from 0 to 100");
   const email = typeof input.billingEmail === "string" ? input.billingEmail.trim() : "";
   if (email && (email.length > 254 || !EMAIL.test(email))) throw new InputError("Billing email is not an email address");
+  const brandName = typeof input.brandName === "string" ? input.brandName.trim() : "";
+  if (brandName.length > 60) throw new InputError("Brand name must be at most 60 characters");
+  const brandUrl = typeof input.brandUrl === "string" ? input.brandUrl.trim() : "";
+  if (brandUrl && (brandUrl.length > 500 || !/^https?:\/\/\S+$/.test(brandUrl))) throw new InputError("Brand link must start with https://");
   return {
     name: text(input.name, "Name", 100),
     maxProducts: limit(input.maxProducts, "Storefront limit"),
     maxTenants: limit(input.maxTenants, "Store limit"),
     wholesalePercent: wholesale,
     billingEmail: email || null,
+    brandName: brandName || null,
+    brandUrl: brandUrl || null,
     listPriceCents: {
       small: listPrice(input.listPriceCents?.small, "Small"),
       medium: listPrice(input.listPriceCents?.medium, "Medium"),
