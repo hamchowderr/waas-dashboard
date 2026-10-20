@@ -460,6 +460,32 @@ export async function setResellerStorefront(id: string, productId: string, add: 
   }, ["/resellers", "/keys"]);
 }
 
+/** A new partner key for a reseller: works on every storefront it has. Platform admin only. */
+export async function createPartnerKey(id: string, label: string): Promise<ActionResult<NewApiKey>> {
+  return run(async () => {
+    await adminOnly("manage resellers");
+    return getAdminApi().createPartnerKey(uuid(id, "reseller"), keyLabel(label));
+  }, ["/resellers"]);
+}
+
+/** Replaces a partner key; the old one keeps working for graceHours. Platform admin only. */
+export async function rotatePartnerKey(id: string, keyId: string, graceHours: number): Promise<ActionResult<NewApiKey>> {
+  return run(async () => {
+    await adminOnly("manage resellers");
+    if (!Number.isInteger(graceHours) || graceHours < 0 || graceHours > 720) throw new InputError("Invalid grace period");
+    return getAdminApi().rotatePartnerKey(uuid(id, "reseller"), uuid(keyId, "key"), graceHours);
+  }, ["/resellers"]);
+}
+
+/** Revokes a partner key now. Platform admin only. */
+export async function revokePartnerKey(id: string, keyId: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("manage resellers");
+    await getAdminApi().revokePartnerKey(uuid(id, "reseller"), uuid(keyId, "key"));
+    return undefined;
+  }, ["/resellers"]);
+}
+
 /** Builds a ready-made storefront for an existing agency. */
 export async function buildStorefront(productId: string, name: string, request: StorefrontRequest): Promise<ActionResult<ReadyStorefront>> {
   return run(

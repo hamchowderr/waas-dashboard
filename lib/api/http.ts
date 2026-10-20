@@ -495,6 +495,23 @@ export class HttpAdminApi implements AdminApi {
     await this.send("DELETE", this.resellerPath(id, `/products/${encodeURIComponent(productId)}`));
   }
 
+  async partnerKeys(id: string): Promise<ApiKey[]> {
+    return (await this.get<WireApiKey[]>(this.resellerPath(id, "/keys")))!.map(toApiKey);
+  }
+
+  async createPartnerKey(id: string, label: string | null): Promise<NewApiKey> {
+    return toNewApiKey((await this.send<WireNewApiKey>("POST", this.resellerPath(id, "/keys"), { label }))!);
+  }
+
+  async rotatePartnerKey(id: string, keyId: string, graceHours: number): Promise<NewApiKey> {
+    const path = this.resellerPath(id, `/keys/${encodeURIComponent(keyId)}/rotate`);
+    return toNewApiKey((await this.send<WireRotatedApiKey>("POST", path, { graceHours }))!.key);
+  }
+
+  async revokePartnerKey(id: string, keyId: string): Promise<void> {
+    await this.send("DELETE", this.resellerPath(id, `/keys/${encodeURIComponent(keyId)}`));
+  }
+
   async team(productId: string): Promise<Team> {
     const view = (await this.get<WireOrganizationView>(this.productPath(productId, "/organization")))!;
     return {
