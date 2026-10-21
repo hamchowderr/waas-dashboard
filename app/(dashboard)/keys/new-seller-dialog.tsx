@@ -25,8 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import type { NewAgency } from "@/lib/api/types";
-import { createAgency } from "../actions";
+import type { NewSeller } from "@/lib/api/types";
+import { createSeller } from "../actions";
 import { SecretDialog } from "./secret-dialog";
 import {
   EMPTY_STOREFRONT,
@@ -35,10 +35,10 @@ import {
 } from "./storefront-fields";
 
 /**
- * "New agency": creates the agency's storefront and its first API key, then shows the secret once. With "Build a
+ * "New seller": creates the seller's storefront and its first API key, then shows the secret once. With "Build a
  * storefront for them", the platform also builds them a WordPress site with WaaS Host, already connected.
  */
-export function NewAgencyButton({
+export function NewSellerButton({
   storefronts,
 }: {
   storefronts: { id: string; name: string; tenantCount: number }[];
@@ -52,7 +52,7 @@ export function NewAgencyButton({
   const [limit, setLimit] = React.useState("");
   const [buildSite, setBuildSite] = React.useState(false);
   const [site, setSite] = React.useState(EMPTY_STOREFRONT);
-  const [created, setCreated] = React.useState<NewAgency | null>(null);
+  const [created, setCreated] = React.useState<NewSeller | null>(null);
   const [pending, startTransition] = React.useTransition();
 
   const limitError =
@@ -63,7 +63,7 @@ export function NewAgencyButton({
 
   const submit = () =>
     startTransition(async () => {
-      const result = await createAgency(
+      const result = await createSeller(
         name,
         limit ? Number(limit) : null,
         buildSite ? site : null,
@@ -74,7 +74,7 @@ export function NewAgencyButton({
         return;
       }
       if (result.data.storefront) toast.success(`Building their storefront at ${result.data.storefront.domain}`);
-      if (result.data.storefrontError) toast.error(`The agency is set up, but its storefront wasn't built: ${result.data.storefrontError}`);
+      if (result.data.storefrontError) toast.error(`The seller is set up, but its storefront wasn't built: ${result.data.storefrontError}`);
       setOpen(false);
       setName("");
       setLimit("");
@@ -86,31 +86,31 @@ export function NewAgencyButton({
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
-        <PlusIcon /> New agency
+        <PlusIcon /> New seller
       </Button>
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New agency</DialogTitle>
+            <DialogTitle>New seller</DialogTitle>
             <DialogDescription>
-              Creates the agency&apos;s storefront and its first API key. They
+              Creates the seller&apos;s storefront and its first API key. They
               can then create, rotate and revoke their own keys through the API.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="agency-name">Agency name</Label>
+              <Label htmlFor="seller-name">Seller name</Label>
               <Input
-                id="agency-name"
+                id="seller-name"
                 value={name}
                 maxLength={100}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="agency-limit">Store limit</Label>
+              <Label htmlFor="seller-limit">Store limit</Label>
               <Input
-                id="agency-limit"
+                id="seller-limit"
                 inputMode="numeric"
                 placeholder="No limit"
                 value={limit}
@@ -124,13 +124,13 @@ export function NewAgencyButton({
                 }
               >
                 {limitError ??
-                  "The most stores the agency can create. Leave empty for no limit."}
+                  "The most stores the seller can create. Leave empty for no limit."}
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="agency-start-from">Start ready from</Label>
+              <Label htmlFor="seller-start-from">Start ready from</Label>
               <Select value={startFrom} onValueChange={setStartFrom}>
-                <SelectTrigger id="agency-start-from" className="w-full">
+                <SelectTrigger id="seller-start-from" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -149,12 +149,12 @@ export function NewAgencyButton({
             </div>
             <div className="flex items-start gap-2">
               <Checkbox
-                id="agency-build-site"
+                id="seller-build-site"
                 checked={buildSite}
                 onCheckedChange={(v) => setBuildSite(v === true)}
               />
               <div className="space-y-1">
-                <Label htmlFor="agency-build-site">Build a storefront for them</Label>
+                <Label htmlFor="seller-build-site">Build a storefront for them</Label>
                 <p className="text-muted-foreground text-sm">
                   A WordPress site with WaaS Host and FluentCart, already
                   connected. Leave it off when they sell from their own site.
@@ -162,7 +162,7 @@ export function NewAgencyButton({
               </div>
             </div>
             {buildSite && (
-              <StorefrontFields value={site} onChange={setSite} idPrefix="agency-site" />
+              <StorefrontFields value={site} onChange={setSite} idPrefix="seller-site" />
             )}
           </div>
           <DialogFooter>
@@ -175,7 +175,7 @@ export function NewAgencyButton({
             </Button>
             <Button disabled={!ready || pending} onClick={submit}>
               {pending && <Spinner />}
-              Create agency
+              Create seller
             </Button>
           </DialogFooter>
         </DialogContent>

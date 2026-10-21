@@ -463,7 +463,7 @@ export type ApiKey = {
 /** A key just created: its secret is here and nowhere else, shown once. */
 export type NewApiKey = ApiKey & { secret: string };
 
-export type NewAgencyInput = {
+export type NewSellerInput = {
   name: string;
   maxTenants: number | null;
   /** A storefront whose production version and newest template the new one starts with. */
@@ -500,13 +500,13 @@ export type Team = {
 
 /** An invitation just made, and whether the API emailed it. */
 export type NewInvitation = TeamInvitation & { emailed: boolean };
-export type NewAgency = {
+export type NewSeller = {
   productId: string;
   name: string;
   key: NewApiKey;
   /** The ready-made storefront being built, when one was asked for. */
   storefront?: ReadyStorefront;
-  /** Why it couldn't be built; the agency and its key exist anyway. */
+  /** Why it couldn't be built; the seller and its key exist anyway. */
   storefrontError?: string;
 };
 

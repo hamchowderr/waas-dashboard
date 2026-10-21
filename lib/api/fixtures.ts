@@ -13,8 +13,8 @@ import {
   type ApprovedApplication,
   type ApproveApplicationInput,
   type SellerApplication,
-  type NewAgency,
-  type NewAgencyInput,
+  type NewSeller,
+  type NewSellerInput,
   type NewStorefrontInput,
   type ReadyStorefront,
   type NewApiKey,
@@ -1072,7 +1072,7 @@ export class FixtureAdminApi implements AdminApi {
       .map((k) => without(k, "productId"));
   }
 
-  async createAgency(input: NewAgencyInput): Promise<NewAgency> {
+  async createSeller(input: NewSellerInput): Promise<NewSeller> {
     if (input.startFrom) this.product(input.startFrom);
     const id = uuid(products.length + 1, 1);
     products.push({ id, name: input.name });
@@ -1153,7 +1153,7 @@ export class FixtureAdminApi implements AdminApi {
 
   async approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication> {
     const application = this.pendingApplication(id);
-    const agency = await this.createAgency({ name: application.business, maxTenants: input.reseller ? null : input.maxTenants });
+    const seller = await this.createSeller({ name: application.business, maxTenants: input.reseller ? null : input.maxTenants });
     const reseller = input.reseller
       ? await this.createReseller({
           name: application.business,
@@ -1164,20 +1164,20 @@ export class FixtureAdminApi implements AdminApi {
           brandName: null,
           brandUrl: null,
           listPriceCents: { small: 1200, medium: 2400, large: 4800 },
-          productIds: [agency.productId]
+          productIds: [seller.productId]
         })
       : null;
     const resellerId = reseller?.id ?? null;
-    Object.assign(application, { status: "approved", productId: agency.productId, resellerId, dateDecided: new Date().toISOString() });
+    Object.assign(application, { status: "approved", productId: seller.productId, resellerId, dateDecided: new Date().toISOString() });
     const storefront = input.storefront
-      ? await this.createStorefront(agency.productId, {
+      ? await this.createStorefront(seller.productId, {
           name: application.business,
           email: application.email,
           subdomain: application.storefrontSubdomain ?? undefined
         })
       : undefined;
     return {
-      productId: agency.productId,
+      productId: seller.productId,
       ...(resellerId ? { resellerId } : {}),
       invitation: { acceptUrl: `https://app.anypress.io/invite/${id}`, emailed: true },
       storefront

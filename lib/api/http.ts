@@ -10,8 +10,8 @@ import type {
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
-  NewAgency,
-  NewAgencyInput,
+  NewSeller,
+  NewSellerInput,
   NewStorefrontInput,
   ReadyStorefront,
   NewApiKey,
@@ -388,7 +388,7 @@ export class HttpAdminApi implements AdminApi {
     return (await this.get<WireApiKey[]>(this.productPath(productId, "/keys")))!.map(toApiKey);
   }
 
-  async createAgency(input: NewAgencyInput): Promise<NewAgency> {
+  async createSeller(input: NewSellerInput): Promise<NewSeller> {
     const created = (await this.send<WireCreatedProduct>("POST", "/admin/products", input))!;
     return { productId: created.product.id, name: created.product.name, key: toNewApiKey(created.key) };
   }
