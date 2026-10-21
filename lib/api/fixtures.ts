@@ -11,6 +11,7 @@ import {
   type ApiKey,
   type ApplicationStatus,
   type ApprovedApplication,
+  type ApproveApplicationInput,
   type SellerApplication,
   type NewAgency,
   type NewAgencyInput,
@@ -141,6 +142,7 @@ const applications: SellerApplication[] = [
     storefrontSubdomain: null,
     status: "pending",
     productId: null,
+    resellerId: null,
     dateDecided: null,
     dateCreated: new Date(Date.now() - 3 * 3600_000).toISOString()
   },
@@ -156,6 +158,7 @@ const applications: SellerApplication[] = [
     storefrontSubdomain: "eastside-chamber",
     status: "pending",
     productId: null,
+    resellerId: null,
     dateDecided: null,
     dateCreated: new Date(Date.now() - 26 * 3600_000).toISOString()
   },
@@ -171,6 +174,7 @@ const applications: SellerApplication[] = [
     storefrontSubdomain: null,
     status: "declined",
     productId: null,
+    resellerId: null,
     dateDecided: new Date(Date.now() - 50 * 3600_000).toISOString(),
     dateCreated: new Date(Date.now() - 72 * 3600_000).toISOString()
   }
@@ -1147,10 +1151,24 @@ export class FixtureAdminApi implements AdminApi {
     return applications.find((a) => a.id === id) ?? null;
   }
 
-  async approveApplication(id: string, input: { maxTenants: number | null; storefront: boolean }): Promise<ApprovedApplication> {
+  async approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication> {
     const application = this.pendingApplication(id);
-    const agency = await this.createAgency({ name: application.business, maxTenants: input.maxTenants });
-    Object.assign(application, { status: "approved", productId: agency.productId, dateDecided: new Date().toISOString() });
+    const agency = await this.createAgency({ name: application.business, maxTenants: input.reseller ? null : input.maxTenants });
+    const reseller = input.reseller
+      ? await this.createReseller({
+          name: application.business,
+          maxProducts: input.maxProducts ?? null,
+          maxTenants: input.maxTenants,
+          wholesalePercent: 40,
+          billingEmail: application.email,
+          brandName: null,
+          brandUrl: null,
+          listPriceCents: { small: 1200, medium: 2400, large: 4800 },
+          productIds: [agency.productId]
+        })
+      : null;
+    const resellerId = reseller?.id ?? null;
+    Object.assign(application, { status: "approved", productId: agency.productId, resellerId, dateDecided: new Date().toISOString() });
     const storefront = input.storefront
       ? await this.createStorefront(agency.productId, {
           name: application.business,
@@ -1158,7 +1176,12 @@ export class FixtureAdminApi implements AdminApi {
           subdomain: application.storefrontSubdomain ?? undefined
         })
       : undefined;
-    return { productId: agency.productId, invitation: { acceptUrl: `https://app.anypress.io/invite/${id}`, emailed: true }, storefront };
+    return {
+      productId: agency.productId,
+      ...(resellerId ? { resellerId } : {}),
+      invitation: { acceptUrl: `https://app.anypress.io/invite/${id}`, emailed: true },
+      storefront
+    };
   }
 
   async declineApplication(id: string): Promise<void> {

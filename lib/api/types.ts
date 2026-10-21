@@ -535,13 +535,28 @@ export type SellerApplication = {
   status: ApplicationStatus;
   /** The storefront made when it was approved. */
   productId: string | null;
+  /** The reseller account made when it was approved as a reseller. */
+  resellerId: string | null;
   dateDecided: string | null;
   dateCreated: string;
+};
+
+/**
+ * How to approve an application: as a seller (a storefront with maxTenants stores), or as a reseller
+ * (an account with maxTenants stores across up to maxProducts storefronts, the storefront inside it).
+ */
+export type ApproveApplicationInput = {
+  maxTenants: number | null;
+  storefront: boolean;
+  reseller?: boolean;
+  maxProducts?: number | null;
 };
 
 /** What approving an application made. */
 export type ApprovedApplication = {
   productId: string;
+  /** The reseller account, for a reseller approval. */
+  resellerId?: string;
   /** The applicant's owner invitation; emailed false means send acceptUrl yourself. */
   invitation: { acceptUrl: string; emailed: boolean };
   storefront?: ReadyStorefront;

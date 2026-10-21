@@ -6,6 +6,7 @@ import type {
   ApiKey,
   ApplicationStatus,
   ApprovedApplication,
+  ApproveApplicationInput,
   SellerApplication,
   NewAgency,
   NewAgencyInput,
@@ -138,7 +139,7 @@ export interface AdminApi {
   /** Null when there is no such application. */
   application(id: string): Promise<SellerApplication | null>;
   /** Makes the storefront with maxTenants stores, invites the applicant as owner and builds their ready-made storefront when asked. */
-  approveApplication(id: string, input: { maxTenants: number | null; storefront: boolean }): Promise<ApprovedApplication>;
+  approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication>;
   /** Declines and emails the applicant. */
   declineApplication(id: string): Promise<void>;
 

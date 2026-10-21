@@ -82,14 +82,21 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
               <ApplicationDecision application={a} storeDomain={STORE_DOMAIN} />
             ) : a.status === "approved" && a.productId ? (
               <div className="space-y-3 text-sm">
-                <p>Approved. Their owner invitation was emailed to {a.email}.</p>
+                <p>{a.resellerId ? "Approved as a reseller." : "Approved."} Their owner invitation was emailed to {a.email}.</p>
                 <div className="flex flex-wrap gap-2">
+                  {a.resellerId && (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/resellers/${a.resellerId}`}>Reseller account</Link>
+                    </Button>
+                  )}
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/keys?product=${a.productId}`}>API keys and storefront</Link>
                   </Button>
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={`/team?product=${a.productId}`}>Team</Link>
-                  </Button>
+                  {!a.resellerId && (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/team?product=${a.productId}`}>Team</Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             ) : (

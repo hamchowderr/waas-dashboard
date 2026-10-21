@@ -262,6 +262,7 @@ export type WireStorefront = { id: string; name: string; domainName: string; sta
 /** POST /admin/applications/{id}/approve. The application itself is SellerApplication's shape. */
 export type WireApprovedApplication = {
   productId: string;
+  resellerId: string | null;
   invitation: { id: string; acceptUrl: string; expiresAt: string; emailed: boolean };
   storefront: WireStorefront | null;
   storefrontError: string | null;
