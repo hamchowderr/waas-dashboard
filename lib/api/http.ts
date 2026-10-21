@@ -8,6 +8,7 @@ import type {
   ApiKey,
   ApplicationStatus,
   ApprovedApplication,
+  ApproveApplicationInput,
   SellerApplication,
   NewAgency,
   NewAgencyInput,
@@ -423,10 +424,11 @@ export class HttpAdminApi implements AdminApi {
     return this.get<SellerApplication>(`/admin/applications/${encodeURIComponent(id)}`, { allow404: true });
   }
 
-  async approveApplication(id: string, input: { maxTenants: number | null; storefront: boolean }): Promise<ApprovedApplication> {
+  async approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication> {
     const approved = (await this.send<WireApprovedApplication>("POST", `/admin/applications/${encodeURIComponent(id)}/approve`, input))!;
     return {
       productId: approved.productId,
+      ...(approved.resellerId ? { resellerId: approved.resellerId } : {}),
       invitation: { acceptUrl: approved.invitation.acceptUrl, emailed: approved.invitation.emailed },
       ...(approved.storefront ? { storefront: toStorefront(approved.storefront) } : {}),
       ...(approved.storefrontError ? { storefrontError: approved.storefrontError } : {})

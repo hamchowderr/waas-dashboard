@@ -357,18 +357,27 @@ export async function createAgency(
   }, ["/keys", "/"]);
 }
 
-/** Approves an application to sell: its storefront with maxTenants stores, the applicant invited as owner. Platform admin only. */
+/**
+ * Approves an application to sell: its storefront with maxTenants stores, the applicant invited as owner.
+ * With `reseller`, a reseller account with that storefront inside and up to maxProducts storefronts. Platform admin only.
+ */
 export async function approveApplication(
   id: string,
   maxTenants: number | null,
-  storefront: boolean
+  storefront: boolean,
+  reseller?: { maxProducts: number | null }
 ): Promise<ActionResult<ApprovedApplication>> {
   return run(async () => {
     await adminOnly();
-    if (maxTenants !== null && !(Number.isInteger(maxTenants) && maxTenants >= 0 && maxTenants <= 100000))
-      throw new InputError("Store limit must be a whole number, 0 or more, or empty for no limit");
-    return getAdminApi().approveApplication(uuid(id, "application"), { maxTenants, storefront: storefront === true });
-  }, ["/applications", "/keys", "/"]);
+    const ok = (n: number | null) => n === null || (Number.isInteger(n) && n >= 0 && n <= 100000);
+    if (!ok(maxTenants)) throw new InputError("Store limit must be a whole number, 0 or more, or empty for no limit");
+    if (reseller && !ok(reseller.maxProducts)) throw new InputError("Storefront limit must be a whole number, 0 or more, or empty for no limit");
+    return getAdminApi().approveApplication(uuid(id, "application"), {
+      maxTenants,
+      storefront: storefront === true,
+      ...(reseller ? { reseller: true, maxProducts: reseller.maxProducts } : {})
+    });
+  }, ["/applications", "/resellers", "/keys", "/"]);
 }
 
 /** Declines an application to sell; the API emails the applicant. Platform admin only. */
