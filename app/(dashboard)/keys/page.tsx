@@ -7,7 +7,7 @@ import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
-import { NewAgencyButton } from "./new-agency-dialog";
+import { NewSellerButton } from "./new-seller-dialog";
 import { StorefrontCard } from "./storefront-card";
 
 export const metadata: Metadata = { title: "API keys" };
@@ -25,15 +25,15 @@ export default async function KeysPage({
   const onlyOne = !isAdmin && products.length === 1 ? products[0] : undefined;
   const product = products.find((p) => p.id === productId) ?? onlyOne;
 
-  // Keys belong to one storefront: pick one first, or set up a new agency.
+  // Keys belong to one storefront: pick one first, or set up a new seller.
   if (!product) {
     return (
       <div className="space-y-4 lg:space-y-6">
         <PageHeader
           title="API keys"
-          description="Each storefront signs in to the API with its own keys. Choose a storefront, or set up a new agency."
+          description="Each storefront signs in to the API with its own keys. Choose a storefront, or set up a new seller."
         >
-          <NewAgencyButton storefronts={products} />
+          <NewSellerButton storefronts={products} />
         </PageHeader>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {products.map((p) => (

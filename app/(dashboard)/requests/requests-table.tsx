@@ -125,7 +125,7 @@ const columns: ColumnDef<ApiRequest>[] = [
   },
 ];
 
-/** `showStorefront`: the platform admin's view of every storefront; an agency sees only its own. */
+/** `showStorefront`: the platform admin's view of every storefront; a seller or reseller team sees only its own. */
 export function RequestsTable({ requests, showStorefront = true }: { requests: ApiRequest[]; showStorefront?: boolean }) {
   const values = (pick: (r: ApiRequest) => string | null | undefined) =>
     [...new Set(requests.map(pick).filter((v): v is string => !!v))].sort().map((v) => ({ value: v, label: v }));

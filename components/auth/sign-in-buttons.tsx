@@ -75,7 +75,7 @@ function EmailSignIn({ returnTo }: { returnTo: string }) {
           type="email"
           autoComplete="email"
           required
-          placeholder="you@agency.com"
+          placeholder="you@yourbusiness.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="h-11 lg:h-8"

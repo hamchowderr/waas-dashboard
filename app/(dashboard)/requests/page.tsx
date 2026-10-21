@@ -31,7 +31,7 @@ export default async function RequestsPage({
   const { product, store, outcome } = params;
   const since: RequestWindow | undefined = isRequestWindow(params.since) ? params.since : undefined;
   const tenantId = store && UUID.test(store) ? store : undefined;
-  // A signed-in agency gets its own storefront's log from the API (/account/requests), never
+  // A signed-in seller or reseller team gets its own storefront's log from the API (/account/requests), never
   // another's; the platform admin sees every storefront's.
   const [viewer, log] = await Promise.all([
     getViewer(),

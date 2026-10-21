@@ -8,8 +8,8 @@ import type {
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
-  NewAgency,
-  NewAgencyInput,
+  NewSeller,
+  NewSellerInput,
   NewStorefrontInput,
   ReadyStorefront,
   NewApiKey,
@@ -121,8 +121,8 @@ export interface AdminApi {
   // API keys. A secret comes back only from the call that creates the key; nothing keeps it.
   /** A storefront's working keys and those revoked in the last 30 days, newest first. */
   apiKeys(productId: string): Promise<ApiKey[]>;
-  /** A new storefront for an agency, with its first key. */
-  createAgency(input: NewAgencyInput): Promise<NewAgency>;
+  /** A new seller: its storefront and first key. */
+  createSeller(input: NewSellerInput): Promise<NewSeller>;
   /** The product's ready-made storefront, or null. */
   storefront(productId: string): Promise<ReadyStorefront | null>;
   /** Builds the product's ready-made storefront, connected with a new key of the product. Platform admin only. */

@@ -309,7 +309,7 @@ export function TeamManager({
                 id="invite-email"
                 type="email"
                 autoComplete="off"
-                placeholder="name@agency.com"
+                placeholder="name@yourbusiness.com"
                 required
                 value={email}
                 maxLength={254}
