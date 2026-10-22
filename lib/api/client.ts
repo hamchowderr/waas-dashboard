@@ -5,6 +5,9 @@ import { cache } from "react";
 import type {
   ApiKey,
   ApplicationStatus,
+  BrandImage,
+  BrandingFields,
+  BrandingView,
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
@@ -177,6 +180,14 @@ export interface AdminApi {
   cancelInvitation(of: TeamOf, invitationId: string): Promise<void>;
   setMemberRole(of: TeamOf, memberId: string, role: TeamRole): Promise<void>;
   removeMember(of: TeamOf, memberId: string): Promise<void>;
+
+  // Branding: a storefront's or reseller's own look in the dashboard. A reseller's is the platform admin's.
+  branding(of: TeamOf): Promise<BrandingView>;
+  /** Sets name, color and support email; null clears one. */
+  updateBranding(of: TeamOf, fields: BrandingFields): Promise<BrandingView>;
+  /** The image's bytes; the API reads the type from them and refuses SVG. */
+  uploadBrandImage(of: TeamOf, kind: BrandImage, image: Uint8Array): Promise<BrandingView>;
+  removeBrandImage(of: TeamOf, kind: BrandImage): Promise<BrandingView>;
 }
 
 /**

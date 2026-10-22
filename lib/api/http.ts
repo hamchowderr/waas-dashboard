@@ -2,6 +2,9 @@ import "server-only";
 
 import type { AdminApi } from "./client";
 import type {
+  BrandImage,
+  BrandingFields,
+  BrandingView,
   ImportCode,
   MoveIn,
   StoreSize,
@@ -218,6 +221,20 @@ export class HttpAdminApi implements AdminApi {
     if (!response.ok) throw new AdminApiError(response.status, path, await apiMessage(response));
     const text = await response.text();
     return text ? (JSON.parse(text) as T) : null;
+  }
+
+  /** An image upload: the bytes are the body. */
+  private async sendImage<T>(path: string, image: Uint8Array): Promise<T> {
+    const { url, headers } = await this.target(path);
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: { ...headers, Accept: "application/json", "Content-Type": "application/octet-stream" },
+      body: image as Uint8Array<ArrayBuffer>,
+      cache: "no-store",
+      signal: AbortSignal.timeout(30_000)
+    });
+    if (!response.ok) throw new AdminApiError(response.status, path, await apiMessage(response));
+    return (await response.json()) as T;
   }
 
   private productPath(productId: string, rest: string): string {
@@ -513,6 +530,22 @@ export class HttpAdminApi implements AdminApi {
 
   async revokePartnerKey(id: string, keyId: string): Promise<void> {
     await this.send("DELETE", this.resellerPath(id, `/keys/${encodeURIComponent(keyId)}`));
+  }
+
+  async branding(of: TeamOf): Promise<BrandingView> {
+    return (await this.get<BrandingView>(this.teamPath(of, "/branding")))!;
+  }
+
+  async updateBranding(of: TeamOf, fields: BrandingFields): Promise<BrandingView> {
+    return (await this.send<BrandingView>("PUT", this.teamPath(of, "/branding"), fields))!;
+  }
+
+  async uploadBrandImage(of: TeamOf, kind: BrandImage, image: Uint8Array): Promise<BrandingView> {
+    return this.sendImage<BrandingView>(this.teamPath(of, `/branding/${kind}`), image);
+  }
+
+  async removeBrandImage(of: TeamOf, kind: BrandImage): Promise<BrandingView> {
+    return (await this.send<BrandingView>("DELETE", this.teamPath(of, `/branding/${kind}`)))!;
   }
 
   private teamPath(of: TeamOf, rest: string): string {

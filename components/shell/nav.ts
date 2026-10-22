@@ -7,6 +7,7 @@ import {
   InboxIcon,
   KeyRoundIcon,
   LayersIcon,
+  PaletteIcon,
   ListChecksIcon,
   StoreIcon,
   UsersIcon,
@@ -38,7 +39,8 @@ export const NAV: { title: string; links: NavLink[] }[] = [
       { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true },
       { title: "Versions & templates", href: "/versions", icon: LayersIcon },
       { title: "API keys", href: "/keys", icon: KeyRoundIcon },
-      { title: "Team", href: "/team", icon: UsersIcon }
+      { title: "Team", href: "/team", icon: UsersIcon },
+      { title: "Branding", href: "/branding", icon: PaletteIcon }
     ]
   }
 ];

@@ -4,6 +4,10 @@ import { randomBytes } from "node:crypto";
 
 import type { AdminApi } from "./client";
 import {
+  type Branding,
+  type BrandImage,
+  type BrandingFields,
+  type BrandingView,
   StatusCode,
   type ImportCode,
   type MoveIn,
@@ -586,6 +590,9 @@ const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended
 
 /** key: the product id, or "reseller:<id>" for a reseller's team. */
 type FixtureTeam = Team & { key: string };
+const emptyBrand = (): Branding => ({ name: null, color: null, supportEmail: null, logoUrl: null, iconUrl: null });
+const brands = new Map<string, Branding>();
+
 const teamKey = (of: TeamOf) => (typeof of === "string" ? of : `reseller:${of.resellerId}`);
 
 const teams: FixtureTeam[] = [
@@ -1428,5 +1435,40 @@ export class FixtureAdminApi implements AdminApi {
     const team = this.teamOf(of);
     if (!team.members.some((m) => m.id === memberId)) throw new FixtureError(404, `Member ${memberId} not found`);
     team.members = team.members.filter((m) => m.id !== memberId);
+  }
+  /** A storefront's branding with its reseller's filling the gaps, as the API answers. */
+  private brandView(of: TeamOf): BrandingView {
+    this.teamName(of);
+    const own = brands.get(teamKey(of)) ?? emptyBrand();
+    const resellerId = typeof of === "string" ? (resellerOf.get(of) ?? null) : null;
+    const parent = resellerId ? (brands.get(teamKey({ resellerId })) ?? emptyBrand()) : emptyBrand();
+    const shown = Object.fromEntries(
+      (Object.keys(own) as (keyof Branding)[]).map((k) => [k, own[k] ?? parent[k]])
+    ) as Branding;
+    return { ...structuredClone(own), shown };
+  }
+
+  async branding(of: TeamOf): Promise<BrandingView> {
+    return this.brandView(of);
+  }
+
+  async updateBranding(of: TeamOf, fields: BrandingFields): Promise<BrandingView> {
+    this.teamName(of);
+    brands.set(teamKey(of), { ...(brands.get(teamKey(of)) ?? emptyBrand()), ...fields });
+    return this.brandView(of);
+  }
+
+  async uploadBrandImage(of: TeamOf, kind: BrandImage, image: Uint8Array): Promise<BrandingView> {
+    this.teamName(of);
+    // Sample data keeps the image as a data: address; the live API serves it from /branding.
+    const url = `data:image/png;base64,${Buffer.from(image).toString("base64")}`;
+    brands.set(teamKey(of), { ...(brands.get(teamKey(of)) ?? emptyBrand()), [kind === "logo" ? "logoUrl" : "iconUrl"]: url });
+    return this.brandView(of);
+  }
+
+  async removeBrandImage(of: TeamOf, kind: BrandImage): Promise<BrandingView> {
+    this.teamName(of);
+    brands.set(teamKey(of), { ...(brands.get(teamKey(of)) ?? emptyBrand()), [kind === "logo" ? "logoUrl" : "iconUrl"]: null });
+    return this.brandView(of);
   }
 }
