@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, ExternalLinkIcon } from "lucide-react";
 
 import { getAdminApi } from "@/lib/api/client";
-import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel } from "@/lib/format";
+import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel, settingLabel } from "@/lib/format";
 import { StatusCode } from "@/lib/api/types";
 import { StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
 import { JobStateBadge } from "@/components/admin/job-state-badge";
@@ -48,10 +48,12 @@ export default async function StorePage({ params }: Params) {
   // A store being removed or that failed can't be rolled back until it's fixed.
   const canRestore = tenant.statusCode !== StatusCode.Removing && tenant.statusCode !== StatusCode.Failed;
   // Links to the site only once it is up.
+  // What the store was made with, in plain words; the values themselves stay private.
+  const settings = [...new Set([...tenant.wpOptionNames, ...tenant.phpConstantNames].map(settingLabel))];
   const siteUrl = tenant.mainDomain && tenant.statusCode === StatusCode.Done ? `https://${tenant.mainDomain}/` : null;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 lg:space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center gap-3">
         <Button asChild variant="outline" size="icon">
           <Link href="/stores">
@@ -103,16 +105,38 @@ export default async function StorePage({ params }: Params) {
             <Row label="Version">{tenant.versionName}</Row>
             <Row label="Template">{tenant.snapshotName ?? "—"}</Row>
             {tenant.keepsOwnCode && <Row label="Plugins and themes">Its own (moved in)</Row>}
-            <Separator />
-            <Row label="Subscription (external id)">
-              <span className="font-mono">{tenant.externalId}</span>
-            </Row>
-            <Row label="Tenant id">
-              <span className="font-mono text-xs">{tenant.id}</span>
-            </Row>
-            <Separator />
             <Row label="Last changed">{formatDateTime(tenant.dateChanged)}</Row>
             {tenant.isSuspended && <Row label="Suspended">{formatDateTime(tenant.dateSuspended)}</Row>}
+            {settings.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-2 text-sm">
+                  <span className="text-muted-foreground">Set up with</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {settings.map((label) => (
+                      <Badge key={label} variant="secondary">
+                        {label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+            <Separator />
+            <details className="group text-sm">
+              <summary className="text-muted-foreground hover:text-foreground cursor-pointer list-none select-none">
+                <span className="group-open:hidden">Show details</span>
+                <span className="hidden group-open:inline">Hide details</span>
+              </summary>
+              <div className="mt-3 space-y-3">
+                <Row label="Subscription">
+                  <span className="font-mono text-xs">{tenant.externalId}</span>
+                </Row>
+                <Row label="Store id">
+                  <span className="font-mono text-xs">{tenant.id}</span>
+                </Row>
+              </div>
+            </details>
           </CardContent>
         </Card>
 
@@ -176,99 +200,60 @@ export default async function StorePage({ params }: Params) {
         </div>
       </div>
 
-      <div className="grid items-start gap-4 lg:gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Backups</CardTitle>
-            <CardDescription>Restore puts the store back to how it was when the backup was taken.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table className={tableClass}>
-              <TableHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>Backups</CardTitle>
+          <CardDescription>Restore puts the store back to how it was when the backup was taken.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table className={tableClass}>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Taken</TableHead>
+                <TableHead className="max-sm:hidden">Reason</TableHead>
+                <TableHead className="text-end">Size</TableHead>
+                <TableHead className="text-end">Status</TableHead>
+                <TableHead className="w-24">
+                  <span className="sr-only">Restore</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tenant.backups.length === 0 ? (
                 <TableRow>
-                  <TableHead>Taken</TableHead>
-                  <TableHead className="max-sm:hidden">Reason</TableHead>
-                  <TableHead className="text-end">Size</TableHead>
-                  <TableHead className="text-end">Status</TableHead>
-                  <TableHead className="w-24">
-                    <span className="sr-only">Restore</span>
-                  </TableHead>
+                  <TableCell colSpan={5} className="text-muted-foreground h-16 text-center">
+                    No backups yet.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tenant.backups.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-muted-foreground h-16 text-center">
-                      No backups yet.
+              ) : (
+                tenant.backups.map((backup) => (
+                  <TableRow key={backup.id}>
+                    <TableCell>
+                      {formatDateTime(backup.dateCreated)}
+                      <div className="text-muted-foreground text-xs sm:hidden">{backupReasonLabel(backup.reason)}</div>
+                    </TableCell>
+                    <TableCell className="max-sm:hidden">{backupReasonLabel(backup.reason)}</TableCell>
+                    <TableCell className="text-end tabular-nums">{formatBytes(backup.sizeBytes)}</TableCell>
+                    <TableCell className="text-end">
+                      <StatusBadge statusCode={backup.statusCode} />
+                    </TableCell>
+                    <TableCell className="text-end">
+                      {canRestore && backup.statusCode === StatusCode.Done && (
+                        <RestoreBackup
+                          tenantId={tenant.id}
+                          storeName={tenant.name}
+                          backupId={backup.id}
+                          takenAt={backup.dateCreated}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
-                ) : (
-                  tenant.backups.map((backup) => (
-                    <TableRow key={backup.id}>
-                      <TableCell>
-                        {formatDateTime(backup.dateCreated)}
-                        <div className="text-muted-foreground text-xs sm:hidden">{backupReasonLabel(backup.reason)}</div>
-                      </TableCell>
-                      <TableCell className="max-sm:hidden">{backupReasonLabel(backup.reason)}</TableCell>
-                      <TableCell className="text-end tabular-nums">{formatBytes(backup.sizeBytes)}</TableCell>
-                      <TableCell className="text-end">
-                        <StatusBadge statusCode={backup.statusCode} />
-                      </TableCell>
-                      <TableCell className="text-end">
-                        {canRestore && backup.statusCode === StatusCode.Done && (
-                          <RestoreBackup
-                            tenantId={tenant.id}
-                            storeName={tenant.name}
-                            backupId={backup.id}
-                            takenAt={backup.dateCreated}
-                          />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-            <CardDescription>The settings this store was made with. Only their names show here.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="space-y-2">
-              <h3 className="font-medium">WordPress options</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {tenant.wpOptionNames.length ? (
-                  tenant.wpOptionNames.map((key) => (
-                    <Badge key={key} variant="secondary" className="font-mono">
-                      {key}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-muted-foreground">None</span>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium">PHP constants</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {tenant.phpConstantNames.length ? (
-                  tenant.phpConstantNames.map((name) => (
-                    <Badge key={name} variant="secondary" className="font-mono">
-                      {name}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-muted-foreground">None</span>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

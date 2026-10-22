@@ -91,3 +91,34 @@ export function formatBytes(bytes: number | null | undefined): string {
   }
   return `${value.toFixed(value < 10 && unit > 0 ? 1 : 0)} ${units[unit]}`;
 }
+
+const settingLabels: Record<string, string> = {
+  blogname: "Site title",
+  blogdescription: "Tagline",
+  admin_email: "Owner email",
+  timezone_string: "Time zone",
+  date_format: "Date format",
+  time_format: "Time format",
+  WPLANG: "Language",
+  woocommerce_currency: "Currency",
+  fluent_cart_currency: "Currency",
+  WP_MEMORY_LIMIT: "Memory limit",
+  WP_MAX_MEMORY_LIMIT: "Admin memory limit",
+  DISALLOW_FILE_EDIT: "File editor turned off",
+  DISALLOW_FILE_MODS: "Plugin installs turned off",
+  WP_AUTO_UPDATE_CORE: "WordPress auto-updates",
+  WP_DEBUG: "Debug mode",
+  WP_POST_REVISIONS: "Post revisions kept",
+};
+
+/** Plain label for a WordPress option or PHP constant a store was made with; unknown names are spelled out. */
+export function settingLabel(name: string): string {
+  const known = settingLabels[name];
+  if (known) return known;
+  const words = name
+    .replace(/^WP_/, "")
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}

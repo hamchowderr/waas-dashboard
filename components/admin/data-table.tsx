@@ -70,6 +70,8 @@ export type AdminDataTableProps<T extends RowData> = {
   bulkActions?: (selected: T[], clearSelection: () => void) => React.ReactNode;
   /** Columns left out of the table below a screen width, so it fits without scrolling sideways. */
   hideBelow?: Record<string, "xl" | "2xl">;
+  /** The only columns a phone card lists under its title, so a long list stays short; the rest are on the row's own page. */
+  cardFields?: string[];
 };
 
 function hiddenBelow(width: "xl" | "2xl" | undefined) {
@@ -92,7 +94,8 @@ export function AdminDataTable<T extends RowData>({
   onRowClick,
   selectable,
   bulkActions,
-  hideBelow = {}
+  hideBelow = {},
+  cardFields
 }: AdminDataTableProps<T>) {
   const [filters, setFilters] = React.useState<TableFilterState>(EMPTY_FILTERS);
   const [tab, setTab] = React.useState(initialTab);
@@ -290,7 +293,8 @@ export function AdminDataTable<T extends RowData>({
             table.getRowModel().rows.map((row) => {
               const cells = row.getVisibleCells();
               const check = cells.find((cell) => cell.column.id === "select");
-              const [title, ...details] = cells.filter((cell) => cell.column.id !== "select");
+              const [title, ...rest] = cells.filter((cell) => cell.column.id !== "select");
+              const details = cardFields ? rest.filter((cell) => cardFields.includes(cell.column.id)) : rest;
               return (
                 <li
                   key={row.id}
