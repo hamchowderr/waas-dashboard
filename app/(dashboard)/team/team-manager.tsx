@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, MailIcon, MoreHorizontalIcon, UserPlusIcon, UserMinusIcon, XIcon } from "lucide-react";
+import { Check, Copy, MailIcon, MoreHorizontalIcon, UserPlusIcon, UserMinusIcon, UsersIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Team, TeamInvitation, TeamMember, TeamOf, TeamRole } from "@/lib/api/types";
@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cancelInvitation, inviteTeammate, removeMember, setMemberRole } from "../actions";
+import { EmptyState } from "@/components/admin/empty-state";
 
 /** Below sm the header's button moves under its text instead of squeezing it. */
 const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
@@ -169,8 +170,17 @@ export function TeamManager({
             <TableBody>
               {team.members.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground h-20 text-center">
-                    No one yet.
+                  <TableCell colSpan={4} className="p-0">
+                    <EmptyState
+                      icon={UsersIcon}
+                      title="No one yet"
+                      action={
+                        <Button size="sm" onClick={() => setInviting(true)}>
+                          <UserPlusIcon /> Invite
+                        </Button>
+                      }>
+                      Invite the owner first. They can invite the rest of their team.
+                    </EmptyState>
                   </TableCell>
                 </TableRow>
               )}

@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { MoreHorizontalIcon, PlusIcon, StarIcon, Trash2Icon, UploadIcon } from "lucide-react";
+import { LayersIcon, MoreHorizontalIcon, PlusIcon, StarIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Template, Version } from "@/lib/api/types";
 import { StatusCode } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
 import { parseTemplateContents } from "@/lib/template-contents";
+import { EmptyState } from "@/components/admin/empty-state";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PluginList } from "@/components/admin/plugin-list";
@@ -116,8 +117,11 @@ export function VersionsManager({
                 <TableBody>
                   {sortedVersions.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-muted-foreground h-20 text-center">
-                        No versions yet. Create the first one from a template.
+                      <TableCell colSpan={5} className="p-0">
+                        <EmptyState icon={LayersIcon} title="No versions yet">
+                          A version is the WordPress build this storefront&apos;s stores run on. Create the first one from a
+                          template.
+                        </EmptyState>
                       </TableCell>
                     </TableRow>
                   )}
