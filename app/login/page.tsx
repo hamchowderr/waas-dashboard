@@ -6,8 +6,18 @@ import { getViewer } from "@/auth";
 import { SignInButtons } from "@/components/auth/sign-in-buttons";
 import { LoginMotion } from "@/components/admin/login-motion";
 import type { Provider } from "@/lib/auth-client";
+import { brandColorVars } from "@/lib/branding";
+import { sellerAddress } from "@/lib/dashboard-host";
 
-export const metadata: Metadata = { title: "Sign in" };
+/** On a seller's own address, the tab shows their name and icon. */
+export async function generateMetadata(): Promise<Metadata> {
+  const seller = await sellerAddress();
+  const name = seller?.brand?.name ?? seller?.productName;
+  return {
+    title: name ? { absolute: `Sign in · ${name}` } : "Sign in",
+    ...(seller?.brand?.iconUrl ? { icons: { icon: seller.brand.iconUrl } } : {})
+  };
+}
 
 // Better Auth's error codes, as it sends them back here.
 const errors: Record<string, string> = {
@@ -51,19 +61,39 @@ export default async function LoginPage({
   // Signed in already: carry on. Someone without a storefront yet sees what to do from the layout.
   if (await getViewer().catch(() => null)) redirect(redirectTo);
 
-  const brand = (
+  // A seller's own address shows the seller's look, and only emailed links: GitHub and Google send
+  // people back to the platform's address only.
+  const seller = await sellerAddress();
+  const sellerName = seller?.brand?.name ?? seller?.productName ?? null;
+  const brand = seller ? (
+    <div className="flex items-center gap-2 font-semibold">
+      {seller.brand?.logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={seller.brand.logoUrl} alt={sellerName ?? ""} className="h-8 w-auto max-w-48 object-contain" />
+      ) : (
+        sellerName
+      )}
+    </div>
+  ) : (
     <div className="flex items-center gap-2 font-semibold">
       <ServerCogIcon className="size-5" />
       AnyPress
     </div>
   );
-  const blurb = "Your stores, their backups and versions, API keys, webhooks and every call your storefront makes.";
+  const blurb = seller
+    ? `The dashboard for ${sellerName ?? "your"} stores: backups, versions, your team and more.`
+    : "Your stores, their backups and versions, API keys, webhooks and every call your storefront makes.";
+  const ways = seller ? (["email"] as Provider[]) : providers();
+  const brandVars = brandColorVars(seller?.brand?.color);
 
   // Large screens: the motion panel beside the form. Smaller ones: one centred column
   // (brand, a smaller motion, the form) with the blurb at the bottom. Each layout has
   // its own copy of the motion; only the one on screen loads and animates.
   return (
     <div className="flex lg:h-screen">
+      {Object.keys(brandVars).length > 0 && (
+        <style>{`body{${Object.entries(brandVars).map(([k, v]) => `${k}:${v}`).join(";")}}`}</style>
+      )}
       <div className="bg-muted hidden w-1/2 flex-col justify-between p-10 lg:flex">
         {brand}
         <div className="flex flex-1 items-center justify-center py-10">
@@ -96,7 +126,7 @@ export default async function LoginPage({
             </p>
           )}
 
-          <SignInButtons providers={providers()} returnTo={redirectTo} />
+          <SignInButtons providers={ways} returnTo={redirectTo} />
         </div>
         <p className="text-muted-foreground mx-auto mt-8 max-w-xs text-center text-xs lg:hidden">{blurb}</p>
       </main>

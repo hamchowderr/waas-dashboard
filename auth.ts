@@ -4,6 +4,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 
 import type { Branding } from "@/lib/api/types";
+import { sellerAddress } from "@/lib/dashboard-host";
 import { STOREFRONT_COOKIE } from "@/lib/storefront-cookie";
 
 /**
@@ -93,10 +94,18 @@ export async function authCookieHeader(): Promise<string> {
     .join("; ");
 }
 
-/** The session headers for the API: the cookies, and the storefront picked in the switcher. */
+/**
+ * The session headers for the API: the cookies, the storefront picked in the switcher, and on a
+ * seller's own address that address, so the API narrows the session to its storefront.
+ */
 export async function sessionHeaders(cookie: string): Promise<Record<string, string>> {
   const picked = (await cookies()).get(STOREFRONT_COOKIE)?.value;
-  return { Cookie: cookie, ...(picked && /^[0-9a-f-]{36}$/i.test(picked) ? { "X-Product-Id": picked } : {}) };
+  const seller = await sellerAddress();
+  return {
+    Cookie: cookie,
+    ...(picked && /^[0-9a-f-]{36}$/i.test(picked) ? { "X-Product-Id": picked } : {}),
+    ...(seller ? { "X-Dashboard-Host": seller.host } : {})
+  };
 }
 
 /**
@@ -117,7 +126,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   if (response.status === 403) return null;
   if (!response.ok) throw new Error(`Provisioning API returned ${response.status} for /account`);
   const body = (await response.json()) as Pick<Viewer, "user" | "memberships" | "active"> & { brand?: Branding | null };
-  const isAdmin = isPlatformAdmin(body.user);
+  // On a seller's own address everyone is that seller's team, platform admins included.
+  const isAdmin = isPlatformAdmin(body.user) && !(await sellerAddress());
   // The platform admin always sees the platform's own look.
   return { ...body, isAdmin, active: isAdmin ? null : body.active, brand: isAdmin ? null : (body.brand ?? null), cookie };
 });
