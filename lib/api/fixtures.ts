@@ -121,6 +121,8 @@ type FixtureTemplate = Template & { productId: string };
 
 const templates: FixtureTemplate[] = [
   { name: "Starter template", comment: "WooCommerce, theme and the WaaS Client plugin", isTenantSnapshot: false, groupName: null, isDefault: true, showAsBaseSnapshot: true },
+  // As the build scripts write it: a label, then waas-template.json, cut at 500 characters.
+  { name: "AnyPress store", comment: "AnyPress store: WordPress, WaaS Client, Fluent suite, Rank Math, WP Fusion Lite, AutomatorWP, FluentAuth, Ollie. {\"builtAt\":\"2026-10-20T18:34:00Z\",\"wordPress\":\"7.1.3\",\"plugins\":{\"waas-client\":\"2.3.2 (194505b)\",\"fluent-cart\":\"1.9.0\",\"fluent-crm\":\"3.2.6\",\"fluentform\":\"6.2.15\",\"fluent-booking\":\"2.5.0\",\"fluent-support\":\"2.4.5\",\"fluent-affiliate\":\"1.6.5\",\"easy-code-manager\":\"10.56\",\"seo-by-rank-math\":\"1.0.280\",\"wp-fusion-lite\":\"3.48.0\",\"automatorwp\":\"6.0.4\",\"fluent-security\":\"3.0.5\",\"fluent-community", isTenantSnapshot: false, groupName: null, isDefault: false, showAsBaseSnapshot: true },
   { name: "Catalog store", comment: "Catalog-only store without checkout", isTenantSnapshot: true, groupName: "catalog", isDefault: false, showAsBaseSnapshot: false },
   { name: "Checkout store", comment: "Store with checkout, shipping and tax set up", isTenantSnapshot: true, groupName: "store", isDefault: false, showAsBaseSnapshot: false }
 ].flatMap((t, i) =>
