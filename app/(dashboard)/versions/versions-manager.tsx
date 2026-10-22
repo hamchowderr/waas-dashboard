@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import type { Template, Version } from "@/lib/api/types";
 import { StatusCode } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
+import { parseTemplateContents } from "@/lib/template-contents";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmAction } from "@/components/admin/confirm-action";
+import { PluginList } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -318,7 +320,7 @@ function TemplatesCard({
                     {template.isDefault && <Badge variant="outline">Default</Badge>}
                     {template.showAsBaseSnapshot && <Badge variant="info">Offered for first version</Badge>}
                   </div>
-                  {template.comment && <p className="text-muted-foreground text-sm">{template.comment}</p>}
+                  <TemplateDescription name={template.name} comment={template.comment} />
                   {template.groupName && (
                     <p className="text-muted-foreground text-xs sm:hidden">Group: {template.groupName}</p>
                   )}
@@ -336,5 +338,16 @@ function TemplatesCard({
         </Table>
       </CardContent>
     </Card>
+  );
+}
+
+/** A template's description, with the build details it carries shown as its plugins rather than raw JSON. */
+function TemplateDescription({ name, comment }: { name: string; comment: string }) {
+  const contents = parseTemplateContents(comment);
+  return (
+    <>
+      {contents.text && contents.text.toLowerCase() !== name.toLowerCase() && <p className="text-muted-foreground text-sm">{contents.text}</p>}
+      <PluginList contents={contents} />
+    </>
   );
 }
