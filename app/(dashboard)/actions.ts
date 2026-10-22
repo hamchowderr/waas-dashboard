@@ -9,6 +9,7 @@ import type {
   BrandImage,
   BrandingFields,
   BrandingView,
+  DashboardDomainView,
   Created,
   CreateTemplateInput,
   CreateVersionInput,
@@ -626,4 +627,18 @@ export async function removeBrandImage(of: TeamOf, kind: BrandImage): Promise<Ac
     if (kind !== "logo" && kind !== "icon") throw new InputError("Choose the logo or the icon");
     return getAdminApi().removeBrandImage(checked, kind);
   });
+}
+
+// A storefront's own dashboard address. The API checks the domain itself.
+
+export async function setDashboardDomain(productId: string, domain: string): Promise<ActionResult<DashboardDomainView>> {
+  return run(() => getAdminApi().setDashboardDomain(uuid(productId, "storefront"), text(domain, "Address", 253)), ["/branding"]);
+}
+
+export async function checkDashboardDomain(productId: string): Promise<ActionResult<DashboardDomainView>> {
+  return run(() => getAdminApi().checkDashboardDomain(uuid(productId, "storefront")), ["/branding"]);
+}
+
+export async function removeDashboardDomain(productId: string): Promise<ActionResult<DashboardDomainView>> {
+  return run(() => getAdminApi().removeDashboardDomain(uuid(productId, "storefront")), ["/branding"]);
 }
