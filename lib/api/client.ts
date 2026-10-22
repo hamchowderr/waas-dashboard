@@ -25,6 +25,9 @@ import type {
   Created,
   CreateTemplateInput,
   CreateVersionInput,
+  PluginChoice,
+  PluginChoiceInput,
+  PluginSearch,
   ProductDetail,
   Client,
   Reseller,
@@ -110,6 +113,13 @@ export interface AdminApi {
   deleteVersion(productId: string, versionId: string): Promise<void>;
   createTemplate(productId: string, input: CreateTemplateInput): Promise<Created>;
   deleteTemplate(productId: string, templateId: string): Promise<void>;
+  /** The storefront's plugin choices and its reseller's, with the newest wordpress.org version of each added one. */
+  pluginChoices(productId: string): Promise<PluginChoice[]>;
+  /** The wordpress.org plugin directory's search, 24 a page. */
+  searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch>;
+  /** Adds a plugin (pinned to version, or the newest) or switches a template plugin off; replaces an earlier choice. */
+  setPluginChoice(productId: string, slug: string, input: PluginChoiceInput): Promise<void>;
+  removePluginChoice(productId: string, slug: string): Promise<void>;
   /** Adds an endpoint to a storefront. The secret is in the result and is never shown again. */
   createWebhook(productId: string, input: WebhookEndpointInput): Promise<WebhookSecret>;
   /** Turns an endpoint off or on, or changes its address, description or events. */

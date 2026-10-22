@@ -11,6 +11,10 @@ import {
   type DashboardDomainView,
   StatusCode,
   type ImportCode,
+  type DirectoryPlugin,
+  type PluginChoice,
+  type PluginChoiceInput,
+  type PluginSearch,
   type MoveIn,
   type StoreSize,
   type ApiKey,
@@ -129,6 +133,39 @@ const templates: FixtureTemplate[] = [
   products.map((p, j) => ({ ...t, id: uuid(i * 10 + j + 1, 7), productId: p.id }))
 );
 
+/** wordpress.org plugins the sample search finds. */
+const directory: DirectoryPlugin[] = [
+  ["contact-form-7", "Contact Form 7", "6.1.2", "Takayuki Miyoshi", "Just another contact form plugin. Simple but flexible.", 80, 10_000_000],
+  ["the-events-calendar", "The Events Calendar", "6.15.0", "The Events Calendar", "Create and manage events with ease.", 88, 700_000],
+  ["wordpress-seo", "Yoast SEO", "26.1", "Team Yoast", "Improve your WordPress SEO.", 96, 10_000_000],
+  ["elementor", "Elementor Website Builder", "3.33.0", "Elementor.com", "The Elementor Website Builder has it all.", 90, 10_000_000],
+  ["wp-super-cache", "WP Super Cache", "3.0.1", "Automattic", "A very fast caching engine for WordPress.", 84, 1_000_000]
+].map(([slug, name, version, author, shortDescription, rating, activeInstalls]) => ({
+  slug: slug as string,
+  name: name as string,
+  version: version as string,
+  icon: `https://ps.w.org/${slug}/assets/icon-128x128.png`,
+  author: author as string,
+  shortDescription: shortDescription as string,
+  rating: rating as number,
+  numRatings: 1200,
+  activeInstalls: activeInstalls as number,
+  lastUpdated: "2026-10-01T12:00:00.000Z",
+  testedUpTo: "7.1",
+  requiresPhp: "7.4",
+  blocked: slug === "wp-super-cache" ? "Page caching is part of the hosting." : null
+}));
+
+/** Plugin choices by product. */
+const pluginChoices = new Map<string, PluginChoice[]>([
+  [
+    products[0]!.id,
+    [
+      { slug: "contact-form-7", name: "Contact Form 7", icon: directory[0]!.icon, action: "add", version: "6.0.0", siteTypes: [], shared: false, inProduction: true, latestVersion: "6.1.2" },
+      { slug: "wp-fusion-lite", name: "WP Fusion Lite", icon: null, action: "off", version: null, siteTypes: ["website"], shared: false, inProduction: false, latestVersion: null }
+    ]
+  ]
+]);
 
 type FixtureKey = ApiKey & { productId: string };
 
@@ -936,6 +973,45 @@ export class FixtureAdminApi implements AdminApi {
       showAsBaseSnapshot: input.showInConsole
     });
     return { id, uploadUrl: FIXTURE_UPLOAD_URL };
+  }
+
+  async pluginChoices(productId: string): Promise<PluginChoice[]> {
+    this.product(productId);
+    return [...(pluginChoices.get(productId) ?? [])].sort((a, b) => a.slug.localeCompare(b.slug));
+  }
+
+  async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {
+    this.product(productId);
+    const q = query.toLowerCase();
+    const plugins = directory.filter((p) => p.slug.includes(q) || p.name.toLowerCase().includes(q));
+    return { page, pages: 1, results: plugins.length, plugins };
+  }
+
+  async setPluginChoice(productId: string, slug: string, input: PluginChoiceInput): Promise<void> {
+    this.product(productId);
+    const found = directory.find((p) => p.slug === slug);
+    if (input.action === "add" && !found) throw new FixtureError(400, `wordpress.org has no plugin ${slug}`);
+    if (input.action === "add" && found?.blocked) throw new FixtureError(400, `${found.name} can't be added: ${found.blocked}`);
+    const list = (pluginChoices.get(productId) ?? []).filter((c) => c.slug !== slug);
+    list.push({
+      slug,
+      name: found?.name ?? slug,
+      icon: found?.icon ?? null,
+      action: input.action,
+      version: input.action === "add" ? (input.version ?? found!.version) : null,
+      siteTypes: input.siteTypes,
+      shared: false,
+      inProduction: false,
+      latestVersion: input.action === "add" ? found!.version : null
+    });
+    pluginChoices.set(productId, list);
+  }
+
+  async removePluginChoice(productId: string, slug: string): Promise<void> {
+    this.product(productId);
+    const list = pluginChoices.get(productId) ?? [];
+    if (!list.some((c) => c.slug === slug)) throw new FixtureError(400, `No plugin choice ${slug}`);
+    pluginChoices.set(productId, list.filter((c) => c.slug !== slug));
   }
 
   async deleteTemplate(productId: string, templateId: string): Promise<void> {

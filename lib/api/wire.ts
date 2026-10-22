@@ -288,3 +288,18 @@ export type WireOrganizationView = {
   members: { id: string; userId: string; name: string; email: string; role: "owner" | "admin" | "member"; dateCreated: string }[];
   invitations: WireInvitation[];
 };
+
+/** PluginChoice (openapi/plugin-choices.yaml) */
+export type WirePluginChoice = {
+  slug: string;
+  name: string;
+  icon: string | null;
+  action: "add" | "off";
+  version?: string;
+  sha256?: string;
+  siteTypes: string[];
+  shared: boolean;
+  dateChanged: string;
+  inProduction?: boolean;
+  latestVersion?: string | null;
+};

@@ -320,6 +320,48 @@ export type CreateVersionInput = {
   asZip?: boolean;
 };
 
+/** A wordpress.org plugin as the directory's search returns it. */
+export type DirectoryPlugin = {
+  slug: string;
+  name: string;
+  version: string;
+  icon: string | null;
+  author: string;
+  shortDescription: string;
+  /** 0 to 100. */
+  rating: number;
+  numRatings: number;
+  activeInstalls: number;
+  lastUpdated: string | null;
+  testedUpTo: string | null;
+  requiresPhp: string | null;
+  /** Why stores can't have it (it clashes with the hosting), or null. */
+  blocked: string | null;
+};
+
+export type PluginSearch = { page: number; pages: number; results: number; plugins: DirectoryPlugin[] };
+
+/**
+ * A plugin a storefront's stores get on top of its template (add, pinned to one version), or a template
+ * plugin it switches off, for some site types or all (empty). Built into each new version.
+ */
+export type PluginChoice = {
+  slug: string;
+  name: string;
+  icon: string | null;
+  action: "add" | "off";
+  version: string | null;
+  siteTypes: string[];
+  /** The reseller's, for all its storefronts; changed on the reseller, not here. */
+  shared: boolean;
+  /** The production version has it as it is now; otherwise it reaches stores with the next version. */
+  inProduction: boolean;
+  /** Newest version on wordpress.org (added plugins). */
+  latestVersion: string | null;
+};
+
+export type PluginChoiceInput = { action: "add" | "off"; version?: string; siteTypes: string[] };
+
 export type CreateTemplateInput = {
   name: string;
   comment: string;
