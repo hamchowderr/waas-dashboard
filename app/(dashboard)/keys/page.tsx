@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
 import { NewSellerButton } from "./new-seller-dialog";
-import { StorefrontCard } from "./storefront-card";
 
 export const metadata: Metadata = { title: "API keys" };
 
@@ -69,19 +68,13 @@ export default async function KeysPage({
     );
   }
 
-  const [keys, storefront] = await Promise.all([api.apiKeys(product.id), api.storefront(product.id)]);
+  const keys = await api.apiKeys(product.id);
 
   return (
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="API keys"
         description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}
-      />
-      <StorefrontCard
-        productId={product.id}
-        productName={product.name}
-        storefront={storefront}
-        canBuild={isAdmin}
       />
       <KeysManager
         productId={product.id}

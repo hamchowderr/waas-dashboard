@@ -30,12 +30,15 @@ export function BrandingEditor({
   of,
   initial,
   canEdit,
-  inherits
+  inherits,
+  brandName
 }: {
   of: TeamOf;
   initial: BrandingView;
   canEdit: boolean;
   inherits?: string;
+  /** A reseller's brand name from its settings. The dashboard name falls back to it, so the name isn't asked twice. */
+  brandName?: string | null;
 }) {
   const [view, setView] = React.useState(initial);
   const [form, setForm] = React.useState(() => toForm(initial));
@@ -96,6 +99,14 @@ export function BrandingEditor({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {brandName !== undefined && !initial.name ? (
+              <div className="space-y-1 text-sm">
+                <div className="font-medium">Name</div>
+                <p className="text-muted-foreground">
+                  {brandName ? `${brandName}, the brand name in Settings.` : "AnyPress until a brand name is set in Settings."}
+                </p>
+              </div>
+            ) : (
             <div className="space-y-2">
               <Label htmlFor="brand-name">Name</Label>
               <Input
@@ -107,6 +118,7 @@ export function BrandingEditor({
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="brand-color">Main color</Label>
               <div className="flex items-center gap-2">

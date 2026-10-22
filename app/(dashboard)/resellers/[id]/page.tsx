@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KeysManager } from "../../keys/keys-manager";
 import { BrandingEditor } from "../../branding/branding-editor";
 import { TeamManager } from "../../team/team-manager";
@@ -23,14 +24,24 @@ export const metadata: Metadata = { title: "Reseller" };
 
 const SIZE_LABELS: Record<StoreSize, string> = { small: "Small", medium: "Medium", large: "Large" };
 
-export default async function ResellerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ month?: string }> }) {
+const TABS = ["bill", "keys", "team", "branding", "settings"] as const;
+
+export default async function ResellerPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ month?: string; tab?: string }>;
+}) {
   const viewer = await getViewer();
   if (!viewer?.isAdmin) notFound();
   const { id } = await params;
   const api = getAdminApi();
   const reseller = /^[0-9a-f-]{36}$/i.test(id) ? await api.reseller(id) : null;
   if (!reseller) notFound();
-  const month = monthRange((await searchParams).month);
+  const query = await searchParams;
+  const month = monthRange(query.month);
+  const tab = TABS.find((t) => t === query.tab) ?? "bill";
   const [bill, products, keys, team, branding] = await Promise.all([
     api.resellerBill(reseller.id, month.month),
     api.products(),
@@ -50,7 +61,16 @@ export default async function ResellerPage({ params, searchParams }: { params: P
           </Button>
         </div>
       </PageHeader>
-      <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
+      {/* One part at a time instead of one long page; ?tab= keeps the place across a month change or a reload. */}
+      <Tabs defaultValue={tab} className="space-y-4">
+        <TabsList className="max-w-full justify-start overflow-x-auto">
+          <TabsTrigger value="bill">Bill</TabsTrigger>
+          <TabsTrigger value="keys">Keys</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="branding">Branding</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="bill" className="grid gap-4 lg:grid-cols-3 lg:gap-6">
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-start justify-between gap-2">
             <div className="space-y-1.5">
@@ -66,13 +86,13 @@ export default async function ResellerPage({ params, searchParams }: { params: P
             <div className="flex gap-1">
               <BillDownload resellerName={reseller.name} bill={bill} />
               <Button asChild variant="outline" size="icon" aria-label="Previous month">
-                <Link href={`/resellers/${reseller.id}?month=${month.previous}`}>
+                <Link href={`/resellers/${reseller.id}?month=${month.previous}&tab=bill`}>
                   <ChevronLeftIcon />
                 </Link>
               </Button>
               {month.month < current && (
                 <Button asChild variant="outline" size="icon" aria-label="Next month">
-                  <Link href={`/resellers/${reseller.id}?month=${month.next}`}>
+                  <Link href={`/resellers/${reseller.id}?month=${month.next}&tab=bill`}>
                     <ChevronRightIcon />
                   </Link>
                 </Button>
@@ -138,29 +158,28 @@ export default async function ResellerPage({ params, searchParams }: { params: P
             />
           </CardContent>
         </Card>
-        <div className="lg:col-span-3">
+        </TabsContent>
+        <TabsContent value="keys">
           <KeysManager partner productId={reseller.id} productName={reseller.name} keys={keys} />
-        </div>
-        <div className="space-y-4 lg:col-span-3 lg:space-y-6">
+        </TabsContent>
+        <TabsContent value="team" className="space-y-4 lg:space-y-6">
           <TeamManager reseller productId={reseller.id} productName={reseller.name} team={team} me={{ userId: viewer.user.id, role: null }} />
-        </div>
-        <div className="space-y-2 lg:col-span-3">
-          <h2 className="text-lg font-semibold">Branding</h2>
+        </TabsContent>
+        <TabsContent value="branding" className="space-y-2">
           <p className="text-muted-foreground text-sm">
             The look every one of this reseller&apos;s storefronts gets in the dashboard. Each storefront can change its own name,
             logo and color on its Branding page.
           </p>
-          <BrandingEditor of={{ resellerId: reseller.id }} initial={branding} canEdit />
-        </div>
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResellerSettingsForm id={reseller.id} settings={reseller} />
-          </CardContent>
-        </Card>
-      </div>
+          <BrandingEditor of={{ resellerId: reseller.id }} initial={branding} canEdit brandName={reseller.brandName} />
+        </TabsContent>
+        <TabsContent value="settings">
+          <Card className="max-w-3xl">
+            <CardContent>
+              <ResellerSettingsForm id={reseller.id} settings={reseller} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
