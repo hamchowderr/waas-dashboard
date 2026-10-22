@@ -13,6 +13,8 @@ import type {
   Created,
   CreateTemplateInput,
   CreateVersionInput,
+  PluginChoiceInput,
+  PluginSearch,
   ImportCode,
   MailDomain,
   StoreSize,
@@ -205,6 +207,49 @@ export async function deleteVersion(productId: string, versionId: string): Promi
     await getAdminApi().deleteVersion(uuid(productId, "storefront"), uuid(versionId, "version"));
     return undefined;
   }, ["/versions"]);
+}
+
+// Plugin choices: wordpress.org plugins a storefront's stores get on top of its template, or template plugins it
+// switches off. They reach stores with the next version.
+
+const PLUGIN_SLUG = /^[a-z0-9][a-z0-9-]{0,99}$/;
+const SITE_TYPE = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** The wordpress.org directory's search. Members may search too: it changes nothing. */
+export async function searchPlugins(productId: string, query: string, page = 1): Promise<ActionResult<PluginSearch>> {
+  const viewer = await getViewer().catch(() => null);
+  if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
+  try {
+    const q = text(query, "Search", 100);
+    if (q.length < 2) throw new InputError("Type at least 2 letters");
+    const n = Number.isInteger(page) && page >= 1 && page <= 50 ? page : 1;
+    return { ok: true, data: await getAdminApi().searchPlugins(uuid(productId, "storefront"), q, n) };
+  } catch (error) {
+    if (error instanceof AdminApiError) return { ok: false, error: error.apiMessage ?? error.message };
+    if (error instanceof InputError) return { ok: false, error: error.message };
+    console.error(error);
+    return { ok: false, error: "The provisioning API did not answer. Try again." };
+  }
+}
+
+export async function setPluginChoice(productId: string, slug: string, input: PluginChoiceInput): Promise<ActionResult> {
+  return run(async () => {
+    if (typeof slug !== "string" || !PLUGIN_SLUG.test(slug)) throw new InputError("Invalid plugin");
+    const action = input?.action === "off" ? "off" : "add";
+    const siteTypes = Array.isArray(input?.siteTypes) ? input.siteTypes : [];
+    if (siteTypes.length > 20 || !siteTypes.every((t) => typeof t === "string" && SITE_TYPE.test(t))) throw new InputError("Invalid site types");
+    const version = action === "add" && typeof input?.version === "string" && input.version ? text(input.version, "Version", 32) : undefined;
+    await getAdminApi().setPluginChoice(uuid(productId, "storefront"), slug, { action, siteTypes: [...new Set(siteTypes)], ...(version && { version }) });
+    return undefined;
+  }, ["/plugins"]);
+}
+
+export async function removePluginChoice(productId: string, slug: string): Promise<ActionResult> {
+  return run(async () => {
+    if (typeof slug !== "string" || !PLUGIN_SLUG.test(slug)) throw new InputError("Invalid plugin");
+    await getAdminApi().removePluginChoice(uuid(productId, "storefront"), slug);
+    return undefined;
+  }, ["/plugins"]);
 }
 
 export async function createTemplate(productId: string, input: CreateTemplateInput): Promise<ActionResult<Created>> {

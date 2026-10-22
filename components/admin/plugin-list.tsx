@@ -8,12 +8,20 @@ import { offDirectory, type TemplateContents } from "@/lib/template-contents";
 /** wordpress.org keeps each plugin's icon under one of these names; tried in order. */
 const iconFiles = ["icon-128x128.png", "icon-128x128.gif", "icon.svg", "icon-128x128.jpg"];
 
-function PluginIcon({ slug, name }: { slug: string; name: string }) {
-  const [attempt, setAttempt] = React.useState(offDirectory.has(slug) ? iconFiles.length : 0);
-  if (attempt >= iconFiles.length) {
+/**
+ * A plugin's wordpress.org icon (the given one first, when known), or a letter tile for one that has none.
+ * size-6 by default; pass a size class for another.
+ */
+export function PluginIcon({ slug, name, icon, className = "size-6" }: { slug: string; name: string; icon?: string | null; className?: string }) {
+  const sources = React.useMemo(
+    () => (offDirectory.has(slug) ? [] : [...(icon ? [icon] : []), ...iconFiles.map((file) => `https://ps.w.org/${slug}/assets/${file}`)]),
+    [slug, icon]
+  );
+  const [attempt, setAttempt] = React.useState(0);
+  if (attempt >= sources.length) {
     return (
       <span
-        className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded text-xs font-semibold"
+        className={`bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded text-xs font-semibold ${className}`}
         aria-hidden={true}>
         {name.charAt(0)}
       </span>
@@ -22,10 +30,10 @@ function PluginIcon({ slug, name }: { slug: string; name: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`https://ps.w.org/${slug}/assets/${iconFiles[attempt]}`}
+      src={sources[attempt]}
       alt=""
       loading="lazy"
-      className="size-6 shrink-0 rounded"
+      className={`shrink-0 rounded ${className}`}
       onError={() => setAttempt((a) => a + 1)}
     />
   );

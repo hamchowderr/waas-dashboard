@@ -2,6 +2,9 @@ import "server-only";
 
 import type { AdminApi } from "./client";
 import type {
+  PluginChoice,
+  PluginChoiceInput,
+  PluginSearch,
   BrandImage,
   BrandingFields,
   BrandingView,
@@ -67,6 +70,7 @@ import type {
   WireInvitation,
   WireOrganizationView,
   WireBaseSnapshot,
+  WirePluginChoice,
   WireCreateBaseSnapshot,
   WireCreatedBaseSnapshot,
   WireCreatedVersion,
@@ -357,6 +361,34 @@ export class HttpAdminApi implements AdminApi {
 
   async deleteTemplate(productId: string, templateId: string): Promise<void> {
     await this.send("DELETE", this.productPath(productId, `/basesnapshots?id=${encodeURIComponent(templateId)}`));
+  }
+
+  async pluginChoices(productId: string): Promise<PluginChoice[]> {
+    const choices = (await this.get<WirePluginChoice[]>(this.productPath(productId, "/plugin-choices?checkUpdates=true")))!;
+    return choices.map((c) => ({
+      slug: c.slug,
+      name: c.name,
+      icon: c.icon ?? null,
+      action: c.action,
+      version: c.version ?? null,
+      siteTypes: c.siteTypes ?? [],
+      shared: c.shared === true,
+      inProduction: c.inProduction === true,
+      latestVersion: c.latestVersion ?? null
+    }));
+  }
+
+  async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {
+    const params = new URLSearchParams({ q: query, page: String(page) });
+    return (await this.get<PluginSearch>(this.productPath(productId, `/plugin-choices/search?${params}`)))!;
+  }
+
+  async setPluginChoice(productId: string, slug: string, input: PluginChoiceInput): Promise<void> {
+    await this.send("PUT", this.productPath(productId, `/plugin-choices/${encodeURIComponent(slug)}`), input);
+  }
+
+  async removePluginChoice(productId: string, slug: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, `/plugin-choices/${encodeURIComponent(slug)}`));
   }
 
   async webhooks(productId?: string): Promise<WebhookEndpoint[]> {
