@@ -8,6 +8,7 @@ import type {
   BrandImage,
   BrandingFields,
   BrandingView,
+  DashboardDomainView,
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
@@ -188,6 +189,14 @@ export interface AdminApi {
   /** The image's bytes; the API reads the type from them and refuses SVG. */
   uploadBrandImage(of: TeamOf, kind: BrandImage, image: Uint8Array): Promise<BrandingView>;
   removeBrandImage(of: TeamOf, kind: BrandImage): Promise<BrandingView>;
+
+  // A storefront's own dashboard address, like dashboard.theirbusiness.com.
+  dashboardDomain(productId: string): Promise<DashboardDomainView>;
+  /** Replaces the address before; the answer lists the DNS records to add. */
+  setDashboardDomain(productId: string, domain: string): Promise<DashboardDomainView>;
+  /** Asks the host to look at the DNS again. */
+  checkDashboardDomain(productId: string): Promise<DashboardDomainView>;
+  removeDashboardDomain(productId: string): Promise<DashboardDomainView>;
 }
 
 /**

@@ -8,6 +8,7 @@ import {
   type BrandImage,
   type BrandingFields,
   type BrandingView,
+  type DashboardDomainView,
   StatusCode,
   type ImportCode,
   type MoveIn,
@@ -592,6 +593,7 @@ const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended
 type FixtureTeam = Team & { key: string };
 const emptyBrand = (): Branding => ({ name: null, color: null, supportEmail: null, logoUrl: null, iconUrl: null });
 const brands = new Map<string, Branding>();
+const dashboardDomains = new Map<string, DashboardDomainView["dashboardDomain"]>();
 
 const teamKey = (of: TeamOf) => (typeof of === "string" ? of : `reseller:${of.resellerId}`);
 
@@ -1470,5 +1472,38 @@ export class FixtureAdminApi implements AdminApi {
     this.teamName(of);
     brands.set(teamKey(of), { ...(brands.get(teamKey(of)) ?? emptyBrand()), [kind === "logo" ? "logoUrl" : "iconUrl"]: null });
     return this.brandView(of);
+  }
+  async dashboardDomain(productId: string): Promise<DashboardDomainView> {
+    this.product(productId);
+    return { enabled: true, dashboardDomain: structuredClone(dashboardDomains.get(productId) ?? null) };
+  }
+
+  async setDashboardDomain(productId: string, domain: string): Promise<DashboardDomainView> {
+    this.product(productId);
+    const name = domain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    if (name.split(".").length < 3) throw new FixtureError(400, "Use an address under your domain, like dashboard.yourbusiness.com");
+    dashboardDomains.set(productId, {
+      domain: name,
+      status: "pending",
+      records: [{ type: "CNAME", name, value: "cname.vercel-dns.com" }],
+      error: null,
+      checkedAt: new Date().toISOString()
+    });
+    return this.dashboardDomain(productId);
+  }
+
+  async checkDashboardDomain(productId: string): Promise<DashboardDomainView> {
+    const current = dashboardDomains.get(productId);
+    if (!current) throw new FixtureError(404, "This storefront has no dashboard address");
+    // Sample data: the DNS is "right" on the second look.
+    if (current.checkedAt && current.status === "pending") Object.assign(current, { status: "active", records: [] });
+    current.checkedAt = new Date().toISOString();
+    return this.dashboardDomain(productId);
+  }
+
+  async removeDashboardDomain(productId: string): Promise<DashboardDomainView> {
+    if (!dashboardDomains.get(productId)) throw new FixtureError(404, "This storefront has no dashboard address");
+    dashboardDomains.delete(productId);
+    return this.dashboardDomain(productId);
   }
 }

@@ -5,6 +5,7 @@ import type {
   BrandImage,
   BrandingFields,
   BrandingView,
+  DashboardDomainView,
   ImportCode,
   MoveIn,
   StoreSize,
@@ -546,6 +547,22 @@ export class HttpAdminApi implements AdminApi {
 
   async removeBrandImage(of: TeamOf, kind: BrandImage): Promise<BrandingView> {
     return (await this.send<BrandingView>("DELETE", this.teamPath(of, `/branding/${kind}`)))!;
+  }
+
+  async dashboardDomain(productId: string): Promise<DashboardDomainView> {
+    return (await this.get<DashboardDomainView>(this.productPath(productId, "/dashboard-domain")))!;
+  }
+
+  async setDashboardDomain(productId: string, domain: string): Promise<DashboardDomainView> {
+    return (await this.send<DashboardDomainView>("PUT", this.productPath(productId, "/dashboard-domain"), { domain }))!;
+  }
+
+  async checkDashboardDomain(productId: string): Promise<DashboardDomainView> {
+    return (await this.send<DashboardDomainView>("POST", this.productPath(productId, "/dashboard-domain/check")))!;
+  }
+
+  async removeDashboardDomain(productId: string): Promise<DashboardDomainView> {
+    return (await this.send<DashboardDomainView>("DELETE", this.productPath(productId, "/dashboard-domain")))!;
   }
 
   private teamPath(of: TeamOf, rest: string): string {

@@ -584,3 +584,17 @@ export type BrandingView = Branding & { shown: Branding };
 export type BrandingFields = { name: string | null; color: string | null; supportEmail: string | null };
 
 export type BrandImage = "logo" | "icon";
+
+/** A storefront's own dashboard address (the API's docs/branding.md). */
+export type DashboardDomain = {
+  domain: string;
+  /** active: the host serves it with a certificate. */
+  status: "pending" | "active";
+  /** DNS records still to add; name is the full hostname. */
+  records: { type: "CNAME" | "A" | "TXT"; name: string; value: string }[];
+  error: string | null;
+  checkedAt: string | null;
+};
+
+/** enabled: this server offers own addresses at all. */
+export type DashboardDomainView = { enabled: boolean; dashboardDomain: DashboardDomain | null };

@@ -7,6 +7,7 @@ import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandingEditor } from "./branding-editor";
+import { DashboardAddress } from "./dashboard-address";
 
 export const metadata: Metadata = { title: "Branding" };
 
@@ -55,7 +56,9 @@ export default async function BrandingPage({
     );
   }
 
-  const branding = await api.branding(product.id);
+  // An API without own addresses yet answers 404: leave the card out.
+  const [branding, address] = await Promise.all([api.branding(product.id), api.dashboardDomain(product.id).catch(() => null)]);
+  const canEdit = !!viewer && canChange(viewer);
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -67,9 +70,10 @@ export default async function BrandingPage({
         key={product.id}
         of={product.id}
         initial={branding}
-        canEdit={!!viewer && canChange(viewer)}
+        canEdit={canEdit}
         inherits={product.resellerId ? (product.resellerName ?? "your reseller account") : undefined}
       />
+      {address?.enabled && <DashboardAddress key={`address-${product.id}`} productId={product.id} initial={address} canEdit={canEdit} />}
     </div>
   );
 }
