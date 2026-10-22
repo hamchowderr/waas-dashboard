@@ -27,6 +27,7 @@ import type {
   CreateVersionInput,
   PluginChoice,
   PluginChoiceInput,
+  PluginUpload,
   PluginSearch,
   ProductDetail,
   Client,
@@ -120,6 +121,10 @@ export interface AdminApi {
   /** Adds a plugin (pinned to version, or the newest) or switches a template plugin off; replaces an earlier choice. */
   setPluginChoice(productId: string, slug: string, input: PluginChoiceInput): Promise<void>;
   removePluginChoice(productId: string, slug: string): Promise<void>;
+  /** Starts uploading a premium plugin's zip: PUT it to uploadUrl, then check it. */
+  createPluginUpload(productId: string): Promise<Created>;
+  /** Checks an uploaded zip: ready to add, or rejected with the reason. */
+  checkPluginUpload(productId: string, uploadId: string): Promise<PluginUpload>;
   /** Adds an endpoint to a storefront. The secret is in the result and is never shown again. */
   createWebhook(productId: string, input: WebhookEndpointInput): Promise<WebhookSecret>;
   /** Turns an endpoint off or on, or changes its address, description or events. */

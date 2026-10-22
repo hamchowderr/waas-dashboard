@@ -297,9 +297,26 @@ export type WirePluginChoice = {
   action: "add" | "off";
   version?: string;
   sha256?: string;
+  source?: "wporg" | "upload";
+  uploadId?: string;
+  licenceConstants?: string[];
   siteTypes: string[];
   shared: boolean;
   dateChanged: string;
   inProduction?: boolean;
   latestVersion?: string | null;
+};
+
+/** PluginUpload (openapi/plugin-choices.yaml) */
+export type WirePluginUpload = {
+  id: string;
+  status: "pending" | "ready" | "rejected";
+  reason?: string;
+  slug?: string;
+  name?: string;
+  version?: string;
+  sha256?: string;
+  sizeBytes?: number;
+  shared: boolean;
+  dateCreated: string;
 };

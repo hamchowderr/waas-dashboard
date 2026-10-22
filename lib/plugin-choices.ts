@@ -43,3 +43,6 @@ export function installsLabel(n: number) {
   if (n >= 1_000) return `${Math.floor(n / 1_000)}K+`;
   return n > 0 ? `${n}+` : "Fewer than 10";
 }
+
+/** The largest premium plugin zip the API takes. */
+export const MAX_PLUGIN_ZIP = 64 * 1024 * 1024;

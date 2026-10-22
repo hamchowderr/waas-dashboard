@@ -14,6 +14,7 @@ import {
   type DirectoryPlugin,
   type PluginChoice,
   type PluginChoiceInput,
+  type PluginUpload,
   type PluginSearch,
   type MoveIn,
   type StoreSize,
@@ -156,13 +157,17 @@ const directory: DirectoryPlugin[] = [
   blocked: slug === "wp-super-cache" ? "Page caching is part of the hosting." : null
 }));
 
+/** Uploaded premium plugin zips by id. The sample "upload" is always a ready copy of the plugin its file is named after. */
+const pluginUploads = new Map<string, PluginUpload>();
+
 /** Plugin choices by product. */
 const pluginChoices = new Map<string, PluginChoice[]>([
   [
     products[0]!.id,
     [
-      { slug: "contact-form-7", name: "Contact Form 7", icon: directory[0]!.icon, action: "add", version: "6.0.0", siteTypes: [], shared: false, inProduction: true, latestVersion: "6.1.2" },
-      { slug: "wp-fusion-lite", name: "WP Fusion Lite", icon: null, action: "off", version: null, siteTypes: ["website"], shared: false, inProduction: false, latestVersion: null }
+      { slug: "contact-form-7", name: "Contact Form 7", icon: directory[0]!.icon, action: "add", version: "6.0.0", source: "wporg", licenceConstants: [], siteTypes: [], shared: false, inProduction: true, latestVersion: "6.1.2" },
+      { slug: "gravityforms", name: "Gravity Forms", icon: null, action: "add", version: "2.9.1", source: "upload", licenceConstants: ["GF_LICENSE_KEY"], siteTypes: ["store", "everything"], shared: false, inProduction: true, latestVersion: null },
+      { slug: "wp-fusion-lite", name: "WP Fusion Lite", icon: null, action: "off", version: null, source: "wporg", licenceConstants: [], siteTypes: ["website"], shared: false, inProduction: false, latestVersion: null }
     ]
   ]
 ]);
@@ -989,22 +994,46 @@ export class FixtureAdminApi implements AdminApi {
 
   async setPluginChoice(productId: string, slug: string, input: PluginChoiceInput): Promise<void> {
     this.product(productId);
+    const before = pluginChoices.get(productId)?.find((c) => c.slug === slug);
+    const uploadId = input.uploadId ?? (input.action === "add" && !input.version && before?.source === "upload" ? "kept" : undefined);
+    const upload = uploadId === "kept" ? { name: before!.name, version: before!.version } : uploadId ? pluginUploads.get(uploadId) : undefined;
+    if (uploadId && !upload) throw new FixtureError(400, `Plugin upload ${uploadId} not found or not checked`);
     const found = directory.find((p) => p.slug === slug);
-    if (input.action === "add" && !found) throw new FixtureError(400, `wordpress.org has no plugin ${slug}`);
+    if (input.action === "add" && !upload && !found) throw new FixtureError(400, `wordpress.org has no plugin ${slug}`);
     if (input.action === "add" && found?.blocked) throw new FixtureError(400, `${found.name} can't be added: ${found.blocked}`);
     const list = (pluginChoices.get(productId) ?? []).filter((c) => c.slug !== slug);
+    const licence = input.licence === undefined ? (before?.licenceConstants ?? []) : Object.keys(input.licence ?? {});
     list.push({
       slug,
-      name: found?.name ?? slug,
-      icon: found?.icon ?? null,
+      name: upload?.name ?? found?.name ?? slug,
+      icon: upload ? null : (found?.icon ?? null),
       action: input.action,
-      version: input.action === "add" ? (input.version ?? found!.version) : null,
+      version: input.action !== "add" ? null : upload ? upload.version : (input.version ?? found!.version),
+      source: upload ? "upload" : "wporg",
+      licenceConstants: input.action === "add" ? licence : [],
       siteTypes: input.siteTypes,
       shared: false,
       inProduction: false,
-      latestVersion: input.action === "add" ? found!.version : null
+      latestVersion: input.action === "add" && !upload ? found!.version : null
     });
     pluginChoices.set(productId, list);
+  }
+
+  async createPluginUpload(productId: string): Promise<Created> {
+    this.product(productId);
+    const id = crypto.randomUUID();
+    pluginUploads.set(id, { id, status: "pending", reason: null, slug: null, name: null, version: null });
+    return { id, uploadUrl: FIXTURE_UPLOAD_URL };
+  }
+
+  async checkPluginUpload(productId: string, uploadId: string): Promise<PluginUpload> {
+    this.product(productId);
+    const upload = pluginUploads.get(uploadId);
+    if (!upload) throw new FixtureError(400, `Plugin upload ${uploadId} not found`);
+    // Nothing is really sent with sample data: every check passes as a sample premium plugin.
+    const ready: PluginUpload = { ...upload, status: "ready", slug: "gravityforms", name: "Gravity Forms", version: "2.9.2" };
+    pluginUploads.set(uploadId, ready);
+    return ready;
   }
 
   async removePluginChoice(productId: string, slug: string): Promise<void> {

@@ -351,6 +351,10 @@ export type PluginChoice = {
   icon: string | null;
   action: "add" | "off";
   version: string | null;
+  /** Where an added plugin comes from: wordpress.org, or a zip uploaded here (a premium plugin). */
+  source: "wporg" | "upload";
+  /** Names of the licence constants set for it; their values are never shown. */
+  licenceConstants: string[];
   siteTypes: string[];
   /** The reseller's, for all its storefronts; changed on the reseller, not here. */
   shared: boolean;
@@ -360,7 +364,26 @@ export type PluginChoice = {
   latestVersion: string | null;
 };
 
-export type PluginChoiceInput = { action: "add" | "off"; version?: string; siteTypes: string[] };
+export type PluginChoiceInput = {
+  action: "add" | "off";
+  version?: string;
+  siteTypes: string[];
+  /** A checked upload of this plugin, instead of wordpress.org. */
+  uploadId?: string;
+  /** PHP constants (licence keys) stores get with it. Left out keeps them; null removes them. */
+  licence?: Record<string, string> | null;
+};
+
+/** A premium plugin's zip, uploaded and then checked by the API before it can be added. */
+export type PluginUpload = {
+  id: string;
+  status: "pending" | "ready" | "rejected";
+  /** Rejected: why. */
+  reason: string | null;
+  slug: string | null;
+  name: string | null;
+  version: string | null;
+};
 
 export type CreateTemplateInput = {
   name: string;
