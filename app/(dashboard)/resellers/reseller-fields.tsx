@@ -103,7 +103,7 @@ export function ResellerFields({ value, onChange, idPrefix }: { value: ResellerF
   );
   return (
     <div className="space-y-4">
-      {field("name", "Name", "The partner's business name.", { maxLength: 100 })}
+      {field("name", "Business name", "The partner's legal or trading name, as you know them.", { maxLength: 100 })}
       <div className="grid gap-4 sm:grid-cols-2">
         {field("maxProducts", "Storefront limit", "Empty for no limit.", { inputMode: "numeric", placeholder: "No limit" })}
         {field("maxTenants", "Store limit", "Across all its storefronts. Empty for no limit.", { inputMode: "numeric", placeholder: "No limit" })}
@@ -111,7 +111,7 @@ export function ResellerFields({ value, onChange, idPrefix }: { value: ResellerF
       {field("wholesalePercent", "Wholesale discount (%)", "Off list price, for every live store on its bill.", { inputMode: "numeric" })}
       {field("billingEmail", "Billing email", "Where its monthly bill goes.", { type: "email", placeholder: "billing@partner.example" })}
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("brandName", "Brand name", "Shown on its stores' \"site unavailable\" page. Empty uses AnyPress.", { maxLength: 60, placeholder: "AnyPress" })}
+        {field("brandName", "Brand name", "What its team and its stores' \"site unavailable\" page show. Empty uses AnyPress.", { maxLength: 60, placeholder: "AnyPress" })}
         {field("brandUrl", "Brand link", "Where its name links to. Optional.", { type: "url", placeholder: "https://partner.example" })}
       </div>
       <div className="space-y-2">

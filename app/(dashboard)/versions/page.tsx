@@ -6,6 +6,7 @@ import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent } from "@/components/ui/card";
+import { StorefrontCard } from "../keys/storefront-card";
 import { VersionsManager } from "./versions-manager";
 
 export const metadata: Metadata = { title: "Versions & templates" };
@@ -15,7 +16,8 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
   const api = getAdminApi();
   const products = await api.products();
   // A customer has one storefront, so their pages open on it.
-  const onlyOne = !(await getViewer())?.isAdmin && products.length === 1 ? products[0] : undefined;
+  const isAdmin = (await getViewer())?.isAdmin === true;
+  const onlyOne = !isAdmin && products.length === 1 ? products[0] : undefined;
   const product = products.find((p) => p.id === productId) ?? onlyOne;
 
   // Versions and templates belong to one storefront: pick one first.
@@ -53,7 +55,11 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
     );
   }
 
-  const [versions, templates] = await Promise.all([api.versions(product.id), api.templates(product.id)]);
+  const [versions, templates, storefront] = await Promise.all([
+    api.versions(product.id),
+    api.templates(product.id),
+    api.storefront(product.id)
+  ]);
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -61,6 +67,7 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
         title="Versions & templates"
         description={`${product.name}: the WordPress builds its stores run on, and the templates they start from.`}
       />
+      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} />
       <VersionsManager productId={product.id} versions={versions} templates={templates} />
     </div>
   );

@@ -127,7 +127,7 @@ export function KeysManager({
         ? {
             ...next,
             usage:
-              "Give these to the partner for their own app. A partner key isn't entered on a storefront: each call names the storefront with ?productId=.",
+              "Give these to the partner for their own app. One key works for all of its storefronts; each call says which storefront it's for.",
           }
         : next,
     );
@@ -182,7 +182,7 @@ export function KeysManager({
           <CardTitle>{partner ? "Partner keys" : "Keys"}</CardTitle>
           <CardDescription>
             {partner
-              ? "One key for every storefront in this account: each API call names the storefront with ?productId=. Secrets are shown once."
+              ? "One key for all of this partner's storefronts; each call says which storefront it's for. Secrets are shown once."
               : activeCount === 0
                 ? "No active key: the storefront can't reach the API."
                 : `${activeCount} active ${activeCount === 1 ? "key" : "keys"}. Secrets are shown once, when a key is created.`}
@@ -228,9 +228,10 @@ export function KeysManager({
                 >
                   <TableCell className="whitespace-normal">
                     <div className="font-medium">{keyName(key)}</div>
-                    <code className="text-muted-foreground text-xs break-all">
-                      {key.id}
-                    </code>
+                    {/* The end of the key id is enough to tell keys apart; the whole id stays on hover. */}
+                    <div className="text-muted-foreground text-xs" title={key.id}>
+                      Ends in {key.id.slice(-6)}
+                    </div>
                     <div className="text-muted-foreground mt-0.5 text-xs md:hidden">
                       Last used{" "}
                       {key.lastUsedAt ? formatAgo(key.lastUsedAt) : "never"}
