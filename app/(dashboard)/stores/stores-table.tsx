@@ -47,7 +47,6 @@ const columns: ColumnDef<Tenant>[] = [
           className="hover:text-primary truncate font-medium hover:underline">
           {row.original.name}
         </Link>
-        <div className="text-muted-foreground truncate font-mono text-xs">{row.original.externalId}</div>
       </div>
     )
   },
@@ -126,6 +125,7 @@ export function StoresTable({ tenants, initialTab }: { tenants: Tenant[]; initia
       initialSorting={[{ id: "dateCreated", desc: true }]}
       emptyText="No stores match these filters."
       onRowClick={(t) => router.push(`/stores/${t.id}`)}
+      cardFields={["mainDomain", "statusCode"]}
     />
   );
 }
