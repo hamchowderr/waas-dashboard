@@ -59,7 +59,6 @@ const columns: ColumnDef<Job>[] = [
     cell: ({ row }) => (
       <div className="min-w-0">
         <div className="font-medium">{jobTypeLabel(row.original.type)}</div>
-        <div className="text-muted-foreground font-mono text-xs">{row.original.type}</div>
       </div>
     )
   },
@@ -75,7 +74,7 @@ const columns: ColumnDef<Job>[] = [
           {row.original.targetName ?? row.original.tenantId}
         </Link>
       ) : row.original.versionId ? (
-        <span className="text-muted-foreground font-mono text-xs">version {row.original.versionId.slice(0, 8)}</span>
+        <span className="text-muted-foreground">A version</span>
       ) : (
         "—"
       )
@@ -95,7 +94,10 @@ const columns: ColumnDef<Job>[] = [
     accessorKey: "error",
     header: "Error",
     cell: ({ row }) => (
-      <span className="text-muted-foreground block max-w-80 truncate">{row.original.error ?? "—"}</span>
+      // Two lines here; a click on the row opens the whole error.
+      <span className="text-muted-foreground line-clamp-2 block max-w-80 whitespace-normal break-words">
+        {row.original.error ?? "—"}
+      </span>
     )
   },
   {
@@ -177,12 +179,15 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
             <>
               <DialogHeader>
                 <DialogTitle>{jobTypeLabel(viewing.type)}</DialogTitle>
-                <DialogDescription className="font-mono break-all">{viewing.id}</DialogDescription>
+                <DialogDescription>
+                  {viewing.targetName ?? (viewing.versionId ? "A version" : "No store")}
+                  {viewing.productName && ` · ${viewing.productName}`}
+                </DialogDescription>
               </DialogHeader>
               {viewing.error && (
                 <div className="bg-destructive/5 border-destructive/20 rounded-xl border p-4">
                   <div className="text-muted-foreground mb-1 text-sm">Error</div>
-                  <p className="text-sm break-words">{viewing.error}</p>
+                  <p className="max-h-64 overflow-y-auto text-sm break-words whitespace-pre-wrap">{viewing.error}</p>
                 </div>
               )}
               {viewing.state === "failed" && (

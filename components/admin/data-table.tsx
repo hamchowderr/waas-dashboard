@@ -123,7 +123,10 @@ export function AdminDataTable<T extends RowData>({
                     onClick={(event) => event.stopPropagation()}
                     aria-label="Select row"
                   />
-                ) : null,
+                ) : (
+                  // Shown greyed out so the column stays even next to rows that can be picked.
+                  <Checkbox disabled aria-label="Can't be selected" onClick={(event) => event.stopPropagation()} />
+                ),
               enableSorting: false,
               enableHiding: false
             },
@@ -142,6 +145,8 @@ export function AdminDataTable<T extends RowData>({
     return active ? filtered.filter(active.match) : filtered;
   }, [filtered, tabs, tab]);
 
+  // The checkbox column only shows while the list has something that can be picked.
+  const canPick = !!selectable && rows.some((row) => selectable(row));
   const table = useReactTable({
     data: rows,
     columns: allColumns,
@@ -154,7 +159,7 @@ export function AdminDataTable<T extends RowData>({
     getSortedRowModel: getSortedRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
-    state: { sorting, columnVisibility, rowSelection }
+    state: { sorting, columnVisibility: canPick ? columnVisibility : { ...columnVisibility, select: false }, rowSelection }
   });
 
   const selected = table.getSelectedRowModel().rows.map((row) => row.original);

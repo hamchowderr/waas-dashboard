@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 
 import type { WebhookEndpoint } from "@/lib/api/types";
+import { urlHost } from "@/lib/display";
 import { formatAgo, webhookEventLabel } from "@/lib/format";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { Badge } from "@/components/ui/badge";
@@ -143,7 +144,9 @@ export function WebhookEndpoints({
                 <TableRow key={endpoint.id}>
                   <TableCell className="max-w-96 whitespace-normal">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs break-all">{endpoint.url}</span>
+                      <span className="font-medium break-all" title={endpoint.url}>
+                        {urlHost(endpoint.url)}
+                      </span>
                       {endpoint.enabled ? <Badge variant="success">On</Badge> : <Badge variant="outline">Off</Badge>}
                     </div>
                     {endpoint.description && <p className="text-muted-foreground text-sm">{endpoint.description}</p>}
