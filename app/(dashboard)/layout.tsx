@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -10,8 +11,20 @@ import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SiteHeader } from "@/components/shell/site-header";
 import { SessionKeepAlive } from "@/components/auth/session-keep-alive";
 import { NoStorefront } from "@/components/auth/no-storefront";
+import { readAppearance } from "@/lib/appearance";
+import { brandColorVars } from "@/lib/branding";
 
 const roleNames = { owner: "Owner", admin: "Admin", member: "Can view" } as const;
+
+/** A branded storefront's name on the browser tab, and its icon (Branding page). */
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = (await getViewer().catch(() => null))?.brand;
+  if (!brand) return {};
+  return {
+    ...(brand.name ? { title: { default: brand.name, template: `%s · ${brand.name}` } } : {}),
+    ...(brand.iconUrl ? { icons: { icon: brand.iconUrl } } : {})
+  };
+}
 
 export default async function DashboardLayout({
   children
@@ -25,6 +38,10 @@ export default async function DashboardLayout({
   if (!canUseDashboard(viewer)) return <NoStorefront viewer={viewer} />;
 
   const cookieStore = await cookies();
+  // The brand's color is the default accent; an accent the person picked in Appearance wins.
+  const brand = viewer.brand;
+  const accentPicked = readAppearance((name) => cookieStore.get(name)?.value).accent !== "default";
+  const brandVars = brand && !accentPicked ? brandColorVars(brand.color) : {};
   const defaultOpen =
     cookieStore.get("sidebar_state")?.value === "true" ||
     cookieStore.get("sidebar_state") === undefined;
@@ -73,8 +90,16 @@ export default async function DashboardLayout({
             "calc(100vh - var(--header-height) - (var(--content-padding) * 2.2) - (var(--content-margin) * 2.2))"
         } as React.CSSProperties
       }>
+      {/* On <body>, so dialogs and toasts (rendered outside this tree) take the color too. The values are checked #rrggbb. */}
+      {Object.keys(brandVars).length > 0 && (
+        <style>{`body{${Object.entries(brandVars).map(([k, v]) => `${k}:${v}`).join(";")}}`}</style>
+      )}
       {!api.isFixture && <SessionKeepAlive />}
-      <AppSidebar isAdmin={viewer.isAdmin} pendingApplications={pendingApplications} />
+      <AppSidebar
+        isAdmin={viewer.isAdmin}
+        pendingApplications={pendingApplications}
+        brand={brand && { name: brand.name, logoUrl: brand.logoUrl, supportEmail: brand.supportEmail }}
+      />
       <SidebarInset>
         <SiteHeader storefronts={storefronts} isFixture={api.isFixture} user={user} memberships={memberships} />
         <div className="flex flex-1 flex-col">

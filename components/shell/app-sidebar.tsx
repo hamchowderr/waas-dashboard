@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -24,8 +25,19 @@ import { BrandMark } from "@/components/shell/brand-mark";
 import { CommandSearch } from "@/components/shell/command-search";
 import { isCurrent, navFor } from "@/components/shell/nav";
 
+/** The storefront's own name, logo and support address (Branding page); absent for the platform's own look. */
+export type SidebarBrand = { name: string | null; logoUrl: string | null; supportEmail: string | null };
+
 /** pendingApplications: shown beside Applications when some are waiting (platform admin only). */
-export function AppSidebar({ isAdmin, pendingApplications = 0 }: { isAdmin: boolean; pendingApplications?: number }) {
+export function AppSidebar({
+  isAdmin,
+  pendingApplications = 0,
+  brand
+}: {
+  isAdmin: boolean;
+  pendingApplications?: number;
+  brand?: SidebarBrand | null;
+}) {
   const pathname = usePathname();
   const { appearance } = useAppearance();
   const { isMobile, setOpen, setOpenMobile } = useSidebar();
@@ -54,8 +66,17 @@ export function AppSidebar({ isAdmin, pendingApplications = 0 }: { isAdmin: bool
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="hover:text-foreground h-10 group-data-[collapsible=icon]:px-0!">
               <Link href="/">
-                <BrandMark />
-                <span className="text-foreground font-semibold">AnyPress</span>
+                {brand?.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={brand.logoUrl}
+                    alt=""
+                    className="me-1 h-8 max-w-28 shrink-0 object-contain group-data-[collapsible=icon]:size-8"
+                  />
+                ) : (
+                  <BrandMark />
+                )}
+                <span className="text-foreground truncate font-semibold">{brand?.name ?? "AnyPress"}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -88,6 +109,16 @@ export function AppSidebar({ isAdmin, pendingApplications = 0 }: { isAdmin: bool
           ))}
         </ScrollArea>
       </SidebarContent>
+      {brand && (
+        <SidebarFooter className="text-muted-foreground gap-1 px-4 pb-3 text-xs group-data-[collapsible=icon]:hidden">
+          {brand.supportEmail && (
+            <a href={`mailto:${brand.supportEmail}`} className="hover:text-foreground truncate">
+              Help: {brand.supportEmail}
+            </a>
+          )}
+          <span>Powered by AnyPress</span>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }

@@ -563,3 +563,24 @@ export type ApprovedApplication = {
   /** Why the ready-made storefront couldn't be built; the approval stands anyway. */
   storefrontError?: string;
 };
+
+/**
+ * A storefront's or reseller's own look in the dashboard (the API's docs/branding.md). Null fields
+ * are not set; the dashboard shows the platform's own name, mark and color for them.
+ */
+export type Branding = {
+  name: string | null;
+  /** #rrggbb */
+  color: string | null;
+  supportEmail: string | null;
+  logoUrl: string | null;
+  iconUrl: string | null;
+};
+
+/** The fields set here, and `shown`: what the dashboard shows once a reseller's branding fills a storefront's gaps. */
+export type BrandingView = Branding & { shown: Branding };
+
+/** The fields a form sets; null clears one. */
+export type BrandingFields = { name: string | null; color: string | null; supportEmail: string | null };
+
+export type BrandImage = "logo" | "icon";

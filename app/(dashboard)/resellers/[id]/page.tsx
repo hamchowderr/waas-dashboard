@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { KeysManager } from "../../keys/keys-manager";
+import { BrandingEditor } from "../../branding/branding-editor";
 import { TeamManager } from "../../team/team-manager";
 import { formatDays, formatMoney, monthRange } from "../usage";
 import { BillDownload } from "./bill-download";
@@ -30,11 +31,12 @@ export default async function ResellerPage({ params, searchParams }: { params: P
   const reseller = /^[0-9a-f-]{36}$/i.test(id) ? await api.reseller(id) : null;
   if (!reseller) notFound();
   const month = monthRange((await searchParams).month);
-  const [bill, products, keys, team] = await Promise.all([
+  const [bill, products, keys, team, branding] = await Promise.all([
     api.resellerBill(reseller.id, month.month),
     api.products(),
     api.partnerKeys(reseller.id),
-    api.team({ resellerId: reseller.id })
+    api.team({ resellerId: reseller.id }),
+    api.branding({ resellerId: reseller.id })
   ]);
   const current = monthRange(undefined).month;
 
@@ -141,6 +143,14 @@ export default async function ResellerPage({ params, searchParams }: { params: P
         </div>
         <div className="space-y-4 lg:col-span-3 lg:space-y-6">
           <TeamManager reseller productId={reseller.id} productName={reseller.name} team={team} me={{ userId: viewer.user.id, role: null }} />
+        </div>
+        <div className="space-y-2 lg:col-span-3">
+          <h2 className="text-lg font-semibold">Branding</h2>
+          <p className="text-muted-foreground text-sm">
+            The look every one of this reseller&apos;s storefronts gets in the dashboard. Each storefront can change its own name,
+            logo and color on its Branding page.
+          </p>
+          <BrandingEditor of={{ resellerId: reseller.id }} initial={branding} canEdit />
         </div>
         <Card className="lg:col-span-2">
           <CardHeader>

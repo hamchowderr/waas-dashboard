@@ -6,6 +6,9 @@ import { canChange, canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
 import type {
+  BrandImage,
+  BrandingFields,
+  BrandingView,
   Created,
   CreateTemplateInput,
   CreateVersionInput,
@@ -27,6 +30,7 @@ import type {
   WebhookEventType,
   WebhookSecret
 } from "@/lib/api/types";
+import { BRAND_IMAGE_LIMITS } from "@/lib/branding";
 import { webhookEventLabels } from "@/lib/format";
 
 // Every change the dashboard makes goes through these actions. Server actions can be
@@ -571,5 +575,55 @@ export async function removeMember(of: TeamOf, memberId: string): Promise<Action
   return teamChange(of, async (checked) => {
     await getAdminApi().removeMember(checked, uuid(memberId, "member"));
     return undefined;
+  });
+}
+
+// Branding: a storefront's own look, or a reseller's (platform admin only). The API checks the
+// image itself; these checks only save a round trip.
+
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+/** A storefront's id, or a reseller's, checked like a team's. */
+async function brandChange<T>(of: TeamOf, work: (checked: TeamOf) => Promise<T>): Promise<ActionResult<T>> {
+  // "/" refreshes every page: the sidebar, tab title and icon show the brand.
+  if (typeof of === "string") return run(() => work(uuid(of, "storefront")), ["/"]);
+  return run(async () => {
+    await adminOnly("manage resellers");
+    return work({ resellerId: uuid(of?.resellerId, "reseller") });
+  }, ["/resellers"]);
+}
+
+function optional(value: unknown, what: string, max: number): string | null {
+  if (value === null || value === undefined || (typeof value === "string" && !value.trim())) return null;
+  if (typeof value !== "string" || value.trim().length > max) throw new InputError(`${what} is too long`);
+  return value.trim();
+}
+
+export async function saveBranding(of: TeamOf, fields: BrandingFields): Promise<ActionResult<BrandingView>> {
+  return brandChange(of, (checked) => {
+    const color = optional(fields?.color, "Color", 7);
+    if (color && !HEX_COLOR.test(color)) throw new InputError("Choose a color like #1d4ed8");
+    const supportEmail = optional(fields?.supportEmail, "Support email", 254);
+    if (supportEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(supportEmail)) throw new InputError("Enter a support email address");
+    return getAdminApi().updateBranding(checked, { name: optional(fields?.name, "Name", 60), color, supportEmail });
+  });
+}
+
+/** form: `kind` (logo or icon) and `file`. */
+export async function uploadBrandImage(of: TeamOf, form: FormData): Promise<ActionResult<BrandingView>> {
+  return brandChange(of, async (checked) => {
+    const kind = form.get("kind");
+    if (kind !== "logo" && kind !== "icon") throw new InputError("Choose the logo or the icon");
+    const file = form.get("file");
+    if (!(file instanceof File) || file.size === 0) throw new InputError("Choose an image");
+    if (file.size > BRAND_IMAGE_LIMITS[kind]) throw new InputError(`The ${kind} must be at most ${BRAND_IMAGE_LIMITS[kind] / 1024} KB`);
+    return getAdminApi().uploadBrandImage(checked, kind, new Uint8Array(await file.arrayBuffer()));
+  });
+}
+
+export async function removeBrandImage(of: TeamOf, kind: BrandImage): Promise<ActionResult<BrandingView>> {
+  return brandChange(of, (checked) => {
+    if (kind !== "logo" && kind !== "icon") throw new InputError("Choose the logo or the icon");
+    return getAdminApi().removeBrandImage(checked, kind);
   });
 }

@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 
+import type { Branding } from "@/lib/api/types";
 import { STOREFRONT_COOKIE } from "@/lib/storefront-cookie";
 
 /**
@@ -67,6 +68,8 @@ export interface Viewer {
   memberships: Membership[];
   /** The storefront a customer acts for; null for an admin, or a customer who must pick one. */
   active: Membership | null;
+  /** The active storefront's own look (the API's docs/branding.md); null shows the platform's. */
+  brand: Branding | null;
   /** The Better Auth cookies, to pass on to the API for a customer. */
   cookie: string;
 }
@@ -76,6 +79,7 @@ const fixtureViewer: Viewer = {
   isAdmin: true,
   memberships: [],
   active: null,
+  brand: null,
   cookie: ""
 };
 
@@ -112,9 +116,10 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   });
   if (response.status === 403) return null;
   if (!response.ok) throw new Error(`Provisioning API returned ${response.status} for /account`);
-  const body = (await response.json()) as Pick<Viewer, "user" | "memberships" | "active">;
+  const body = (await response.json()) as Pick<Viewer, "user" | "memberships" | "active"> & { brand?: Branding | null };
   const isAdmin = isPlatformAdmin(body.user);
-  return { ...body, isAdmin, active: isAdmin ? null : body.active, cookie };
+  // The platform admin always sees the platform's own look.
+  return { ...body, isAdmin, active: isAdmin ? null : body.active, brand: isAdmin ? null : (body.brand ?? null), cookie };
 });
 
 /** Whether the viewer may use the dashboard's pages: an admin, or a customer with a storefront. */
