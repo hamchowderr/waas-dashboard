@@ -15,6 +15,7 @@ import type {
   CreateVersionInput,
   PluginChoiceInput,
   PluginSearch,
+  PluginUpload,
   ImportCode,
   MailDomain,
   StoreSize,
@@ -209,11 +210,25 @@ export async function deleteVersion(productId: string, versionId: string): Promi
   }, ["/versions"]);
 }
 
-// Plugin choices: wordpress.org plugins a storefront's stores get on top of its template, or template plugins it
+// Plugin choices: wordpress.org or uploaded premium plugins a storefront's stores get on top of its template, or template plugins it
 // switches off. They reach stores with the next version.
 
 const PLUGIN_SLUG = /^[a-z0-9][a-z0-9-]{0,99}$/;
 const SITE_TYPE = /^[A-Za-z0-9_-]{1,64}$/;
+const LICENCE_NAME = /^[A-Z][A-Z0-9_]{2,63}$/;
+
+/** Licence constants as the API takes them: up to 10, upper-case names, values up to 500 characters. */
+function licenceInput(licence: unknown): Record<string, string> | null | undefined {
+  if (licence === undefined || licence === null) return licence;
+  if (typeof licence !== "object" || Array.isArray(licence)) throw new InputError("Invalid licence keys");
+  const entries = Object.entries(licence as Record<string, unknown>);
+  if (entries.length > 10) throw new InputError("At most 10 licence keys");
+  for (const [name, value] of entries) {
+    if (!LICENCE_NAME.test(name)) throw new InputError(`${name || "A licence key name"} must be upper-case letters, digits and underscores, like GF_LICENSE_KEY`);
+    if (typeof value !== "string" || !value.trim() || value.length > 500) throw new InputError(`Enter the value of ${name} (up to 500 characters)`);
+  }
+  return entries.length ? Object.fromEntries(entries.map(([name, value]) => [name, (value as string).trim()])) : null;
+}
 
 /** The wordpress.org directory's search. Members may search too: it changes nothing. */
 export async function searchPlugins(productId: string, query: string, page = 1): Promise<ActionResult<PluginSearch>> {
@@ -239,9 +254,26 @@ export async function setPluginChoice(productId: string, slug: string, input: Pl
     const siteTypes = Array.isArray(input?.siteTypes) ? input.siteTypes : [];
     if (siteTypes.length > 20 || !siteTypes.every((t) => typeof t === "string" && SITE_TYPE.test(t))) throw new InputError("Invalid site types");
     const version = action === "add" && typeof input?.version === "string" && input.version ? text(input.version, "Version", 32) : undefined;
-    await getAdminApi().setPluginChoice(uuid(productId, "storefront"), slug, { action, siteTypes: [...new Set(siteTypes)], ...(version && { version }) });
+    const uploadId = action === "add" && typeof input?.uploadId === "string" && UUID.test(input.uploadId) ? input.uploadId : undefined;
+    const licence = action === "add" ? licenceInput(input?.licence) : undefined;
+    await getAdminApi().setPluginChoice(uuid(productId, "storefront"), slug, {
+      action,
+      siteTypes: [...new Set(siteTypes)],
+      ...(version && !uploadId && { version }),
+      ...(uploadId && { uploadId }),
+      ...(licence !== undefined && { licence })
+    });
     return undefined;
   }, ["/plugins"]);
+}
+
+/** Starts a premium plugin upload; the browser PUTs the zip to uploadUrl, then checks it. */
+export async function startPluginUpload(productId: string): Promise<ActionResult<Created>> {
+  return run(async () => getAdminApi().createPluginUpload(uuid(productId, "storefront")), []);
+}
+
+export async function checkPluginUpload(productId: string, uploadId: string): Promise<ActionResult<PluginUpload>> {
+  return run(async () => getAdminApi().checkPluginUpload(uuid(productId, "storefront"), uuid(uploadId, "upload")), []);
 }
 
 export async function removePluginChoice(productId: string, slug: string): Promise<ActionResult> {

@@ -3,12 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpCircleIcon, LayersIcon, PencilIcon, PlusIcon, PowerOffIcon, SearchIcon, StarIcon, Trash2Icon } from "lucide-react";
+import { ArrowUpCircleIcon, KeyRoundIcon, LayersIcon, PencilIcon, PlusIcon, PowerOffIcon, SearchIcon, StarIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import type { DirectoryPlugin, PluginChoice, PluginChoiceInput } from "@/lib/api/types";
-import { formatDate } from "@/lib/format";
-import { installsLabel, SITE_TYPES, siteTypesLabel, TEMPLATE_PLUGINS } from "@/lib/plugin-choices";
+import type { DirectoryPlugin, PluginChoice, PluginChoiceInput, PluginUpload } from "@/lib/api/types";
+import { formatBytes, formatDate } from "@/lib/format";
+import { installsLabel, MAX_PLUGIN_ZIP, SITE_TYPES, siteTypesLabel, TEMPLATE_PLUGINS } from "@/lib/plugin-choices";
+import { uploadArchive } from "@/lib/upload-archive";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PluginIcon } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
@@ -18,15 +19,26 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { removePluginChoice, searchPlugins, setPluginChoice } from "../actions";
+import { checkPluginUpload, removePluginChoice, searchPlugins, setPluginChoice, startPluginUpload } from "../actions";
 
 /** Below sm the header's button moves under its text instead of squeezing it. */
 const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
 const actionClass = "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start";
 
-/** What the site types dialog is choosing for. */
-type Editing = { slug: string; name: string; icon: string | null; action: "add" | "off"; siteTypes: string[]; version?: string } | null;
+/** What the site types dialog is choosing for. uploadId: a checked upload being added. */
+type Editing = {
+  slug: string;
+  name: string;
+  icon: string | null;
+  action: "add" | "off";
+  siteTypes: string[];
+  version?: string;
+  uploadId?: string;
+  /** Names of the licence keys it already has. */
+  licenceConstants: string[];
+} | null;
 
 export function PluginChoicesManager({ productId, choices }: { productId: string; choices: PluginChoice[] }) {
   const router = useRouter();
@@ -71,7 +83,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
         </CardHeader>
         <CardContent>
           {choices.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No plugins added yet. Search wordpress.org below to add one.</p>
+            <p className="text-muted-foreground text-sm">No plugins added yet. Search wordpress.org below, or upload a premium plugin.</p>
           ) : (
             <ul className="divide-y">
               {choices.map((choice) => (
@@ -83,6 +95,13 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
                       {choice.name}
                       {choice.version && <span className="text-muted-foreground text-xs tabular-nums">{choice.version}</span>}
                       {choice.action === "off" && <Badge variant="secondary">Switched off</Badge>}
+                      {choice.action === "add" && choice.source === "upload" && <Badge variant="secondary">Uploaded</Badge>}
+                      {choice.licenceConstants.length > 0 && (
+                        <Badge variant="outline" title={choice.licenceConstants.join(", ")}>
+                          <KeyRoundIcon aria-hidden={true} />
+                          Licence key set
+                        </Badge>
+                      )}
                       {choice.shared && <Badge variant="outline">From your reseller</Badge>}
                       {!choice.inProduction && <Badge variant="warning">Not in a version yet</Badge>}
                     </p>
@@ -108,7 +127,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
                         size="sm"
                         variant="ghost"
                         aria-label={`Site types for ${choice.name}`}
-                        onClick={() => setEditing({ ...choice, version: choice.version ?? undefined })}>
+                        onClick={() => setEditing({ ...choice, version: choice.source === "wporg" ? (choice.version ?? undefined) : undefined })}>
                         <PencilIcon />
                       </Button>
                       <Button size="sm" variant="ghost" aria-label={`Remove ${choice.name}`} onClick={() => setRemoving(choice)}>
@@ -139,7 +158,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
                     className="hover:bg-muted/60 flex items-center gap-2 rounded-md border py-1 ps-1 pe-2.5 text-sm transition-colors disabled:cursor-default"
                     disabled={bySlug.has(plugin.slug)}
                     title={off ? "Switched off" : `Switch off ${plugin.name}`}
-                    onClick={() => setEditing({ slug: plugin.slug, name: plugin.name, icon: null, action: "off", siteTypes: [] })}>
+                    onClick={() => setEditing({ slug: plugin.slug, name: plugin.name, icon: null, action: "off", siteTypes: [], licenceConstants: [] })}>
                     <PluginIcon slug={plugin.slug} name={plugin.name} />
                     <span className={off ? "text-muted-foreground line-through" : undefined}>{plugin.name}</span>
                     {!bySlug.has(plugin.slug) && <PowerOffIcon className="text-muted-foreground size-3.5" aria-hidden={true} />}
@@ -155,16 +174,40 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
         productId={productId}
         chosen={bySlug}
         full={added.filter((c) => !c.shared).length >= 25}
-        onAdd={(plugin) => setEditing({ slug: plugin.slug, name: plugin.name, icon: plugin.icon, action: "add", siteTypes: [] })}
+        onAdd={(plugin) => setEditing({ slug: plugin.slug, name: plugin.name, icon: plugin.icon, action: "add", siteTypes: [], licenceConstants: [] })}
+      />
+
+      <PremiumUpload
+        productId={productId}
+        full={added.filter((c) => !c.shared).length >= 25}
+        onReady={(upload) => {
+          // A new release of a plugin already added keeps its site types and licence keys.
+          const before = bySlug.get(upload.slug!);
+          setEditing({
+            slug: upload.slug!,
+            name: upload.name ?? upload.slug!,
+            icon: null,
+            action: "add",
+            siteTypes: before?.action === "add" ? before.siteTypes : [],
+            version: upload.version ?? undefined,
+            uploadId: upload.id,
+            licenceConstants: before?.action === "add" ? before.licenceConstants : []
+          });
+        }}
       />
 
       <SiteTypesDialog
         editing={editing}
         onOpenChange={(open) => !open && setEditing(null)}
-        onSave={(e, siteTypes) =>
+        onSave={(e, siteTypes, licence) =>
           save(
             e.slug,
-            { action: e.action, siteTypes, ...(e.version && { version: e.version }) },
+            {
+              action: e.action,
+              siteTypes,
+              ...(e.uploadId ? { uploadId: e.uploadId } : e.version && { version: e.version }),
+              ...(licence !== undefined && { licence })
+            },
             e.action === "off" ? `${e.name} will be switched off in your next version` : `${e.name} will be in your next version`
           )
         }
@@ -334,7 +377,7 @@ function SiteTypesDialog({
 }: {
   editing: Editing;
   onOpenChange: (open: boolean) => void;
-  onSave: (editing: NonNullable<Editing>, siteTypes: string[]) => Promise<boolean>;
+  onSave: (editing: NonNullable<Editing>, siteTypes: string[], licence: Licence) => Promise<boolean>;
 }) {
   const [pending, startTransition] = React.useTransition();
   return (
@@ -347,9 +390,9 @@ function SiteTypesDialog({
             editing={editing}
             pending={pending}
             onCancel={() => onOpenChange(false)}
-            onSave={(siteTypes) =>
+            onSave={(siteTypes, licence) =>
               startTransition(async () => {
-                if (await onSave(editing, siteTypes)) onOpenChange(false);
+                if (await onSave(editing, siteTypes, licence)) onOpenChange(false);
               })
             }
           />
@@ -368,8 +411,9 @@ function SiteTypesForm({
   editing: NonNullable<Editing>;
   pending: boolean;
   onCancel: () => void;
-  onSave: (siteTypes: string[]) => void;
+  onSave: (siteTypes: string[], licence: Licence) => void;
 }) {
+  const [licence, setLicence] = React.useState<Licence>(undefined);
   const [all, setAll] = React.useState(editing.siteTypes.length === 0);
   const [picked, setPicked] = React.useState(() =>
     SITE_TYPES.filter((t) => t.keys.some((k) => editing.siteTypes.includes(k))).map((t) => t.label)
@@ -387,7 +431,9 @@ function SiteTypesForm({
         <DialogDescription>
           {off
             ? "Which stores leave it switched off? It stays installed, so you can turn it back on later."
-            : "Which stores get it? It is pinned to its current version until you update it here."}
+            : editing.uploadId
+              ? `Which stores get ${editing.version && editing.version !== "unknown" ? `version ${editing.version}` : "this upload"}? Every store runs exactly the files you uploaded.`
+              : "Which stores get it? It is pinned to its current version until you update it here."}
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-3">
@@ -410,17 +456,200 @@ function SiteTypesForm({
             ))}
           </div>
         )}
+        {!off && <LicenceKeys saved={editing.licenceConstants} value={licence} onChange={setLicence} disabled={pending} />}
         <p className="text-muted-foreground text-xs">Your stores get the change once you build a new version and make it production.</p>
       </div>
       <DialogFooter>
         <Button variant="outline" disabled={pending} onClick={onCancel}>
           Cancel
         </Button>
-        <Button disabled={pending || (!all && keys.length === 0)} onClick={() => onSave(all ? [] : keys)}>
+        <Button
+          disabled={pending || (!all && keys.length === 0) || licenceError(licence) !== null}
+          onClick={() => onSave(all ? [] : keys, licence)}>
           {pending && <Spinner />}
           {off ? "Switch off" : "Save"}
         </Button>
       </DialogFooter>
     </>
+  );
+}
+
+/** Licence keys as a choice saves them: undefined keeps the saved ones, null removes them. */
+type Licence = Record<string, string> | null | undefined;
+
+const LICENCE_NAME = /^[A-Z][A-Z0-9_]{2,63}$/;
+
+/** Why the licence keys can't be saved yet, or null. */
+function licenceError(licence: Licence): string | null {
+  if (!licence) return null;
+  for (const [name, value] of Object.entries(licence)) {
+    if (!LICENCE_NAME.test(name)) return "Names are upper-case letters, digits and underscores, like GF_LICENSE_KEY.";
+    if (!value.trim()) return `Enter the value of ${name}.`;
+  }
+  return null;
+}
+
+/**
+ * The PHP constants a premium plugin reads its licence key from (its docs name them), which stores get
+ * with it. Saved values are never shown: changing any means entering them all again.
+ */
+function LicenceKeys({
+  saved,
+  value,
+  onChange,
+  disabled
+}: {
+  saved: string[];
+  value: Licence;
+  onChange: (licence: Licence) => void;
+  disabled: boolean;
+}) {
+  const [rows, setRows] = React.useState<{ name: string; value: string }[]>(() => saved.map((name) => ({ name, value: "" })));
+  const editing = value !== undefined;
+  const error = licenceError(value);
+
+  function update(next: { name: string; value: string }[]) {
+    setRows(next);
+    const filled = next.filter((r) => r.name || r.value);
+    onChange(filled.length ? Object.fromEntries(filled.map((r) => [r.name.trim().toUpperCase(), r.value])) : saved.length ? null : undefined);
+  }
+
+  return (
+    <div className="space-y-2 border-t pt-3">
+      <div className="flex items-center gap-2">
+        <KeyRoundIcon className="text-muted-foreground size-4" aria-hidden={true} />
+        <p className="flex-1 text-sm font-medium">Licence keys</p>
+        {saved.length > 0 && !editing && <Badge variant="outline">{saved.length === 1 ? "1 saved" : `${saved.length} saved`}</Badge>}
+        {value === null && <Badge variant="warning">Removed when you save</Badge>}
+      </div>
+      <p className="text-muted-foreground text-xs">
+        For premium plugins that take their licence key from a PHP constant, like Gravity Forms&apos; GF_LICENSE_KEY. Your stores
+        get it with the plugin, so nobody has to enter it in each store. Saved keys are never shown again
+        {saved.length > 0 && ": to change one, enter them all again"}.
+      </p>
+      {rows.map((row, i) => (
+        <div key={i} className="flex gap-2">
+          <Input
+            aria-label="Constant name"
+            placeholder="GF_LICENSE_KEY"
+            value={row.name}
+            disabled={disabled}
+            maxLength={64}
+            className="font-mono uppercase"
+            onChange={(event) => update(rows.map((r, j) => (j === i ? { ...r, name: event.target.value } : r)))}
+          />
+          <Input
+            aria-label={`Value of ${row.name || "the constant"}`}
+            placeholder={saved.includes(row.name) && !editing ? "Saved" : "Licence key"}
+            type="password"
+            autoComplete="off"
+            value={row.value}
+            disabled={disabled}
+            maxLength={500}
+            onChange={(event) => update(rows.map((r, j) => (j === i ? { ...r, value: event.target.value } : r)))}
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label={`Remove ${row.name || "this key"}`}
+            disabled={disabled}
+            onClick={() => update(rows.filter((_, j) => j !== i))}>
+            <XIcon />
+          </Button>
+        </div>
+      ))}
+      {error && <p className="text-destructive text-xs">{error}</p>}
+      {rows.length < 10 && (
+        <Button size="sm" variant="outline" disabled={disabled} onClick={() => update([...rows, { name: "", value: "" }])}>
+          <PlusIcon />
+          Add a licence key
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/** Uploads a premium plugin's zip, has the API check it, and hands a ready one on to be added. */
+function PremiumUpload({
+  productId,
+  full,
+  onReady
+}: {
+  productId: string;
+  full: boolean;
+  onReady: (upload: PluginUpload) => void;
+}) {
+  const input = React.useRef<HTMLInputElement>(null);
+  const [step, setStep] = React.useState<{ file: string; progress: number | null } | null>(null);
+  const [rejected, setRejected] = React.useState<{ file: string; reason: string } | null>(null);
+
+  async function upload(file: File) {
+    setRejected(null);
+    if (!/\.zip$/i.test(file.name)) return setRejected({ file: file.name, reason: "Upload the plugin's .zip file, as the vendor ships it." });
+    if (file.size > MAX_PLUGIN_ZIP) return setRejected({ file: file.name, reason: `The zip is ${formatBytes(file.size)}; plugins can be at most ${formatBytes(MAX_PLUGIN_ZIP)}.` });
+    setStep({ file: file.name, progress: 0 });
+    try {
+      const started = await startPluginUpload(productId);
+      if (!started.ok) throw new Error(started.error);
+      await uploadArchive(started.data.uploadUrl!, file, (progress) => setStep({ file: file.name, progress }));
+      setStep({ file: file.name, progress: null });
+      const checked = await checkPluginUpload(productId, started.data.id);
+      if (!checked.ok) throw new Error(checked.error);
+      if (checked.data.status === "ready") onReady(checked.data);
+      else setRejected({ file: file.name, reason: checked.data.reason ?? "The zip isn't a plugin stores can have." });
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setStep(null);
+      if (input.current) input.current.value = "";
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className={headerClass}>
+        <CardTitle>Upload a premium plugin</CardTitle>
+        <CardDescription>
+          For plugins you buy elsewhere, or your own. Upload the zip from the vendor&apos;s download page (up to{" "}
+          {formatBytes(MAX_PLUGIN_ZIP)}). It is checked before your stores can get it, and a new release is a new upload.
+        </CardDescription>
+        <CardAction className={actionClass}>
+          <Button disabled={full || step !== null} onClick={() => input.current?.click()}>
+            {step ? <Spinner /> : <UploadIcon />}
+            Upload a zip
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <input
+          ref={input}
+          type="file"
+          accept=".zip,application/zip"
+          className="hidden"
+          aria-label="Plugin zip"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void upload(file);
+          }}
+        />
+        {step ? (
+          <div className="space-y-1">
+            <Progress value={(step.progress ?? 1) * 100} />
+            <p className="text-muted-foreground text-xs tabular-nums">
+              {step.progress === null ? `Checking ${step.file}…` : `Uploading ${step.file}… ${Math.round(step.progress * 100)}%`}
+            </p>
+          </div>
+        ) : rejected ? (
+          <p className="text-destructive text-sm">
+            {rejected.file} can&apos;t be added: {rejected.reason}
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            The check refuses zips that aren&apos;t one plugin, plugins that clash with the hosting, and the hidden code that
+            hacked or &ldquo;nulled&rdquo; copies carry.
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

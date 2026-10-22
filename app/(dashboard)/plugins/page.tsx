@@ -55,7 +55,7 @@ export default async function PluginsPage({ searchParams }: { searchParams: Prom
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="Plugins"
-        description={`${product.name}: plugins from wordpress.org your stores get on top of the template, and template plugins you switch off.`}
+        description={`${product.name}: plugins from wordpress.org or your own uploads that your stores get on top of the template, and template plugins you switch off.`}
       />
       <PluginChoicesManager productId={product.id} choices={choices} />
     </div>
