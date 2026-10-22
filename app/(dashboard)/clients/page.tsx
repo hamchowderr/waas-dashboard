@@ -5,6 +5,9 @@ import { notFound } from "next/navigation";
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import type { Client } from "@/lib/api/types";
+import { BriefcaseIcon } from "lucide-react";
+
+import { EmptyState } from "@/components/admin/empty-state";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -79,8 +82,10 @@ export default async function ClientsPage() {
               })}
               {clients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground py-10 text-center">
-                    No clients yet. Add one with Add client.
+                  <TableCell colSpan={4} className="p-0">
+                    <EmptyState icon={BriefcaseIcon} title="No clients yet" action={<AddClientButton />}>
+                      People you set up sites for yourself. Adding one makes their account and site, and emails them a sign-in link.
+                    </EmptyState>
                   </TableCell>
                 </TableRow>
               )}

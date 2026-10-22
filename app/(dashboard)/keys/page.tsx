@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ChevronRight, StoreIcon } from "lucide-react";
+import { redirect } from "next/navigation";
+import { StoreIcon } from "lucide-react";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/admin/empty-state";
+import { Card } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
 import { NewSellerButton } from "./new-seller-dialog";
 
@@ -24,46 +25,18 @@ export default async function KeysPage({
   const onlyOne = !isAdmin && products.length === 1 ? products[0] : undefined;
   const product = products.find((p) => p.id === productId) ?? onlyOne;
 
-  // Keys belong to one storefront: pick one first, or set up a new seller.
+  // These pages are about one storefront. With none picked, open the first rather than showing only a picker;
+  // the switcher at the top moves between them.
   if (!product) {
+    if (products[0]) redirect(`/keys?product=${products[0].id}`);
     return (
       <div className="space-y-4 lg:space-y-6">
-        <PageHeader
-          title="API keys"
-          description="Each storefront signs in to the API with its own keys. Choose a storefront, or set up a new seller."
-        >
-          <NewSellerButton storefronts={products} />
-        </PageHeader>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {products.map((p) => (
-            <Card
-              key={p.id}
-              className="hover:bg-muted/40 relative transition-colors"
-            >
-              <CardContent className="flex items-center gap-3">
-                <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md border">
-                  <StoreIcon className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/keys?product=${p.id}`}
-                    className="font-medium focus:outline-none"
-                  >
-                    <span className="absolute inset-0" aria-hidden={true} />
-                    {p.name}
-                  </Link>
-                  <p className="text-muted-foreground text-sm">
-                    {p.tenantCount} {p.tenantCount === 1 ? "store" : "stores"}
-                  </p>
-                </div>
-                <ChevronRight className="text-muted-foreground size-5" />
-              </CardContent>
-            </Card>
-          ))}
-          {products.length === 0 && (
-            <p className="text-muted-foreground text-sm">No storefronts yet.</p>
-          )}
-        </div>
+        <PageHeader title="API keys">{isAdmin && <NewSellerButton storefronts={products} />}</PageHeader>
+        <Card>
+          <EmptyState icon={StoreIcon} title="No storefronts yet">
+            Each storefront signs in to the API with its own keys. A storefront is set up when a seller or reseller is approved.
+          </EmptyState>
+        </Card>
       </div>
     );
   }
@@ -74,8 +47,9 @@ export default async function KeysPage({
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="API keys"
-        description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}
-      />
+        description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}>
+        {isAdmin && <NewSellerButton storefronts={products} />}
+      </PageHeader>
       <KeysManager
         productId={product.id}
         productName={product.name}

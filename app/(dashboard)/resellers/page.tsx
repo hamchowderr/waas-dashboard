@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { HandshakeIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
+import { EmptyState } from "@/components/admin/empty-state";
 import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -60,8 +62,13 @@ export default async function ResellersPage() {
               ))}
               {resellers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground py-10 text-center">
-                    No resellers yet. Make one with New reseller.
+                  <TableCell colSpan={5} className="p-0">
+                    <EmptyState
+                      icon={HandshakeIcon}
+                      title="No resellers yet"
+                      action={<NewResellerButton storefronts={products.filter((p) => !p.resellerId).map(({ id, name }) => ({ id, name }))} />}>
+                      A reseller runs several storefronts under one sign-in and gets one monthly bill at a wholesale price.
+                    </EmptyState>
                   </TableCell>
                 </TableRow>
               )}

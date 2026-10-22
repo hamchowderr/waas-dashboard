@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   BanIcon,
+  KeyRoundIcon,
   MoreHorizontalIcon,
   PlusIcon,
   RefreshCwIcon,
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 import type { ApiKey, ApiKeyState } from "@/lib/api/types";
 import { formatAgo, formatDate, formatDateTime } from "@/lib/format";
 import { ConfirmAction } from "@/components/admin/confirm-action";
+import { EmptyState } from "@/components/admin/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,11 +211,20 @@ export function KeysManager({
             <TableBody>
               {keys.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-muted-foreground h-20 text-center"
-                  >
-                    No keys yet.
+                  <TableCell colSpan={5} className="p-0">
+                    <EmptyState
+                      icon={KeyRoundIcon}
+                      title="No keys yet"
+                      action={
+                        <Button size="sm" onClick={() => setCreating(true)}>
+                          <PlusIcon /> New key
+                        </Button>
+                      }
+                    >
+                      {partner
+                        ? "A key lets the partner's own app create and manage stores on all of its storefronts."
+                        : "A key lets this storefront's site or app create and manage its stores."}
+                    </EmptyState>
                   </TableCell>
                 </TableRow>
               )}

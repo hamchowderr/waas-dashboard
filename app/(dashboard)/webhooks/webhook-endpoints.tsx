@@ -12,7 +12,8 @@ import {
   PowerIcon,
   PowerOffIcon,
   SendIcon,
-  Trash2Icon
+  Trash2Icon,
+  WebhookIcon
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,6 +21,7 @@ import type { WebhookEndpoint } from "@/lib/api/types";
 import { urlHost } from "@/lib/display";
 import { formatAgo, webhookEventLabel } from "@/lib/format";
 import { ConfirmAction } from "@/components/admin/confirm-action";
+import { EmptyState } from "@/components/admin/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,8 +137,17 @@ export function WebhookEndpoints({
             <TableBody>
               {endpoints.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-muted-foreground h-20 text-center">
-                    No endpoints yet.
+                  <TableCell colSpan={7} className="p-0">
+                    <EmptyState
+                      icon={WebhookIcon}
+                      title="No endpoints yet"
+                      action={
+                        <Button size="sm" onClick={() => setAdding(true)} disabled={storefronts.length === 0}>
+                          <PlusIcon /> Add endpoint
+                        </Button>
+                      }>
+                      An endpoint is an address on your own site or app that hears about store changes as they happen.
+                    </EmptyState>
                   </TableCell>
                 </TableRow>
               )}
