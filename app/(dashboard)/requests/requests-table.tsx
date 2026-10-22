@@ -10,7 +10,7 @@ import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { Badge } from "@/components/ui/badge";
 import type { ApiRequest } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
-import { madeWith } from "@/lib/requests";
+import { describeRequest, madeWith } from "@/lib/requests";
 
 const columnLabels: Record<string, string> = {
   at: "Time",
@@ -31,7 +31,7 @@ const tabs: TableTab<ApiRequest>[] = [
 
 function readField(row: ApiRequest, path: string): unknown {
   if (path === "search")
-    return `${row.path} ${row.query ?? ""} ${row.tenantName ?? ""} ${row.externalId ?? ""} ${row.error ?? ""} ${row.ip ?? ""} ${row.apiKeyId ?? ""} ${row.apiKeyLabel ?? ""}`;
+    return `${describeRequest(row)} ${row.path} ${row.query ?? ""} ${row.tenantName ?? ""} ${row.externalId ?? ""} ${row.error ?? ""} ${row.ip ?? ""} ${row.apiKeyId ?? ""} ${row.apiKeyLabel ?? ""}`;
   if (path === "madeWith") return madeWith(row);
   if (path === "store") return row.tenantName ?? "";
   return row[path as keyof ApiRequest];
@@ -59,13 +59,10 @@ const columns: ColumnDef<ApiRequest>[] = [
       const r = row.original;
       return (
         <div className="max-w-xs min-w-0 2xl:max-w-md">
-          <div className="flex items-center gap-1.5">
-            <Badge variant="outline" className="font-mono">
-              {r.method}
-            </Badge>
-            <span className="truncate font-mono text-xs">{r.path}</span>
+          {/* The raw call stays on hover for anyone matching it against their own logs. */}
+          <div className="truncate font-medium" title={`${r.method} ${r.path}${r.query ? `?${r.query}` : ""}`}>
+            {describeRequest(r)}
           </div>
-          {r.query && <div className="text-muted-foreground truncate font-mono text-xs">?{r.query}</div>}
           {r.error && <div className="text-destructive line-clamp-2 text-xs whitespace-normal">{r.error}</div>}
         </div>
       );
@@ -81,7 +78,7 @@ const columns: ColumnDef<ApiRequest>[] = [
     header: "Store",
     cell: ({ row }) => {
       const r = row.original;
-      if (!r.tenantId) return <span className="text-muted-foreground">{r.externalId ?? "None"}</span>;
+      if (!r.tenantId) return <span className="text-muted-foreground">—</span>;
       return (
         <Link href={`/stores/${r.tenantId}`} className="hover:text-primary font-medium hover:underline">
           {r.tenantName ?? "Deleted store"}
@@ -159,7 +156,7 @@ export function RequestsTable({ requests, showStorefront = true }: { requests: A
       columns={showStorefront ? columns : columns.filter((c) => !("accessorKey" in c && c.accessorKey === "productName"))}
       columnLabels={columnLabels}
       getRowId={(r) => r.id}
-      searchPlaceholder="Path, store, key, error, IP..."
+      searchPlaceholder="Request, store, key, error, IP..."
       facets={facets}
       readField={readField}
       tabs={tabs}

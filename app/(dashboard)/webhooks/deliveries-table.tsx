@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { WebhookDelivery } from "@/lib/api/types";
+import { replyText, urlHost } from "@/lib/display";
 import { formatDateTime, webhookEventLabel, webhookEventLabels } from "@/lib/format";
 
 const columnLabels: Record<string, string> = {
@@ -77,7 +78,6 @@ const columns: ColumnDef<WebhookDelivery>[] = [
     cell: ({ row }) => (
       <div className="min-w-0">
         <div className="font-medium">{webhookEventLabel(row.original.eventType)}</div>
-        <div className="text-muted-foreground font-mono text-xs">{row.original.eventType}</div>
       </div>
     )
   },
@@ -92,7 +92,7 @@ const columns: ColumnDef<WebhookDelivery>[] = [
             {d.tenantName ?? "Deleted store"}
           </Link>
         );
-      return <span className="text-muted-foreground">{d.versionId ? "A version" : "None"}</span>;
+      return <span className="text-muted-foreground">{d.versionId ? "A version" : "—"}</span>;
     }
   },
   {
@@ -100,8 +100,8 @@ const columns: ColumnDef<WebhookDelivery>[] = [
     header: "Endpoint",
     cell: ({ row }) => (
       <div className="max-w-48 min-w-0 2xl:max-w-64">
-        <div className="truncate font-mono text-xs" title={row.original.url}>
-          {row.original.url}
+        <div className="truncate" title={row.original.url}>
+          {urlHost(row.original.url)}
         </div>
         <div className="text-muted-foreground truncate text-xs">{row.original.productName}</div>
       </div>
@@ -144,9 +144,10 @@ const columns: ColumnDef<WebhookDelivery>[] = [
             <span className="text-destructive line-clamp-2 text-xs break-words" title={d.error}>
               {d.error}
             </span>
-          ) : d.responseBody ? (
-            <span className="text-muted-foreground line-clamp-2 font-mono text-xs break-all" title={d.responseBody}>
-              {d.responseBody}
+          ) : status !== null && status >= 300 && d.responseBody ? (
+            // A good answer needs no words; a bad one shows what the receiver said, minus any HTML.
+            <span className="text-muted-foreground line-clamp-2 text-xs break-words" title={replyText(d.responseBody, 1000)}>
+              {replyText(d.responseBody)}
             </span>
           ) : null}
         </div>
@@ -178,7 +179,7 @@ export function DeliveriesTable({ deliveries }: { deliveries: WebhookDelivery[] 
     {
       id: "url",
       label: "Endpoint",
-      options: [...new Set(deliveries.map((d) => d.url))].sort().map((v) => ({ value: v, label: v })),
+      options: [...new Set(deliveries.map((d) => d.url))].sort().map((v) => ({ value: v, label: urlHost(v) })),
       icon: <LinkIcon />
     }
   ];
