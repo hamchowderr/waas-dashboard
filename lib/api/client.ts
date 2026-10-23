@@ -90,6 +90,8 @@ export interface AdminApi {
   // Changes. Each throws AdminApiError with the API's message when the API refuses.
   /** Re-queues a failed job; the store or version goes back to Pending. */
   retryFailure(failureId: string): Promise<void>;
+  /** Takes a failed job off the list without running anything; for one with nothing left to retry. */
+  dismissFailure(failureId: string): Promise<void>;
   /** Makes a domain the store's main address, adding it if new; the old main domain redirects to it. */
   setMainDomain(tenantId: string, domainName: string): Promise<void>;
   /**

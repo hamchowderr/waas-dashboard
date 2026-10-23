@@ -119,7 +119,7 @@ export type JobType =
   | "tenant.rollback";
 
 /** queued, running and failed are the Jobs page's tabs; the rest appear on a store's page. */
-export type JobState = "queued" | "running" | "failed" | "retried" | "done" | "cancelled";
+export type JobState = "queued" | "running" | "failed" | "retried" | "dismissed" | "done" | "cancelled";
 
 export type Job = {
   /** pg-boss job id, or the job_failures id for failed and retried ones. */

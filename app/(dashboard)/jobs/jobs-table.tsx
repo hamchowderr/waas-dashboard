@@ -3,10 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { ListChecksIcon, RotateCcwIcon, StoreIcon } from "lucide-react";
+import { ListChecksIcon, RotateCcwIcon, StoreIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { retryFailures } from "../actions";
+import { dismissFailures, retryFailures } from "../actions";
 
 import { SortableHeader } from "@/components/admin/sortable-header";
 import type { TableFacet } from "@/components/admin/table-filters";
@@ -109,13 +109,21 @@ const columns: ColumnDef<Job>[] = [
 
 /** Retries failed jobs and reports the outcome; true when every one was accepted. */
 async function retry(ids: string[]): Promise<boolean> {
-  const result = await retryFailures(ids);
+  return report(await retryFailures(ids), (n) => (n === 1 ? "Job queued again" : `${n} jobs queued again`));
+}
+
+/** Dismisses failed jobs and reports the outcome; true when every one was accepted. */
+async function dismiss(ids: string[]): Promise<boolean> {
+  return report(await dismissFailures(ids), (n) => (n === 1 ? "Failed job dismissed" : `${n} failed jobs dismissed`));
+}
+
+function report(result: Awaited<ReturnType<typeof retryFailures>>, success: (n: number) => string): boolean {
   if (!result.ok) {
     toast.error(result.error);
     return false;
   }
-  const { retried, errors } = result.data;
-  if (retried > 0) toast.success(retried === 1 ? "Job queued again" : `${retried} jobs queued again`);
+  const { done, errors } = result.data;
+  if (done > 0) toast.success(success(done));
   for (const error of [...new Set(errors)]) toast.error(error);
   return errors.length === 0;
 }
@@ -159,17 +167,31 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
         onRowClick={setViewing}
         selectable={(job) => job.state === "failed"}
         bulkActions={(selected, clear) => (
-          <Button
-            size="sm"
-            disabled={pending}
-            onClick={() =>
-              startTransition(async () => {
-                await retry(selected.map((job) => job.id));
-                clear();
-              })
-            }>
-            <RotateCcwIcon /> Retry {selected.length}
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  await dismiss(selected.map((job) => job.id));
+                  clear();
+                })
+              }>
+              <XIcon /> Dismiss {selected.length}
+            </Button>
+            <Button
+              size="sm"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  await retry(selected.map((job) => job.id));
+                  clear();
+                })
+              }>
+              <RotateCcwIcon /> Retry {selected.length}
+            </Button>
+          </>
         )}
       />
 
@@ -193,7 +215,8 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
               {viewing.state === "failed" && (
                 <p className="text-muted-foreground text-sm">
                   Retry puts the {viewing.versionId && !viewing.tenantId ? "version" : "store"} back to Pending and
-                  runs the same job again.
+                  runs the same job again. Dismiss takes it off this list without running anything, for a job with
+                  nothing left to retry.
                 </p>
               )}
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
@@ -230,6 +253,18 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
                 {viewing.tenantId && (
                   <Button variant="outline" asChild>
                     <Link href={`/stores/${viewing.tenantId}`}>Open store</Link>
+                  </Button>
+                )}
+                {viewing.state === "failed" && (
+                  <Button
+                    variant="outline"
+                    disabled={pending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        if (await dismiss([viewing.id])) setViewing(null);
+                      })
+                    }>
+                    <XIcon /> Dismiss
                   </Button>
                 )}
                 {viewing.state === "failed" ? (

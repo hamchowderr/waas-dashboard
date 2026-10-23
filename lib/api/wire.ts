@@ -77,7 +77,7 @@ export type WireJobFailure = WireJobTarget & {
   errorMessage: string;
   attempts: number;
   failedAt: string;
-  status: "failed" | "retried";
+  status: "failed" | "retried" | "dismissed";
   retriedAt: string | null;
   retryJobId: string | null;
 };
