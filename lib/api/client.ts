@@ -97,6 +97,12 @@ export interface AdminApi {
    * now is backed up first so the rollback can be undone.
    */
   restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void>;
+  /** Takes a store offline; with takeBackup it is backed up first. Platform admin only. */
+  suspendStore(tenantId: string, takeBackup: boolean): Promise<void>;
+  /** Brings a suspended store back online. Platform admin only. */
+  resumeStore(tenantId: string): Promise<void>;
+  /** Deletes a store; its backups are kept for the retention period. Platform admin only. */
+  deleteStore(tenantId: string): Promise<void>;
   /** Makes a store that waits for a site moved in from another host, and answers its import code. */
   moveSiteIn(productId: string, input: { name: string; size: StoreSize }): Promise<ImportCode>;
   /** A new store of the storefront, built from its production version and latest template. */

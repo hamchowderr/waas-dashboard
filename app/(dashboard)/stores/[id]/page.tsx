@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ExternalLinkIcon } from "lucide-react";
 
+import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel, settingLabel } from "@/lib/format";
 import { StatusCode } from "@/lib/api/types";
@@ -17,6 +18,7 @@ import { ChangeAddress } from "./change-address";
 import { MailSender } from "./mail-sender";
 import { RestoreBackup } from "./restore-backup";
 import { MoveInStatus } from "./move-in";
+import { StoreActions } from "./store-actions";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -39,7 +41,11 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export default async function StorePage({ params }: Params) {
   const { id } = await params;
-  const [tenant, mailDomain] = await Promise.all([getAdminApi().tenant(id), getAdminApi().mailDomain(id).catch(() => null)]);
+  const [tenant, mailDomain, viewer] = await Promise.all([
+    getAdminApi().tenant(id),
+    getAdminApi().mailDomain(id).catch(() => null),
+    getViewer()
+  ]);
   if (!tenant) notFound();
   const connect =
     mailDomain?.status === "pending"
@@ -47,6 +53,8 @@ export default async function StorePage({ params }: Params) {
       : null;
   // A store being removed or that failed can't be rolled back until it's fixed.
   const canRestore = tenant.statusCode !== StatusCode.Removing && tenant.statusCode !== StatusCode.Failed;
+  // Suspend and delete are the platform admin's; a seller's stores follow their shop's subscriptions.
+  const canManage = viewer?.isAdmin === true && tenant.statusCode !== StatusCode.Removing;
   // Links to the site only once it is up.
   // What the store was made with, in plain words; the values themselves stay private.
   const settings = [...new Set([...tenant.wpOptionNames, ...tenant.phpConstantNames].map(settingLabel))];
@@ -90,6 +98,14 @@ export default async function StorePage({ params }: Params) {
         <Button asChild variant="outline" size="sm">
           <Link href={`/requests?store=${tenant.id}`}>API requests</Link>
         </Button>
+        {canManage && (
+          <StoreActions
+            tenantId={tenant.id}
+            storeName={tenant.name}
+            isSuspended={tenant.isSuspended}
+            canSuspend={tenant.statusCode !== StatusCode.Failed}
+          />
+        )}
       </div>
 
       <div className="grid items-start gap-4 md:grid-cols-2 lg:gap-6">

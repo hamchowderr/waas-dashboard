@@ -867,6 +867,48 @@ export class FixtureAdminApi implements AdminApi {
     tenant.dateChanged = new Date().toISOString();
   }
 
+  async suspendStore(tenantId: string, takeBackup: boolean): Promise<void> {
+    const tenant = this.changeableTenant(tenantId);
+    if (tenant.isSuspended) return;
+    const now = new Date().toISOString();
+    if (takeBackup) {
+      backups.unshift({
+        id: uuid(200 + backups.length, 4),
+        productId: tenant.productId,
+        productName: tenant.productName,
+        tenantId,
+        externalId: tenant.externalId,
+        tenantName: tenant.name,
+        reason: "suspend",
+        sizeBytes: 200 * 1_048_576,
+        statusCode: StatusCode.Done,
+        dateCreated: now,
+        tenantDeletedAt: null,
+        expiresAt: null
+      });
+    }
+    Object.assign(tenant, { isSuspended: true, dateSuspended: now, dateChanged: now });
+  }
+
+  async resumeStore(tenantId: string): Promise<void> {
+    const tenant = this.changeableTenant(tenantId);
+    Object.assign(tenant, { isSuspended: false, dateSuspended: null, dateChanged: new Date().toISOString() });
+  }
+
+  async deleteStore(tenantId: string): Promise<void> {
+    const i = tenants.findIndex((t) => t.id === tenantId);
+    if (i < 0) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    tenants.splice(i, 1);
+  }
+
+  private changeableTenant(tenantId: string): FixtureTenant {
+    const tenant = tenants.find((t) => t.id === tenantId);
+    if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    if (tenant.statusCode === StatusCode.Removing || tenant.statusCode === StatusCode.Failed)
+      throw new FixtureError(400, `Tenant ${tenant.externalId} is ${tenant.statusCode === StatusCode.Failed ? "Failed" : "Removing"}`);
+    return tenant;
+  }
+
   async setMainDomain(tenantId: string, domainName: string): Promise<void> {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);

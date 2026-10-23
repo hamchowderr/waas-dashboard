@@ -179,6 +179,34 @@ export async function restoreBackup(tenantId: string, backupId: string, takeBack
   }, ["/stores", "/backups", "/"]);
 }
 
+/** Takes a store offline, backing it up first unless takeBackup is false. Platform admin only. */
+export async function suspendStore(tenantId: string, takeBackup: boolean): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("suspend a store");
+    if (typeof takeBackup !== "boolean") throw new InputError("Invalid choice");
+    await getAdminApi().suspendStore(uuid(tenantId, "store"), takeBackup);
+    return undefined;
+  }, ["/stores", "/backups", "/"]);
+}
+
+/** Brings a suspended store back online. Platform admin only. */
+export async function resumeStore(tenantId: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("resume a store");
+    await getAdminApi().resumeStore(uuid(tenantId, "store"));
+    return undefined;
+  }, ["/stores", "/"]);
+}
+
+/** Deletes a store; its backups are kept. Platform admin only. */
+export async function deleteStore(tenantId: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("delete a store");
+    await getAdminApi().deleteStore(uuid(tenantId, "store"));
+    return undefined;
+  }, ["/stores", "/backups", "/"]);
+}
+
 export async function createVersion(productId: string, input: CreateVersionInput): Promise<ActionResult<Created>> {
   return run(async () => {
     const product = uuid(productId, "storefront");
