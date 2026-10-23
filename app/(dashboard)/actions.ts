@@ -26,6 +26,7 @@ import type {
   NewStorefrontInput,
   ReadyStorefront,
   Reseller,
+  ResellerInvoice,
   ResellerSettings,
   TeamOf,
   TeamRole,
@@ -498,6 +499,9 @@ function resellerSettings(input: ResellerSettings): ResellerSettings {
   if (brandName.length > 60) throw new InputError("Brand name must be at most 60 characters");
   const brandUrl = typeof input.brandUrl === "string" ? input.brandUrl.trim() : "";
   if (brandUrl && (brandUrl.length > 500 || !/^https?:\/\/\S+$/.test(brandUrl))) throw new InputError("Brand link must start with https://");
+  if (input.autoInvoice !== undefined && typeof input.autoInvoice !== "boolean") throw new InputError("Automatic invoices must be on or off");
+  const customer = typeof input.stripeCustomerId === "string" ? input.stripeCustomerId.trim() : input.stripeCustomerId;
+  if (customer && !/^cus_[A-Za-z0-9]{1,250}$/.test(customer)) throw new InputError("Stripe customer must be a Stripe customer id (cus_…)");
   return {
     name: text(input.name, "Name", 100),
     maxProducts: limit(input.maxProducts, "Storefront limit"),
@@ -510,7 +514,9 @@ function resellerSettings(input: ResellerSettings): ResellerSettings {
       small: listPrice(input.listPriceCents?.small, "Small"),
       medium: listPrice(input.listPriceCents?.medium, "Medium"),
       large: listPrice(input.listPriceCents?.large, "Large")
-    }
+    },
+    ...(input.autoInvoice !== undefined && { autoInvoice: input.autoInvoice }),
+    ...(customer !== undefined && { stripeCustomerId: customer || null })
   };
 }
 
@@ -529,6 +535,15 @@ export async function updateReseller(id: string, input: ResellerSettings): Promi
   return run(async () => {
     await adminOnly("manage resellers");
     return getAdminApi().updateReseller(uuid(id, "reseller"), resellerSettings(input));
+  }, ["/resellers"]);
+}
+
+/** Sends a month's bill as a Stripe invoice now, or tries a failed one again. Platform admin only. */
+export async function sendResellerInvoice(id: string, month: string): Promise<ActionResult<ResellerInvoice>> {
+  return run(async () => {
+    await adminOnly("manage resellers");
+    if (typeof month !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new InputError("Month must be YYYY-MM");
+    return getAdminApi().sendResellerInvoice(uuid(id, "reseller"), month);
   }, ["/resellers"]);
 }
 

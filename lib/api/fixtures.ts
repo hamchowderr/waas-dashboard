@@ -57,6 +57,8 @@ import {
   type Client,
   type Reseller,
   type ResellerBill,
+  type ResellerInvoice,
+  type ResellerInvoices,
   type ResellerSettings,
   type ResellerUsage,
   type StoreDays,
@@ -101,10 +103,28 @@ const products: Omit<Product, "tenantCount">[] = [
 const clients: Client[] = [];
 
 /** Reseller accounts, and which reseller each storefront belongs to. */
-type FixtureReseller = ResellerSettings & { id: string; dateCreated: string };
+type FixtureReseller = ResellerSettings & { id: string; dateCreated: string; autoInvoice: boolean; stripeCustomerId: string | null };
 const resellers: FixtureReseller[] = [
-  { id: uuid(1, 13), name: "Sample partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", brandName: "Sample Partner Sites", brandUrl: "https://partner.example", listPriceCents: { small: 1200, medium: 2400, large: 4800 }, dateCreated: iso(NOW - 40 * DAY) }
+  { id: uuid(1, 13), name: "Sample partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", brandName: "Sample Partner Sites", brandUrl: "https://partner.example", listPriceCents: { small: 1200, medium: 2400, large: 4800 }, autoInvoice: true, stripeCustomerId: "cus_SamplePartner", dateCreated: iso(NOW - 40 * DAY) }
 ];
+// Sample data: last month's bill was sent and paid.
+const resellerInvoices = new Map<string, ResellerInvoice[]>([
+  [
+    resellers[0].id,
+    [
+      {
+        id: uuid(1, 14),
+        month: new Date(Date.UTC(new Date(NOW).getUTCFullYear(), new Date(NOW).getUTCMonth() - 1, 1)).toISOString().slice(0, 7),
+        totalCents: 4320,
+        status: "paid",
+        hostedInvoiceUrl: "https://invoice.stripe.com/i/sample",
+        chargeAutomatically: true,
+        error: null,
+        dateUpdated: iso(NOW - 20 * DAY)
+      }
+    ]
+  ]
+]);
 const resellerOf = new Map<string, string>([[products[1].id, resellers[0].id]]);
 
 type FixtureVersion = Version & { productId: string };
@@ -1417,13 +1437,45 @@ export class FixtureAdminApi implements AdminApi {
     };
   }
 
+  async resellerInvoices(id: string): Promise<ResellerInvoices> {
+    this.findReseller(id);
+    return { enabled: true, invoices: [...(resellerInvoices.get(id) ?? [])].sort((a, b) => b.month.localeCompare(a.month)) };
+  }
+
+  async sendResellerInvoice(id: string, month: string): Promise<ResellerInvoice> {
+    const reseller = this.findReseller(id);
+    const list = resellerInvoices.get(id) ?? [];
+    const existing = list.find((i) => i.month === month);
+    if (existing && existing.status !== "failed") return existing;
+    const bill = await this.resellerBill(id, month);
+    if (!bill.complete) throw new FixtureError(400, "That month is not over yet");
+    const invoice: ResellerInvoice = {
+      id: existing?.id ?? uuid(list.length + 2, 14),
+      month,
+      totalCents: bill.totalCents,
+      status: bill.totalCents ? (reseller.billingEmail || reseller.stripeCustomerId ? "open" : "failed") : "nothing_due",
+      hostedInvoiceUrl: bill.totalCents ? "https://invoice.stripe.com/i/sample" : null,
+      chargeAutomatically: bill.totalCents ? Boolean(reseller.stripeCustomerId) : null,
+      error: bill.totalCents && !reseller.billingEmail && !reseller.stripeCustomerId ? "No billing email or Stripe customer: add a billing email to send invoices" : null,
+      dateUpdated: new Date().toISOString()
+    };
+    resellerInvoices.set(id, [...list.filter((i) => i.month !== month), invoice]);
+    return invoice;
+  }
+
   async createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller> {
     for (const productId of input.productIds) {
       this.product(productId);
       if (resellerOf.has(productId)) throw new FixtureError(409, "This storefront belongs to another reseller; remove it from that one first");
     }
     const { productIds, ...settings } = input;
-    const reseller: FixtureReseller = { ...settings, id: uuid(resellers.length + 1, 13), dateCreated: new Date().toISOString() };
+    const reseller: FixtureReseller = {
+      autoInvoice: true,
+      stripeCustomerId: null,
+      ...settings,
+      id: uuid(resellers.length + 1, 13),
+      dateCreated: new Date().toISOString()
+    };
     resellers.push(reseller);
     for (const productId of productIds) resellerOf.set(productId, reseller.id);
     return this.toReseller(reseller);

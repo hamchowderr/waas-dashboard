@@ -36,6 +36,8 @@ import type {
   Client,
   Reseller,
   ResellerBill,
+  ResellerInvoice,
+  ResellerInvoices,
   ResellerSettings,
   ResellerUsage,
   Template,
@@ -164,6 +166,8 @@ const toReseller = (r: WireReseller): Reseller => ({
   brandName: r.brandName,
   brandUrl: r.brandUrl,
   listPriceCents: { small: r.listPriceCents.small, medium: r.listPriceCents.medium, large: r.listPriceCents.large },
+  autoInvoice: r.autoInvoice,
+  stripeCustomerId: r.stripeCustomerId,
   products: r.products.map(({ id, name, tenantCount }) => ({ id, name, tenantCount })),
   tenantCount: r.tenantCount,
   liveTenantCount: r.liveTenantCount,
@@ -540,6 +544,32 @@ export class HttpAdminApi implements AdminApi {
       lines: bill.lines.map((l) => ({ ...l })),
       totalCents: bill.totalCents
     };
+  }
+
+  async resellerInvoices(id: string): Promise<ResellerInvoices> {
+    const { enabled, invoices } = (await this.get<ResellerInvoices>(this.resellerPath(id, "/invoices")))!;
+    return {
+      enabled,
+      invoices: invoices.map(({ id, month, totalCents, status, hostedInvoiceUrl, chargeAutomatically, error, dateUpdated }) => ({
+        id,
+        month,
+        totalCents,
+        status,
+        hostedInvoiceUrl,
+        chargeAutomatically,
+        error,
+        dateUpdated
+      }))
+    };
+  }
+
+  async sendResellerInvoice(id: string, month: string): Promise<ResellerInvoice> {
+    const { id: invoiceId, totalCents, status, hostedInvoiceUrl, chargeAutomatically, error, dateUpdated } = (await this.send<ResellerInvoice>(
+      "POST",
+      this.resellerPath(id, "/invoices"),
+      { month }
+    ))!;
+    return { id: invoiceId, month, totalCents, status, hostedInvoiceUrl, chargeAutomatically, error, dateUpdated };
   }
 
   async createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller> {
