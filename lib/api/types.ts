@@ -227,6 +227,8 @@ export type Client = {
 
 export type Reseller = ResellerSettings & {
   id: string;
+  autoInvoice: boolean;
+  stripeCustomerId: string | null;
   products: Product[];
   /** Stores across its storefronts. */
   tenantCount: number;
@@ -249,6 +251,31 @@ export type ResellerSettings = {
   brandUrl: string | null;
   /** Monthly list price of one store of each size, in US cents, before the discount. */
   listPriceCents: Record<StoreSize, number>;
+  /** Send its bill as a Stripe invoice on the 1st. Unchanged when left out. */
+  autoInvoice?: boolean;
+  /** Its Stripe customer (cus_…); made from billingEmail on the first invoice when null. Unchanged when left out. */
+  stripeCustomerId?: string | null;
+};
+
+/** One month's bill sent as a Stripe invoice. */
+export type ResellerInvoice = {
+  id: string;
+  month: string;
+  totalCents: number;
+  /** open: Stripe is charging the card on file, or emailed it to pay. nothing_due: no charge that month. */
+  status: "sending" | "nothing_due" | "open" | "paid" | "void" | "uncollectible" | "failed";
+  /** Stripe's page to view and pay it. */
+  hostedInvoiceUrl: string | null;
+  /** true: charged to the card on file; false: emailed to pay. */
+  chargeAutomatically: boolean | null;
+  error: string | null;
+  dateUpdated: string;
+};
+
+export type ResellerInvoices = {
+  /** false while the API has no Stripe key: bills are sent by hand. */
+  enabled: boolean;
+  invoices: ResellerInvoice[];
 };
 
 /** Days a store was live, per size: a store live all of a 30-day month is 30. */

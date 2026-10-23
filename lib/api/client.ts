@@ -33,6 +33,8 @@ import type {
   Client,
   Reseller,
   ResellerBill,
+  ResellerInvoice,
+  ResellerInvoices,
   ResellerSettings,
   ResellerUsage,
   Template,
@@ -174,6 +176,10 @@ export interface AdminApi {
   resellerUsage(id: string, from: string, to: string): Promise<ResellerUsage>;
   /** The wholesale bill for one calendar month, YYYY-MM. */
   resellerBill(id: string, month: string): Promise<ResellerBill>;
+  /** The Stripe invoices sent for its bills, newest month first. */
+  resellerInvoices(id: string): Promise<ResellerInvoices>;
+  /** Sends a month's bill as a Stripe invoice now, or tries a failed one again; never twice. */
+  sendResellerInvoice(id: string, month: string): Promise<ResellerInvoice>;
   /** A new reseller, with those storefronts moved into it. */
   createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller>;
   /** Changes only the settings given. */

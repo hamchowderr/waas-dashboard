@@ -1,5 +1,6 @@
 "use client";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ResellerSettings } from "@/lib/api/types";
@@ -17,6 +18,9 @@ export type ResellerForm = {
   priceSmall: string;
   priceMedium: string;
   priceLarge: string;
+  /** Send the bill as a Stripe invoice on the 1st. */
+  autoInvoice: boolean;
+  stripeCustomerId: string;
 };
 
 // The default list prices are the Website plan's: Small $12, Medium 2x, Large 4x.
@@ -30,7 +34,9 @@ export const EMPTY_RESELLER: ResellerForm = {
   brandUrl: "",
   priceSmall: "12",
   priceMedium: "24",
-  priceLarge: "48"
+  priceLarge: "48",
+  autoInvoice: true,
+  stripeCustomerId: ""
 };
 
 const dollars = (cents: number) => (cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2));
@@ -48,7 +54,9 @@ export function toForm(r: ResellerSettings): ResellerForm {
     brandUrl: r.brandUrl ?? "",
     priceSmall: dollars(r.listPriceCents.small),
     priceMedium: dollars(r.listPriceCents.medium),
-    priceLarge: dollars(r.listPriceCents.large)
+    priceLarge: dollars(r.listPriceCents.large),
+    autoInvoice: r.autoInvoice ?? true,
+    stripeCustomerId: r.stripeCustomerId ?? ""
   };
 }
 
@@ -61,7 +69,9 @@ export function toSettings(f: ResellerForm): ResellerSettings {
     billingEmail: f.billingEmail.trim() || null,
     brandName: f.brandName.trim() || null,
     brandUrl: f.brandUrl.trim() || null,
-    listPriceCents: { small: cents(f.priceSmall), medium: cents(f.priceMedium), large: cents(f.priceLarge) }
+    listPriceCents: { small: cents(f.priceSmall), medium: cents(f.priceMedium), large: cents(f.priceLarge) },
+    autoInvoice: f.autoInvoice,
+    stripeCustomerId: f.stripeCustomerId.trim() || null
   };
 }
 
@@ -79,7 +89,8 @@ function errors(f: ResellerForm) {
     brandUrl: f.brandUrl.trim() && !/^https?:\/\/\S+$/.test(f.brandUrl.trim()) ? "A link starting with https://" : null,
     priceSmall: priceError(f.priceSmall),
     priceMedium: priceError(f.priceMedium),
-    priceLarge: priceError(f.priceLarge)
+    priceLarge: priceError(f.priceLarge),
+    stripeCustomerId: f.stripeCustomerId.trim() && !/^cus_[A-Za-z0-9]{1,250}$/.test(f.stripeCustomerId.trim()) ? "A Stripe customer id, starting cus_" : null
   };
 }
 
@@ -90,9 +101,10 @@ export function resellerFormReady(f: ResellerForm) {
 
 export function ResellerFields({ value, onChange, idPrefix }: { value: ResellerForm; onChange: (next: ResellerForm) => void; idPrefix: string }) {
   const problems = errors(value);
-  const set = (key: keyof ResellerForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  type TextKey = Exclude<keyof ResellerForm, "autoInvoice">;
+  const set = (key: TextKey) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onChange({ ...value, [key]: key === "name" || key === "billingEmail" || key === "brandName" ? e.target.value : e.target.value.trim() });
-  const field = (key: keyof ResellerForm, label: string, hint: string, props: React.ComponentProps<typeof Input> = {}) => (
+  const field = (key: TextKey, label: string, hint: string, props: React.ComponentProps<typeof Input> = {}) => (
     <div className="space-y-1.5">
       <Label htmlFor={`${idPrefix}-${key}`}>{label}</Label>
       <Input id={`${idPrefix}-${key}`} value={value[key]} onChange={set(key)} {...props} />
@@ -110,6 +122,24 @@ export function ResellerFields({ value, onChange, idPrefix }: { value: ResellerF
       </div>
       {field("wholesalePercent", "Wholesale discount (%)", "Off list price, for every live store on its bill.", { inputMode: "numeric" })}
       {field("billingEmail", "Billing email", "Where its monthly bill goes.", { type: "email", placeholder: "billing@partner.example" })}
+      <div className="flex items-start gap-3">
+        <Checkbox
+          id={`${idPrefix}-autoInvoice`}
+          checked={value.autoInvoice}
+          onCheckedChange={(v) => onChange({ ...value, autoInvoice: v === true })}
+          className="mt-0.5"
+        />
+        <div className="space-y-1">
+          <Label htmlFor={`${idPrefix}-autoInvoice`}>Send the bill through Stripe on the 1st</Label>
+          <p className="text-muted-foreground text-sm">
+            Stripe charges the card on file, or emails the invoice to pay online. Off: you send the bill yourself.
+          </p>
+        </div>
+      </div>
+      {value.autoInvoice &&
+        field("stripeCustomerId", "Stripe customer (optional)", "Only to bill a customer you already have in Stripe. Empty: one is made from the billing email.", {
+          placeholder: "cus_…"
+        })}
       <div className="grid gap-4 sm:grid-cols-2">
         {field("brandName", "Brand name", "What its team and its stores' \"site unavailable\" page show. Empty uses AnyPress.", { maxLength: 60, placeholder: "AnyPress" })}
         {field("brandUrl", "Brand link", "Where its name links to. Optional.", { type: "url", placeholder: "https://partner.example" })}
