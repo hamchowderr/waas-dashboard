@@ -323,6 +323,18 @@ export class HttpAdminApi implements AdminApi {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/restore`, { backupId, takeBackup });
   }
 
+  async suspendStore(tenantId: string, takeBackup: boolean): Promise<void> {
+    await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/suspend`, { takeBackup });
+  }
+
+  async resumeStore(tenantId: string): Promise<void> {
+    await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/resume`, {});
+  }
+
+  async deleteStore(tenantId: string): Promise<void> {
+    await this.send("DELETE", `/admin/tenants/${encodeURIComponent(tenantId)}`);
+  }
+
   async setMailDomain(tenantId: string, domainName: string): Promise<MailDomain> {
     const res = await this.send<{ mailDomain: MailDomain }>("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/mail-domain`, {
       domainName
