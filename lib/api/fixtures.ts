@@ -758,7 +758,7 @@ export class FixtureAdminApi implements AdminApi {
 
   async jobs(filter: JobFilter = {}): Promise<JobsList> {
     const productName = products.find((p) => p.id === filter.productId)?.name;
-    // Like the API: retried failures leave the list (their new job is queued instead).
+    // Like the API: retried and dismissed failures leave the list (their new job is queued instead).
     const listed = jobs.filter((j) => j.state === "queued" || j.state === "running" || j.state === "failed");
     const items = filter.productId ? listed.filter((j) => j.productName === productName) : listed;
     return {
@@ -975,12 +975,21 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async retryFailure(failureId: string): Promise<void> {
-    const job = jobs.find((j) => j.id === failureId && (j.state === "failed" || j.state === "retried"));
+    const job = jobs.find((j) => j.id === failureId && (j.state === "failed" || j.state === "retried" || j.state === "dismissed"));
     if (!job) throw new FixtureError(404, `Failure ${failureId} not found`);
     if (job.state === "retried") return;
+    if (job.state === "dismissed") throw new FixtureError(400, "This failure was dismissed");
     job.state = "retried";
     job.retriedAt = new Date().toISOString();
     jobs.push({ ...job, id: uuid(jobs.length + 100, 5), state: "queued", createdAt: job.retriedAt, failedAt: null, error: null, retriedAt: null, attempts: 0 });
+  }
+
+  async dismissFailure(failureId: string): Promise<void> {
+    const job = jobs.find((j) => j.id === failureId && (j.state === "failed" || j.state === "retried" || j.state === "dismissed"));
+    if (!job) throw new FixtureError(404, `Failure ${failureId} not found`);
+    if (job.state === "dismissed") return;
+    if (job.state === "retried") throw new FixtureError(400, "This failure was already retried");
+    job.state = "dismissed";
   }
 
   async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {

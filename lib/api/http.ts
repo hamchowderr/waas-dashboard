@@ -295,6 +295,10 @@ export class HttpAdminApi implements AdminApi {
     await this.send("POST", `/admin/jobs/failures/${encodeURIComponent(failureId)}/retry`);
   }
 
+  async dismissFailure(failureId: string): Promise<void> {
+    await this.send("POST", `/admin/jobs/failures/${encodeURIComponent(failureId)}/dismiss`);
+  }
+
   async setMainDomain(tenantId: string, domainName: string): Promise<void> {
     await this.send("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/domains/main`, { domainName });
   }
@@ -869,7 +873,7 @@ export class HttpAdminApi implements AdminApi {
     const tenant = f.tenantId ? names.get(f.tenantId) : undefined;
     return {
       id: f.id,
-      state: f.status === "retried" ? "retried" : "failed",
+      state: f.status === "failed" ? "failed" : f.status,
       type: f.type,
       tenantId: f.tenantId,
       versionId: f.versionId,

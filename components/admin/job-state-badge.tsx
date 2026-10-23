@@ -6,6 +6,7 @@ const meta: Record<JobState, { label: string; badge: "info" | "warning" | "destr
   running: { label: "Running", badge: "info" },
   failed: { label: "Failed", badge: "destructive" },
   retried: { label: "Retried", badge: "outline" },
+  dismissed: { label: "Dismissed", badge: "outline" },
   done: { label: "Done", badge: "success" },
   cancelled: { label: "Cancelled", badge: "outline" }
 };

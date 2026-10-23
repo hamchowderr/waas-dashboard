@@ -75,28 +75,39 @@ function text(value: unknown, what: string, max = 200): string {
   return value.trim();
 }
 
-/** Retries failed jobs one by one; reports how many the API accepted. */
-export async function retryFailures(
-  failureIds: string[]
-): Promise<ActionResult<{ retried: number; errors: string[] }>> {
+/** Runs one change per failed job; reports how many the API accepted. */
+async function eachFailure(
+  failureIds: string[],
+  change: (api: ReturnType<typeof getAdminApi>, id: string) => Promise<void>
+): Promise<ActionResult<{ done: number; errors: string[] }>> {
   return run(async () => {
     if (!Array.isArray(failureIds) || failureIds.length === 0 || failureIds.length > 200)
       throw new InputError("Choose between 1 and 200 failed jobs");
     const ids = failureIds.map((id) => uuid(id, "job id"));
     const api = getAdminApi();
     const errors: string[] = [];
-    let retried = 0;
+    let done = 0;
     for (const id of ids) {
       try {
-        await api.retryFailure(id);
-        retried++;
+        await change(api, id);
+        done++;
       } catch (error) {
         if (!(error instanceof AdminApiError)) throw error;
         errors.push(error.apiMessage ?? error.message);
       }
     }
-    return { retried, errors };
+    return { done, errors };
   }, ["/"]);
+}
+
+/** Retries failed jobs one by one. */
+export async function retryFailures(failureIds: string[]): Promise<ActionResult<{ done: number; errors: string[] }>> {
+  return eachFailure(failureIds, (api, id) => api.retryFailure(id));
+}
+
+/** Dismisses failed jobs one by one: they leave the list and nothing runs. */
+export async function dismissFailures(failureIds: string[]): Promise<ActionResult<{ done: number; errors: string[] }>> {
+  return eachFailure(failureIds, (api, id) => api.dismissFailure(id));
 }
 
 // A bare hostname, as the API stores it: letters, digits and hyphens, dot-separated.
