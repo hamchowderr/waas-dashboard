@@ -109,14 +109,28 @@ const settingLabels: Record<string, string> = {
   WP_AUTO_UPDATE_CORE: "WordPress auto-updates",
   WP_DEBUG: "Debug mode",
   WP_POST_REVISIONS: "Post revisions kept",
+  WAAS_TENANT_ROLES: "Plan roles",
+  WAAS_PUBLIC_KEY: "One-click sign-in key",
+  WAAS_TENANT_NO_ADMINISTRATOR_PLUGIN_CAPS: "Plugins managed by the plan",
+  WAAS_API_BASE_URL: "API address",
+  WAAS_API_KEY: "API key",
+  WAAS_API_SECRET: "API secret",
+  WAAS_HOST_KEY_ENCRYPTION_KEY: "Sign-in key encryption",
+  waas_root_domain: "Website domain",
+};
+
+/** Names stores were given under the old platform's prefix, shown like their waas_ spelling. */
+const legacyNames: Record<string, string> = {
+  wpcs_host_settings_root_domain: "waas_root_domain",
 };
 
 /** Plain label for a WordPress option or PHP constant a store was made with; unknown names are spelled out. */
 export function settingLabel(name: string): string {
+  name = legacyNames[name] ?? name.replace(/^WPCS_/, "WAAS_");
   const known = settingLabels[name];
   if (known) return known;
   const words = name
-    .replace(/^WP_/, "")
+    .replace(/^(WP|WAAS)_/, "")
     .replace(/_/g, " ")
     .toLowerCase()
     .trim();
