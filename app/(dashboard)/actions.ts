@@ -458,6 +458,14 @@ export async function renameStorefront(productId: string, name: string): Promise
   }, ["/"]);
 }
 
+/** Deletes a storefront that has no stores (platform admin only). */
+export async function deleteStorefront(productId: string): Promise<ActionResult<null>> {
+  return run(async () => {
+    await getAdminApi().deleteStorefront(uuid(productId, "storefront"));
+    return null;
+  }, ["/"]);
+}
+
 /** A new seller with its first key, and with `storefront`, a ready-made storefront built for it. */
 export async function createSeller(
   name: string,

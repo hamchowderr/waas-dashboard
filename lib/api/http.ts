@@ -481,6 +481,10 @@ export class HttpAdminApi implements AdminApi {
     await this.send("PUT", this.productPath(productId, ""), { name });
   }
 
+  async deleteStorefront(productId: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, ""));
+  }
+
   async storefront(productId: string): Promise<ReadyStorefront | null> {
     // 404 from an API without ready-made storefronts: none.
     const storefront = await this.get<WireStorefront | null>(this.productPath(productId, "/storefront"), { allow404: true });

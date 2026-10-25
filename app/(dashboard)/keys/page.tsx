@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
 import { NewSellerButton } from "./new-seller-dialog";
 import { RenameStorefrontButton } from "./rename-storefront-dialog";
+import { DeleteStorefrontButton } from "./delete-storefront-dialog";
 
 export const metadata: Metadata = { title: "API keys" };
 
@@ -52,6 +53,7 @@ export default async function KeysPage({
         {isAdmin && (
           <div className="flex flex-wrap justify-end gap-2">
             <RenameStorefrontButton key={product.id} productId={product.id} name={product.name} />
+            {product.tenantCount === 0 && <DeleteStorefrontButton productId={product.id} name={product.name} />}
             <NewSellerButton storefronts={products} />
           </div>
         )}
