@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$DOLT_CREDS_JWK\" ] && command -v dolt >/dev/null && printf '%s' \"$DOLT_CREDS_JWK\" | dolt creds import >/dev/null && dolt creds use \"$DOLT_CREDS_KEY_ID\"; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
