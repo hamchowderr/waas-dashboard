@@ -152,6 +152,8 @@ export interface AdminApi {
   apiKeys(productId: string): Promise<ApiKey[]>;
   /** A new seller: its storefront and first key. */
   createSeller(input: NewSellerInput): Promise<NewSeller>;
+  /** Renames a storefront. Platform admin only. */
+  renameStorefront(productId: string, name: string): Promise<void>;
   /** The product's ready-made storefront, or null. */
   storefront(productId: string): Promise<ReadyStorefront | null>;
   /** Builds the product's ready-made storefront, connected with a new key of the product. Platform admin only. */

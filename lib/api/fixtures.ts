@@ -1266,6 +1266,10 @@ export class FixtureAdminApi implements AdminApi {
     return { productId: id, name: input.name, key: await this.createApiKey(id, "Storefront") };
   }
 
+  async renameStorefront(productId: string, name: string): Promise<void> {
+    this.product(productId).name = name;
+  }
+
   async storefront(productId: string): Promise<ReadyStorefront | null> {
     this.product(productId);
     return storefronts.get(productId) ?? null;

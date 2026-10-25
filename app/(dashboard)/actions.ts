@@ -450,6 +450,14 @@ function storefrontInput(name: string, request: StorefrontRequest): NewStorefron
   return { name, email, ...(subdomain ? { subdomain } : {}) };
 }
 
+/** Renames a storefront (platform admin only; the API answers 404 to anyone else). */
+export async function renameStorefront(productId: string, name: string): Promise<ActionResult<null>> {
+  return run(async () => {
+    await getAdminApi().renameStorefront(uuid(productId, "storefront"), text(name, "Name", 100).trim());
+    return null;
+  }, ["/"]);
+}
+
 /** A new seller with its first key, and with `storefront`, a ready-made storefront built for it. */
 export async function createSeller(
   name: string,
