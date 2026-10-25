@@ -122,6 +122,8 @@ export type WireProduct = {
   tenantCount: number;
   versionCount: number;
   productionVersionId: string | null;
+  /** The most stores it may have; null is no limit. Absent from an older API. */
+  maxTenants?: number | null;
   /** Added with reseller accounts; absent from an older API. */
   resellerId?: string | null;
   resellerName?: string | null;
