@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { Card } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
 import { NewSellerButton } from "./new-seller-dialog";
+import { RenameStorefrontButton } from "./rename-storefront-dialog";
 
 export const metadata: Metadata = { title: "API keys" };
 
@@ -48,7 +49,12 @@ export default async function KeysPage({
       <PageHeader
         title="API keys"
         description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}>
-        {isAdmin && <NewSellerButton storefronts={products} />}
+        {isAdmin && (
+          <div className="flex flex-wrap justify-end gap-2">
+            <RenameStorefrontButton key={product.id} productId={product.id} name={product.name} />
+            <NewSellerButton storefronts={products} />
+          </div>
+        )}
       </PageHeader>
       <KeysManager
         productId={product.id}

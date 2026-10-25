@@ -477,6 +477,10 @@ export class HttpAdminApi implements AdminApi {
     return { productId: created.product.id, name: created.product.name, key: toNewApiKey(created.key) };
   }
 
+  async renameStorefront(productId: string, name: string): Promise<void> {
+    await this.send("PUT", this.productPath(productId, ""), { name });
+  }
+
   async storefront(productId: string): Promise<ReadyStorefront | null> {
     // 404 from an API without ready-made storefronts: none.
     const storefront = await this.get<WireStorefront | null>(this.productPath(productId, "/storefront"), { allow404: true });
