@@ -1270,6 +1270,13 @@ export class FixtureAdminApi implements AdminApi {
     this.product(productId).name = name;
   }
 
+  async deleteStorefront(productId: string): Promise<void> {
+    this.product(productId);
+    if (tenants.some((t) => t.productId === productId)) throw new FixtureError(409, "Delete its stores first");
+    if (storefronts.has(productId)) throw new FixtureError(409, "Delete its ready-made storefront first");
+    products.splice(products.findIndex((p) => p.id === productId), 1);
+  }
+
   async storefront(productId: string): Promise<ReadyStorefront | null> {
     this.product(productId);
     return storefronts.get(productId) ?? null;
