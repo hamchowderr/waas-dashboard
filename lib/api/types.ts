@@ -201,6 +201,8 @@ export type RequestLog = Listing<ApiRequest> & {
 
 /** A storefront with its version count and production version, for the Versions page. */
 export type ProductDetail = Product & {
+  /** The most stores it may have; null is no limit. */
+  maxTenants: number | null;
   versionCount: number;
   productionVersionId: string | null;
   /** The reseller it belongs to; null for a storefront of its own. */

@@ -258,6 +258,7 @@ export class HttpAdminApi implements AdminApi {
       id: p.id,
       name: p.name,
       tenantCount: p.tenantCount,
+      maxTenants: p.maxTenants ?? null,
       versionCount: p.versionCount,
       productionVersionId: p.productionVersionId,
       resellerId: p.resellerId ?? null,
@@ -479,6 +480,10 @@ export class HttpAdminApi implements AdminApi {
 
   async renameStorefront(productId: string, name: string): Promise<void> {
     await this.send("PUT", this.productPath(productId, ""), { name });
+  }
+
+  async setStoreLimit(productId: string, maxTenants: number | null): Promise<void> {
+    await this.send("PUT", this.productPath(productId, ""), { maxTenants });
   }
 
   async deleteStorefront(productId: string): Promise<void> {

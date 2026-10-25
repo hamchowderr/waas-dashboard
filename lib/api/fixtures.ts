@@ -99,6 +99,9 @@ const products: Omit<Product, "tenantCount">[] = [
   { id: uuid(2, 1), name: "Staging storefront" }
 ];
 
+/** Store limits by storefront; a storefront missing here has no limit. */
+const limits = new Map<string, number | null>([[products[0].id, 6]]);
+
 /** Clients added in one step; each has its own storefront and one site. */
 const clients: Client[] = [];
 
@@ -776,6 +779,7 @@ export class FixtureAdminApi implements AdminApi {
     return products.map((p) => ({
       ...p,
       tenantCount: tenants.filter((t) => t.productId === p.id).length,
+      maxTenants: limits.get(p.id) ?? null,
       versionCount: versions.filter((v) => v.productId === p.id).length,
       productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null,
       resellerId: resellerOf.get(p.id) ?? null,
@@ -1268,6 +1272,10 @@ export class FixtureAdminApi implements AdminApi {
 
   async renameStorefront(productId: string, name: string): Promise<void> {
     this.product(productId).name = name;
+  }
+
+  async setStoreLimit(productId: string, maxTenants: number | null): Promise<void> {
+    limits.set(this.product(productId).id, maxTenants);
   }
 
   async deleteStorefront(productId: string): Promise<void> {

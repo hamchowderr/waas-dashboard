@@ -458,6 +458,16 @@ export async function renameStorefront(productId: string, name: string): Promise
   }, ["/"]);
 }
 
+/** Sets a storefront's store limit; null is no limit (platform admin only). */
+export async function setStoreLimit(productId: string, maxTenants: number | null): Promise<ActionResult<null>> {
+  return run(async () => {
+    if (maxTenants !== null && !(Number.isInteger(maxTenants) && maxTenants >= 0 && maxTenants <= 100000))
+      throw new InputError("Store limit must be a whole number, 0 or more, or empty for no limit");
+    await getAdminApi().setStoreLimit(uuid(productId, "storefront"), maxTenants);
+    return null;
+  }, ["/"]);
+}
+
 /** Deletes a storefront that has no stores (platform admin only). */
 export async function deleteStorefront(productId: string): Promise<ActionResult<null>> {
   return run(async () => {
