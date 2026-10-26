@@ -23,10 +23,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { navFor } from "@/components/shell/nav";
+import { linkHref, navFor } from "@/components/shell/nav";
 
-/** The sidebar's search box: opens a page finder, also on ⌘K / Ctrl+K. */
-export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
+/** The sidebar's search box: opens a page finder, also on ⌘K / Ctrl+K. product: the storefront picked in the header. */
+export function CommandSearch({ isAdmin, product }: { isAdmin: boolean; product: string | null }) {
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
 
@@ -86,7 +86,7 @@ export function CommandSearch({ isAdmin }: { isAdmin: boolean }) {
                 {index > 0 && <CommandSeparator />}
                 <CommandGroup heading={group.title}>
                   {group.links.map((link) => (
-                    <CommandItem key={link.href} onSelect={() => go(link.href)}>
+                    <CommandItem key={link.href} onSelect={() => go(linkHref(link, product))}>
                       <link.icon />
                       {link.title}
                     </CommandItem>

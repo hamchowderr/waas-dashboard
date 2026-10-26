@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { StoreIcon } from "lucide-react";
 
@@ -6,12 +7,10 @@ import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
-import { NewSellerButton } from "./new-seller-dialog";
-import { RenameStorefrontButton } from "./rename-storefront-dialog";
-import { DeleteStorefrontButton } from "./delete-storefront-dialog";
-import { StoreLimitButton } from "./store-limit-dialog";
+import { NewSellerButton } from "../storefronts/new-seller-dialog";
 
 export const metadata: Metadata = { title: "API keys" };
 
@@ -51,18 +50,11 @@ export default async function KeysPage({
       <PageHeader
         title="API keys"
         description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}>
+        {/* Renaming, the store limit and new sellers are on the Storefronts page. */}
         {isAdmin && (
-          <div className="flex flex-wrap justify-end gap-2">
-            <RenameStorefrontButton key={product.id} productId={product.id} name={product.name} />
-            <StoreLimitButton
-              key={`limit-${product.id}`}
-              productId={product.id}
-              maxTenants={product.maxTenants}
-              tenantCount={product.tenantCount}
-            />
-            {product.tenantCount === 0 && <DeleteStorefrontButton productId={product.id} name={product.name} />}
-            <NewSellerButton storefronts={products} />
-          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/storefronts">All storefronts</Link>
+          </Button>
         )}
       </PageHeader>
       <KeysManager

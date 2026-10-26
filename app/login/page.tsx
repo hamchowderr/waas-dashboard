@@ -116,7 +116,7 @@ export default async function LoginPage({
           <div className="text-center">
             <h2 className="text-3xl font-bold lg:mt-6">Sign in</h2>
             <p className="text-muted-foreground mt-2 text-sm">
-              Use the email address your invitation was sent to.
+              For sellers, resellers and their teams. Use the email address your invitation was sent to.
             </p>
           </div>
 
@@ -127,6 +127,16 @@ export default async function LoginPage({
           )}
 
           <SignInButtons providers={ways} returnTo={redirectTo} />
+
+          {/* Someone who bought a website for themselves has no account here: theirs is on anypress.io. */}
+          {!seller && (
+            <p className="text-muted-foreground text-center text-sm">
+              Bought a website from AnyPress?{" "}
+              <a href="https://anypress.io/account" className="text-foreground font-medium underline-offset-4 hover:underline">
+                Manage it at anypress.io/account
+              </a>
+            </p>
+          )}
         </div>
         <p className="text-muted-foreground mx-auto mt-8 max-w-xs text-center text-xs lg:hidden">{blurb}</p>
       </main>

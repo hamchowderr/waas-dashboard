@@ -27,12 +27,12 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import type { NewSeller } from "@/lib/api/types";
 import { createSeller } from "../actions";
-import { SecretDialog } from "./secret-dialog";
+import { SecretDialog } from "../keys/secret-dialog";
 import {
   EMPTY_STOREFRONT,
   StorefrontFields,
   storefrontFieldsError,
-} from "./storefront-fields";
+} from "../keys/storefront-fields";
 
 /**
  * "New seller": creates the seller's storefront and its first API key, then shows the secret once. With "Build a

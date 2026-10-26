@@ -32,7 +32,7 @@ export function DeleteStorefrontButton({ productId, name }: { productId: string;
       }
       toast.success(`Deleted ${name}`);
       setOpen(false);
-      router.push("/keys");
+      router.push("/storefronts");
       router.refresh();
     });
 

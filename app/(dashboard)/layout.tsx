@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { canUseDashboard, getViewer } from "@/auth";
+import { canChange, canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import type { StorefrontOption } from "@/components/shell/storefront-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -101,7 +101,13 @@ export default async function DashboardLayout({
         brand={brand && { name: brand.name, logoUrl: brand.logoUrl, supportEmail: brand.supportEmail }}
       />
       <SidebarInset>
-        <SiteHeader storefronts={storefronts} isFixture={api.isFixture} user={user} memberships={memberships} />
+        <SiteHeader
+          storefronts={storefronts}
+          isFixture={api.isFixture}
+          user={user}
+          memberships={memberships}
+          viewOnly={!canChange(viewer)}
+        />
         <div className="flex flex-1 flex-col">
           <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:w-full xl:group-data-[theme-content-layout=centered]/layout:max-w-7xl">
             {children}

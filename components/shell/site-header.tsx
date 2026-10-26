@@ -10,20 +10,29 @@ import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AppearancePanel } from "@/components/shell/appearance-panel";
-import { StorefrontSwitcher, type StorefrontOption } from "@/components/shell/storefront-switcher";
-import { UserMenu, type SignedInUser, type StorefrontMembership } from "@/components/shell/user-menu";
+import {
+  MyStorefrontSwitcher,
+  StorefrontSwitcher,
+  type StorefrontMembership,
+  type StorefrontOption
+} from "@/components/shell/storefront-switcher";
+import { UserMenu, type SignedInUser } from "@/components/shell/user-menu";
 
 export function SiteHeader({
   storefronts,
   user,
   isFixture,
-  memberships
+  memberships,
+  viewOnly = false
 }: {
   /** Null hides the storefront switcher: a customer sees their own storefront only. */
   storefronts: StorefrontOption[] | null;
   user: SignedInUser;
   isFixture: boolean;
+  /** A customer's storefronts; with more than one, a switcher between them. */
   memberships: StorefrontMembership[];
+  /** A "Can view" member: buttons that change things are refused, so say so up front. */
+  viewOnly?: boolean;
 }) {
   const { open, toggleSidebar } = useSidebar();
 
@@ -35,7 +44,16 @@ export function SiteHeader({
           <span className="sr-only">Toggle sidebar</span>
         </Button>
         {storefronts && <StorefrontSwitcher storefronts={storefronts} />}
+        {memberships.length > 1 && <MyStorefrontSwitcher memberships={memberships} />}
         <div className="ms-auto flex items-center gap-1 sm:gap-2">
+          {viewOnly && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary">View only</Badge>
+              </TooltipTrigger>
+              <TooltipContent>You can look around but not change anything. An owner or admin can change your role on the Team page.</TooltipContent>
+            </Tooltip>
+          )}
           {isFixture && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -47,7 +65,7 @@ export function SiteHeader({
           <ModeToggle />
           <AppearancePanel />
           <Separator orientation="vertical" className="mx-1 self-center data-[orientation=vertical]:h-4 sm:mx-2" />
-          <UserMenu user={user} memberships={memberships} />
+          <UserMenu user={user} />
         </div>
       </div>
     </header>

@@ -3,8 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { CheckIcon, LogOutIcon, MoonIcon } from "lucide-react";
-import { toast } from "sonner";
+import { LogOutIcon, MoonIcon } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,15 +16,12 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import { pickStorefront, signOut } from "@/lib/auth-client";
+import { signOut } from "@/lib/auth-client";
 
 /** `detail`: the GitHub login or email, and for a customer their storefront and role. */
 export type SignedInUser = { name: string; detail: string; image: string | null };
 
-/** Storefronts someone belongs to, when there is more than one to switch between. */
-export type StorefrontMembership = { organizationId: string; productId: string; productName: string; active: boolean };
-
-export function UserMenu({ user, memberships = [] }: { user: SignedInUser; memberships?: StorefrontMembership[] }) {
+export function UserMenu({ user }: { user: SignedInUser }) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const mounted = React.useSyncExternalStore(
@@ -42,16 +38,6 @@ export function UserMenu({ user, memberships = [] }: { user: SignedInUser; membe
     }
     router.replace("/login");
     router.refresh();
-  }
-
-  async function switchTo(storefront: StorefrontMembership) {
-    try {
-      await pickStorefront(storefront);
-      router.replace("/");
-      router.refresh();
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
   }
 
   const fallback = user.name.slice(0, 2).toUpperCase();
@@ -94,20 +80,6 @@ export function UserMenu({ user, memberships = [] }: { user: SignedInUser; membe
             </DropdownMenuItem>
           )}
         </DropdownMenuGroup>
-        {memberships.length > 1 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">Storefronts</DropdownMenuLabel>
-              {memberships.map((m) => (
-                <DropdownMenuItem key={m.productId} disabled={m.active} onSelect={() => void switchTo(m)}>
-                  {m.productName}
-                  {m.active && <CheckIcon className="ms-auto" />}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void leave()}>
           <LogOutIcon className="text-muted-foreground" />

@@ -26,7 +26,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
         description={
           page.total > page.items.length
             ? `Showing ${page.items.length} of ${page.total} stores.`
-            : `${page.total} stores across ${product ? "this storefront" : "all storefronts"}.`
+            : `${page.total} ${page.total === 1 ? "store" : "stores"} on ${product ? "this storefront" : viewer?.isAdmin ? "all storefronts" : "your storefront"}.`
         }
       >
         {viewer && canChange(viewer) && (

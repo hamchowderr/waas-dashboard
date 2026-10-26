@@ -61,7 +61,7 @@ import type {
   WebhookSecret
 } from "./types";
 import { FixtureAdminApi } from "./fixtures";
-import { getViewer, sessionHeaders } from "@/auth";
+import { fixtureScope, getViewer, sessionHeaders } from "@/auth";
 import { AdminApiError, HttpAdminApi, type ApiAccess } from "./http";
 
 /** Read-only view of the provisioning API's admin endpoints. Server code only. */
@@ -242,7 +242,7 @@ export interface AdminApi {
  * so the layout and the page share what they load.
  */
 export const getAdminApi = cache((): AdminApi => {
-  if (process.env.WAAS_API_FIXTURES === "1") return new FixtureAdminApi();
+  if (process.env.WAAS_API_FIXTURES === "1") return new FixtureAdminApi(fixtureScope());
   const baseUrl = process.env.WAAS_API_URL;
   if (!baseUrl) throw new Error("Set WAAS_API_URL, or WAAS_API_FIXTURES=1 for sample data.");
   return new HttpAdminApi(baseUrl, access);
