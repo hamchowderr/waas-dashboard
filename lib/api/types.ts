@@ -212,22 +212,6 @@ export type ProductDetail = Product & {
 };
 
 /** A partner that sells stores from one or more storefronts and pays a wholesale price for each live store. */
-/** A client set up in one step (Add client): their own storefront, one site, and an invitation. */
-export type Client = {
-  productId: string;
-  name: string;
-  email: string;
-  size: StoreSize;
-  /** setting_up until the site is built; invited until they accept; active once they have. */
-  status: "setting_up" | "invited" | "active" | "needs_attention";
-  tenantId: string | null;
-  siteDomain: string | null;
-  /** Why the storefront or site could not be built, when status is needs_attention. */
-  problem: string | null;
-  invitationEmailed: boolean;
-  dateCreated: string;
-};
-
 export type Reseller = ResellerSettings & {
   id: string;
   autoInvoice: boolean;

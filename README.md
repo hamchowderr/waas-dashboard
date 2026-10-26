@@ -24,7 +24,7 @@ The storefront switcher in the header narrows every page to one storefront. Susp
 ## Who signs in
 
 - **Platform admins** are listed by email address in `ALLOWED_ADMIN_EMAILS` (or by GitHub login in `ALLOWED_GITHUB_LOGINS`), and they see every storefront.
-- **A storefront's own people** (a seller's or reseller's team, or a client you added) sign in with a link emailed to them, or with GitHub or Google when those are turned on. They see only their own storefront: its stores, jobs, backups, request log, versions, API keys and webhooks. Owners and admins can make changes, and members can only look. The platform admin invites a storefront's first owner from its Team page, and from then on its owners and admins invite the rest (the API's [accounts guide](https://github.com/hamchowderr/waas-provisioning-api/blob/main/docs/accounts.md)).
+- **A storefront's own people** (a seller's or reseller's team) sign in with a link emailed to them, or with GitHub or Google when those are turned on. They see only their own storefront: its stores, activity, backups, API log, store designs, API keys and webhooks. Owners and admins can make changes, and members can only look. The platform admin invites a storefront's first owner from its Team page, and from then on its owners and admins invite the rest (the API's [accounts guide](https://github.com/hamchowderr/waas-provisioning-api/blob/main/docs/accounts.md)).
 
 Sign-in runs on the provisioning API (Better Auth). The dashboard passes `/api/auth/*` through to it, so the session cookie belongs to the dashboard alone. The API checks every request and narrows what a storefront's people see. The list of admins is checked on every request, so removing a login locks it out at once.
 

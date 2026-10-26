@@ -29,10 +29,8 @@ const PAGES = [
 export default async function StorefrontsPage() {
   if (!(await getViewer())?.isAdmin) notFound();
   const api = getAdminApi();
-  // An API without clients yet answers 404: none of these storefronts is a client's.
-  const [products, clients] = await Promise.all([api.products(), api.clients().catch(() => [])]);
+  const products = await api.products();
   const shops = await Promise.all(products.map((p) => api.storefront(p.id).catch(() => null)));
-  const clientOf = new Set(clients.map((c) => c.productId));
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -44,7 +42,7 @@ export default async function StorefrontsPage() {
       {products.length === 0 ? (
         <Card>
           <EmptyState icon={ShoppingBagIcon} title="No storefronts yet" action={<NewSellerButton storefronts={products} />}>
-            A storefront is set up when you approve an application, add a client, or make a seller here.
+            A storefront is set up when you approve an application or make a seller here.
           </EmptyState>
         </Card>
       ) : (
@@ -70,8 +68,6 @@ export default async function StorefrontsPage() {
                         <Badge variant="outline" asChild>
                           <Link href={`/resellers/${p.resellerId}`}>Reseller: {p.resellerName ?? "unnamed"}</Link>
                         </Badge>
-                      ) : clientOf.has(p.id) ? (
-                        <Badge variant="outline">Client</Badge>
                       ) : (
                         <Badge variant="outline">Seller</Badge>
                       )}

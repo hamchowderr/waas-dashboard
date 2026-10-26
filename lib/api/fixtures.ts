@@ -54,7 +54,6 @@ import {
   type CreateTemplateInput,
   type CreateVersionInput,
   type ProductDetail,
-  type Client,
   type Reseller,
   type ResellerBill,
   type ResellerInvoice,
@@ -101,9 +100,6 @@ const products: Omit<Product, "tenantCount">[] = [
 
 /** Store limits by storefront; a storefront missing here has no limit. */
 const limits = new Map<string, number | null>([[products[0].id, 6]]);
-
-/** Clients added in one step; each has its own storefront and one site. */
-const clients: Client[] = [];
 
 /** Reseller accounts, and which reseller each storefront belongs to. */
 type FixtureReseller = ResellerSettings & { id: string; dateCreated: string; autoInvoice: boolean; stripeCustomerId: string | null };
@@ -1426,37 +1422,6 @@ export class FixtureAdminApi implements AdminApi {
     const reseller = resellers.find((r) => r.id === id);
     if (!reseller) throw new FixtureError(404, `Reseller ${id} not found`);
     return reseller;
-  }
-
-  async clients(): Promise<Client[]> {
-    // A site made in the sample data is ready at once, so its client shows as invited.
-    return clients.map((c) => {
-      const site = tenants.find((t) => t.id === c.tenantId);
-      const built = site && site.statusCode !== StatusCode.Pending;
-      return { ...c, status: built ? "invited" : "setting_up", siteDomain: site?.mainDomain ?? null };
-    });
-  }
-
-  async createClient(input: { name: string; email: string; size: StoreSize }): Promise<Client> {
-    const name = input.name.trim();
-    if (!name) throw new FixtureError(400, "name is required, at most 100 characters");
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(input.email)) throw new FixtureError(400, "email must be an email address");
-    const productId = uuid(products.length + 1, 1);
-    products.push({ id: productId, name });
-    const client: Client = {
-      productId,
-      name,
-      email: input.email.trim().toLowerCase(),
-      size: input.size,
-      status: "setting_up",
-      tenantId: this.addTenant(productId, name),
-      siteDomain: null,
-      problem: null,
-      invitationEmailed: true,
-      dateCreated: new Date().toISOString()
-    };
-    clients.unshift(client);
-    return client;
   }
 
   async resellers(): Promise<Reseller[]> {

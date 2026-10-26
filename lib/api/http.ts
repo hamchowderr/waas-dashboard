@@ -33,7 +33,6 @@ import type {
   CreateTemplateInput,
   CreateVersionInput,
   ProductDetail,
-  Client,
   Reseller,
   ResellerBill,
   ResellerInvoice,
@@ -541,14 +540,6 @@ export class HttpAdminApi implements AdminApi {
 
   private resellerPath(id: string, rest = ""): string {
     return `/admin/resellers/${encodeURIComponent(id)}${rest}`;
-  }
-
-  async clients(): Promise<Client[]> {
-    return (await this.get<Client[]>("/admin/clients"))!;
-  }
-
-  async createClient(input: { name: string; email: string; size: StoreSize }): Promise<Client> {
-    return (await this.send<Client>("POST", "/admin/clients", input))!;
   }
 
   async resellers(): Promise<Reseller[]> {

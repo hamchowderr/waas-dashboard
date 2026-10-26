@@ -33,7 +33,7 @@ const SIZES = [
 
 /**
  * Makes a new store of a storefront from its production version and latest template, then opens
- * it while it builds. For a store that isn't bought on the storefront, such as a client's site.
+ * it while it builds. For a store that isn't bought on the storefront, such as a test store or a site you give away.
  */
 export function NewSite({
   products,
