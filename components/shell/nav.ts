@@ -18,10 +18,10 @@ import {
 } from "lucide-react";
 
 /**
- * adminOnly: shown to the platform admin only.
+ * adminOnly: shown to the platform admin only. resellerOnly: shown to a reseller's own team only.
  * global: a page about every storefront at once, so links to it don't carry the storefront picked in the header.
  */
-export type NavLink = { title: string; href: string; icon: LucideIcon; adminOnly?: boolean; global?: boolean };
+export type NavLink = { title: string; href: string; icon: LucideIcon; adminOnly?: boolean; resellerOnly?: boolean; global?: boolean };
 
 /**
  * Every page in the sidebar and in the ⌘K search, grouped as the sidebar shows them: the stores themselves,
@@ -43,7 +43,8 @@ export const NAV: { title: string; links: NavLink[] }[] = [
       { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true },
       { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true },
       { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true },
-      { title: "Clients", href: "/clients", icon: ContactIcon, adminOnly: true, global: true }
+      { title: "Clients", href: "/clients", icon: ContactIcon, adminOnly: true, global: true },
+      { title: "Reseller account", href: "/reseller", icon: HandshakeIcon, resellerOnly: true, global: true }
     ]
   },
   {
@@ -65,11 +66,13 @@ export const NAV: { title: string; links: NavLink[] }[] = [
   }
 ];
 
-/** The sidebar's groups for this viewer: customers don't see the platform admin's pages, nor a group left empty. */
-export function navFor(isAdmin: boolean) {
-  return NAV.map((group) => ({ ...group, links: group.links.filter((link) => isAdmin || !link.adminOnly) })).filter(
-    (group) => group.links.length > 0
-  );
+/**
+ * The sidebar's groups for this viewer: customers don't see the platform admin's pages, only a reseller's team
+ * sees its Reseller account, and a group left empty goes.
+ */
+export function navFor(isAdmin: boolean, isReseller = false) {
+  const shown = (link: NavLink) => (link.adminOnly ? isAdmin : link.resellerOnly ? isReseller && !isAdmin : true);
+  return NAV.map((group) => ({ ...group, links: group.links.filter(shown) })).filter((group) => group.links.length > 0);
 }
 
 /** A link's address, keeping the storefront picked in the header (?product=) unless the page is about all of them. */

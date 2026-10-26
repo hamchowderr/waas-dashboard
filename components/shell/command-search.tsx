@@ -26,7 +26,15 @@ import {
 import { linkHref, navFor } from "@/components/shell/nav";
 
 /** The sidebar's search box: opens a page finder, also on ⌘K / Ctrl+K. product: the storefront picked in the header. */
-export function CommandSearch({ isAdmin, product }: { isAdmin: boolean; product: string | null }) {
+export function CommandSearch({
+  isAdmin,
+  isReseller,
+  product
+}: {
+  isAdmin: boolean;
+  isReseller: boolean;
+  product: string | null;
+}) {
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
 
@@ -81,7 +89,7 @@ export function CommandSearch({ isAdmin, product }: { isAdmin: boolean; product:
           <CommandInput placeholder="Go to a page..." />
           <CommandList>
             <CommandEmpty>No page matches.</CommandEmpty>
-            {navFor(isAdmin).map((group, index) => (
+            {navFor(isAdmin, isReseller).map((group, index) => (
               <React.Fragment key={group.title}>
                 {index > 0 && <CommandSeparator />}
                 <CommandGroup heading={group.title}>

@@ -11,8 +11,15 @@ describe("navFor", () => {
     expect(groups.flatMap((g) => g.links).some((l) => l.adminOnly)).toBe(false);
   });
 
-  it("shows every page to the platform admin", () => {
-    expect(navFor(true).flatMap((g) => g.links)).toHaveLength(NAV.flatMap((g) => g.links).length);
+  it("shows the platform admin every page but a reseller team's own", () => {
+    const links = navFor(true).flatMap((g) => g.links);
+    expect(links).toHaveLength(NAV.flatMap((g) => g.links).length - 1);
+    expect(links.some((l) => l.resellerOnly)).toBe(false);
+  });
+
+  it("gives a reseller's team its Reseller account under Accounts", () => {
+    const accounts = navFor(false, true).find((g) => g.title === "Accounts");
+    expect(accounts?.links.map((l) => l.href)).toEqual(["/reseller"]);
   });
 });
 

@@ -66,6 +66,7 @@ import {
   rotatePartnerKey,
 } from "../actions";
 import { SecretDialog } from "./secret-dialog";
+import { useCanChange } from "@/components/auth/can-change";
 
 /** Below sm the header's button moves under its text instead of squeezing it. */
 const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
@@ -117,6 +118,7 @@ export function KeysManager({
   keys: ApiKey[];
   partner?: boolean;
 }) {
+  const canChange = useCanChange();
   const [creating, setCreating] = React.useState(false);
   const [label, setLabel] = React.useState("");
   const [rotating, setRotating] = React.useState<ApiKey | null>(null);
@@ -190,7 +192,7 @@ export function KeysManager({
                 : `${activeCount} active ${activeCount === 1 ? "key" : "keys"}. Secrets are shown once, when a key is created.`}
           </CardDescription>
           <CardAction className={actionClass}>
-            <Button size="sm" onClick={() => setCreating(true)}>
+            <Button size="sm" onClick={() => setCreating(true)} disabled={!canChange}>
               <PlusIcon /> New key
             </Button>
           </CardAction>
@@ -216,7 +218,7 @@ export function KeysManager({
                       icon={KeyRoundIcon}
                       title="No keys yet"
                       action={
-                        <Button size="sm" onClick={() => setCreating(true)}>
+                        <Button size="sm" onClick={() => setCreating(true)} disabled={!canChange}>
                           <PlusIcon /> New key
                         </Button>
                       }
@@ -266,7 +268,7 @@ export function KeysManager({
                     {formatDate(key.dateCreated)}
                   </TableCell>
                   <TableCell>
-                    {key.state !== "revoked" && (
+                    {canChange && key.state !== "revoked" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon-sm">

@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { deleteTemplate, deleteVersion, setProductionVersion } from "../actions";
 import { CreateVersionDialog } from "./create-version-dialog";
 import { CreateTemplateDialog } from "./create-template-dialog";
+import { useCanChange } from "@/components/auth/can-change";
 
 /** Below sm the header's button moves under its text instead of squeezing it. */
 const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
@@ -58,6 +59,7 @@ export function VersionsManager({
   versions: Version[];
   templates: Template[];
 }) {
+  const canChange = useCanChange();
   const [pending, setPending] = React.useState<Pending>(null);
   const [creatingVersion, setCreatingVersion] = React.useState(false);
   const [creatingTemplate, setCreatingTemplate] = React.useState<"base" | "group" | null>(null);
@@ -96,7 +98,7 @@ export function VersionsManager({
                   : "No production version yet: the storefront can't create stores until one is set."}
               </CardDescription>
               <CardAction className={actionClass}>
-                <Button size="sm" onClick={() => setCreatingVersion(true)}>
+                <Button size="sm" onClick={() => setCreatingVersion(true)} disabled={!canChange}>
                   <PlusIcon /> New version
                 </Button>
               </CardAction>
@@ -151,7 +153,7 @@ export function VersionsManager({
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild disabled={!canChange}>
                             <Button variant="ghost" size="icon-sm">
                               <span className="sr-only">Actions for {version.name}</span>
                               <MoreHorizontalIcon />
@@ -186,15 +188,15 @@ export function VersionsManager({
             title="Base templates"
             description="A new version starts from one of these: the whole WordPress site with its plugins and theme."
             templates={baseTemplates}
-            onAdd={() => setCreatingTemplate("base")}
-            onDelete={(template) => setPending({ kind: "delete-template", template })}
+            onAdd={canChange ? () => setCreatingTemplate("base") : undefined}
+            onDelete={canChange ? (template) => setPending({ kind: "delete-template", template }) : undefined}
           />
           <TemplatesCard
             title="Group templates"
             description="Starting points for stores, copied into a version when it is created. The group name ties them to a plan."
             templates={groupTemplates}
-            onAdd={() => setCreatingTemplate("group")}
-            onDelete={(template) => setPending({ kind: "delete-template", template })}
+            onAdd={canChange ? () => setCreatingTemplate("group") : undefined}
+            onDelete={canChange ? (template) => setPending({ kind: "delete-template", template }) : undefined}
           />
         </TabsContent>
       </Tabs>
@@ -282,7 +284,8 @@ function TemplatesCard({
   description: string;
   templates: Template[];
   onAdd?: () => void;
-  onDelete: (template: Template) => void;
+  /** Left out for someone who may only look. */
+  onDelete?: (template: Template) => void;
 }) {
   return (
     <Card>
@@ -331,7 +334,7 @@ function TemplatesCard({
                 </TableCell>
                 <TableCell className="text-muted-foreground max-sm:hidden">{template.groupName ?? "—"}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon-sm" onClick={() => onDelete(template)}>
+                  <Button variant="ghost" size="icon-sm" onClick={() => onDelete?.(template)} disabled={!onDelete}>
                     <span className="sr-only">Delete {template.name}</span>
                     <Trash2Icon />
                   </Button>

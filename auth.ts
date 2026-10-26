@@ -84,22 +84,28 @@ const fixtureAdmin: Viewer = {
   cookie: ""
 };
 
-/** The sample storefronts' ids (lib/api/fixtures.ts): a seller's, and one a reseller runs. */
+/** The sample storefronts (lib/api/fixtures.ts): a seller's, and one the sample reseller runs. */
 const SAMPLE_SELLER = { productId: "00000001-0000-4000-8000-00000001b808", productName: "Test storefront" };
+const SAMPLE_RESELLER = {
+  productId: "00000001-0000-4000-8000-00000001d6f7",
+  productName: "Staging storefront",
+  resellerId: "0000000d-0000-4000-8000-00000014e534"
+};
 
 /**
  * Sample mode's viewer. WAAS_FIXTURE_VIEWER=seller or member shows the dashboard as a seller's owner or a
- * "Can view" member of the first sample storefront; anything else, the platform admin.
+ * "Can view" member of the first sample storefront, reseller as the owner on the sample reseller's team;
+ * anything else, the platform admin.
  */
 function fixtureViewer(): Viewer {
   const as = process.env.WAAS_FIXTURE_VIEWER;
-  if (as !== "seller" && as !== "member") return fixtureAdmin;
+  if (as !== "seller" && as !== "member" && as !== "reseller") return fixtureAdmin;
   const membership: Membership = {
     organizationId: "sample-org",
-    organizationName: SAMPLE_SELLER.productName,
-    ...SAMPLE_SELLER,
-    role: as === "member" ? "member" : "owner",
-    resellerId: null
+    ...(as === "reseller"
+      ? { ...SAMPLE_RESELLER, organizationName: "Sample partner" }
+      : { ...SAMPLE_SELLER, organizationName: SAMPLE_SELLER.productName, resellerId: null }),
+    role: as === "member" ? "member" : "owner"
   };
   return {
     ...fixtureAdmin,
