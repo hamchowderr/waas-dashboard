@@ -34,7 +34,7 @@ export const NAV: { title: string; links: NavLink[] }[] = [
       { title: "Overview", href: "/", icon: GaugeIcon },
       { title: "Stores", href: "/stores", icon: StoreIcon },
       { title: "Backups", href: "/backups", icon: ArchiveIcon },
-      { title: "Jobs", href: "/jobs", icon: ListChecksIcon }
+      { title: "Activity", href: "/jobs", icon: ListChecksIcon }
     ]
   },
   {
@@ -50,7 +50,7 @@ export const NAV: { title: string; links: NavLink[] }[] = [
   {
     title: "Storefront setup",
     links: [
-      { title: "Versions & templates", href: "/versions", icon: LayersIcon },
+      { title: "Store designs", href: "/versions", icon: LayersIcon },
       { title: "Plugins", href: "/plugins", icon: PlugIcon },
       { title: "Team", href: "/team", icon: UsersIcon },
       { title: "Branding", href: "/branding", icon: PaletteIcon }
@@ -61,7 +61,7 @@ export const NAV: { title: string; links: NavLink[] }[] = [
     links: [
       { title: "API keys", href: "/keys", icon: KeyRoundIcon },
       { title: "Webhooks", href: "/webhooks", icon: WebhookIcon },
-      { title: "Requests", href: "/requests", icon: ActivityIcon }
+      { title: "API log", href: "/requests", icon: ActivityIcon }
     ]
   }
 ];

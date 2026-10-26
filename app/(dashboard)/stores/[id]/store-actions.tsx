@@ -26,11 +26,14 @@ import { deleteStore, resumeStore, suspendStore } from "../../actions";
 export function StoreActions({
   tenantId,
   storeName,
+  storesHref,
   isSuspended,
   canSuspend
 }: {
   tenantId: string;
   storeName: string;
+  /** The Stores list to go back to after a delete, in the store's own storefront. */
+  storesHref: string;
   isSuspended: boolean;
   /** False for a failed store, which can only be deleted until it's fixed. */
   canSuspend: boolean;
@@ -43,7 +46,7 @@ export function StoreActions({
         ) : (
           <SuspendStore tenantId={tenantId} storeName={storeName} />
         ))}
-      <DeleteStore tenantId={tenantId} storeName={storeName} />
+      <DeleteStore tenantId={tenantId} storeName={storeName} storesHref={storesHref} />
     </>
   );
 }
@@ -129,7 +132,7 @@ function ResumeStore({ tenantId, storeName }: { tenantId: string; storeName: str
   );
 }
 
-function DeleteStore({ tenantId, storeName }: { tenantId: string; storeName: string }) {
+function DeleteStore({ tenantId, storeName, storesHref }: { tenantId: string; storeName: string; storesHref: string }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [typed, setTyped] = React.useState("");
@@ -145,7 +148,7 @@ function DeleteStore({ tenantId, storeName }: { tenantId: string; storeName: str
       }
       toast.success(`Deleting ${storeName}. Its backups are kept on the Backups page.`);
       setOpen(false);
-      router.push("/stores");
+      router.push(storesHref);
     });
 
   return (

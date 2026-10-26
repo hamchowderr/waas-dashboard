@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { StorefrontCard } from "../keys/storefront-card";
 import { VersionsManager } from "./versions-manager";
 
-export const metadata: Metadata = { title: "Versions & templates" };
+export const metadata: Metadata = { title: "Store designs" };
 
 export default async function VersionsPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const { product: productId } = await searchParams;
@@ -27,10 +27,10 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
     if (products[0]) redirect(`/versions?product=${products[0].id}`);
     return (
       <div className="space-y-4 lg:space-y-6">
-        <PageHeader title="Versions & templates" />
+        <PageHeader title="Store designs" />
         <Card>
           <EmptyState icon={StoreIcon} title="No storefronts yet">
-            Each storefront has its own versions and templates. A storefront is set up when a seller or reseller is approved.
+            Each storefront has its own store designs. A storefront is set up when a seller or reseller is approved.
           </EmptyState>
         </Card>
       </div>
@@ -46,8 +46,8 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
-        title="Versions & templates"
-        description={`${product.name}: the WordPress builds its stores run on, and the templates they start from.`}
+        title="Store designs"
+        description={`What a new store from ${product.name} gets: the WordPress version it runs on, and the template site it starts from.`}
       />
       <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} />
       <VersionsManager productId={product.id} versions={versions} templates={templates} />

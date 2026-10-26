@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: "Storefronts" };
 /** A storefront's own pages, each opened on it. */
 const PAGES = [
   { title: "Stores", href: "/stores" },
-  { title: "Versions", href: "/versions" },
+  { title: "Store designs", href: "/versions" },
   { title: "Plugins", href: "/plugins" },
   { title: "Team", href: "/team" },
   { title: "Branding", href: "/branding" },

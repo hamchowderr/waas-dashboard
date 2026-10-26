@@ -147,7 +147,8 @@ export type JobsList = {
   truncated: boolean;
 };
 
-export type TenantFilter = { productId?: string };
+/** acrossReseller: a reseller team's stores on every storefront of its account (the API's ?across=reseller). */
+export type TenantFilter = { productId?: string; acrossReseller?: boolean };
 export type BackupFilter = { productId?: string };
 export type JobFilter = { productId?: string };
 
