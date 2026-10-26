@@ -5,12 +5,18 @@ import {
   Check,
   ChevronRight,
   DatabaseIcon,
+  ExternalLinkIcon,
   Eye,
+  KeyRoundIcon,
   ListChecksIcon,
+  PaletteIcon,
   ServerIcon,
+  StoreIcon,
+  UsersIcon,
   type LucideIcon
 } from "lucide-react";
 
+import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import type { Overview } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -99,11 +105,30 @@ const services: { key: "api" | "database" | "queue"; name: string; icon: LucideI
   { key: "queue", name: "Job queue", icon: ListChecksIcon }
 ];
 
+/** A customer's first steps, each on the page that does it. */
+const firstSteps: { title: string; detail: string; href: string; icon: LucideIcon }[] = [
+  { title: "Make a store", detail: "Start a new site, or move one in from another host.", href: "/stores", icon: StoreIcon },
+  { title: "Invite your team", detail: "Who can sign in here, and who can only look.", href: "/team", icon: UsersIcon },
+  { title: "Add your brand", detail: "Your name, logo and color on this dashboard.", href: "/branding", icon: PaletteIcon },
+  { title: "Connect your shop or app", detail: "API keys for the WaaS Host plugin, n8n, Zapier or your own code.", href: "/keys", icon: KeyRoundIcon }
+];
+
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const { product } = await searchParams;
   const api = getAdminApi();
-  const [overview, jobs] = await Promise.all([api.overview(product), api.jobs({ productId: product })]);
-  const storefront = product ? overview.products.find((p) => p.id === product) : undefined;
+  const [overview, jobs, viewer] = await Promise.all([
+    api.overview(product),
+    api.jobs({ productId: product }),
+    getViewer().catch(() => null)
+  ]);
+  const isAdmin = viewer?.isAdmin ?? false;
+  // A customer sees their own storefront only, so the overview is about it.
+  const storefront = product
+    ? overview.products.find((p) => p.id === product)
+    : !isAdmin && overview.products.length === 1
+      ? overview.products[0]
+      : undefined;
+  const shop = !isAdmin && storefront ? await api.storefront(storefront.id).catch(() => null) : null;
   const failedJobs = jobs.items.filter((job) => job.state === "failed").slice(0, 5);
   const { health } = overview;
   const serviceUp = { api: health.ok, database: health.checks.database === "up", queue: health.checks.queue === "up" };
@@ -120,35 +145,86 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     <div className="space-y-4 lg:space-y-6">
       <PageHeader title="Overview" description={`${storefront?.name ?? "All storefronts"} · updated ${formatDateTime(health.checkedAt)}`} />
 
-      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats(overview).map((item) => (
-          <li key={item.name}>
-            <StatCard stat={item} href={withProduct(item.href, product)} />
-          </li>
-        ))}
+      {/* Customers see their stores; the platform's own services are the platform admin's to watch. */}
+      <ul className={cn("grid gap-4 sm:grid-cols-2", isAdmin ? "xl:grid-cols-4" : "lg:grid-cols-3")}>
+        {stats(overview)
+          .filter((item) => isAdmin || item.href !== "#health")
+          .map((item) => (
+            <li key={item.name}>
+              <StatCard stat={item} href={withProduct(item.href, product)} />
+            </li>
+          ))}
       </ul>
 
       <div className="grid items-start gap-4 lg:gap-6 xl:grid-cols-3">
-        {/* Current state only, until uptime history exists. */}
-        <Card id="health" className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Platform status</CardTitle>
-            <CardDescription>From the API&apos;s health check, {formatAgo(health.checkedAt)}</CardDescription>
-            <CardAction>
-              <HealthBadge ok={health.ok} />
-            </CardAction>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <ul className="space-y-4">
-              {services.map((service) => (
-                <ServiceRow key={service.key} name={service.name} icon={service.icon} up={serviceUp[service.key]} />
-              ))}
-            </ul>
-            <p className="bg-muted/50 text-muted-foreground rounded-lg border p-3 text-sm">
-              Daily uptime history will show here once outside uptime monitoring is set up.
-            </p>
-          </CardContent>
-        </Card>
+        {/* The platform's services for its admin (current state only, until uptime history exists); first steps for a customer. */}
+        {isAdmin ? (
+          <Card id="health" className="xl:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg">Platform status</CardTitle>
+              <CardDescription>From the API&apos;s health check, {formatAgo(health.checkedAt)}</CardDescription>
+              <CardAction>
+                <HealthBadge ok={health.ok} />
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <ul className="space-y-4">
+                {services.map((service) => (
+                  <ServiceRow key={service.key} name={service.name} icon={service.icon} up={serviceUp[service.key]} />
+                ))}
+              </ul>
+              <p className="bg-muted/50 text-muted-foreground rounded-lg border p-3 text-sm">
+                Daily uptime history will show here once outside uptime monitoring is set up.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="xl:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg">Start here</CardTitle>
+              <CardDescription>
+                {shop ? (
+                  <>
+                    Your shop is{" "}
+                    <a href={`https://${shop.domain}`} target="_blank" rel="noreferrer" className="text-foreground inline-flex items-center gap-1 hover:underline">
+                      {shop.domain}
+                      <ExternalLinkIcon className="size-3.5" aria-hidden />
+                    </a>
+                  </>
+                ) : (
+                  "The pages you need first. The sidebar has the rest."
+                )}
+              </CardDescription>
+              <CardAction>
+                <HealthBadge ok={health.ok} />
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {firstSteps.map((step) => (
+                  <li key={step.href}>
+                    <Link
+                      href={step.href}
+                      className="hover:bg-muted/60 focus-visible:ring-ring/50 flex h-full items-start gap-3 rounded-lg border p-3 outline-none focus-visible:ring-3">
+                      <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-md border">
+                        <step.icon className="size-4" aria-hidden />
+                      </span>
+                      <span className="min-w-0 text-sm">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          {step.title}
+                          {step.href === "/stores" && overview.tenants.total > 0 && (
+                            <Check className="size-4 text-green-600 dark:text-green-400" aria-label="Done" />
+                          )}
+                        </span>
+                        <span className="text-muted-foreground block">{step.detail}</span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

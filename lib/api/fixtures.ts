@@ -689,14 +689,19 @@ const teams: FixtureTeam[] = [
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
-  async overview(productId?: string): Promise<Overview> {
+  /** scope: the one storefront a signed-in customer sees, as the API narrows /account to it. */
+  constructor(private readonly scope?: string) {}
+
+  async overview(productId = this.scope): Promise<Overview> {
     const mine = byProduct(tenants, productId);
     const ids = new Set(mine.map((t) => t.id));
     const myBackups = productId ? backups.filter((b) => ids.has(b.tenantId)) : backups;
     const myJobs = productId ? jobs.filter((j) => j.tenantId && ids.has(j.tenantId)) : jobs;
     return {
       health: health(),
-      products: products.map((p) => ({ ...p, tenantCount: tenants.filter((t) => t.productId === p.id).length })),
+      products: products
+        .filter((p) => !this.scope || p.id === this.scope)
+        .map((p) => ({ ...p, tenantCount: tenants.filter((t) => t.productId === p.id).length })),
       tenants: { ...counts(mine), total: mine.length, suspended: mine.filter((t) => t.isSuspended).length },
       versions: { pending: 0, done: versions.length, failed: 0, removing: 0 },
       backups: { ...counts(myBackups), total: myBackups.length },
@@ -709,7 +714,7 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async tenants(filter: TenantFilter = {}): Promise<Listing<Tenant>> {
-    return listing(byProduct(tenants, filter.productId).map(toRow));
+    return listing(byProduct(tenants, filter.productId ?? this.scope).map(toRow));
   }
 
   async tenant(id: string): Promise<TenantDetail | null> {
@@ -729,10 +734,11 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async backups(filter: BackupFilter = {}): Promise<Listing<Backup>> {
-    return listing(byProduct(backups, filter.productId));
+    return listing(byProduct(backups, filter.productId ?? this.scope));
   }
 
   async requests(filter: RequestFilter = {}): Promise<RequestLog> {
+    filter = { ...filter, productId: filter.productId ?? this.scope };
     const ranges = { ok: [0, 399], "client-error": [400, 499], "server-error": [500, 599], error: [400, 599] } as const;
     const items = requestLog.filter((r) => {
       // A storefront's log also has failed sign-ins with its keys, which carry no storefront.
@@ -760,6 +766,7 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async jobs(filter: JobFilter = {}): Promise<JobsList> {
+    filter = { ...filter, productId: filter.productId ?? this.scope };
     const productName = products.find((p) => p.id === filter.productId)?.name;
     // Like the API: retried and dismissed failures leave the list (their new job is queued instead).
     const listed = jobs.filter((j) => j.state === "queued" || j.state === "running" || j.state === "failed");
@@ -776,7 +783,7 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async products(): Promise<ProductDetail[]> {
-    return products.map((p) => ({
+    return products.filter((p) => !this.scope || p.id === this.scope).map((p) => ({
       ...p,
       tenantCount: tenants.filter((t) => t.productId === p.id).length,
       maxTenants: limits.get(p.id) ?? null,
@@ -1131,7 +1138,7 @@ export class FixtureAdminApi implements AdminApi {
     return webhook;
   }
 
-  async webhooks(productId?: string): Promise<WebhookEndpoint[]> {
+  async webhooks(productId = this.scope): Promise<WebhookEndpoint[]> {
     const dayAgo = Date.now() - DAY;
     return byProduct(webhooks, productId)
       .map((w): WebhookEndpoint => {
@@ -1154,6 +1161,7 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async webhookDeliveries(filter: WebhookFilter = {}): Promise<Listing<WebhookDelivery>> {
+    filter = { ...filter, productId: filter.productId ?? this.scope };
     const items = webhookDeliveries
       .filter(
         (d) =>

@@ -45,6 +45,7 @@ You need a running provisioning API with `ADMIN_TOKEN` set and sign-in turned on
 | `ALLOWED_GITHUB_LOGINS` | platform admins | GitHub usernames that see every storefront, comma separated |
 | `AUTH_PROVIDERS` | sign-in | ways to sign in: `email` (default, an emailed link), plus `github` or `google` once the API has those set up, e.g. `email,github` |
 | `WAAS_API_FIXTURES` | sample data | `1` to show built-in sample data instead of the API, with no sign-in |
+| `WAAS_FIXTURE_VIEWER` | sample data | who the sample data is shown to: the platform admin (default), `seller` (a seller's owner) or `member` (a "Can view" member) |
 
 `.env.example` lists them.
 

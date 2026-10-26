@@ -75,7 +75,7 @@ export interface Viewer {
   cookie: string;
 }
 
-const fixtureViewer: Viewer = {
+const fixtureAdmin: Viewer = {
   user: { id: "fixture", name: "Sample Admin", email: "admin@example.com", image: null, githubLogin: "sample-admin" },
   isAdmin: true,
   memberships: [],
@@ -83,6 +83,37 @@ const fixtureViewer: Viewer = {
   brand: null,
   cookie: ""
 };
+
+/** The sample storefronts' ids (lib/api/fixtures.ts): a seller's, and one a reseller runs. */
+const SAMPLE_SELLER = { productId: "00000001-0000-4000-8000-00000001b808", productName: "Test storefront" };
+
+/**
+ * Sample mode's viewer. WAAS_FIXTURE_VIEWER=seller or member shows the dashboard as a seller's owner or a
+ * "Can view" member of the first sample storefront; anything else, the platform admin.
+ */
+function fixtureViewer(): Viewer {
+  const as = process.env.WAAS_FIXTURE_VIEWER;
+  if (as !== "seller" && as !== "member") return fixtureAdmin;
+  const membership: Membership = {
+    organizationId: "sample-org",
+    organizationName: SAMPLE_SELLER.productName,
+    ...SAMPLE_SELLER,
+    role: as === "member" ? "member" : "owner",
+    resellerId: null
+  };
+  return {
+    ...fixtureAdmin,
+    user: { id: "fixture-seller", name: "Sample Seller", email: "seller@example.com", image: null, githubLogin: null },
+    isAdmin: false,
+    memberships: [membership],
+    active: membership
+  };
+}
+
+/** The storefront sample mode narrows to, like the API does for a signed-in customer; none for the admin. */
+export function fixtureScope(): string | undefined {
+  return fixtureViewer().active?.productId;
+}
 
 /** Better Auth's cookies from this request, as a Cookie header; empty when there are none. */
 export async function authCookieHeader(): Promise<string> {
@@ -113,7 +144,7 @@ export async function sessionHeaders(cookie: string): Promise<Record<string, str
  * throws, so a page shows its error instead of sending the person back to sign in.
  */
 export const getViewer = cache(async (): Promise<Viewer | null> => {
-  if (process.env.WAAS_API_FIXTURES === "1") return fixtureViewer;
+  if (process.env.WAAS_API_FIXTURES === "1") return fixtureViewer();
   const baseUrl = process.env.WAAS_API_URL;
   if (!baseUrl) throw new Error("Set WAAS_API_URL, or WAAS_API_FIXTURES=1 for sample data.");
   const cookie = await authCookieHeader();

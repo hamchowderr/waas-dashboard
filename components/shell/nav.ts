@@ -7,49 +7,74 @@ import {
   InboxIcon,
   KeyRoundIcon,
   LayersIcon,
+  ListChecksIcon,
   PaletteIcon,
   PlugIcon,
-  ListChecksIcon,
+  ShoppingBagIcon,
   StoreIcon,
   UsersIcon,
   WebhookIcon,
   type LucideIcon
 } from "lucide-react";
 
-/** adminOnly: shown to the platform admin only. */
-export type NavLink = { title: string; href: string; icon: LucideIcon; adminOnly?: boolean };
+/**
+ * adminOnly: shown to the platform admin only.
+ * global: a page about every storefront at once, so links to it don't carry the storefront picked in the header.
+ */
+export type NavLink = { title: string; href: string; icon: LucideIcon; adminOnly?: boolean; global?: boolean };
 
-/** Every page in the sidebar and in the ⌘K search, grouped as the sidebar shows them. */
+/**
+ * Every page in the sidebar and in the ⌘K search, grouped as the sidebar shows them: the stores themselves,
+ * the accounts that sell them (platform admin), how a storefront's stores are set up, and what developers use.
+ */
 export const NAV: { title: string; links: NavLink[] }[] = [
   {
-    title: "Operations",
+    title: "Stores",
     links: [
       { title: "Overview", href: "/", icon: GaugeIcon },
-      { title: "Clients", href: "/clients", icon: ContactIcon, adminOnly: true },
       { title: "Stores", href: "/stores", icon: StoreIcon },
-      { title: "Jobs", href: "/jobs", icon: ListChecksIcon },
       { title: "Backups", href: "/backups", icon: ArchiveIcon },
-      { title: "Requests", href: "/requests", icon: ActivityIcon },
-      { title: "Webhooks", href: "/webhooks", icon: WebhookIcon }
+      { title: "Jobs", href: "/jobs", icon: ListChecksIcon }
     ]
   },
   {
-    title: "Storefronts",
+    title: "Accounts",
     links: [
-      { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true },
-      { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true },
+      { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true },
+      { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true },
+      { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true },
+      { title: "Clients", href: "/clients", icon: ContactIcon, adminOnly: true, global: true }
+    ]
+  },
+  {
+    title: "Storefront setup",
+    links: [
       { title: "Versions & templates", href: "/versions", icon: LayersIcon },
       { title: "Plugins", href: "/plugins", icon: PlugIcon },
-      { title: "API keys", href: "/keys", icon: KeyRoundIcon },
       { title: "Team", href: "/team", icon: UsersIcon },
       { title: "Branding", href: "/branding", icon: PaletteIcon }
+    ]
+  },
+  {
+    title: "Developers",
+    links: [
+      { title: "API keys", href: "/keys", icon: KeyRoundIcon },
+      { title: "Webhooks", href: "/webhooks", icon: WebhookIcon },
+      { title: "Requests", href: "/requests", icon: ActivityIcon }
     ]
   }
 ];
 
-/** The sidebar's groups for this viewer: customers don't see the platform admin's pages. */
+/** The sidebar's groups for this viewer: customers don't see the platform admin's pages, nor a group left empty. */
 export function navFor(isAdmin: boolean) {
-  return NAV.map((group) => ({ ...group, links: group.links.filter((link) => isAdmin || !link.adminOnly) }));
+  return NAV.map((group) => ({ ...group, links: group.links.filter((link) => isAdmin || !link.adminOnly) })).filter(
+    (group) => group.links.length > 0
+  );
+}
+
+/** A link's address, keeping the storefront picked in the header (?product=) unless the page is about all of them. */
+export function linkHref(link: NavLink, product: string | null): string {
+  return product && !link.global ? `${link.href}?product=${encodeURIComponent(product)}` : link.href;
 }
 
 /** A link is current on its own page and on pages below it (a store under Stores). */

@@ -35,7 +35,11 @@ export async function NoStorefront({ viewer }: { viewer: Viewer }) {
       description={
         <>
           Signed in as {viewer.user.email}, which isn&apos;t part of a storefront. Open the invitation link you were sent, or ask
-          the person who invited you to send one to this address.
+          the person who invited you to send one to this address. Bought a website for yourself? Manage it at{" "}
+          <a href="https://anypress.io/account" className="text-foreground font-medium underline-offset-4 hover:underline">
+            anypress.io/account
+          </a>
+          .
         </>
       }>
       <SignOutButton />

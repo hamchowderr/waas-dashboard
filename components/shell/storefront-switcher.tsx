@@ -2,8 +2,10 @@
 
 import { CheckIcon, ChevronsUpDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import { pickStorefront } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -38,7 +40,8 @@ function Option({
 }: {
   index: number;
   name: string;
-  count: number;
+  /** Left out where the store count isn't known (a customer's own storefronts). */
+  count?: number;
   checked: boolean;
   onSelect: () => void;
 }) {
@@ -47,7 +50,7 @@ function Option({
       <Dot index={index} className="size-6" />
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-medium">{name}</span>
-        <span className="text-muted-foreground text-xs">{count} stores</span>
+        {count !== undefined && <span className="text-muted-foreground text-xs">{count} stores</span>}
       </span>
       {checked && <CheckIcon className="ms-auto" />}
     </DropdownMenuItem>
@@ -103,6 +106,55 @@ export function StorefrontSwitcher({ storefronts }: { storefronts: StorefrontOpt
             count={storefront.tenantCount}
             checked={storefront.id === selectedId}
             onSelect={() => select(storefront.id)}
+          />
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** Storefronts a customer belongs to, for MyStorefrontSwitcher. */
+export type StorefrontMembership = { organizationId: string; productId: string; productName: string; active: boolean };
+
+/**
+ * For someone on more than one storefront's team (a reseller's team): which one the pages show. Unlike the
+ * platform admin's switcher it changes the storefront they act for, so it goes back to the Overview.
+ */
+export function MyStorefrontSwitcher({ memberships }: { memberships: StorefrontMembership[] }) {
+  const router = useRouter();
+  const activeIndex = memberships.findIndex((m) => m.active);
+  const active = memberships[activeIndex];
+
+  async function switchTo(storefront: StorefrontMembership) {
+    try {
+      await pickStorefront(storefront);
+      router.replace("/");
+      router.refresh();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <Dot index={activeIndex} className="size-4" />
+          <span className="hidden font-medium md:inline">{active?.productName ?? "Choose a storefront"}</span>
+          <ChevronsUpDown className="text-muted-foreground size-3.5!" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64">
+        <DropdownMenuLabel>Your storefronts</DropdownMenuLabel>
+        {memberships.map((m, index) => (
+          <Option
+            key={m.productId}
+            index={index}
+            name={m.productName}
+            checked={m.active}
+            onSelect={() => {
+              if (!m.active) void switchTo(m);
+            }}
           />
         ))}
       </DropdownMenuContent>

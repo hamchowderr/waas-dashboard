@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { BookOpenIcon, LifeBuoyIcon } from "lucide-react";
 
 import { useIsTablet } from "@/hooks/use-mobile";
 import { useAppearance } from "@/components/appearance-provider";
@@ -23,10 +24,14 @@ import {
 } from "@/components/ui/sidebar";
 import { BrandMark } from "@/components/shell/brand-mark";
 import { CommandSearch } from "@/components/shell/command-search";
-import { isCurrent, navFor } from "@/components/shell/nav";
+import { isCurrent, linkHref, navFor } from "@/components/shell/nav";
 
 /** The storefront's own name, logo and support address (Branding page); absent for the platform's own look. */
 export type SidebarBrand = { name: string | null; logoUrl: string | null; supportEmail: string | null };
+
+/** Where a customer on the platform's own look gets help. */
+const SUPPORT_EMAIL = "support@anypress.io";
+const DOCS_URL = "https://shop.anypress.io/docs/";
 
 /** pendingApplications: shown beside Applications when some are waiting (platform admin only). */
 export function AppSidebar({
@@ -39,6 +44,8 @@ export function AppSidebar({
   brand?: SidebarBrand | null;
 }) {
   const pathname = usePathname();
+  // The storefront picked in the header (platform admin) stays picked from page to page.
+  const product = useSearchParams().get("product");
   const { appearance } = useAppearance();
   const { isMobile, setOpen, setOpenMobile } = useSidebar();
   const isTablet = useIsTablet();
@@ -81,7 +88,7 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <CommandSearch isAdmin={isAdmin} />
+        <CommandSearch isAdmin={isAdmin} product={product} />
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="h-full [&>[data-slot=scroll-area-viewport]]:scroll-fade">
@@ -93,7 +100,7 @@ export function AppSidebar({
                   {group.links.map((link) => (
                     <SidebarMenuItem key={link.href}>
                       <SidebarMenuButton asChild tooltip={link.title} isActive={isCurrent(pathname, link.href)}>
-                        <Link href={link.href}>
+                        <Link href={linkHref(link, product)}>
                           <link.icon />
                           <span>{link.title}</span>
                         </Link>
@@ -109,7 +116,7 @@ export function AppSidebar({
           ))}
         </ScrollArea>
       </SidebarContent>
-      {brand && (
+      {brand ? (
         <SidebarFooter className="text-muted-foreground gap-1 px-4 pb-3 text-xs group-data-[collapsible=icon]:hidden">
           {brand.supportEmail && (
             <a href={`mailto:${brand.supportEmail}`} className="hover:text-foreground truncate">
@@ -118,6 +125,19 @@ export function AppSidebar({
           )}
           <span>Powered by AnyPress</span>
         </SidebarFooter>
+      ) : (
+        !isAdmin && (
+          <SidebarFooter className="text-muted-foreground gap-2 px-4 pb-3 text-xs group-data-[collapsible=icon]:hidden">
+            <a href={DOCS_URL} target="_blank" rel="noreferrer" className="hover:text-foreground flex items-center gap-2">
+              <BookOpenIcon className="size-3.5" aria-hidden />
+              Guides and docs
+            </a>
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-foreground flex items-center gap-2 truncate">
+              <LifeBuoyIcon className="size-3.5" aria-hidden />
+              Help: {SUPPORT_EMAIL}
+            </a>
+          </SidebarFooter>
+        )
       )}
     </Sidebar>
   );
