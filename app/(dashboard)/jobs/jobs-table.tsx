@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import type { Job } from "@/lib/api/types";
 import { formatAgo, formatDateTime, jobTypeLabel, jobTypeLabels } from "@/lib/format";
+import { useCanChange } from "@/components/auth/can-change";
 
 const columnLabels: Record<string, string> = {
   type: "Job",
@@ -129,6 +130,7 @@ function report(result: Awaited<ReturnType<typeof retryFailures>>, success: (n: 
 }
 
 export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: string }) {
+  const canChange = useCanChange();
   const [viewing, setViewing] = React.useState<Job | null>(null);
   const [pending, startTransition] = React.useTransition();
 
@@ -165,7 +167,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
         initialSorting={[{ id: "when", desc: true }]}
         emptyText="No jobs here. Finished jobs are not listed."
         onRowClick={setViewing}
-        selectable={(job) => job.state === "failed"}
+        selectable={(job) => canChange && job.state === "failed"}
         bulkActions={(selected, clear) => (
           <>
             <Button
@@ -255,7 +257,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
                     <Link href={`/stores/${viewing.tenantId}`}>Open store</Link>
                   </Button>
                 )}
-                {viewing.state === "failed" && (
+                {canChange && viewing.state === "failed" && (
                   <Button
                     variant="outline"
                     disabled={pending}
@@ -267,7 +269,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
                     <XIcon /> Dismiss
                   </Button>
                 )}
-                {viewing.state === "failed" ? (
+                {canChange && viewing.state === "failed" ? (
                   <Button
                     disabled={pending}
                     onClick={() =>

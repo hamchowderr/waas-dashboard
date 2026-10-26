@@ -44,6 +44,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { deleteWebhook, rotateWebhookSecret, testWebhook, updateWebhook } from "../actions";
 import { AddEndpointDialog } from "./add-endpoint-dialog";
+import { useCanChange } from "@/components/auth/can-change";
 
 /** Below sm the header's button moves under its text instead of squeezing it. */
 const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
@@ -98,6 +99,7 @@ export function WebhookEndpoints({
   /** The storefront the page is narrowed to, if any. */
   productId?: string;
 }) {
+  const canChange = useCanChange();
   const [pending, setPending] = React.useState<Pending>(null);
   const [adding, setAdding] = React.useState(false);
   const [shown, setShown] = React.useState<ShownSecret>(null);
@@ -114,7 +116,7 @@ export function WebhookEndpoints({
             the signature.
           </CardDescription>
           <CardAction className={actionClass}>
-            <Button size="sm" onClick={() => setAdding(true)} disabled={storefronts.length === 0}>
+            <Button size="sm" onClick={() => setAdding(true)} disabled={!canChange || storefronts.length === 0}>
               <PlusIcon /> Add endpoint
             </Button>
           </CardAction>
@@ -142,7 +144,7 @@ export function WebhookEndpoints({
                       icon={WebhookIcon}
                       title="No endpoints yet"
                       action={
-                        <Button size="sm" onClick={() => setAdding(true)} disabled={storefronts.length === 0}>
+                        <Button size="sm" onClick={() => setAdding(true)} disabled={!canChange || storefronts.length === 0}>
                           <PlusIcon /> Add endpoint
                         </Button>
                       }>
@@ -187,7 +189,7 @@ export function WebhookEndpoints({
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild disabled={!canChange}>
                         <Button variant="ghost" size="icon-sm">
                           <span className="sr-only">Actions for {endpoint.url}</span>
                           <MoreHorizontalIcon />

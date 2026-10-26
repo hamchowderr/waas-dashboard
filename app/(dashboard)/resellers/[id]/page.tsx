@@ -1,41 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import type { ResellerInvoice, StoreSize } from "@/lib/api/types";
-import { formatDate } from "@/lib/format";
 import { PageHeader } from "@/components/admin/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KeysManager } from "../../keys/keys-manager";
 import { BrandingEditor } from "../../branding/branding-editor";
 import { TeamManager } from "../../team/team-manager";
-import { formatDays, formatMoney, monthRange } from "../usage";
-import { BillDownload } from "./bill-download";
+import { formatMoney, monthRange } from "../usage";
 import { DeleteReseller } from "./delete-reseller";
 import { ResellerSettingsForm } from "./settings-form";
 import { SendInvoice } from "./send-invoice";
 import { ResellerStorefronts } from "./storefronts";
+import { BillCard, InvoicesCard } from "../bill-parts";
 
 export const metadata: Metadata = { title: "Reseller" };
 
-const SIZE_LABELS: Record<StoreSize, string> = { small: "Small", medium: "Medium", large: "Large" };
 
-const INVOICE_STATUS: Record<ResellerInvoice["status"], { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  sending: { label: "Sending", variant: "secondary" },
-  nothing_due: { label: "Nothing due", variant: "outline" },
-  open: { label: "Waiting for payment", variant: "secondary" },
-  paid: { label: "Paid", variant: "default" },
-  void: { label: "Voided", variant: "outline" },
-  uncollectible: { label: "Uncollectible", variant: "destructive" },
-  failed: { label: "Not sent", variant: "destructive" }
-};
 
 const TABS = ["bill", "keys", "team", "branding", "settings"] as const;
 
@@ -87,84 +72,14 @@ export default async function ResellerPage({
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         <TabsContent value="bill" className="grid gap-4 lg:grid-cols-3 lg:gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-start justify-between gap-2">
-            <div className="space-y-1.5">
-              <CardTitle>
-                Bill for {month.label}
-                {!bill.complete && <span className="text-muted-foreground font-normal"> (so far)</span>}
-              </CardTitle>
-              <CardDescription>
-                Each store pays its size&apos;s list price less {bill.wholesalePercent}%, for the days it was live. Suspended stores don&apos;t
-                count.{" "}
-                {autoSend ? (
-                  <>Stripe sends it on the 1st{bill.billingEmail && <> to {bill.billingEmail}</>}, charging the card on file when there is one.</>
-                ) : (
-                  bill.billingEmail && <>Send it to {bill.billingEmail}.</>
-                )}
-              </CardDescription>
-            </div>
-            <div className="flex gap-1">
-              <BillDownload resellerName={reseller.name} bill={bill} />
-              <Button asChild variant="outline" size="icon" aria-label="Previous month">
-                <Link href={`/resellers/${reseller.id}?month=${month.previous}&tab=bill`}>
-                  <ChevronLeftIcon />
-                </Link>
-              </Button>
-              {month.month < current && (
-                <Button asChild variant="outline" size="icon" aria-label="Next month">
-                  <Link href={`/resellers/${reseller.id}?month=${month.next}&tab=bill`}>
-                    <ChevronRightIcon />
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-6">Storefront</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead className="text-right">Store-days</TableHead>
-                  <TableHead className="text-right">Price each</TableHead>
-                  <TableHead className="pr-6 text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bill.lines.map((l) => (
-                  <TableRow key={`${l.productId}-${l.size}`}>
-                    <TableCell className="pl-6">{l.name ?? <span className="text-muted-foreground">Deleted storefront</span>}</TableCell>
-                    <TableCell>{SIZE_LABELS[l.size]}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatDays(l.storeDays)}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatMoney(l.wholesalePriceCents)}
-                      <span className="text-muted-foreground"> of {formatMoney(l.listPriceCents)}</span>
-                    </TableCell>
-                    <TableCell className="pr-6 text-right tabular-nums">{formatMoney(l.amountCents)}</TableCell>
-                  </TableRow>
-                ))}
-                {bill.lines.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-muted-foreground py-8 text-center">
-                      No live stores this month.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-              {bill.lines.length > 0 && (
-                <TableFooter>
-                  <TableRow>
-                    <TableCell className="pl-6 font-medium" colSpan={4}>
-                      Total
-                    </TableCell>
-                    <TableCell className="pr-6 text-right font-medium tabular-nums">{formatMoney(bill.totalCents)}</TableCell>
-                  </TableRow>
-                </TableFooter>
-              )}
-            </Table>
-          </CardContent>
-        </Card>
+        <BillCard
+          bill={bill}
+          month={month}
+          current={current}
+          resellerName={reseller.name}
+          autoSend={autoSend}
+          monthHref={(m) => `/resellers/${reseller.id}?month=${m}&tab=bill`}
+        />
         <Card>
           <CardHeader>
             <CardTitle>Storefronts</CardTitle>
@@ -179,19 +94,18 @@ export default async function ResellerPage({
             />
           </CardContent>
         </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-start justify-between gap-2">
-            <div className="space-y-1.5">
-              <CardTitle>Invoices</CardTitle>
-              <CardDescription>
-                {!invoicing.enabled
-                  ? "Automatic invoices are off: the API has no Stripe key, so send bills yourself."
-                  : reseller.autoInvoice
-                    ? "Each month's bill goes out through Stripe on the 1st."
-                    : "Automatic invoices are off for this reseller (Settings). You can still send a month from here."}
-              </CardDescription>
-            </div>
-            {invoicing.enabled && bill.complete && bill.totalCents > 0 && (!invoice || invoice.status === "failed") && (
+        <InvoicesCard
+          invoicing={invoicing}
+          monthHref={(m) => `/resellers/${reseller.id}?month=${m}&tab=bill`}
+          description={
+            !invoicing.enabled
+              ? "Automatic invoices are off: the API has no Stripe key, so send bills yourself."
+              : reseller.autoInvoice
+                ? "Each month's bill goes out through Stripe on the 1st."
+                : "Automatic invoices are off for this reseller (Settings). You can still send a month from here."
+          }
+          action={
+            invoicing.enabled && bill.complete && bill.totalCents > 0 && (!invoice || invoice.status === "failed") && (
               <SendInvoice
                 id={reseller.id}
                 month={bill.month}
@@ -200,56 +114,9 @@ export default async function ResellerPage({
                 to={bill.billingEmail}
                 retry={invoice?.status === "failed"}
               />
-            )}
-          </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-6">Month</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="pr-6 text-right">Invoice</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoicing.invoices.map((i) => (
-                  <TableRow key={i.id}>
-                    <TableCell className="pl-6">
-                      <Link href={`/resellers/${reseller.id}?month=${i.month}&tab=bill`} className="hover:underline">
-                        {monthRange(i.month).label}
-                      </Link>
-                      {i.error && <p className="text-destructive max-w-md text-sm whitespace-normal">{i.error}</p>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={INVOICE_STATUS[i.status].variant}>{INVOICE_STATUS[i.status].label}</Badge>
-                      {i.status === "open" && (
-                        <span className="text-muted-foreground block text-xs">{i.chargeAutomatically ? "Charging the card on file" : "Emailed to pay"}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{formatMoney(i.totalCents)}</TableCell>
-                    <TableCell className="pr-6 text-right">
-                      {i.hostedInvoiceUrl ? (
-                        <a href={i.hostedInvoiceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                          View
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">{formatDate(i.dateUpdated)}</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {invoicing.invoices.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-muted-foreground py-8 text-center">
-                      No invoices yet. The first goes out on the 1st after a month with live stores.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+            )
+          }
+        />
         </TabsContent>
         <TabsContent value="keys">
           <KeysManager partner productId={reseller.id} productName={reseller.name} keys={keys} />

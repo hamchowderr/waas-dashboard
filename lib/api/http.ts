@@ -167,7 +167,7 @@ const toReseller = (r: WireReseller): Reseller => ({
   brandUrl: r.brandUrl,
   listPriceCents: { small: r.listPriceCents.small, medium: r.listPriceCents.medium, large: r.listPriceCents.large },
   autoInvoice: r.autoInvoice,
-  stripeCustomerId: r.stripeCustomerId,
+  stripeCustomerId: r.stripeCustomerId ?? null,
   products: r.products.map(({ id, name, tenantCount }) => ({ id, name, tenantCount })),
   tenantCount: r.tenantCount,
   liveTenantCount: r.liveTenantCount,
@@ -200,7 +200,10 @@ export class HttpAdminApi implements AdminApi {
   /** The request's URL and headers; paths below are written as /admin/… */
   private async target(path: string): Promise<{ url: URL; headers: Record<string, string> }> {
     const { prefix, headers } = await this.access();
-    return { url: new URL(prefix + path.replace(/^\/admin/, ""), this.baseUrl), headers };
+    let rest = path.replace(/^\/admin/, "");
+    // A reseller's own team reaches its account at /account/reseller, without the id.
+    if (prefix === "/account") rest = rest.replace(/^\/resellers\/[^/?]+/, "/reseller");
+    return { url: new URL(prefix + rest, this.baseUrl), headers };
   }
 
   private async get<T>(path: string, { allow404 = false } = {}): Promise<T | null> {

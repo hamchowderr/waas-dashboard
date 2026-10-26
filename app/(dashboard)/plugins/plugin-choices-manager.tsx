@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { checkPluginUpload, removePluginChoice, searchPlugins, setPluginChoice, startPluginUpload } from "../actions";
+import { useCanChange } from "@/components/auth/can-change";
 
 /** Below sm the header's button moves under its text instead of squeezing it. */
 const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
@@ -42,6 +43,7 @@ type Editing = {
 
 export function PluginChoicesManager({ productId, choices }: { productId: string; choices: PluginChoice[] }) {
   const router = useRouter();
+  const canChange = useCanChange();
   const [editing, setEditing] = React.useState<Editing>(null);
   const [removing, setRemoving] = React.useState<PluginChoice | null>(null);
   const [updating, setUpdating] = React.useState<string | null>(null);
@@ -107,7 +109,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
                     </p>
                     <p className="text-muted-foreground text-sm">{siteTypesLabel(choice.siteTypes)}</p>
                   </div>
-                  {!choice.shared && (
+                  {!choice.shared && canChange && (
                     <div className="flex flex-wrap gap-2">
                       {choice.action === "add" && choice.latestVersion && choice.latestVersion !== choice.version && (
                         <Button
@@ -156,7 +158,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
                   <button
                     type="button"
                     className="hover:bg-muted/60 flex items-center gap-2 rounded-md border py-1 ps-1 pe-2.5 text-sm transition-colors disabled:cursor-default"
-                    disabled={bySlug.has(plugin.slug)}
+                    disabled={!canChange || bySlug.has(plugin.slug)}
                     title={off ? "Switched off" : `Switch off ${plugin.name}`}
                     onClick={() => setEditing({ slug: plugin.slug, name: plugin.name, icon: null, action: "off", siteTypes: [], licenceConstants: [] })}>
                     <PluginIcon slug={plugin.slug} name={plugin.name} />
@@ -170,31 +172,35 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
         </CardContent>
       </Card>
 
-      <DirectorySearch
-        productId={productId}
-        chosen={bySlug}
-        full={added.filter((c) => !c.shared).length >= 25}
-        onAdd={(plugin) => setEditing({ slug: plugin.slug, name: plugin.name, icon: plugin.icon, action: "add", siteTypes: [], licenceConstants: [] })}
-      />
+      {canChange && (
+        <DirectorySearch
+          productId={productId}
+          chosen={bySlug}
+          full={added.filter((c) => !c.shared).length >= 25}
+          onAdd={(plugin) => setEditing({ slug: plugin.slug, name: plugin.name, icon: plugin.icon, action: "add", siteTypes: [], licenceConstants: [] })}
+        />
+      )}
 
-      <PremiumUpload
-        productId={productId}
-        full={added.filter((c) => !c.shared).length >= 25}
-        onReady={(upload) => {
-          // A new release of a plugin already added keeps its site types and licence keys.
-          const before = bySlug.get(upload.slug!);
-          setEditing({
-            slug: upload.slug!,
-            name: upload.name ?? upload.slug!,
-            icon: null,
-            action: "add",
-            siteTypes: before?.action === "add" ? before.siteTypes : [],
-            version: upload.version ?? undefined,
-            uploadId: upload.id,
-            licenceConstants: before?.action === "add" ? before.licenceConstants : []
-          });
-        }}
-      />
+      {canChange && (
+        <PremiumUpload
+          productId={productId}
+          full={added.filter((c) => !c.shared).length >= 25}
+          onReady={(upload) => {
+            // A new release of a plugin already added keeps its site types and licence keys.
+            const before = bySlug.get(upload.slug!);
+            setEditing({
+              slug: upload.slug!,
+              name: upload.name ?? upload.slug!,
+              icon: null,
+              action: "add",
+              siteTypes: before?.action === "add" ? before.siteTypes : [],
+              version: upload.version ?? undefined,
+              uploadId: upload.id,
+              licenceConstants: before?.action === "add" ? before.licenceConstants : []
+            });
+          }}
+        />
+      )}
 
       <SiteTypesDialog
         editing={editing}

@@ -541,6 +541,12 @@ async function adminOnly(what = "review applications") {
   if (!(await getViewer())?.isAdmin) throw new InputError(`Only the platform admin can ${what}.`);
 }
 
+/** The platform admin, or a member of this reseller's own team (the API checks their role). */
+async function adminOrOwnReseller(id: string) {
+  const viewer = await getViewer();
+  if (!viewer?.isAdmin && viewer?.active?.resellerId !== id) throw new InputError("Only this reseller's team can manage its partner keys.");
+}
+
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function limit(value: unknown, what: string): number | null {
@@ -632,30 +638,30 @@ export async function setResellerStorefront(id: string, productId: string, add: 
   }, ["/resellers", "/keys"]);
 }
 
-/** A new partner key for a reseller: works on every storefront it has. Platform admin only. */
+/** A new partner key for a reseller: works on every storefront it has. The platform admin or the reseller's team. */
 export async function createPartnerKey(id: string, label: string): Promise<ActionResult<NewApiKey>> {
   return run(async () => {
-    await adminOnly("manage resellers");
+    await adminOrOwnReseller(id);
     return getAdminApi().createPartnerKey(uuid(id, "reseller"), keyLabel(label));
-  }, ["/resellers"]);
+  }, ["/resellers", "/reseller"]);
 }
 
-/** Replaces a partner key; the old one keeps working for graceHours. Platform admin only. */
+/** Replaces a partner key; the old one keeps working for graceHours. The platform admin or the reseller's team. */
 export async function rotatePartnerKey(id: string, keyId: string, graceHours: number): Promise<ActionResult<NewApiKey>> {
   return run(async () => {
-    await adminOnly("manage resellers");
+    await adminOrOwnReseller(id);
     if (!Number.isInteger(graceHours) || graceHours < 0 || graceHours > 720) throw new InputError("Invalid grace period");
     return getAdminApi().rotatePartnerKey(uuid(id, "reseller"), uuid(keyId, "key"), graceHours);
-  }, ["/resellers"]);
+  }, ["/resellers", "/reseller"]);
 }
 
-/** Revokes a partner key now. Platform admin only. */
+/** Revokes a partner key now. The platform admin or the reseller's team. */
 export async function revokePartnerKey(id: string, keyId: string): Promise<ActionResult> {
   return run(async () => {
-    await adminOnly("manage resellers");
+    await adminOrOwnReseller(id);
     await getAdminApi().revokePartnerKey(uuid(id, "reseller"), uuid(keyId, "key"));
     return undefined;
-  }, ["/resellers"]);
+  }, ["/resellers", "/reseller"]);
 }
 
 /** Builds a ready-made storefront for an existing seller. */

@@ -11,6 +11,7 @@ import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SiteHeader } from "@/components/shell/site-header";
 import { SessionKeepAlive } from "@/components/auth/session-keep-alive";
 import { NoStorefront } from "@/components/auth/no-storefront";
+import { CanChangeProvider } from "@/components/auth/can-change";
 import { readAppearance } from "@/lib/appearance";
 import { brandColorVars } from "@/lib/branding";
 
@@ -97,6 +98,7 @@ export default async function DashboardLayout({
       {!api.isFixture && <SessionKeepAlive />}
       <AppSidebar
         isAdmin={viewer.isAdmin}
+        isReseller={!!viewer.active?.resellerId}
         pendingApplications={pendingApplications}
         brand={brand && { name: brand.name, logoUrl: brand.logoUrl, supportEmail: brand.supportEmail }}
       />
@@ -110,7 +112,7 @@ export default async function DashboardLayout({
         />
         <div className="flex flex-1 flex-col">
           <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:w-full xl:group-data-[theme-content-layout=centered]/layout:max-w-7xl">
-            {children}
+            <CanChangeProvider value={canChange(viewer)}>{children}</CanChangeProvider>
           </div>
         </div>
       </SidebarInset>

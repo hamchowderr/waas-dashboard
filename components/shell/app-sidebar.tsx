@@ -36,10 +36,13 @@ const DOCS_URL = "https://shop.anypress.io/docs/";
 /** pendingApplications: shown beside Applications when some are waiting (platform admin only). */
 export function AppSidebar({
   isAdmin,
+  isReseller = false,
   pendingApplications = 0,
   brand
 }: {
   isAdmin: boolean;
+  /** On a reseller's own team: the sidebar has its Reseller account. */
+  isReseller?: boolean;
   pendingApplications?: number;
   brand?: SidebarBrand | null;
 }) {
@@ -88,11 +91,11 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <CommandSearch isAdmin={isAdmin} product={product} />
+        <CommandSearch isAdmin={isAdmin} isReseller={isReseller} product={product} />
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="h-full [&>[data-slot=scroll-area-viewport]]:scroll-fade">
-          {navFor(isAdmin).map((group) => (
+          {navFor(isAdmin, isReseller).map((group) => (
             <SidebarGroup key={group.title}>
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
