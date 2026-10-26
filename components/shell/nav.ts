@@ -1,7 +1,6 @@
 import {
   ActivityIcon,
   ArchiveIcon,
-  ContactIcon,
   GaugeIcon,
   HandshakeIcon,
   InboxIcon,
@@ -43,7 +42,6 @@ export const NAV: { title: string; links: NavLink[] }[] = [
       { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true },
       { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true },
       { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true },
-      { title: "Clients", href: "/clients", icon: ContactIcon, adminOnly: true, global: true },
       { title: "Reseller account", href: "/reseller", icon: HandshakeIcon, resellerOnly: true, global: true }
     ]
   },

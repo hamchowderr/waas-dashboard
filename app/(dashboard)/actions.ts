@@ -164,18 +164,6 @@ export async function createStore(productId: string, name: string, size: string)
   }, ["/stores", "/"]);
 }
 
-/** Adds a client: their own storefront, a site once it has built, and an emailed invitation. Platform admin only. */
-export async function addClient(name: string, email: string, size: string): Promise<ActionResult<{ productId: string }>> {
-  return run(async () => {
-    if (!SIZES.includes(size as StoreSize)) throw new InputError("Invalid size");
-    const address = typeof email === "string" ? email.trim() : "";
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) throw new InputError("Enter the client's email address");
-    await adminOnly("add clients");
-    const client = await getAdminApi().createClient({ name: text(name, "Name", 100), email: address, size: size as StoreSize });
-    return { productId: client.productId };
-  }, ["/clients", "/"]);
-}
-
 /** A new import code for a store still waiting for its site; the old one stops working. */
 export async function renewImportCode(tenantId: string): Promise<ActionResult<ImportCode>> {
   return run(() => getAdminApi().renewImportCode(uuid(tenantId, "store")), ["/stores"]);

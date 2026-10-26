@@ -30,7 +30,6 @@ import type {
   PluginUpload,
   PluginSearch,
   ProductDetail,
-  Client,
   Reseller,
   ResellerBill,
   ResellerInvoice,
@@ -177,10 +176,6 @@ export interface AdminApi {
   approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication>;
   /** Declines and emails the applicant. */
   declineApplication(id: string): Promise<void>;
-
-  // Clients set up in one step: their own storefront, a site, and an emailed invitation. Platform admin only.
-  clients(): Promise<Client[]>;
-  createClient(input: { name: string; email: string; size: StoreSize }): Promise<Client>;
 
   // Reseller accounts: storefronts grouped under one partner. Platform admin only.
   resellers(): Promise<Reseller[]>;
