@@ -163,7 +163,7 @@ export function RequestsTable({ requests, showStorefront = true }: { requests: A
       tabCounts
       initialSorting={[{ id: "at", desc: true }]}
       hideBelow={{ madeWith: "2xl", ip: "2xl" }}
-      emptyText="No requests match these filters."
+      emptyText="No calls match these filters."
     />
   );
 }

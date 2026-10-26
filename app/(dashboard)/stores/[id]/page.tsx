@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ChevronLeft, ExternalLinkIcon } from "lucide-react";
 
 import { getViewer } from "@/auth";
@@ -20,7 +20,7 @@ import { RestoreBackup } from "./restore-backup";
 import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
 
-type Params = { params: Promise<{ id: string }> };
+type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ product?: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const tenant = await getAdminApi().tenant((await params).id);
@@ -39,14 +39,19 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export default async function StorePage({ params }: Params) {
+export default async function StorePage({ params, searchParams }: Params) {
   const { id } = await params;
+  const { product } = await searchParams;
   const [tenant, mailDomain, viewer] = await Promise.all([
     getAdminApi().tenant(id),
     getAdminApi().mailDomain(id).catch(() => null),
     getViewer()
   ]);
   if (!tenant) notFound();
+  // The admin works one storefront at a time (?product=); a store page opens in its own storefront, so the
+  // sidebar and the way back stay there instead of dropping to the first storefront.
+  if (viewer?.isAdmin && product !== tenant.productId) redirect(`/stores/${id}?product=${tenant.productId}`);
+  const storesHref = viewer?.isAdmin ? `/stores?product=${tenant.productId}` : "/stores";
   const connect =
     mailDomain?.status === "pending"
       ? await getAdminApi().domainConnect(id, mailDomain.domainName, "email").catch(() => null)
@@ -64,7 +69,7 @@ export default async function StorePage({ params }: Params) {
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center gap-3">
         <Button asChild variant="outline" size="icon">
-          <Link href="/stores">
+          <Link href={storesHref}>
             <ChevronLeft />
             <span className="sr-only">Back to stores</span>
           </Link>
@@ -96,12 +101,13 @@ export default async function StorePage({ params }: Params) {
           </>
         )}
         <Button asChild variant="outline" size="sm">
-          <Link href={`/requests?store=${tenant.id}`}>API requests</Link>
+          <Link href={viewer?.isAdmin ? `/requests?product=${tenant.productId}&store=${tenant.id}` : `/requests?store=${tenant.id}`}>API log</Link>
         </Button>
         {canManage && (
           <StoreActions
             tenantId={tenant.id}
             storeName={tenant.name}
+            storesHref={storesHref}
             isSuspended={tenant.isSuspended}
             canSuspend={tenant.statusCode !== StatusCode.Failed}
           />
@@ -273,8 +279,8 @@ export default async function StorePage({ params }: Params) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Jobs</CardTitle>
-          <CardDescription>This store&apos;s recent jobs, newest first. Finished jobs are kept for 7 days.</CardDescription>
+          <CardTitle>Activity</CardTitle>
+          <CardDescription>Recent work on this store, newest first. Finished tasks are kept for 7 days.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table className={tableClass}>

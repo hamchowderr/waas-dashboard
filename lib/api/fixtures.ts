@@ -714,6 +714,8 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async tenants(filter: TenantFilter = {}): Promise<Listing<Tenant>> {
+    const reseller = filter.acrossReseller && this.scope ? resellerOf.get(this.scope) : undefined;
+    if (reseller) return listing(tenants.filter((t) => resellerOf.get(t.productId) === reseller).map(toRow));
     return listing(byProduct(tenants, filter.productId ?? this.scope).map(toRow));
   }
 

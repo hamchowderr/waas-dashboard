@@ -81,8 +81,8 @@ export default async function LoginPage({
     </div>
   );
   const blurb = seller
-    ? `The dashboard for ${sellerName ?? "your"} stores: backups, versions, your team and more.`
-    : "Your stores, their backups and versions, API keys, webhooks and every call your storefront makes.";
+    ? `The dashboard for ${sellerName ?? "your"} stores: backups, store designs, your team and more.`
+    : "Your stores, their backups and designs, API keys, webhooks and every call your storefront makes.";
   const ways = seller ? (["email"] as Provider[]) : providers();
   const brandVars = brandColorVars(seller?.brand?.color);
 

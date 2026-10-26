@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
 import { GitBranchIcon, StoreIcon } from "lucide-react";
 
@@ -11,6 +13,8 @@ import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
 import { StatusCode, type Tenant } from "@/lib/api/types";
 import { formatAgo, formatDate } from "@/lib/format";
+import { pickStorefront } from "@/lib/auth-client";
+import type { StorefrontMembership } from "@/components/shell/storefront-switcher";
 
 const columnLabels: Record<string, string> = {
   name: "Store",
@@ -35,7 +39,10 @@ function readField(row: Tenant, path: string): unknown {
   return row[path as keyof Tenant];
 }
 
-const columns: ColumnDef<Tenant>[] = [
+/** onOpen: runs when a store's name is clicked, before the link is followed (it may follow it itself). */
+function storeColumns(onOpen: (tenant: Tenant, event: React.MouseEvent) => void): ColumnDef<Tenant>[] {
+  return [
+
   {
     accessorKey: "name",
     header: ({ column }) => <SortableHeader column={column}>Store</SortableHeader>,
@@ -43,7 +50,10 @@ const columns: ColumnDef<Tenant>[] = [
       <div className="min-w-0">
         <Link
           href={`/stores/${row.original.id}`}
-          onClick={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen(row.original, event);
+          }}
           className="hover:text-primary truncate font-medium hover:underline">
           {row.original.name}
         </Link>
@@ -89,10 +99,46 @@ const columns: ColumnDef<Tenant>[] = [
       <span className="text-muted-foreground whitespace-nowrap">{formatDate(row.original.dateCreated)}</span>
     )
   }
-];
+  ];
+}
 
-export function StoresTable({ tenants, initialTab }: { tenants: Tenant[]; initialTab?: string }) {
+/**
+ * storefronts: on a reseller team's list of all its stores, the storefronts it can switch to. A store on
+ * another storefront opens after switching to that storefront, since its pages are about the one picked.
+ */
+export function StoresTable({
+  tenants,
+  initialTab,
+  storefronts
+}: {
+  tenants: Tenant[];
+  initialTab?: string;
+  storefronts?: StorefrontMembership[];
+}) {
   const router = useRouter();
+  const table = useMemo(() => {
+    const otherStorefront = (tenant: Tenant) => storefronts?.find((s) => s.productId === tenant.productId && !s.active);
+    // Opens a store, switching to its storefront first when it is on another one.
+    const openStore = (tenant: Tenant) => {
+      const storefront = otherStorefront(tenant);
+      if (!storefront) return router.push(`/stores/${tenant.id}`);
+      pickStorefront(storefront).then(
+        () => {
+          router.push(`/stores/${tenant.id}`);
+          router.refresh();
+        },
+        (e: Error) => toast.error(e.message)
+      );
+    };
+    return {
+      openStore,
+      list: storeColumns((tenant, event) => {
+        if (!otherStorefront(tenant)) return;
+        event.preventDefault();
+        openStore(tenant);
+      })
+    };
+  }, [router, storefronts]);
   const unique = (values: string[]) => [...new Set(values)].sort();
 
   const facets: TableFacet[] = [
@@ -113,7 +159,7 @@ export function StoresTable({ tenants, initialTab }: { tenants: Tenant[]; initia
   return (
     <AdminDataTable
       data={tenants}
-      columns={columns}
+      columns={table.list}
       columnLabels={columnLabels}
       getRowId={(t) => t.id}
       searchPlaceholder="Name, subscription, domain..."
@@ -124,7 +170,7 @@ export function StoresTable({ tenants, initialTab }: { tenants: Tenant[]; initia
       initialTab={initialTab && tabs.some((t) => t.value === initialTab) ? initialTab : "all"}
       initialSorting={[{ id: "dateCreated", desc: true }]}
       emptyText="No stores match these filters."
-      onRowClick={(t) => router.push(`/stores/${t.id}`)}
+      onRowClick={table.openStore}
       cardFields={["mainDomain", "statusCode"]}
     />
   );

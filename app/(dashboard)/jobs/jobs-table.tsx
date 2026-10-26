@@ -165,7 +165,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
         tabCounts
         initialTab={initialTab}
         initialSorting={[{ id: "when", desc: true }]}
-        emptyText="No jobs here. Finished jobs are not listed."
+        emptyText="Nothing here. Finished tasks are not listed."
         onRowClick={setViewing}
         selectable={(job) => canChange && job.state === "failed"}
         bulkActions={(selected, clear) => (

@@ -66,12 +66,12 @@ function stats(o: Overview): Stat[] {
       href: t.failed > 0 ? "/stores?state=failed" : "/stores"
     },
     {
-      name: "Background jobs",
+      name: "Activity",
       stat: String(o.jobs.queued + o.jobs.running),
-      note: `${o.jobs.queued} queued · ${o.jobs.running} running`,
+      note: `${o.jobs.queued} waiting · ${o.jobs.running} running`,
       level: o.jobs.failed > 0 ? "critical" : "within",
       status: o.jobs.failed > 0 ? `${o.jobs.failed} failed` : "None failed",
-      action: "See jobs",
+      action: "See activity",
       href: o.jobs.failed > 0 ? "/jobs?state=failed" : "/jobs"
     },
     {
@@ -262,13 +262,13 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
       <Card>
         <CardHeader>
-          <CardTitle>Failed jobs</CardTitle>
-          <CardDescription>Jobs that used up their retries. The store or version shows Failed until it is fixed.</CardDescription>
+          <CardTitle>Failed tasks</CardTitle>
+          <CardDescription>Tasks that used up their retries. The store or version shows Failed until it is fixed.</CardDescription>
           <CardAction>
             <Link
               href={withProduct("/jobs?state=failed", product)}
               className="text-primary inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline pointer-coarse:min-h-11">
-              All failed jobs
+              All failed tasks
               <ChevronRight className="size-4" aria-hidden />
             </Link>
           </CardAction>

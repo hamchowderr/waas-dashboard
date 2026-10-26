@@ -750,7 +750,10 @@ export class HttpAdminApi implements AdminApi {
   }
 
   async tenants(filter: TenantFilter = {}): Promise<Listing<Tenant>> {
-    const { items, total } = await this.getAll<WireTenantRow>("/admin/tenants", { productId: filter.productId });
+    const { items, total } = await this.getAll<WireTenantRow>("/admin/tenants", {
+      productId: filter.productId,
+      across: filter.acrossReseller ? "reseller" : undefined
+    });
     return {
       total,
       items: items.map((t) => ({

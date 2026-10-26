@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { RequestsTable } from "./requests-table";
 
-export const metadata: Metadata = { title: "Requests" };
+export const metadata: Metadata = { title: "API log" };
 
 const outcomes = new Set<RequestOutcome>(["ok", "client-error", "server-error", "error"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -54,7 +54,7 @@ export default async function RequestsPage({
   return (
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
-        title="Requests"
+        title="API log"
         description={`${day.total} calls in the last 24 hours, ${day.clientErrors} refused and ${day.serverErrors} failed. ${kept}${shown}`}>
         {storeName && (
           <Button asChild variant="outline" size="sm">
