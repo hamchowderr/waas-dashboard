@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArchiveIcon,
   Check,
   ChevronRight,
-  DatabaseIcon,
   ExternalLinkIcon,
-  Eye,
+  InboxIcon,
   KeyRoundIcon,
-  ListChecksIcon,
+  Loader2Icon,
   PaletteIcon,
   ServerIcon,
   StoreIcon,
@@ -20,70 +20,25 @@ import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import type { Overview } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
-import { formatAgo, formatDateTime, jobTypeLabel } from "@/lib/format";
+import { formatDateTime, jobTypeLabel } from "@/lib/format";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Overview" };
 
-type Level = "within" | "observe" | "critical";
-
-const levelStyle: Record<Level, { icon: LucideIcon; box: string; text: string }> = {
-  within: { icon: Check, box: "bg-emerald-500 text-white", text: "text-emerald-800 dark:text-emerald-500" },
-  observe: { icon: Eye, box: "bg-yellow-500 text-white", text: "text-yellow-800 dark:text-yellow-500" },
-  critical: { icon: AlertTriangle, box: "bg-red-500 text-white", text: "text-red-800 dark:text-red-500" }
-};
-
-/** action: what the link at the bottom of the card opens. */
-type Stat = { name: string; stat: string; note: string; level: Level; status: string; action: string; href: string };
+/** One thing that needs the person, with the button that deals with it. critical: broken; waiting: someone is waiting on them. */
+type Todo = { key: string; tone: "critical" | "waiting"; icon: LucideIcon; title: string; detail: string | null; action: string; href: string };
 
 /** Links keep the chosen storefront, so the next page shows the same one. */
 function withProduct(href: string, product?: string): string {
-  if (!product || href.startsWith("#")) return href;
+  if (!product) return href;
   return `${href}${href.includes("?") ? "&" : "?"}product=${encodeURIComponent(product)}`;
 }
 
-function stats(o: Overview): Stat[] {
-  const t = o.tenants;
-  return [
-    {
-      name: "Provisioning API",
-      stat: o.health.ok ? "Up" : "Down",
-      note: `Checked ${formatAgo(o.health.checkedAt)}`,
-      level: o.health.ok ? "within" : "critical",
-      status: o.health.ok ? "Healthy" : "Not answering",
-      action: "See status",
-      href: "#health"
-    },
-    {
-      name: "Stores",
-      stat: String(o.tenants.total),
-      note: storeNote(o),
-      level: t.failed > 0 ? "critical" : t.pending + t.removing > 0 ? "observe" : "within",
-      status: t.failed > 0 ? `${t.failed} failed` : "None failed",
-      action: "See stores",
-      href: t.failed > 0 ? "/stores?state=failed" : "/stores"
-    },
-    {
-      name: "Activity",
-      stat: String(o.jobs.queued + o.jobs.running),
-      note: `${o.jobs.queued} waiting · ${o.jobs.running} running`,
-      level: o.jobs.failed > 0 ? "critical" : "within",
-      status: o.jobs.failed > 0 ? `${o.jobs.failed} failed` : "None failed",
-      action: "See activity",
-      href: o.jobs.failed > 0 ? "/jobs?state=failed" : "/jobs"
-    },
-    {
-      name: "Backups",
-      stat: String(o.backups.total),
-      note: `${o.backups.done} ready · ${o.backups.pending} in progress`,
-      level: o.backups.failed > 0 ? "critical" : o.backups.pending > 0 ? "observe" : "within",
-      status: o.backups.failed > 0 ? `${o.backups.failed} failed` : "None failed",
-      action: "See backups",
-      href: "/backups"
-    }
-  ];
+function plural(n: number, one: string, many = `${one}s`) {
+  return `${n} ${n === 1 ? one : many}`;
 }
 
 /** Ready, suspended, pending and failed add up to the total; a suspended store is a ready one that is switched off. */
@@ -91,19 +46,15 @@ function readyCount(o: Overview): number {
   return Math.max(o.tenants.done - o.tenants.suspended, 0);
 }
 
-function storeNote(o: Overview): string {
-  const t = o.tenants;
-  const parts = [`${readyCount(o)} ready`];
-  if (t.suspended > 0) parts.push(`${t.suspended} suspended`);
-  if (t.pending + t.removing > 0) parts.push(`${t.pending + t.removing} in progress`);
-  return parts.join(" · ");
+/** What is going on right now that needs nobody: builds and tasks in progress. */
+function inProgress(o: Overview): string | null {
+  const parts = [];
+  const building = o.tenants.pending + o.tenants.removing;
+  if (building > 0) parts.push(`${plural(building, "store")} being built or removed`);
+  if (o.jobs.queued + o.jobs.running > 0) parts.push(`${plural(o.jobs.queued + o.jobs.running, "task")} running or waiting`);
+  if (o.backups.pending > 0) parts.push(`${plural(o.backups.pending, "backup")} in progress`);
+  return parts.length ? parts.join(" · ") : null;
 }
-
-const services: { key: "api" | "database" | "queue"; name: string; icon: LucideIcon }[] = [
-  { key: "api", name: "Provisioning API", icon: ServerIcon },
-  { key: "database", name: "Database", icon: DatabaseIcon },
-  { key: "queue", name: "Job queue", icon: ListChecksIcon }
-];
 
 /** A customer's first steps, each on the page that does it. */
 const firstSteps: { title: string; detail: string; href: string; icon: LucideIcon }[] = [
@@ -116,12 +67,14 @@ const firstSteps: { title: string; detail: string; href: string; icon: LucideIco
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const { product } = await searchParams;
   const api = getAdminApi();
-  const [overview, jobs, viewer] = await Promise.all([
+  const viewer = await getViewer().catch(() => null);
+  const isAdmin = viewer?.isAdmin ?? false;
+  const [overview, jobs, pending] = await Promise.all([
     api.overview(product),
     api.jobs({ productId: product }),
-    getViewer().catch(() => null)
+    // An API without applications yet answers 404: none waiting.
+    isAdmin && !product ? api.applications("pending").catch(() => []) : Promise.resolve([])
   ]);
-  const isAdmin = viewer?.isAdmin ?? false;
   // A customer sees their own storefront only, so the overview is about it.
   const storefront = product
     ? overview.products.find((p) => p.id === product)
@@ -129,209 +82,247 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       ? overview.products[0]
       : undefined;
   const shop = !isAdmin && storefront ? await api.storefront(storefront.id).catch(() => null) : null;
-  const failedJobs = jobs.items.filter((job) => job.state === "failed").slice(0, 5);
+  const failedJobs = jobs.items.filter((job) => job.state === "failed");
   const { health } = overview;
-  const serviceUp = { api: health.ok, database: health.checks.database === "up", queue: health.checks.queue === "up" };
   const t = overview.tenants;
   const breakdown = [
-    { label: "Ready", value: readyCount(overview), bar: "bg-green-600 dark:bg-green-400" },
-    { label: "Suspended", value: t.suspended, bar: "bg-zinc-400 dark:bg-zinc-500" },
-    { label: "Pending", value: t.pending, bar: "bg-orange-500 dark:bg-orange-400" },
-    { label: "Removing", value: t.removing, bar: "bg-blue-500 dark:bg-blue-400" },
-    { label: "Failed", value: t.failed, bar: "bg-rose-600 dark:bg-rose-400" }
+    { label: "Ready", value: readyCount(overview), bar: "bg-green-600 dark:bg-green-400", state: "ready" },
+    { label: "Suspended", value: t.suspended, bar: "bg-zinc-400 dark:bg-zinc-500", state: "suspended" },
+    { label: "In progress", value: t.pending + t.removing, bar: "bg-orange-500 dark:bg-orange-400", state: "pending" },
+    { label: "Failed", value: t.failed, bar: "bg-rose-600 dark:bg-rose-400", state: "failed" }
   ];
+
+  // Most urgent first: the platform itself, then broken stores and tasks, then people waiting on an answer.
+  const todos: Todo[] = [];
+  if (isAdmin && !health.ok) {
+    const down = [health.checks.database !== "up" && "database", health.checks.queue !== "up" && "task queue"].filter(Boolean);
+    todos.push({
+      key: "health",
+      tone: "critical",
+      icon: ServerIcon,
+      title: "The provisioning API has a problem",
+      detail: down.length ? `Not answering: ${down.join(" and ")}. New stores and changes wait until it is back.` : "New stores and changes wait until it is back.",
+      action: "See activity",
+      href: "/jobs"
+    });
+  }
+  for (const job of failedJobs.slice(0, 5)) {
+    todos.push({
+      key: job.id,
+      tone: "critical",
+      icon: AlertTriangle,
+      title: `${jobTypeLabel(job.type)} failed${job.targetName ? ` · ${job.targetName}` : ""}`,
+      detail: job.error,
+      action: job.tenantId ? "Open store" : "See task",
+      href: job.tenantId ? `/stores/${job.tenantId}` : "/jobs?state=failed"
+    });
+  }
+  if (failedJobs.length > 5) {
+    todos.push({
+      key: "more-jobs",
+      tone: "critical",
+      icon: AlertTriangle,
+      title: `${plural(failedJobs.length - 5, "more failed task")}`,
+      detail: null,
+      action: "See all",
+      href: "/jobs?state=failed"
+    });
+  }
+  if (t.failed > 0 && failedJobs.length === 0) {
+    todos.push({
+      key: "stores",
+      tone: "critical",
+      icon: StoreIcon,
+      title: `${plural(t.failed, "store")} failed to build`,
+      detail: "Open each one to retry or remove it.",
+      action: "See failed stores",
+      href: "/stores?state=failed"
+    });
+  }
+  if (overview.backups.failed > 0) {
+    todos.push({
+      key: "backups",
+      tone: "critical",
+      icon: ArchiveIcon,
+      title: `${plural(overview.backups.failed, "backup")} failed`,
+      detail: "Take a new backup from the store's page.",
+      action: "See backups",
+      href: "/backups"
+    });
+  }
+  if (pending.length > 0) {
+    todos.push({
+      key: "applications",
+      tone: "waiting",
+      icon: InboxIcon,
+      title: `${plural(pending.length, "seller application")} waiting`,
+      detail: pending
+        .slice(0, 3)
+        .map((a) => a.business || a.name)
+        .join(", "),
+      action: "Review",
+      href: "/applications"
+    });
+  }
+  const busy = inProgress(overview);
 
   return (
     <div className="space-y-4 lg:space-y-6">
-      <PageHeader title="Overview" description={`${storefront?.name ?? "All storefronts"} · updated ${formatDateTime(health.checkedAt)}`} />
-
-      {/* Customers see their stores; the platform's own services are the platform admin's to watch. */}
-      <ul className={cn("grid gap-4 sm:grid-cols-2", isAdmin ? "xl:grid-cols-4" : "lg:grid-cols-3")}>
-        {stats(overview)
-          .filter((item) => isAdmin || item.href !== "#health")
-          .map((item) => (
-            <li key={item.name}>
-              <StatCard stat={item} href={withProduct(item.href, product)} />
-            </li>
-          ))}
-      </ul>
+      <PageHeader title={storefront ? storefront.name : "Overview"} description={`${storefront ? "Your storefront" : "All storefronts"} · updated ${formatDateTime(health.checkedAt)}`}>
+        <div className="flex items-center gap-2">
+          <HealthBadge ok={health.ok} />
+          <Button asChild size="sm">
+            <Link href={withProduct("/stores", product)}>
+              <StoreIcon aria-hidden />
+              Stores
+            </Link>
+          </Button>
+        </div>
+      </PageHeader>
 
       <div className="grid items-start gap-4 lg:gap-6 xl:grid-cols-3">
-        {/* The platform's services for its admin (current state only, until uptime history exists); first steps for a customer. */}
-        {isAdmin ? (
-          <Card id="health" className="xl:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Platform status</CardTitle>
-              <CardDescription>From the API&apos;s health check, {formatAgo(health.checkedAt)}</CardDescription>
-              <CardAction>
-                <HealthBadge ok={health.ok} />
-              </CardAction>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <ul className="space-y-4">
-                {services.map((service) => (
-                  <ServiceRow key={service.key} name={service.name} icon={service.icon} up={serviceUp[service.key]} />
-                ))}
-              </ul>
-              <p className="bg-muted/50 text-muted-foreground rounded-lg border p-3 text-sm">
-                Daily uptime history will show here once outside uptime monitoring is set up.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="xl:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Start here</CardTitle>
-              <CardDescription>
-                {shop ? (
-                  <>
-                    Your shop is{" "}
-                    <a href={`https://${shop.domain}`} target="_blank" rel="noreferrer" className="text-foreground inline-flex items-center gap-1 hover:underline">
-                      {shop.domain}
-                      <ExternalLinkIcon className="size-3.5" aria-hidden />
-                    </a>
-                  </>
-                ) : (
-                  "The pages you need first. The sidebar has the rest."
-                )}
-              </CardDescription>
-              <CardAction>
-                <HealthBadge ok={health.ok} />
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {firstSteps.map((step) => (
-                  <li key={step.href}>
-                    <Link
-                      href={step.href}
-                      className="hover:bg-muted/60 focus-visible:ring-ring/50 flex h-full items-start gap-3 rounded-lg border p-3 outline-none focus-visible:ring-3">
-                      <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-md border">
-                        <step.icon className="size-4" aria-hidden />
-                      </span>
-                      <span className="min-w-0 text-sm">
-                        <span className="flex items-center gap-1.5 font-medium">
-                          {step.title}
-                          {step.href === "/stores" && overview.tenants.total > 0 && (
-                            <Check className="size-4 text-green-600 dark:text-green-400" aria-label="Done" />
-                          )}
-                        </span>
-                        <span className="text-muted-foreground block">{step.detail}</span>
-                      </span>
-                    </Link>
+        <Card className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg">{todos.length ? "Needs you" : "Nothing needs you"}</CardTitle>
+            <CardDescription>
+              {todos.length
+                ? "Broken things first. Each button goes to the page that fixes it."
+                : `Every store is running${busy ? "" : " and nothing is waiting"}.`}
+              {busy && (
+                <span className="mt-1 flex items-center gap-1.5">
+                  <Loader2Icon className="size-3.5 animate-spin" aria-hidden />
+                  {busy}
+                </span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {todos.length === 0 ? (
+              <div className="flex items-center gap-3 rounded-lg border border-green-600/20 bg-green-600/5 p-4 text-sm">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded bg-emerald-500 text-white">
+                  <Check className="size-4" aria-hidden />
+                </span>
+                <span>
+                  <span className="block font-medium">All clear</span>
+                  <span className="text-muted-foreground">
+                    {plural(readyCount(overview), "store")} ready{t.suspended > 0 ? `, ${t.suspended} suspended` : ""}.
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <ul className="divide-y">
+                {todos.map((todo) => (
+                  <li key={todo.key} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <span
+                      className={cn(
+                        "flex size-9 shrink-0 items-center justify-center rounded text-white",
+                        todo.tone === "critical" ? "bg-red-500" : "bg-yellow-500"
+                      )}>
+                      <todo.icon className="size-4" aria-hidden />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{todo.title}</p>
+                      {todo.detail && <p className="text-muted-foreground truncate text-sm">{todo.detail}</p>}
+                    </div>
+                    <Button asChild size="sm" variant="outline" className="shrink-0">
+                      <Link href={todo.href.startsWith("/stores/") || todo.href === "/applications" ? todo.href : withProduct(todo.href, product)}>
+                        {todo.action}
+                        <ChevronRight aria-hidden />
+                      </Link>
+                    </Button>
                   </li>
                 ))}
               </ul>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Stores by status</CardTitle>
-            <CardDescription>
-              {overview.tenants.total} {overview.tenants.total === 1 ? "store" : "stores"}
-            </CardDescription>
+            <CardTitle>Stores</CardTitle>
+            <CardDescription>{plural(t.total, "store")}</CardDescription>
+            <CardAction>
+              <Link
+                href={withProduct("/stores", product)}
+                className="text-primary inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline pointer-coarse:min-h-11">
+                All
+                <ChevronRight className="size-4" aria-hidden />
+              </Link>
+            </CardAction>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex h-3 w-full overflow-hidden rounded-full">
+            <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
               {breakdown
                 .filter((b) => b.value > 0)
                 .map((b) => (
-                  <span
-                    key={b.label}
-                    className={cn("h-full", b.bar)}
-                    style={{ width: `${(b.value / Math.max(overview.tenants.total, 1)) * 100}%` }}
-                  />
+                  <span key={b.label} className={cn("h-full", b.bar)} style={{ width: `${(b.value / Math.max(t.total, 1)) * 100}%` }} />
                 ))}
             </div>
-            <div className="space-y-2">
+            <ul className="space-y-1">
               {breakdown.map((b) => (
-                <div key={b.label} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("size-2.5 rounded-full", b.bar)} />
-                    <span className="text-muted-foreground">{b.label}</span>
-                  </div>
-                  <span className="font-medium tabular-nums">{b.value}</span>
-                </div>
+                <li key={b.label}>
+                  <Link
+                    href={withProduct(`/stores?state=${b.state}`, product)}
+                    className="hover:bg-muted/60 -mx-2 flex items-center justify-between rounded-md px-2 py-1 text-sm pointer-coarse:min-h-11">
+                    <span className="flex items-center gap-2">
+                      <span className={cn("size-2.5 rounded-full", b.bar)} />
+                      <span className="text-muted-foreground">{b.label}</span>
+                    </span>
+                    <span className="font-medium tabular-nums">{b.value}</span>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Failed tasks</CardTitle>
-          <CardDescription>Tasks that used up their retries. The store or version shows Failed until it is fixed.</CardDescription>
-          <CardAction>
-            <Link
-              href={withProduct("/jobs?state=failed", product)}
-              className="text-primary inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline pointer-coarse:min-h-11">
-              All failed tasks
-              <ChevronRight className="size-4" aria-hidden />
-            </Link>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {failedJobs.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No failed jobs.</p>
-          ) : (
-            <ul className="divide-y">
-              {failedJobs.map((job) => (
-                <li key={job.id} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">
-                      {jobTypeLabel(job.type)}
-                      {job.targetName && (
-                        <>
-                          {" · "}
-                          {job.tenantId ? (
-                            <Link href={`/stores/${job.tenantId}`} className="hover:underline">
-                              {job.targetName}
-                            </Link>
-                          ) : (
-                            job.targetName
-                          )}
-                        </>
-                      )}
-                    </p>
-                    <p className="text-muted-foreground truncate text-sm">{job.error}</p>
-                  </div>
-                  <span className="text-muted-foreground shrink-0 text-xs">{formatAgo(job.failedAt)}</span>
+      {/* A customer's first steps, until their storefront is set up; the platform admin knows the way. */}
+      {!isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Start here</CardTitle>
+            <CardDescription>
+              {shop ? (
+                <>
+                  Your shop is{" "}
+                  <a href={`https://${shop.domain}`} target="_blank" rel="noreferrer" className="text-foreground inline-flex items-center gap-1 hover:underline">
+                    {shop.domain}
+                    <ExternalLinkIcon className="size-3.5" aria-hidden />
+                  </a>
+                </>
+              ) : (
+                "The pages you need first. The sidebar has the rest."
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {firstSteps.map((step) => (
+                <li key={step.href}>
+                  <Link
+                    href={step.href}
+                    className="hover:bg-muted/60 focus-visible:ring-ring/50 flex h-full items-start gap-3 rounded-lg border p-3 outline-none focus-visible:ring-3">
+                    <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-md border">
+                      <step.icon className="size-4" aria-hidden />
+                    </span>
+                    <span className="min-w-0 text-sm">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        {step.title}
+                        {step.href === "/stores" && t.total > 0 && (
+                          <Check className="size-4 text-green-600 dark:text-green-400" aria-label="Done" />
+                        )}
+                      </span>
+                      <span className="text-muted-foreground block">{step.detail}</span>
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
-  );
-}
-
-/** One headline number, with where to go next and how it is doing. The whole card is the link. */
-function StatCard({ stat, href }: { stat: Stat; href: string }) {
-  const { icon: Icon, box, text } = levelStyle[stat.level];
-  return (
-    <Card className="group relative h-full gap-6 p-6 transition-colors">
-      <div>
-        <p className="text-muted-foreground mb-1 text-sm">{stat.name}</p>
-        <p className="text-foreground text-3xl font-bold">{stat.stat}</p>
-        <p className="text-muted-foreground mt-1 text-xs">{stat.note}</p>
-      </div>
-      <Link
-        href={href}
-        className="bg-muted/60 group-hover:bg-muted focus-visible:ring-ring/50 flex items-center gap-3 rounded-md p-2 outline-none after:absolute after:inset-0 focus-visible:ring-3">
-        <span className={cn("flex size-9 shrink-0 items-center justify-center rounded", box)}>
-          <Icon className="size-4" aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm">
-          <span className={cn("block font-medium", text)}>{stat.status}</span>
-          <span className="text-muted-foreground block">{stat.action}</span>
-        </span>
-        <ChevronRight className="text-muted-foreground/60 group-hover:text-muted-foreground size-5 shrink-0" aria-hidden />
-      </Link>
-    </Card>
   );
 }
 
@@ -348,23 +339,6 @@ function HealthBadge({ ok }: { ok: boolean }) {
       <StatusDot up={ok} className="size-1.5" />
       {ok ? "All systems normal" : "Service problem"}
     </Badge>
-  );
-}
-
-function ServiceRow({ name, icon: Icon, up }: { name: string; icon: LucideIcon; up: boolean }) {
-  return (
-    <li className="flex items-center justify-between gap-3">
-      <span className="flex min-w-0 items-center gap-2.5">
-        <span className="bg-muted flex size-7 shrink-0 items-center justify-center rounded-md border">
-          <Icon className="text-foreground size-3.5" />
-        </span>
-        <span className="truncate text-sm font-medium">{name}</span>
-      </span>
-      <span className="flex shrink-0 items-center gap-2 text-sm">
-        <StatusDot up={up} />
-        <span className="font-medium">{up ? "Operational" : "Down"}</span>
-      </span>
-    </li>
   );
 }
 

@@ -9,6 +9,7 @@ import type { StorefrontOption } from "@/components/shell/storefront-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SiteHeader } from "@/components/shell/site-header";
+import { SectionTabs } from "@/components/shell/section-tabs";
 import { SessionKeepAlive } from "@/components/auth/session-keep-alive";
 import { NoStorefront } from "@/components/auth/no-storefront";
 import { CanChangeProvider } from "@/components/auth/can-change";
@@ -112,6 +113,7 @@ export default async function DashboardLayout({
         />
         <div className="flex flex-1 flex-col">
           <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:w-full xl:group-data-[theme-content-layout=centered]/layout:max-w-7xl">
+            <SectionTabs isAdmin={viewer.isAdmin} isReseller={!!viewer.active?.resellerId} />
             <CanChangeProvider value={canChange(viewer)}>{children}</CanChangeProvider>
           </div>
         </div>

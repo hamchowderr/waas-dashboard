@@ -14,7 +14,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuBadge,
@@ -33,7 +32,7 @@ export type SidebarBrand = { name: string | null; logoUrl: string | null; suppor
 const SUPPORT_EMAIL = "support@anypress.io";
 const DOCS_URL = "https://shop.anypress.io/docs/";
 
-/** pendingApplications: shown beside Applications when some are waiting (platform admin only). */
+/** pendingApplications: shown beside Accounts when some are waiting (platform admin only). */
 export function AppSidebar({
   isAdmin,
   isReseller = false,
@@ -95,28 +94,29 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="h-full [&>[data-slot=scroll-area-viewport]]:scroll-fade">
-          {navFor(isAdmin, isReseller).map((group) => (
-            <SidebarGroup key={group.title}>
-              <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.links.map((link) => (
-                    <SidebarMenuItem key={link.href}>
-                      <SidebarMenuButton asChild tooltip={link.title} isActive={isCurrent(pathname, link.href)}>
-                        <Link href={linkHref(link, product)}>
-                          <link.icon />
-                          <span>{link.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                      {link.href === "/applications" && pendingApplications > 0 && (
-                        <SidebarMenuBadge>{pendingApplications}</SidebarMenuBadge>
-                      )}
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+          {/* One link per section; the section's other pages are tabs at the top of the page. */}
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navFor(isAdmin, isReseller).map((section) => (
+                  <SidebarMenuItem key={section.title}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={section.title}
+                      isActive={section.links.some((link) => isCurrent(pathname, link.href))}>
+                      <Link href={linkHref(section.links[0], product)}>
+                        <section.icon />
+                        <span>{section.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                    {section.links.some((link) => link.href === "/applications") && pendingApplications > 0 && (
+                      <SidebarMenuBadge title="Applications waiting">{pendingApplications}</SidebarMenuBadge>
+                    )}
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </ScrollArea>
       </SidebarContent>
       {brand ? (
