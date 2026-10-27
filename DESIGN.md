@@ -219,7 +219,7 @@ Muted track, 10px radius, 3px inset; active segment is a background-colored pill
 32px, 10px radius, hairline `input` border, transparent fill (dark: `input/30`). Focus = ring border + 3px halo. Invalid = destructive border + tinted halo. Placeholder muted.
 
 ### Navigation
-Sidebar items: 16px icon + 14px label, muted foreground; hover and active use `sidebar-accent` fill with full-strength text and a rounded rectangle. Group labels 12px muted. Collapsed state shows icons only with tooltips.
+Sidebar items: one per section (Overview, Stores, Store designs, Accounts, Team and brand, Developers), 16px icon + 14px label, muted foreground; hover and active use `sidebar-accent` fill with full-strength text and a rounded rectangle. A section's pages show as link tabs above the page (`components/shell/section-tabs.tsx`, drawn like Tabs). Collapsed state shows icons only with tooltips.
 
 ## Do's and Don'ts
 

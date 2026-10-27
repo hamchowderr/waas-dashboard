@@ -23,39 +23,55 @@ import {
 export type NavLink = { title: string; href: string; icon: LucideIcon; adminOnly?: boolean; resellerOnly?: boolean; global?: boolean };
 
 /**
- * Every page in the sidebar and in the ⌘K search, grouped as the sidebar shows them: the stores themselves,
- * the accounts that sell them (platform admin), how a storefront's stores are set up, and what developers use.
+ * Every page, in the sections the sidebar shows: one sidebar link per section, and the section's pages as tabs at
+ * the top of each of them (components/shell/section-tabs.tsx). ⌘K search lists every page.
  */
-export const NAV: { title: string; links: NavLink[] }[] = [
+export type NavSection = { title: string; icon: LucideIcon; links: NavLink[] };
+
+export const NAV: NavSection[] = [
+  { title: "Overview", icon: GaugeIcon, links: [{ title: "Overview", href: "/", icon: GaugeIcon }] },
   {
     title: "Stores",
+    icon: StoreIcon,
     links: [
-      { title: "Overview", href: "/", icon: GaugeIcon },
       { title: "Stores", href: "/stores", icon: StoreIcon },
       { title: "Backups", href: "/backups", icon: ArchiveIcon },
       { title: "Activity", href: "/jobs", icon: ListChecksIcon }
     ]
   },
   {
-    title: "Accounts",
+    title: "Store designs",
+    icon: LayersIcon,
     links: [
-      { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true },
-      { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true },
-      { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true },
-      { title: "Reseller account", href: "/reseller", icon: HandshakeIcon, resellerOnly: true, global: true }
+      { title: "Store designs", href: "/versions", icon: LayersIcon },
+      { title: "Plugins", href: "/plugins", icon: PlugIcon }
     ]
   },
   {
-    title: "Storefront setup",
+    title: "Accounts",
+    icon: ShoppingBagIcon,
     links: [
-      { title: "Store designs", href: "/versions", icon: LayersIcon },
-      { title: "Plugins", href: "/plugins", icon: PlugIcon },
+      { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true },
+      { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true },
+      { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true }
+    ]
+  },
+  {
+    title: "Reseller account",
+    icon: HandshakeIcon,
+    links: [{ title: "Reseller account", href: "/reseller", icon: HandshakeIcon, resellerOnly: true, global: true }]
+  },
+  {
+    title: "Team and brand",
+    icon: UsersIcon,
+    links: [
       { title: "Team", href: "/team", icon: UsersIcon },
       { title: "Branding", href: "/branding", icon: PaletteIcon }
     ]
   },
   {
     title: "Developers",
+    icon: KeyRoundIcon,
     links: [
       { title: "API keys", href: "/keys", icon: KeyRoundIcon },
       { title: "Webhooks", href: "/webhooks", icon: WebhookIcon },
@@ -65,8 +81,8 @@ export const NAV: { title: string; links: NavLink[] }[] = [
 ];
 
 /**
- * The sidebar's groups for this viewer: customers don't see the platform admin's pages, only a reseller's team
- * sees its Reseller account, and a group left empty goes.
+ * The sections for this viewer: customers don't see the platform admin's pages, only a reseller's team sees its
+ * Reseller account, and a section left empty goes.
  */
 export function navFor(isAdmin: boolean, isReseller = false) {
   const shown = (link: NavLink) => (link.adminOnly ? isAdmin : link.resellerOnly ? isReseller && !isAdmin : true);
@@ -81,4 +97,9 @@ export function linkHref(link: NavLink, product: string | null): string {
 /** A link is current on its own page and on pages below it (a store under Stores). */
 export function isCurrent(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** The section a page belongs to, with only the pages this viewer may see; null for a page outside the sidebar. */
+export function sectionOf(pathname: string, isAdmin: boolean, isReseller = false): NavSection | null {
+  return navFor(isAdmin, isReseller).find((section) => section.links.some((link) => isCurrent(pathname, link.href))) ?? null;
 }

@@ -28,7 +28,7 @@ const columnLabels: Record<string, string> = {
 
 const tabs: TableTab<Tenant>[] = [
   { value: "ready", label: "Ready", match: (t) => t.statusCode === StatusCode.Done && !t.isSuspended },
-  { value: "pending", label: "Pending", match: (t) => t.statusCode === StatusCode.Pending || t.statusCode === StatusCode.Removing },
+  { value: "pending", label: "In progress", match: (t) => t.statusCode === StatusCode.Pending || t.statusCode === StatusCode.Removing },
   { value: "failed", label: "Failed", match: (t) => t.statusCode === StatusCode.Failed },
   { value: "suspended", label: "Suspended", match: (t) => t.isSuspended }
 ];
