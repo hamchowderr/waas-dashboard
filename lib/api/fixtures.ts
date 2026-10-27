@@ -94,8 +94,9 @@ function uuid(n: number, kind: number): string {
 }
 
 const products: Omit<Product, "tenantCount">[] = [
-  { id: uuid(1, 1), name: "Test storefront" },
-  { id: uuid(2, 1), name: "Staging storefront" }
+  // The first matches the platform's own storefront (shop.anypress.io), so a preview looks like the real dashboard.
+  { id: uuid(1, 1), name: "AnyPress" },
+  { id: uuid(2, 1), name: "Sample Partner storefront" }
 ];
 
 /** Store limits by storefront; a storefront missing here has no limit. */
