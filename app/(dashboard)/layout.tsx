@@ -10,6 +10,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SiteHeader } from "@/components/shell/site-header";
 import { SectionTabs } from "@/components/shell/section-tabs";
+import { DashboardTour } from "@/components/shell/dashboard-tour";
 import { SessionKeepAlive } from "@/components/auth/session-keep-alive";
 import { NoStorefront } from "@/components/auth/no-storefront";
 import { CanChangeProvider } from "@/components/auth/can-change";
@@ -80,44 +81,46 @@ export default async function DashboardLayout({
       }));
 
   return (
-    <SidebarProvider
-      defaultOpen={defaultOpen}
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 64)",
-          "--header-height": "calc(var(--spacing) * 14)",
-          "--content-padding": "calc(var(--spacing) * 6)",
-          "--content-margin": "calc(var(--spacing) * 1.5)",
-          "--content-full-height":
-            "calc(100vh - var(--header-height) - (var(--content-padding) * 2.2) - (var(--content-margin) * 2.2))"
-        } as React.CSSProperties
-      }>
-      {/* On <body>, so dialogs and toasts (rendered outside this tree) take the color too. The values are checked #rrggbb. */}
-      {Object.keys(brandVars).length > 0 && (
-        <style>{`body{${Object.entries(brandVars).map(([k, v]) => `${k}:${v}`).join(";")}}`}</style>
-      )}
-      {!api.isFixture && <SessionKeepAlive />}
-      <AppSidebar
-        isAdmin={viewer.isAdmin}
-        isReseller={!!viewer.active?.resellerId}
-        pendingApplications={pendingApplications}
-        brand={brand && { name: brand.name, logoUrl: brand.logoUrl, supportEmail: brand.supportEmail }}
-      />
-      <SidebarInset>
-        <SiteHeader
-          storefronts={storefronts}
-          isFixture={api.isFixture}
-          user={user}
-          memberships={memberships}
-          viewOnly={!canChange(viewer)}
+    <DashboardTour kind={viewer.isAdmin ? "admin" : active?.resellerId ? "reseller" : "seller"} canChange={canChange(viewer)}>
+      <SidebarProvider
+        defaultOpen={defaultOpen}
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 64)",
+            "--header-height": "calc(var(--spacing) * 14)",
+            "--content-padding": "calc(var(--spacing) * 6)",
+            "--content-margin": "calc(var(--spacing) * 1.5)",
+            "--content-full-height":
+              "calc(100vh - var(--header-height) - (var(--content-padding) * 2.2) - (var(--content-margin) * 2.2))"
+          } as React.CSSProperties
+        }>
+        {/* On <body>, so dialogs and toasts (rendered outside this tree) take the color too. The values are checked #rrggbb. */}
+        {Object.keys(brandVars).length > 0 && (
+          <style>{`body{${Object.entries(brandVars).map(([k, v]) => `${k}:${v}`).join(";")}}`}</style>
+        )}
+        {!api.isFixture && <SessionKeepAlive />}
+        <AppSidebar
+          isAdmin={viewer.isAdmin}
+          isReseller={!!viewer.active?.resellerId}
+          pendingApplications={pendingApplications}
+          brand={brand && { name: brand.name, logoUrl: brand.logoUrl, supportEmail: brand.supportEmail }}
         />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:w-full xl:group-data-[theme-content-layout=centered]/layout:max-w-7xl">
-            <SectionTabs isAdmin={viewer.isAdmin} isReseller={!!viewer.active?.resellerId} />
-            <CanChangeProvider value={canChange(viewer)}>{children}</CanChangeProvider>
+        <SidebarInset>
+          <SiteHeader
+            storefronts={storefronts}
+            isFixture={api.isFixture}
+            user={user}
+            memberships={memberships}
+            viewOnly={!canChange(viewer)}
+          />
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:w-full xl:group-data-[theme-content-layout=centered]/layout:max-w-7xl">
+              <SectionTabs isAdmin={viewer.isAdmin} isReseller={!!viewer.active?.resellerId} />
+              <CanChangeProvider value={canChange(viewer)}>{children}</CanChangeProvider>
+            </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </DashboardTour>
   );
 }

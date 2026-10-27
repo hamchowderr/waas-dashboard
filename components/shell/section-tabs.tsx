@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { isCurrent, linkHref, sectionOf } from "@/components/shell/nav";
+import { sectionSlug } from "@/components/shell/tours";
 
 /**
  * The pages of the current sidebar section, as tabs above the page (Stores · Backups · Activity). Drawn like the
@@ -18,7 +19,7 @@ export function SectionTabs({ isAdmin, isReseller = false }: { isAdmin: boolean;
 
   return (
     <nav aria-label={section.title} className="mb-4 overflow-x-auto lg:mb-6">
-      <ul className="bg-muted text-muted-foreground inline-flex h-9 items-center rounded-lg p-[3px] pointer-coarse:h-11">
+      <ul data-tour-step-id={`tabs-${sectionSlug(section.title)}`} className="bg-muted text-muted-foreground inline-flex h-9 items-center rounded-lg p-[3px] pointer-coarse:h-11">
         {section.links.map((link) => {
           const current = isCurrent(pathname, link.href);
           return (

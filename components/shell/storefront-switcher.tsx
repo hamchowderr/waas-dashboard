@@ -82,7 +82,7 @@ export function StorefrontSwitcher({ storefronts }: { storefronts: StorefrontOpt
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" data-tour-step-id="storefront-picker">
           <Dot index={selectedIndex} className="size-4" />
           <span className="hidden font-medium md:inline">{selected ? selected.name : "All storefronts"}</span>
           <ChevronsUpDown className="text-muted-foreground size-3.5!" />

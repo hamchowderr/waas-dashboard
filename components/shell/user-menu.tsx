@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { LogOutIcon, MoonIcon } from "lucide-react";
+import { CompassIcon, LogOutIcon, MoonIcon } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { signOut } from "@/lib/auth-client";
+import { useStartTour } from "@/components/shell/dashboard-tour";
 
 /** `detail`: the GitHub login or email, and for a customer their storefront and role. */
 export type SignedInUser = { name: string; detail: string; image: string | null };
@@ -24,6 +25,7 @@ export type SignedInUser = { name: string; detail: string; image: string | null 
 export function UserMenu({ user }: { user: SignedInUser }) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const startTour = useStartTour();
   const mounted = React.useSyncExternalStore(
     () => () => {},
     () => true,
@@ -46,6 +48,7 @@ export function UserMenu({ user }: { user: SignedInUser }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Account menu"
+        data-tour-step-id="account-menu"
         className="focus-visible:ring-ring/50 cursor-pointer rounded-full outline-none focus-visible:ring-3">
         <Avatar className="pointer-coarse:size-11">
           {user.image && <AvatarImage src={user.image} alt={user.name} />}
@@ -67,6 +70,10 @@ export function UserMenu({ user }: { user: SignedInUser }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <DropdownMenuItem onSelect={startTour}>
+            <CompassIcon className="text-muted-foreground" />
+            Take the tour
+          </DropdownMenuItem>
           {mounted && (
             <DropdownMenuItem
               onSelect={(event) => {
