@@ -85,10 +85,10 @@ const fixtureAdmin: Viewer = {
 };
 
 /** The sample storefronts (lib/api/fixtures.ts): a seller's, and one the sample reseller runs. */
-const SAMPLE_SELLER = { productId: "00000001-0000-4000-8000-00000001b808", productName: "Test storefront" };
+const SAMPLE_SELLER = { productId: "00000001-0000-4000-8000-00000001b808", productName: "AnyPress" };
 const SAMPLE_RESELLER = {
   productId: "00000001-0000-4000-8000-00000001d6f7",
-  productName: "Staging storefront",
+  productName: "Sample Partner storefront",
   resellerId: "0000000d-0000-4000-8000-00000014e534"
 };
 
