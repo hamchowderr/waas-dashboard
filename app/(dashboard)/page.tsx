@@ -22,6 +22,7 @@ import type { Overview } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { formatDateTime, jobTypeLabel } from "@/lib/format";
 import { PageHeader } from "@/components/admin/page-header";
+import { TakeTourButton } from "@/components/shell/dashboard-tour";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,6 +172,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <PageHeader title={storefront ? storefront.name : "Overview"} description={`${storefront ? "Your storefront" : "All storefronts"} · updated ${formatDateTime(health.checkedAt)}`}>
         <div className="flex items-center gap-2">
           <HealthBadge ok={health.ok} />
+          <TakeTourButton />
           <Button asChild size="sm">
             <Link href={withProduct("/stores", product)}>
               <StoreIcon aria-hidden />
@@ -181,7 +183,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       </PageHeader>
 
       <div className="grid items-start gap-4 lg:gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+        <Card className="xl:col-span-2" data-tour-step-id="needs-you">
           <CardHeader>
             <CardTitle className="text-lg">{todos.length ? "Needs you" : "Nothing needs you"}</CardTitle>
             <CardDescription>
@@ -279,7 +281,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
       {/* A customer's first steps, until their storefront is set up; the platform admin knows the way. */}
       {!isAdmin && (
-        <Card>
+        <Card data-tour-step-id="start-here">
           <CardHeader>
             <CardTitle className="text-lg">Start here</CardTitle>
             <CardDescription>

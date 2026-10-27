@@ -49,7 +49,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
           </div>
         )}
         {viewer && canChange(viewer) && !across && (
-          <div className="flex gap-2">
+          <div className="flex gap-2" data-tour-step-id="store-actions">
             <MoveSiteIn products={choices} />
             <NewSite products={choices} />
           </div>

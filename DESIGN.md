@@ -221,6 +221,9 @@ Muted track, 10px radius, 3px inset; active segment is a background-colored pill
 ### Navigation
 Sidebar items: one per section (Overview, Stores, Store designs, Accounts, Team and brand, Developers), 16px icon + 14px label, muted foreground; hover and active use `sidebar-accent` fill with full-strength text and a rounded rectangle. A section's pages show as link tabs above the page (`components/shell/section-tabs.tsx`, drawn like Tabs). Collapsed state shows icons only with tooltips.
 
+### Guided tour
+A tour per kind of account (`components/shell/tours.ts`, built on the Tour component in `components/ui/tour.tsx`) starts the first time someone opens the Overview in a browser; "Take the tour" on the Overview and in the account menu starts it again. Steps point at elements by `data-tour-step-id` (a space-separated list): add one to anything a new step needs, and keep step text in the dashboard's plain voice.
+
 ## Do's and Don'ts
 
 ### Do:

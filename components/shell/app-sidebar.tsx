@@ -24,6 +24,7 @@ import {
 import { BrandMark } from "@/components/shell/brand-mark";
 import { CommandSearch } from "@/components/shell/command-search";
 import { isCurrent, linkHref, navFor } from "@/components/shell/nav";
+import { sectionSlug } from "@/components/shell/tours";
 
 /** The storefront's own name, logo and support address (Branding page); absent for the platform's own look. */
 export type SidebarBrand = { name: string | null; logoUrl: string | null; supportEmail: string | null };
@@ -97,10 +98,11 @@ export function AppSidebar({
           {/* One link per section; the section's other pages are tabs at the top of the page. */}
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu data-tour-step-id="sidebar-nav">
                 {navFor(isAdmin, isReseller).map((section) => (
                   <SidebarMenuItem key={section.title}>
                     <SidebarMenuButton
+                      data-tour-step-id={`nav-${sectionSlug(section.title)}`}
                       asChild
                       tooltip={section.title}
                       isActive={section.links.some((link) => isCurrent(pathname, link.href))}>
