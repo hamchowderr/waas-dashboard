@@ -1,4 +1,4 @@
-import type { ApiRequest, MoveIn, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
+import type { ApiRequest, FluentRoute, MoveIn, SiteReport, SiteReportArea, SiteReportItem, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
 
 /**
  * The admin API's response bodies, exactly as openapi/admin/admin-api.yaml (v0.1.0) in
@@ -124,9 +124,56 @@ export type WireMoveIn = {
   reason?: string;
   check?: { ok?: boolean; home?: number; login?: number; loaded?: boolean; fatal?: string | null; error?: string };
   warnings?: string[];
+  siteReport?: unknown;
 };
 
 const text = (value: unknown): string | null => (typeof value === "string" && value.trim() ? value.trim() : null);
+const texts = (value: unknown): string[] => (Array.isArray(value) ? value : []).map(text).filter((t): t is string => t !== null);
+
+const AREAS: SiteReportArea[] = ["forms", "shop", "crm", "booking", "support", "affiliates", "community"];
+const ROUTES: FluentRoute[] = ["native", "native-pro", "addon", "none"];
+
+/**
+ * The "what's on this site" report (GET /admin/tenants/:id moveIn.siteReport) as the store page shows
+ * it. Items of an unknown area or route, and counts that aren't numbers, are left out; null when there
+ * is no report.
+ */
+export function toSiteReport(wire: unknown): SiteReport | null {
+  if (!wire || typeof wire !== "object") return null;
+  const report = wire as Record<string, unknown>;
+  const items = (Array.isArray(report.items) ? report.items : []).flatMap((raw): SiteReportItem[] => {
+    const item = (raw ?? {}) as Record<string, unknown>;
+    const plugin = text(item.plugin);
+    if (!plugin || !AREAS.includes(item.area as SiteReportArea) || !ROUTES.includes(item.fluentRoute as FluentRoute)) return [];
+    const counts = (Array.isArray(item.counts) ? item.counts : []).flatMap((c) => {
+      const count = (c ?? {}) as Record<string, unknown>;
+      const label = text(count.label);
+      return typeof count.count === "number" && label ? [{ name: text(count.name) ?? label, count: count.count, label }] : [];
+    });
+    return [
+      {
+        area: item.area as SiteReportArea,
+        plugin,
+        slug: text(item.slug) ?? plugin,
+        version: text(item.version),
+        counts,
+        fluentRoute: item.fluentRoute as FluentRoute,
+        fluentPlugin: text(item.fluentPlugin) ?? "",
+        onFluent: item.onFluent === true,
+        needsPro: item.needsPro === true,
+        route: text(item.route) ?? "",
+        willLose: texts(item.willLose),
+        blockers: texts(item.blockers)
+      }
+    ];
+  });
+  const plugins = (Array.isArray(report.plugins) ? report.plugins : []).flatMap((raw) => {
+    const p = (raw ?? {}) as Record<string, unknown>;
+    const name = text(p.name) ?? text(p.slug);
+    return name ? [{ slug: text(p.slug) ?? name, name, version: text(p.version) ?? "" }] : [];
+  });
+  return { items, plugins, notes: texts(report.notes) };
+}
 
 /**
  * A store's move-in as the dashboard shows it. The API already words a failed health check as one of
@@ -138,7 +185,8 @@ export function toMoveIn(wire: WireMoveIn): MoveIn {
     startedAt: wire.startedAt,
     source: wire.source as MoveIn["source"],
     reason: text(wire.reason),
-    warnings: (Array.isArray(wire.warnings) ? wire.warnings : []).map(text).filter((w): w is string => w !== null)
+    warnings: texts(wire.warnings),
+    siteReport: toSiteReport(wire.siteReport)
   };
 }
 

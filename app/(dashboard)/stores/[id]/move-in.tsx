@@ -6,14 +6,16 @@ import { toast } from "sonner";
 import type { ImportCode, MoveIn } from "@/lib/api/types";
 import { formatBytes, formatDateTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { renewImportCode } from "../../actions";
 import { ImportCodeSteps } from "../import-code";
+import { SiteReportSection } from "./site-report";
 
 /**
  * A store made to move a site in. While it waits, the code can't be shown again (only its hash is
  * kept), so a new one replaces it. Once the move started, what the plugin told about the old site, why
- * the move failed, and what to check after it.
+ * the move failed, what to check after it, and what's on the moved site (SiteReportSection).
  */
 export function MoveInStatus({
   tenantId,
@@ -75,6 +77,12 @@ export function MoveInStatus({
               ))}
             </ul>
           </div>
+        )}
+        {moveIn.siteReport && (
+          <>
+            <Separator />
+            <SiteReportSection report={moveIn.siteReport} />
+          </>
         )}
       </div>
     );
