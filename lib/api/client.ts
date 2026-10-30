@@ -114,7 +114,7 @@ export interface AdminApi {
   /** Makes a store that waits for a site moved in from another host, and answers its import code. */
   moveSiteIn(productId: string, input: { name: string; size: StoreSize }): Promise<ImportCode>;
   /** A new store of the storefront, built from its production version and latest template. */
-  createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize }): Promise<{ tenantId: string }>;
+  createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize; notifyOwner?: boolean }): Promise<{ tenantId: string }>;
   /** A new import code for a store still waiting for its site; the old one stops working. */
   renewImportCode(tenantId: string): Promise<ImportCode>;
   /** The store's own sending domain with its DNS records; null when it sends from the platform's address. */
