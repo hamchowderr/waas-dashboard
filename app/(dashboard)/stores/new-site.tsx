@@ -44,18 +44,22 @@ export function NewSite({
   const [open, setOpen] = React.useState(false);
   const [productId, setProductId] = React.useState(products[0]?.id ?? "");
   const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
   const [size, setSize] = React.useState("small");
   const [pending, startTransition] = React.useTransition();
 
   const close = (next: boolean) => {
     if (pending) return;
     setOpen(next);
-    if (!next) setName("");
+    if (!next) {
+      setName("");
+      setEmail("");
+    }
   };
 
   const submit = () =>
     startTransition(async () => {
-      const result = await createStore(productId, name, size);
+      const result = await createStore(productId, name, email, size);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -63,6 +67,7 @@ export function NewSite({
       toast.success("The site is being built");
       setOpen(false);
       setName("");
+      setEmail("");
       router.push(`/stores/${result.data.tenantId}`);
     });
 
@@ -84,7 +89,7 @@ export function NewSite({
             className="space-y-4"
             onSubmit={(event) => {
               event.preventDefault();
-              if (name.trim()) submit();
+              if (name.trim() && email.trim()) submit();
             }}
           >
             {products.length > 1 && (
@@ -121,6 +126,23 @@ export function NewSite({
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="new-site-email">Owner email</Label>
+              <Input
+                id="new-site-email"
+                type="email"
+                value={email}
+                maxLength={254}
+                placeholder="owner@example.com"
+                disabled={pending}
+                autoComplete="off"
+                aria-describedby="new-site-email-help"
+                onChange={(event) => setEmail(event.target.value)}
+              />
+              <p id="new-site-email-help" className="text-muted-foreground text-sm">
+                They sign in to the site with this email.
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="new-site-size">Size</Label>
               <Select value={size} onValueChange={setSize} disabled={pending}>
                 <SelectTrigger id="new-site-size" className="w-full">
@@ -145,7 +167,7 @@ export function NewSite({
               Cancel
             </Button>
             <Button
-              disabled={pending || !name.trim() || !productId}
+              disabled={pending || !name.trim() || !email.trim() || !productId}
               onClick={submit}
             >
               {pending && <Spinner />}
