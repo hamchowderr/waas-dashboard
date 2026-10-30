@@ -1,4 +1,4 @@
-import type { ApiRequest, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
+import type { ApiRequest, MoveIn, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
 
 /**
  * The admin API's response bodies, exactly as openapi/admin/admin-api.yaml (v0.1.0) in
@@ -33,6 +33,8 @@ export type WireTenantRow = {
   statusCode: number;
   statusName: string;
   isSuspended: boolean;
+  /** Not in the admin list's schema yet; read when present. */
+  onHold?: boolean;
   latestBackupAt: string | null;
   dateCreated: string;
 };
@@ -101,6 +103,8 @@ export type WireTenantDetail = {
   statusName: string;
   isSuspended: boolean;
   dateSuspended?: string | null;
+  onHold?: boolean;
+  dateHeld?: string | null;
   dateCreated?: string;
   dateChanged?: string;
   wpOptionNames: string[];
@@ -110,8 +114,33 @@ export type WireTenantDetail = {
   recentJobs: WireJob[];
   failures: WireJobFailure[];
   keepsOwnCode?: boolean;
-  moveIn?: { expiresAt: string; startedAt: string | null; source: Record<string, unknown> | null };
+  moveIn?: WireMoveIn;
 };
+
+export type WireMoveIn = {
+  expiresAt: string;
+  startedAt: string | null;
+  source: Record<string, unknown> | null;
+  reason?: string;
+  check?: { ok?: boolean; home?: number; login?: number; loaded?: boolean; fatal?: string | null; error?: string };
+  warnings?: string[];
+};
+
+const text = (value: unknown): string | null => (typeof value === "string" && value.trim() ? value.trim() : null);
+
+/**
+ * A store's move-in as the dashboard shows it. The API already words a failed health check as one of
+ * the warnings, so the check itself isn't shown again; blank reasons and warnings are dropped.
+ */
+export function toMoveIn(wire: WireMoveIn): MoveIn {
+  return {
+    expiresAt: wire.expiresAt,
+    startedAt: wire.startedAt,
+    source: wire.source as MoveIn["source"],
+    reason: text(wire.reason),
+    warnings: (Array.isArray(wire.warnings) ? wire.warnings : []).map(text).filter((w): w is string => w !== null)
+  };
+}
 
 // Versions and templates (openapi/admin, waas-api-plu.3). Same bodies as the /v1
 // operations in openapi/waas-provisioning-api.yaml.

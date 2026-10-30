@@ -1,4 +1,4 @@
-import { PauseCircleIcon } from "lucide-react";
+import { HourglassIcon, PauseCircleIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { statusMeta } from "@/lib/format";
@@ -18,6 +18,16 @@ export function SuspendedBadge() {
     <Badge variant="outline" className="text-muted-foreground whitespace-nowrap">
       <PauseCircleIcon />
       Suspended
+    </Badge>
+  );
+}
+
+/** A site moved in that hasn't gone live yet: no scheduled tasks, email only to its owner, not indexed. */
+export function OnHoldBadge() {
+  return (
+    <Badge variant="outline" className="text-muted-foreground whitespace-nowrap">
+      <HourglassIcon />
+      On hold
     </Badge>
   );
 }

@@ -10,7 +10,7 @@ import { GitBranchIcon, StoreIcon } from "lucide-react";
 import { SortableHeader } from "@/components/admin/sortable-header";
 import type { TableFacet } from "@/components/admin/table-filters";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
-import { StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
+import { OnHoldBadge, StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
 import { StatusCode, type Tenant } from "@/lib/api/types";
 import { formatAgo, formatDate } from "@/lib/format";
 import { pickStorefront } from "@/lib/auth-client";
@@ -82,6 +82,7 @@ function storeColumns(onOpen: (tenant: Tenant, event: React.MouseEvent) => void)
       <div className="flex items-center gap-1.5">
         <StatusBadge statusCode={row.original.statusCode} />
         {row.original.isSuspended && <SuspendedBadge />}
+        {row.original.onHold && <OnHoldBadge />}
       </div>
     )
   },
