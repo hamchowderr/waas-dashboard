@@ -595,6 +595,20 @@ export type ReadyStorefront = { id: string; name: string; domain: string; status
 /** The owner signs in to WordPress with this email; the site answers on <subdomain>.<platform domain>. */
 export type NewStorefrontInput = { name: string; email: string; subdomain?: string };
 
+/**
+ * Add storefront: one more storefront in a reseller's account. startFrom copies one of its storefronts' production
+ * version and template; storefront also builds it a ready-made shop site.
+ */
+export type AddStorefrontInput = { name: string; startFrom?: string | null; storefront?: NewStorefrontInput | null };
+
+export type AddedStorefront = {
+  product: { id: string; name: string };
+  /** The ready-made shop site being built, when one was asked for. */
+  storefront?: ReadyStorefront;
+  /** Why it couldn't be built; the storefront exists anyway. */
+  storefrontError?: string;
+};
+
 /** An application to sell websites, sent from the marketing site's form and waiting for the platform admin. */
 export type ApplicationStatus = "pending" | "approved" | "declined";
 

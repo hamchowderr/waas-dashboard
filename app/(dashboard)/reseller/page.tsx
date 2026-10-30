@@ -1,22 +1,24 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getViewer } from "@/auth";
+import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KeysManager } from "../keys/keys-manager";
 import { BillCard, InvoicesCard } from "../resellers/bill-parts";
 import { monthRange } from "../resellers/usage";
+import { AddStorefrontButton } from "./add-storefront-dialog";
 
 export const metadata: Metadata = { title: "Reseller account" };
 
 const TABS = ["bill", "keys"] as const;
 
 /**
- * A reseller's own team: its monthly bill, the invoices sent for it, and its partner keys. The platform admin
- * sees the same on the reseller's page under Resellers.
+ * A reseller's own team: its monthly bill, its storefronts (owners and admins add more, up to the account's
+ * limit), the invoices sent for it, and its partner keys. The platform admin sees the same on the reseller's
+ * page under Resellers.
  */
 export default async function ResellerAccountPage({ searchParams }: { searchParams: Promise<{ month?: string; tab?: string }> }) {
   const viewer = await getViewer();
@@ -34,6 +36,8 @@ export default async function ResellerAccountPage({ searchParams }: { searchPara
   ]);
   if (!reseller) notFound();
   const monthHref = (m: string) => `/reseller?month=${m}&tab=bill`;
+  const count = reseller.products.length;
+  const full = reseller.maxProducts !== null && count >= reseller.maxProducts;
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -58,7 +62,22 @@ export default async function ResellerAccountPage({ searchParams }: { searchPara
           <Card>
             <CardHeader>
               <CardTitle>Storefronts</CardTitle>
-              <CardDescription>Switch between them at the top of the page. Each one&apos;s live stores count toward this bill.</CardDescription>
+              <CardDescription>
+                {count > 1 ? "Switch between them at the top of the page. " : ""}Each one&apos;s live stores count toward this bill.
+                {reseller.maxProducts !== null &&
+                  ` ${count} of ${reseller.maxProducts} used${full ? ": ask AnyPress at support@anypress.io for more." : "."}`}
+              </CardDescription>
+              {canChange(viewer) && (
+                <CardAction>
+                  <AddStorefrontButton
+                    resellerId={reseller.id}
+                    storefronts={reseller.products}
+                    maxProducts={reseller.maxProducts}
+                    startFrom={viewer.active?.productId}
+                    organizationId={viewer.active?.organizationId}
+                  />
+                </CardAction>
+              )}
             </CardHeader>
             <CardContent>
               <ul className="divide-y text-sm">

@@ -272,6 +272,13 @@ export type WireApprovedApplication = {
   storefrontError: string | null;
 };
 
+// Add storefront (POST /admin/resellers/{id}/products, or /account/reseller/products for its own team).
+export type WireAddedStorefront = {
+  product: { id: string; name: string };
+  storefront: WireStorefront | null;
+  storefrontError: string | null;
+};
+
 export type WireRotatedApiKey = { key: WireNewApiKey; replaced: WireApiKey };
 
 // Teams: a product's organization (GET /admin/products/{id}/organization, docs/accounts.md).

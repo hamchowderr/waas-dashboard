@@ -6,7 +6,7 @@ import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KeysManager } from "../../keys/keys-manager";
 import { BrandingEditor } from "../../branding/branding-editor";
@@ -15,6 +15,7 @@ import { formatMoney, monthRange } from "../usage";
 import { DeleteReseller } from "./delete-reseller";
 import { ResellerSettingsForm } from "./settings-form";
 import { SendInvoice } from "./send-invoice";
+import { AddStorefrontButton } from "../../reseller/add-storefront-dialog";
 import { ResellerStorefronts } from "./storefronts";
 import { BillCard, InvoicesCard } from "../bill-parts";
 
@@ -84,6 +85,9 @@ export default async function ResellerPage({
           <CardHeader>
             <CardTitle>Storefronts</CardTitle>
             <CardDescription>Each keeps its keys, team and stores. Its live stores count toward this bill.</CardDescription>
+            <CardAction>
+              <AddStorefrontButton resellerId={reseller.id} storefronts={reseller.products} maxProducts={reseller.maxProducts} />
+            </CardAction>
           </CardHeader>
           <CardContent>
             <ResellerStorefronts

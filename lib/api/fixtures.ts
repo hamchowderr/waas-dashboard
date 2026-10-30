@@ -23,6 +23,8 @@ import {
   type ApprovedApplication,
   type ApproveApplicationInput,
   type SellerApplication,
+  type AddedStorefront,
+  type AddStorefrontInput,
   type NewSeller,
   type NewSellerInput,
   type NewStorefrontInput,
@@ -1550,6 +1552,26 @@ export class FixtureAdminApi implements AdminApi {
       throw new FixtureError(400, `This reseller has reached its limit of ${reseller.maxProducts} storefronts`);
     }
     resellerOf.set(productId, id);
+  }
+
+  async createResellerProduct(id: string, input: AddStorefrontInput): Promise<AddedStorefront> {
+    const reseller = this.findReseller(id);
+    const count = [...resellerOf.values()].filter((r) => r === id).length;
+    if (reseller.maxProducts !== null && count >= reseller.maxProducts) {
+      throw new FixtureError(400, `This account has reached its limit of ${reseller.maxProducts} storefront${reseller.maxProducts === 1 ? "" : "s"}`);
+    }
+    const source = input.startFrom ? versions.find((v) => v.productId === this.product(input.startFrom!).id && v.isProduction) : undefined;
+    if (input.startFrom && !source) throw new FixtureError(400, "That storefront has no ready production version with a template to start from");
+    const product = { id: uuid(products.length + 1, 1), name: input.name };
+    products.push(product);
+    resellerOf.set(product.id, id);
+    if (source) versions.push({ ...source, id: uuid(versions.length + 1, 2), productId: product.id, statusCode: StatusCode.Pending, dateCreated: new Date().toISOString() });
+    if (!input.storefront) return { product };
+    try {
+      return { product, storefront: await this.createStorefront(product.id, input.storefront) };
+    } catch (error) {
+      return { product, storefrontError: (error as Error).message };
+    }
   }
 
   async removeResellerProduct(id: string, productId: string): Promise<void> {

@@ -132,7 +132,7 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
               {
                 id: "nav-reseller-account",
                 title: "Your reseller account",
-                content: "Your monthly bill, past invoices and your partner keys are here.",
+                content: "Your monthly bill, your storefronts (add one for each brand you sell under), past invoices and your partner keys are here.",
                 side: "right",
                 align: "start"
               } satisfies Step

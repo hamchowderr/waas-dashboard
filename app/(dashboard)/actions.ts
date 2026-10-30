@@ -6,6 +6,7 @@ import { canChange, canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
 import type {
+  AddedStorefront,
   BrandImage,
   BrandingFields,
   BrandingView,
@@ -530,9 +531,9 @@ async function adminOnly(what = "review applications") {
 }
 
 /** The platform admin, or a member of this reseller's own team (the API checks their role). */
-async function adminOrOwnReseller(id: string) {
+async function adminOrOwnReseller(id: string, what = "manage its partner keys") {
   const viewer = await getViewer();
-  if (!viewer?.isAdmin && viewer?.active?.resellerId !== id) throw new InputError("Only this reseller's team can manage its partner keys.");
+  if (!viewer?.isAdmin && viewer?.active?.resellerId !== id) throw new InputError(`Only this reseller's team can ${what}.`);
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -624,6 +625,28 @@ export async function setResellerStorefront(id: string, productId: string, add: 
     else await api.removeResellerProduct(uuid(id, "reseller"), uuid(productId, "storefront"));
     return undefined;
   }, ["/resellers", "/keys"]);
+}
+
+/**
+ * Add storefront: one more storefront in a reseller's account, for another brand, within its storefront limit.
+ * startFrom copies one of its storefronts' WordPress version and starter template; site also builds it a
+ * ready-made shop site. The platform admin or the reseller's team (owners and admins).
+ */
+export async function addResellerStorefront(
+  id: string,
+  name: string,
+  startFrom: string | null,
+  site: StorefrontRequest | null
+): Promise<ActionResult<AddedStorefront>> {
+  return run(async () => {
+    await adminOrOwnReseller(id, "add its storefronts");
+    const storefrontName = text(name, "Storefront name", 100);
+    return getAdminApi().createResellerProduct(uuid(id, "reseller"), {
+      name: storefrontName,
+      startFrom: startFrom ? uuid(startFrom, "storefront") : null,
+      storefront: site ? storefrontInput(storefrontName, site) : null
+    });
+  }, ["/resellers", "/reseller", "/"]);
 }
 
 /** A new partner key for a reseller: works on every storefront it has. The platform admin or the reseller's team. */
