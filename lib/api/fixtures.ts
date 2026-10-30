@@ -947,7 +947,7 @@ export class FixtureAdminApi implements AdminApi {
     return this.importCode(id);
   }
 
-  async createStore(productId: string, input: { name: string; size: StoreSize }): Promise<{ tenantId: string }> {
+  async createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize }): Promise<{ tenantId: string }> {
     return { tenantId: this.addTenant(productId, input.name) };
   }
 
