@@ -88,7 +88,7 @@ const fixtureAdmin: Viewer = {
 const SAMPLE_SELLER = { productId: "00000001-0000-4000-8000-00000001b808", productName: "AnyPress" };
 const SAMPLE_RESELLER = {
   productId: "00000001-0000-4000-8000-00000001d6f7",
-  productName: "Sample Partner storefront",
+  productName: "Summit Sites",
   resellerId: "0000000d-0000-4000-8000-00000014e534"
 };
 
@@ -103,7 +103,7 @@ function fixtureViewer(): Viewer {
   const membership: Membership = {
     organizationId: "sample-org",
     ...(as === "reseller"
-      ? { ...SAMPLE_RESELLER, organizationName: "Sample partner" }
+      ? { ...SAMPLE_RESELLER, organizationName: "Summit Web Studio" }
       : { ...SAMPLE_SELLER, organizationName: SAMPLE_SELLER.productName, resellerId: null }),
     role: as === "member" ? "member" : "owner"
   };

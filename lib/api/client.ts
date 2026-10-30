@@ -12,6 +12,8 @@ import type {
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
+  AddedStorefront,
+  AddStorefrontInput,
   NewSeller,
   NewSellerInput,
   NewStorefrontInput,
@@ -196,6 +198,8 @@ export interface AdminApi {
   /** Only a reseller with no storefronts. */
   deleteReseller(id: string): Promise<void>;
   addResellerProduct(id: string, productId: string): Promise<void>;
+  /** A new storefront made inside the reseller, within its storefront limit. The platform admin or the reseller's team. */
+  createResellerProduct(id: string, input: AddStorefrontInput): Promise<AddedStorefront>;
   removeResellerProduct(id: string, productId: string): Promise<void>;
   /** Partner keys: the reseller's own API keys, which work on every storefront it has. */
   partnerKeys(id: string): Promise<ApiKey[]>;

@@ -595,6 +595,11 @@ export type ReadyStorefront = { id: string; name: string; domain: string; status
 /** The owner signs in to WordPress with this email; the site answers on <subdomain>.<platform domain>. */
 export type NewStorefrontInput = { name: string; email: string; subdomain?: string };
 
+/** Add storefront: one more storefront in a reseller's account, a copy of startFrom's production version and template. */
+export type AddStorefrontInput = { name: string; startFrom: string };
+
+export type AddedStorefront = { id: string; name: string };
+
 /** An application to sell websites, sent from the marketing site's form and waiting for the platform admin. */
 export type ApplicationStatus = "pending" | "approved" | "declined";
 

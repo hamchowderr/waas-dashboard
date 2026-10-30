@@ -18,6 +18,8 @@ import type {
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
+  AddedStorefront,
+  AddStorefrontInput,
   NewSeller,
   NewSellerInput,
   NewStorefrontInput,
@@ -66,6 +68,7 @@ import type {
   WireApiKey,
   WireCreatedProduct,
   WireStorefront,
+  WireAddedStorefront,
   WireApprovedApplication,
   WireNewApiKey,
   WireRotatedApiKey,
@@ -609,6 +612,11 @@ export class HttpAdminApi implements AdminApi {
 
   async addResellerProduct(id: string, productId: string): Promise<void> {
     await this.send("PUT", this.resellerPath(id, `/products/${encodeURIComponent(productId)}`));
+  }
+
+  async createResellerProduct(id: string, input: AddStorefrontInput): Promise<AddedStorefront> {
+    const { id: productId, name } = (await this.send<WireAddedStorefront>("POST", this.resellerPath(id, "/products"), input))!;
+    return { id: productId, name };
   }
 
   async removeResellerProduct(id: string, productId: string): Promise<void> {

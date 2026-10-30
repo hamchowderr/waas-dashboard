@@ -6,6 +6,7 @@ import { canChange, canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
 import type {
+  AddedStorefront,
   BrandImage,
   BrandingFields,
   BrandingView,
@@ -530,9 +531,9 @@ async function adminOnly(what = "review applications") {
 }
 
 /** The platform admin, or a member of this reseller's own team (the API checks their role). */
-async function adminOrOwnReseller(id: string) {
+async function adminOrOwnReseller(id: string, what = "manage its partner keys") {
   const viewer = await getViewer();
-  if (!viewer?.isAdmin && viewer?.active?.resellerId !== id) throw new InputError("Only this reseller's team can manage its partner keys.");
+  if (!viewer?.isAdmin && viewer?.active?.resellerId !== id) throw new InputError(`Only this reseller's team can ${what}.`);
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -624,6 +625,21 @@ export async function setResellerStorefront(id: string, productId: string, add: 
     else await api.removeResellerProduct(uuid(id, "reseller"), uuid(productId, "storefront"));
     return undefined;
   }, ["/resellers", "/keys"]);
+}
+
+/**
+ * Add storefront: one more storefront in a reseller's account, for another brand, within its storefront limit.
+ * It starts as a copy of startFrom's WordPress version and starter template. The platform admin or the
+ * reseller's team (owners and admins).
+ */
+export async function addResellerStorefront(id: string, name: string, startFrom: string): Promise<ActionResult<AddedStorefront>> {
+  return run(async () => {
+    await adminOrOwnReseller(id, "add its storefronts");
+    return getAdminApi().createResellerProduct(uuid(id, "reseller"), {
+      name: text(name, "Storefront name", 100),
+      startFrom: uuid(startFrom, "storefront")
+    });
+  }, ["/resellers", "/reseller", "/"]);
 }
 
 /** A new partner key for a reseller: works on every storefront it has. The platform admin or the reseller's team. */
