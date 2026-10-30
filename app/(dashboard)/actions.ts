@@ -158,13 +158,13 @@ export async function moveSiteIn(productId: string, name: string, size: string):
 }
 
 /** A new store of the storefront, built from its production version and latest template. */
-export async function createStore(productId: string, name: string, ownerEmail: string, size: string): Promise<ActionResult<{ tenantId: string }>> {
+export async function createStore(productId: string, name: string, ownerEmail: string, size: string, notifyOwner = false): Promise<ActionResult<{ tenantId: string }>> {
   return run(async () => {
     if (!SIZES.includes(size as StoreSize)) throw new InputError("Invalid size");
     // The owner signs in with this email, and it is the site's own address.
     const email = ownerEmail.trim().toLowerCase();
     if (!EMAIL.test(email) || email.length > 254) throw new InputError("Owner email is not an email address");
-    return getAdminApi().createStore(uuid(productId, "storefront"), { name: text(name, "Name", 30), ownerEmail: email, size: size as StoreSize });
+    return getAdminApi().createStore(uuid(productId, "storefront"), { name: text(name, "Name", 30), ownerEmail: email, size: size as StoreSize, ...(notifyOwner === true && { notifyOwner: true }) });
   }, ["/stores", "/"]);
 }
 

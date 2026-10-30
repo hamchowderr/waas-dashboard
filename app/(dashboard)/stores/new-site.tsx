@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ export function NewSite({
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [size, setSize] = React.useState("small");
+  const [notify, setNotify] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
 
   const close = (next: boolean) => {
@@ -54,12 +56,13 @@ export function NewSite({
     if (!next) {
       setName("");
       setEmail("");
+      setNotify(false);
     }
   };
 
   const submit = () =>
     startTransition(async () => {
-      const result = await createStore(productId, name, email, size);
+      const result = await createStore(productId, name, email, size, notify);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -68,6 +71,7 @@ export function NewSite({
       setOpen(false);
       setName("");
       setEmail("");
+      setNotify(false);
       router.push(`/stores/${result.data.tenantId}`);
     });
 
@@ -141,6 +145,25 @@ export function NewSite({
               <p id="new-site-email-help" className="text-muted-foreground text-sm">
                 They sign in to the site with this email.
               </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="new-site-notify"
+                className="mt-0.5"
+                checked={notify}
+                disabled={pending}
+                aria-describedby="new-site-notify-help"
+                onCheckedChange={(checked) => setNotify(checked === true)}
+              />
+              <div className="space-y-1">
+                <Label htmlFor="new-site-notify" className="leading-snug font-normal">
+                  Email the owner their sign-in link
+                </Label>
+                <p id="new-site-notify-help" className="text-muted-foreground text-sm">
+                  When the site is ready, they get an email to set their
+                  password. Leave it off to tell them yourself.
+                </p>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="new-site-size">Size</Label>
