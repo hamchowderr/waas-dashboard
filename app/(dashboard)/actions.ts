@@ -629,22 +629,15 @@ export async function setResellerStorefront(id: string, productId: string, add: 
 
 /**
  * Add storefront: one more storefront in a reseller's account, for another brand, within its storefront limit.
- * startFrom copies one of its storefronts' WordPress version and starter template; site also builds it a
- * ready-made shop site. The platform admin or the reseller's team (owners and admins).
+ * It starts as a copy of startFrom's WordPress version and starter template. The platform admin or the
+ * reseller's team (owners and admins).
  */
-export async function addResellerStorefront(
-  id: string,
-  name: string,
-  startFrom: string | null,
-  site: StorefrontRequest | null
-): Promise<ActionResult<AddedStorefront>> {
+export async function addResellerStorefront(id: string, name: string, startFrom: string): Promise<ActionResult<AddedStorefront>> {
   return run(async () => {
     await adminOrOwnReseller(id, "add its storefronts");
-    const storefrontName = text(name, "Storefront name", 100);
     return getAdminApi().createResellerProduct(uuid(id, "reseller"), {
-      name: storefrontName,
-      startFrom: startFrom ? uuid(startFrom, "storefront") : null,
-      storefront: site ? storefrontInput(storefrontName, site) : null
+      name: text(name, "Storefront name", 100),
+      startFrom: uuid(startFrom, "storefront")
     });
   }, ["/resellers", "/reseller", "/"]);
 }

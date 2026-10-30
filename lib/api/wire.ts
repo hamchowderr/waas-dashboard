@@ -273,11 +273,7 @@ export type WireApprovedApplication = {
 };
 
 // Add storefront (POST /admin/resellers/{id}/products, or /account/reseller/products for its own team).
-export type WireAddedStorefront = {
-  product: { id: string; name: string };
-  storefront: WireStorefront | null;
-  storefrontError: string | null;
-};
+export type WireAddedStorefront = { id: string; name: string };
 
 export type WireRotatedApiKey = { key: WireNewApiKey; replaced: WireApiKey };
 

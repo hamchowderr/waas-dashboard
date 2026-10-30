@@ -6,7 +6,6 @@ import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -27,15 +26,10 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { pickStorefront } from "@/lib/auth-client";
 import { addResellerStorefront } from "../actions";
-import {
-  EMPTY_STOREFRONT,
-  StorefrontFields,
-  storefrontFieldsError,
-} from "../keys/storefront-fields";
 
 /**
  * "Add storefront": one more storefront in a reseller's account, usually one per brand, up to its storefront
- * limit. It can start ready from one of the account's storefronts and get its own shop site. organizationId is
+ * limit. It starts ready as a copy of one of the account's storefronts. organizationId is
  * the reseller team's, so its own people can switch to the new storefront straight away; the platform admin
  * passes none.
  */
@@ -55,21 +49,17 @@ export function AddStorefrontButton({
 }) {
   const router = useRouter();
   const full = maxProducts !== null && storefronts.length >= maxProducts;
-  const fallback = preferred ?? storefronts[0]?.id ?? "none";
+  const fallback = preferred ?? storefronts[0]?.id ?? "";
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState("");
   const [startFrom, setStartFrom] = React.useState(fallback);
-  const [buildSite, setBuildSite] = React.useState(false);
-  const [site, setSite] = React.useState(EMPTY_STOREFRONT);
   const [pending, startTransition] = React.useTransition();
 
-  const ready = name.trim() && !(buildSite && storefrontFieldsError(site));
+  const ready = name.trim() && startFrom;
 
   const reset = () => {
     setName("");
     setStartFrom(fallback);
-    setBuildSite(false);
-    setSite(EMPTY_STOREFRONT);
   };
 
   const openIt = async (productId: string) => {
@@ -84,23 +74,16 @@ export function AddStorefrontButton({
 
   const submit = () =>
     startTransition(async () => {
-      const result = await addResellerStorefront(
-        resellerId,
-        name,
-        startFrom === "none" ? null : startFrom,
-        buildSite ? site : null
-      );
+      const result = await addResellerStorefront(resellerId, name, startFrom);
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
-      const { product, storefront, storefrontError } = result.data;
+      const product = result.data;
       toast.success(
-        `${product.name} is ready.${startFrom === "none" ? "" : " Its WordPress version is building; New site works once it has."}`,
+        `${product.name} is set up. Its WordPress version is building; New site works once it has.`,
         organizationId ? { action: { label: "Switch to it", onClick: () => void openIt(product.id) } } : undefined
       );
-      if (storefront) toast.success(`Building its shop site at ${storefront.domain}`);
-      if (storefrontError) toast.error(`The storefront is set up, but its shop site wasn't built: ${storefrontError}`);
       setOpen(false);
       reset();
       router.refresh();
@@ -111,7 +94,7 @@ export function AddStorefrontButton({
       <Button
         size="sm"
         onClick={() => setOpen(true)}
-        disabled={full}
+        disabled={full || storefronts.length === 0}
         title={full ? `You have all ${maxProducts} storefronts this account allows. Ask AnyPress at support@anypress.io for more.` : undefined}
       >
         <PlusIcon /> Add storefront
@@ -140,7 +123,7 @@ export function AddStorefrontButton({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="add-storefront-start-from">Start ready from</Label>
+              <Label htmlFor="add-storefront-start-from">Copy setup from</Label>
               <Select value={startFrom} onValueChange={setStartFrom}>
                 <SelectTrigger id="add-storefront-start-from" className="w-full">
                   <SelectValue />
@@ -151,7 +134,6 @@ export function AddStorefrontButton({
                       {s.name}
                     </SelectItem>
                   ))}
-                  <SelectItem value="none">Nothing: start empty</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-muted-foreground text-sm">
@@ -160,24 +142,6 @@ export function AddStorefrontButton({
                 keys and team aren&apos;t copied.
               </p>
             </div>
-            <div className="flex items-start gap-2">
-              <Checkbox
-                id="add-storefront-build-site"
-                checked={buildSite}
-                onCheckedChange={(v) => setBuildSite(v === true)}
-              />
-              <div className="space-y-1">
-                <Label htmlFor="add-storefront-build-site">Build a shop site for it</Label>
-                <p className="text-muted-foreground text-sm">
-                  A WordPress site with WaaS Host and FluentCart, already
-                  connected, to sell this brand&apos;s websites from. Leave it
-                  off when you sell from a site of your own.
-                </p>
-              </div>
-            </div>
-            {buildSite && (
-              <StorefrontFields value={site} onChange={setSite} idPrefix="add-storefront-site" />
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" disabled={pending} onClick={() => setOpen(false)}>

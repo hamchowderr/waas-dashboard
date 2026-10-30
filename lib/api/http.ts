@@ -615,12 +615,8 @@ export class HttpAdminApi implements AdminApi {
   }
 
   async createResellerProduct(id: string, input: AddStorefrontInput): Promise<AddedStorefront> {
-    const added = (await this.send<WireAddedStorefront>("POST", this.resellerPath(id, "/products"), input))!;
-    return {
-      product: { id: added.product.id, name: added.product.name },
-      ...(added.storefront ? { storefront: toStorefront(added.storefront) } : {}),
-      ...(added.storefrontError ? { storefrontError: added.storefrontError } : {})
-    };
+    const { id: productId, name } = (await this.send<WireAddedStorefront>("POST", this.resellerPath(id, "/products"), input))!;
+    return { id: productId, name };
   }
 
   async removeResellerProduct(id: string, productId: string): Promise<void> {
