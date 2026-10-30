@@ -98,7 +98,7 @@ function uuid(n: number, kind: number): string {
 const products: Omit<Product, "tenantCount">[] = [
   // The first matches the platform's own storefront (shop.anypress.io), so a preview looks like the real dashboard.
   { id: uuid(1, 1), name: "AnyPress" },
-  { id: uuid(2, 1), name: "Sample Partner storefront" }
+  { id: uuid(2, 1), name: "Sample Partner Storefront" }
 ];
 
 /** Store limits by storefront; a storefront missing here has no limit. */
@@ -107,7 +107,7 @@ const limits = new Map<string, number | null>([[products[0].id, 6]]);
 /** Reseller accounts, and which reseller each storefront belongs to. */
 type FixtureReseller = ResellerSettings & { id: string; dateCreated: string; autoInvoice: boolean; stripeCustomerId: string | null };
 const resellers: FixtureReseller[] = [
-  { id: uuid(1, 13), name: "Sample partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", brandName: "Sample Partner Sites", brandUrl: "https://partner.example", listPriceCents: { small: 1200, medium: 2400, large: 4800 }, autoInvoice: true, stripeCustomerId: "cus_SamplePartner", dateCreated: iso(NOW - 40 * DAY) }
+  { id: uuid(1, 13), name: "Sample Partner", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@partner.example", brandName: "Sample Partner Sites", brandUrl: "https://partner.example", listPriceCents: { small: 1200, medium: 2400, large: 4800 }, autoInvoice: true, stripeCustomerId: "cus_SamplePartner", dateCreated: iso(NOW - 40 * DAY) }
 ];
 // Sample data: last month's bill was sent and paid.
 const resellerInvoices = new Map<string, ResellerInvoice[]>([
