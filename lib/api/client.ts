@@ -104,6 +104,11 @@ export interface AdminApi {
   suspendStore(tenantId: string, takeBackup: boolean): Promise<void>;
   /** Brings a suspended store back online. Platform admin only. */
   resumeStore(tenantId: string): Promise<void>;
+  /**
+   * Ends the hold of a site moved in: its scheduled tasks start, it emails everyone and search engines
+   * may index it. The store is Pending until that's done; one not on hold is left as it is.
+   */
+  goLive(tenantId: string): Promise<void>;
   /** Deletes a store; its backups are kept for the retention period. Platform admin only. */
   deleteStore(tenantId: string): Promise<void>;
   /** Makes a store that waits for a site moved in from another host, and answers its import code. */

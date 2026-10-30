@@ -11,7 +11,6 @@ import type {
   BrandingView,
   DashboardDomainView,
   ImportCode,
-  MoveIn,
   StoreSize,
   ApiKey,
   ApplicationStatus,
@@ -101,6 +100,7 @@ import type {
   WireWebhookEndpointParams,
   WireWebhookSecret
 } from "./wire";
+import { toMoveIn } from "./wire";
 
 export class AdminApiError extends Error {
   constructor(
@@ -339,6 +339,10 @@ export class HttpAdminApi implements AdminApi {
 
   async resumeStore(tenantId: string): Promise<void> {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/resume`, {});
+  }
+
+  async goLive(tenantId: string): Promise<void> {
+    await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/go-live`, {});
   }
 
   async deleteStore(tenantId: string): Promise<void> {
@@ -767,6 +771,7 @@ export class HttpAdminApi implements AdminApi {
         domainCount: t.domainCount,
         statusCode: t.statusCode as StatusCode,
         isSuspended: t.isSuspended,
+        onHold: t.onHold ?? false,
         latestBackupAt: t.latestBackupAt,
         dateCreated: t.dateCreated
       }))
@@ -797,6 +802,8 @@ export class HttpAdminApi implements AdminApi {
       statusCode: t.statusCode as StatusCode,
       isSuspended: t.isSuspended,
       dateSuspended: t.dateSuspended ?? null,
+      onHold: t.onHold ?? false,
+      dateHeld: t.dateHeld ?? null,
       dateCreated: t.dateCreated ?? null,
       dateChanged: t.dateChanged ?? null,
       mainDomain: main?.domainName ?? null,
@@ -806,7 +813,7 @@ export class HttpAdminApi implements AdminApi {
       backups: t.backups.map((b) => this.toBackup(b, names, products)),
       jobs,
       keepsOwnCode: t.keepsOwnCode ?? false,
-      moveIn: t.moveIn ? { expiresAt: t.moveIn.expiresAt, startedAt: t.moveIn.startedAt, source: t.moveIn.source as MoveIn["source"] } : null
+      moveIn: t.moveIn ? toMoveIn(t.moveIn) : null
     };
   }
 

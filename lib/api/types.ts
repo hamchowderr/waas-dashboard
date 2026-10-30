@@ -40,6 +40,8 @@ export type Tenant = {
   domainCount: number;
   statusCode: StatusCode;
   isSuspended: boolean;
+  /** A site moved in, held until it goes live. False when the API's list doesn't say. */
+  onHold: boolean;
   latestBackupAt: string | null;
   dateCreated: string;
 };
@@ -59,6 +61,12 @@ export type TenantDetail = {
   statusCode: StatusCode;
   isSuspended: boolean;
   dateSuspended: string | null;
+  /**
+   * A site moved in, held until it goes live: its scheduled tasks don't run, it emails only its owner
+   * and it isn't indexed by search engines.
+   */
+  onHold: boolean;
+  dateHeld: string | null;
   dateCreated: string | null;
   dateChanged: string | null;
   mainDomain: string | null;
@@ -80,6 +88,10 @@ export type MoveIn = {
   startedAt: string | null;
   /** What the export plugin told about the old site. */
   source: { home?: string; wordPressVersion?: string; phpVersion?: string; uploadedBytes?: number } | null;
+  /** Once the move failed, why, in words the site's owner can act on. */
+  reason: string | null;
+  /** What to check after the move: another PHP version, a newer WordPress, a failed health check. */
+  warnings: string[];
 };
 
 /** A store waiting for its site: the code to paste into the AnyPress Export plugin, and where to get the plugin. */
@@ -116,7 +128,8 @@ export type JobType =
   | "tenant.resume"
   | "tenant.backup"
   | "tenant.restore"
-  | "tenant.rollback";
+  | "tenant.rollback"
+  | "tenant.go-live";
 
 /** queued, running and failed are the Jobs page's tabs; the rest appear on a store's page. */
 export type JobState = "queued" | "running" | "failed" | "retried" | "dismissed" | "done" | "cancelled";
@@ -449,6 +462,7 @@ export type WebhookEventType =
   | "tenant.domains_changed"
   | "tenant.suspended"
   | "tenant.resumed"
+  | "tenant.live"
   | "tenant.deleted"
   | "tenant.restored"
   | "tenant.rolled_back"

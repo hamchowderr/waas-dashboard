@@ -3,11 +3,11 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ChevronLeft, ExternalLinkIcon } from "lucide-react";
 
-import { getViewer } from "@/auth";
+import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel, settingLabel } from "@/lib/format";
 import { StatusCode } from "@/lib/api/types";
-import { StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
+import { OnHoldBadge, StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
 import { JobStateBadge } from "@/components/admin/job-state-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChangeAddress } from "./change-address";
+import { GoLive } from "./go-live";
 import { MailSender } from "./mail-sender";
 import { RestoreBackup } from "./restore-backup";
 import { MoveInStatus } from "./move-in";
@@ -60,6 +61,8 @@ export default async function StorePage({ params, searchParams }: Params) {
   const canRestore = tenant.statusCode !== StatusCode.Removing && tenant.statusCode !== StatusCode.Failed;
   // Suspend and delete are the platform admin's; a seller's stores follow their shop's subscriptions.
   const canManage = viewer?.isAdmin === true && tenant.statusCode !== StatusCode.Removing;
+  // Going live is the site owner's own step: anyone who can change the storefront may take it.
+  const canGoLive = tenant.onHold && !!viewer && canChange(viewer) && canRestore;
   // Links to the site only once it is up.
   // What the store was made with, in plain words; the values themselves stay private.
   const settings = [...new Set([...tenant.wpOptionNames, ...tenant.phpConstantNames].map(settingLabel))];
@@ -79,6 +82,7 @@ export default async function StorePage({ params, searchParams }: Params) {
             <h1 className="truncate text-xl font-bold tracking-tight lg:text-2xl">{tenant.name}</h1>
             <StatusBadge statusCode={tenant.statusCode} />
             {tenant.isSuspended && <SuspendedBadge />}
+            {tenant.onHold && <OnHoldBadge />}
           </div>
           <p className="text-muted-foreground truncate text-sm">{tenant.mainDomain ?? "No main domain"}</p>
         </div>
@@ -113,6 +117,37 @@ export default async function StorePage({ params, searchParams }: Params) {
           />
         )}
       </div>
+
+      {tenant.onHold && (
+        <Card data-testid="on-hold">
+          <CardHeader>
+            <CardTitle>This site is on hold</CardTitle>
+            <CardDescription>
+              It was moved in{tenant.dateHeld ? ` on ${formatDateTime(tenant.dateHeld)}` : ""} and doesn&apos;t act as the live site yet,
+              so it can&apos;t clash with the old one while you look it over.
+            </CardDescription>
+            {canGoLive && (
+              <CardAction>
+                <GoLive
+                  tenantId={tenant.id}
+                  storeName={tenant.name}
+                  onBaseAddress={tenant.domains.some((d) => d.isMain && d.isBase)}
+                />
+              </CardAction>
+            )}
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc space-y-1.5 ps-5 text-sm">
+              <li>Scheduled tasks are paused: no subscription renewals, order clean-ups, or newsletter and feed syncs.</li>
+              <li>Email goes only to you and your team. Every other email is held, not sent.</li>
+              <li>Search engines are asked not to index it.</li>
+            </ul>
+            <p className="text-muted-foreground mt-3 text-sm">
+              When it looks right, point your domain at this store, then go live.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid items-start gap-4 md:grid-cols-2 lg:gap-6">
         <Card>

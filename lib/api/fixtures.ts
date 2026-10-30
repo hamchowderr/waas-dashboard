@@ -297,15 +297,22 @@ const TEMPLATE_NAME = /^[A-Za-z0-9 -]{5,50}$/;
 // Obviously fictional names and reserved .example domains: sample data must never look like a real business.
 const storeNames = Array.from({ length: 20 }, (_, i) => `Example Store ${i + 1}`);
 
-type TenantSeed = { status: StatusCode; suspended?: boolean; custom?: string; extra?: string[] };
+type TenantSeed = {
+  status: StatusCode;
+  suspended?: boolean;
+  custom?: string;
+  extra?: string[];
+  /** A site moved in: "held" is built and on hold until it goes live, "failed" is a move that failed. */
+  movedIn?: "held" | "failed";
+};
 
 const seeds: TenantSeed[] = [
   { status: StatusCode.Done, custom: "shop.store1.example", extra: ["store1.example"] },
   { status: StatusCode.Done },
-  { status: StatusCode.Done, custom: "store3.example" },
+  { status: StatusCode.Done, custom: "store3.example", movedIn: "held" },
   { status: StatusCode.Pending },
   { status: StatusCode.Done, suspended: true },
-  { status: StatusCode.Failed },
+  { status: StatusCode.Failed, movedIn: "failed" },
   { status: StatusCode.Done, custom: "store7.example" },
   { status: StatusCode.Done },
   { status: StatusCode.Done, suspended: true, custom: "store9.example" },
@@ -325,9 +332,33 @@ const seeds: TenantSeed[] = [
 type FixtureTenant = Tenant & {
   domains: TenantDomain[];
   dateSuspended: string | null;
+  dateHeld: string | null;
   dateChanged: string;
   moveIn?: MoveIn;
 };
+
+/** The move of a sample site from another host, as the API reports it once it ran. */
+function sampleMoveIn(kind: "held" | "failed", startedAt: number): MoveIn {
+  const source = { home: "https://www.old-host.example", wordPressVersion: "6.9.4", phpVersion: "8.1.29", uploadedBytes: 1_288_490_189 };
+  if (kind === "failed")
+    return {
+      expiresAt: iso(startedAt + 6 * DAY),
+      startedAt: iso(startedAt),
+      source,
+      reason: "The database holds two sets of WordPress tables whose names collide. Remove the old copy's tables from the old site's database, then export again.",
+      warnings: []
+    };
+  return {
+    expiresAt: iso(startedAt + 6 * DAY),
+    startedAt: iso(startedAt),
+    source,
+    reason: null,
+    warnings: [
+      "The old site ran PHP 8.1 and this store runs PHP 8.3. Check that its plugins and theme work.",
+      "After the move the home page answered 500 and the login page 200, and PHP stopped with: Uncaught Error: Call to undefined function create_function() in wp-content/plugins/old-slider/slider.php:42. Fix or switch off the plugin or theme at fault."
+    ]
+  };
+}
 
 const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   const version = versions[i % 5 === 4 ? 2 : i % 4 === 1 ? 1 : 0];
@@ -351,6 +382,9 @@ const tenants: FixtureTenant[] = seeds.map((seed, i) => {
     statusCode: seed.status,
     isSuspended: !!seed.suspended,
     dateSuspended: seed.suspended ? iso(NOW - (3 + i) * DAY) : null,
+    onHold: seed.movedIn === "held",
+    dateHeld: seed.movedIn === "held" ? iso(NOW - 2 * DAY) : null,
+    ...(seed.movedIn && { moveIn: sampleMoveIn(seed.movedIn, NOW - 2 * DAY - 2 * HOUR) }),
     mainDomain: domains.find((d) => d.isMain)!.domainName,
     domainCount: domains.length,
     domains,
@@ -653,7 +687,7 @@ function without<T extends object, K extends keyof T>(item: T, ...keys: K[]): Om
   return copy;
 }
 
-const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended", "dateChanged");
+const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended", "dateHeld", "dateChanged", "moveIn");
 
 /** key: the product id, or "reseller:<id>" for a reseller's team. */
 type FixtureTeam = Team & { key: string };
@@ -812,7 +846,13 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async moveSiteIn(productId: string, input: { name: string; size: StoreSize }): Promise<ImportCode> {
-    const id = this.addTenant(productId, input.name, { expiresAt: new Date(Date.now() + 7 * DAY).toISOString(), startedAt: null, source: null });
+    const id = this.addTenant(productId, input.name, {
+      expiresAt: new Date(Date.now() + 7 * DAY).toISOString(),
+      startedAt: null,
+      source: null,
+      reason: null,
+      warnings: []
+    });
     return this.importCode(id);
   }
 
@@ -839,6 +879,8 @@ export class FixtureAdminApi implements AdminApi {
       statusCode: StatusCode.Pending,
       isSuspended: false,
       dateSuspended: null,
+      onHold: false,
+      dateHeld: null,
       mainDomain: base,
       domainCount: 1,
       domains: [{ domainName: base, isMain: true, isBase: true }],
@@ -905,6 +947,16 @@ export class FixtureAdminApi implements AdminApi {
   async resumeStore(tenantId: string): Promise<void> {
     const tenant = this.changeableTenant(tenantId);
     Object.assign(tenant, { isSuspended: false, dateSuspended: null, dateChanged: new Date().toISOString() });
+  }
+
+  /** Like the API: the hold ends at once, and the store is Pending until its job has run (a few seconds here). */
+  async goLive(tenantId: string): Promise<void> {
+    const tenant = this.changeableTenant(tenantId);
+    if (!tenant.onHold) return;
+    Object.assign(tenant, { onHold: false, dateHeld: null, statusCode: StatusCode.Pending, dateChanged: new Date().toISOString() });
+    setTimeout(() => {
+      if (tenant.statusCode === StatusCode.Pending) tenant.statusCode = StatusCode.Done;
+    }, 5_000).unref?.();
   }
 
   async deleteStore(tenantId: string): Promise<void> {

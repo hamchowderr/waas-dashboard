@@ -12,7 +12,8 @@ import { ImportCodeSteps } from "../import-code";
 
 /**
  * A store made to move a site in. While it waits, the code can't be shown again (only its hash is
- * kept), so a new one replaces it. Once the move started, what the plugin told about the old site.
+ * kept), so a new one replaces it. Once the move started, what the plugin told about the old site, why
+ * the move failed, and what to check after it.
  */
 export function MoveInStatus({
   tenantId,
@@ -37,21 +38,43 @@ export function MoveInStatus({
   if (moveIn.startedAt) {
     const source = moveIn.source ?? {};
     return (
-      <div className="space-y-1 text-sm">
-        <p>
-          Moved in {formatDateTime(moveIn.startedAt)}
-          {source.home ? ` from ${source.home}` : ""}.
-        </p>
-        {(source.wordPressVersion || source.uploadedBytes) && (
-          <p className="text-muted-foreground">
-            {[
-              source.wordPressVersion && `WordPress ${source.wordPressVersion}`,
-              source.uploadedBytes &&
-                `${formatBytes(source.uploadedBytes)} uploaded`,
-            ]
-              .filter(Boolean)
-              .join(", ")}
+      <div className="space-y-3 text-sm">
+        <div className="space-y-1">
+          <p>
+            {moveIn.reason ? "The move started" : "Moved in"} {formatDateTime(moveIn.startedAt)}
+            {source.home ? ` from ${source.home}` : ""}.
           </p>
+          {(source.wordPressVersion || source.phpVersion || source.uploadedBytes) && (
+            <p className="text-muted-foreground">
+              {[
+                source.wordPressVersion && `WordPress ${source.wordPressVersion}`,
+                source.phpVersion && `PHP ${source.phpVersion}`,
+                source.uploadedBytes &&
+                  `${formatBytes(source.uploadedBytes)} uploaded`,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+            </p>
+          )}
+        </div>
+        {moveIn.reason && (
+          <div
+            role="alert"
+            className="border-destructive/20 bg-destructive/5 space-y-1 rounded-lg border p-3"
+          >
+            <p className="text-destructive font-medium">The move failed</p>
+            <p>{moveIn.reason}</p>
+          </div>
+        )}
+        {moveIn.warnings.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="font-medium">Check after the move</p>
+            <ul className="text-muted-foreground list-disc space-y-1 ps-5 break-words">
+              {moveIn.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     );

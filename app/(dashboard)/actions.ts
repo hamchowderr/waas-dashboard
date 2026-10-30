@@ -198,6 +198,17 @@ export async function resumeStore(tenantId: string): Promise<ActionResult> {
   }, ["/stores", "/"]);
 }
 
+/**
+ * Ends the hold of a site moved in: its scheduled tasks start, it emails everyone and search engines may
+ * index it. The site owner's own step, so any viewer who can change the storefront may take it.
+ */
+export async function goLive(tenantId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().goLive(uuid(tenantId, "store"));
+    return undefined;
+  }, ["/stores", "/"]);
+}
+
 /** Deletes a store; its backups are kept. Platform admin only. */
 export async function deleteStore(tenantId: string): Promise<ActionResult> {
   return run(async () => {

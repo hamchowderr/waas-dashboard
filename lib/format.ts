@@ -24,7 +24,8 @@ export const jobTypeLabels: Record<JobType, string> = {
   "tenant.resume": "Resume store",
   "tenant.backup": "Back up store",
   "tenant.restore": "Restore store",
-  "tenant.rollback": "Restore from backup"
+  "tenant.rollback": "Restore from backup",
+  "tenant.go-live": "Go live"
 };
 
 export const webhookEventLabels: Record<WebhookEventType, string> = {
@@ -34,6 +35,7 @@ export const webhookEventLabels: Record<WebhookEventType, string> = {
   "tenant.domains_changed": "Store domains changed",
   "tenant.suspended": "Store suspended",
   "tenant.resumed": "Store resumed",
+  "tenant.live": "Store went live",
   "tenant.deleted": "Store deleted",
   "tenant.restored": "Store restored",
   "tenant.rolled_back": "Store restored from backup",
