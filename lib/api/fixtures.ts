@@ -17,6 +17,7 @@ import {
   type PluginUpload,
   type PluginSearch,
   type MoveIn,
+  type SiteReport,
   type StoreSize,
   type ApiKey,
   type ApplicationStatus,
@@ -346,7 +347,8 @@ function sampleMoveIn(kind: "held" | "failed", startedAt: number): MoveIn {
       startedAt: iso(startedAt),
       source,
       reason: "The database holds two sets of WordPress tables whose names collide. Remove the old copy's tables from the old site's database, then export again.",
-      warnings: []
+      warnings: [],
+      siteReport: null
     };
   return {
     expiresAt: iso(startedAt + 6 * DAY),
@@ -356,9 +358,97 @@ function sampleMoveIn(kind: "held" | "failed", startedAt: number): MoveIn {
     warnings: [
       "The old site ran PHP 8.1 and this store runs PHP 8.3. Check that its plugins and theme work.",
       "After the move the home page answered 500 and the login page 200, and PHP stopped with: Uncaught Error: Call to undefined function create_function() in wp-content/plugins/old-slider/slider.php:42. Fix or switch off the plugin or theme at fault."
-    ]
+    ],
+    siteReport: sampleSiteReport
   };
 }
+
+/** What the API's report says about a sample site moved in: Contact Form 7, WooCommerce and MailPoet. */
+const sampleSiteReport: SiteReport = {
+  items: [
+    {
+      area: "forms",
+      plugin: "Contact Form 7",
+      slug: "contact-form-7",
+      version: "6.1.2",
+      counts: [
+        { name: "forms", count: 4, label: "4 forms" },
+        { name: "entries", count: 1204, label: "1,204 entries" },
+        { name: "pages with its forms", count: 6, label: "6 pages with its forms" }
+      ],
+      fluentRoute: "native",
+      fluentPlugin: "Fluent Forms",
+      onFluent: false,
+      needsPro: true,
+      route: "Needs Fluent Forms Pro",
+      willLose: [
+        "Email notifications and thank-you messages: set them up again in Fluent Forms.",
+        "Hidden fields.",
+        "The original date of each entry: entries come in dated the day they are brought in.",
+        "Entries past the first 1,000 of each form: Fluent Forms brings in no more per form.",
+        "The form shortcodes and blocks on 6 pages stay as they are: swap each one for the Fluent Forms form, or visitors see the old shortcode once the old plugin is off."
+      ],
+      blockers: ["2 forms use phone, file upload or range fields, which only Fluent Forms Pro brings in. Without it those fields are dropped."]
+    },
+    {
+      area: "shop",
+      plugin: "WooCommerce",
+      slug: "woocommerce",
+      version: "10.2.1",
+      counts: [
+        { name: "products", count: 86, label: "86 products" },
+        { name: "orders", count: 2310, label: "2,310 orders" },
+        { name: "guest orders", count: 911, label: "911 guest orders" }
+      ],
+      fluentRoute: "addon",
+      fluentPlugin: "FluentCart",
+      onFluent: false,
+      needsPro: false,
+      route: "Needs the FluentCart Migrator add-on",
+      willLose: [
+        "Shipping zones, product tags, gallery images and reviews.",
+        "Payment gateway keys: connect each payment method again in FluentCart.",
+        "Store emails and shortcodes on pages."
+      ],
+      blockers: [
+        "WooCommerce keeps its orders the old way (HPOS is off). Turn on High-Performance Order Storage under WooCommerce → Settings → Advanced → Features and let it sync before moving orders.",
+        "Live payment keys came across for Stripe. Payments taken on this copy are real: put the gateways in test mode until it goes live."
+      ]
+    },
+    {
+      area: "crm",
+      plugin: "MailPoet",
+      slug: "mailpoet",
+      version: "5.14.1",
+      counts: [
+        { name: "subscribers", count: 4120, label: "4,120 subscribers" },
+        { name: "lists", count: 3, label: "3 lists" },
+        { name: "emails", count: 57, label: "57 emails" }
+      ],
+      fluentRoute: "none",
+      fluentPlugin: "FluentCRM",
+      onFluent: false,
+      needsPro: false,
+      route: "No Fluent route yet",
+      willLose: [
+        "FluentCRM has no MailPoet importer: export the subscribers from MailPoet as a CSV file and import that.",
+        "Emails, automations and their stats."
+      ],
+      blockers: []
+    }
+  ],
+  plugins: [
+    { slug: "contact-form-7", name: "Contact Form 7", version: "6.1.2" },
+    { slug: "flamingo", name: "Flamingo", version: "2.6" },
+    { slug: "woocommerce", name: "WooCommerce", version: "10.2.1" },
+    { slug: "woocommerce-gateway-stripe", name: "WooCommerce Stripe Gateway", version: "9.8.0" },
+    { slug: "mailpoet", name: "MailPoet", version: "5.14.1" },
+    { slug: "wordpress-seo", name: "Yoast SEO", version: "26.2" },
+    { slug: "akismet", name: "Akismet Anti-spam", version: "5.5" },
+    { slug: "old-slider", name: "Old Slider", version: "1.4" }
+  ],
+  notes: []
+};
 
 const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   const version = versions[i % 5 === 4 ? 2 : i % 4 === 1 ? 1 : 0];
@@ -851,7 +941,8 @@ export class FixtureAdminApi implements AdminApi {
       startedAt: null,
       source: null,
       reason: null,
-      warnings: []
+      warnings: [],
+      siteReport: null
     });
     return this.importCode(id);
   }

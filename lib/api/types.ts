@@ -92,6 +92,44 @@ export type MoveIn = {
   reason: string | null;
   /** What to check after the move: another PHP version, a newer WordPress, a failed health check. */
   warnings: string[];
+  /** What's on the moved site, counted once it was built; null before that or from an older API. */
+  siteReport: SiteReport | null;
+};
+
+/** The parts of a site the report groups plugins by. */
+export type SiteReportArea = "forms" | "shop" | "crm" | "booking" | "support" | "affiliates" | "community";
+
+/**
+ * How a Fluent plugin can take a plugin's data over: its own importer, its importer with Pro, a
+ * separate add-on, or no way yet.
+ */
+export type FluentRoute = "native" | "native-pro" | "addon" | "none";
+
+/** One form, shop, CRM, booking, support, affiliate or community plugin found on a moved site. */
+export type SiteReportItem = {
+  area: SiteReportArea;
+  plugin: string;
+  slug: string;
+  version: string | null;
+  /** "1,204 entries" and the like, in order. */
+  counts: { name: string; count: number; label: string }[];
+  fluentRoute: FluentRoute;
+  fluentPlugin: string;
+  /** The site already runs that Fluent plugin. */
+  onFluent: boolean;
+  needsPro: boolean;
+  /** The route in a few words, e.g. "Needs Fluent Forms Pro". */
+  route: string;
+  willLose: string[];
+  blockers: string[];
+};
+
+export type SiteReport = {
+  items: SiteReportItem[];
+  /** Every plugin active on the moved site. */
+  plugins: { slug: string; name: string; version: string }[];
+  /** What the store could not count. */
+  notes: string[];
 };
 
 /** A store waiting for its site: the code to paste into the AnyPress Export plugin, and where to get the plugin. */
