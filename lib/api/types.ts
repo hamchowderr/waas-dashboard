@@ -642,6 +642,12 @@ export type NewSeller = {
 };
 
 /** A ready-made storefront: a WordPress site with WaaS Host that the platform built and connected for a product. */
+/**
+ * "Log in to WordPress": a link that opens the site's wp-admin signed in, once, for a few minutes. When oneClick is
+ * false the site's plugin is older than one-click login and url is its ordinary login page.
+ */
+export type WordPressLogin = { url: string; oneClick: boolean; expiresAt: string | null };
+
 export type ReadyStorefront = { id: string; name: string; domain: string; statusCode: StatusCode; statusName: string };
 
 /** The owner signs in to WordPress with this email; the site answers on <subdomain>.<platform domain>. */

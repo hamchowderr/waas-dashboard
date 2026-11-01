@@ -19,8 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import type { ReadyStorefront } from "@/lib/api/types";
+import { StatusCode, type ReadyStorefront } from "@/lib/api/types";
 import { buildStorefront } from "../actions";
+import { WordPressLoginButton } from "../wordpress-login";
 import {
   EMPTY_STOREFRONT,
   StorefrontFields,
@@ -36,11 +37,14 @@ export function StorefrontCard({
   productName,
   storefront,
   canBuild,
+  canLogIn = false,
 }: {
   productId: string;
   productName: string;
   storefront: ReadyStorefront | null;
   canBuild: boolean;
+  /** One-click sign-in to its wp-admin: for anyone who may change the storefront. */
+  canLogIn?: boolean;
 }) {
   if (!storefront && !canBuild) return null;
   return (
@@ -63,11 +67,15 @@ export function StorefrontCard({
                 <Link href={`/stores/${storefront.id}`}>Store page</Link>
               </Button>
             )}
-            <Button variant="outline" size="sm" asChild>
-              <a href={`https://${storefront.domain}/wp-admin/`} target="_blank" rel="noreferrer">
-                WordPress admin <ExternalLinkIcon />
-              </a>
-            </Button>
+            {canLogIn && storefront.statusCode === StatusCode.Done ? (
+              <WordPressLoginButton productId={productId} />
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <a href={`https://${storefront.domain}/wp-admin/`} target="_blank" rel="noreferrer">
+                  WordPress admin <ExternalLinkIcon />
+                </a>
+              </Button>
+            )}
           </>
         ) : (
           <>

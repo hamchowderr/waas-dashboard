@@ -59,7 +59,8 @@ import type {
   WebhookEndpointChange,
   WebhookEndpointInput,
   WebhookFilter,
-  WebhookSecret
+  WebhookSecret,
+  WordPressLogin
 } from "./types";
 import { FixtureAdminApi } from "./fixtures";
 import { fixtureScope, getViewer, sessionHeaders } from "@/auth";
@@ -109,6 +110,10 @@ export interface AdminApi {
    * may index it. The store is Pending until that's done; one not on hold is left as it is.
    */
   goLive(tenantId: string): Promise<void>;
+  /** A one-time link that opens the store's wp-admin signed in. Owners and admins only. */
+  wordPressLogin(tenantId: string): Promise<WordPressLogin>;
+  /** The same for the product's ready-made storefront. */
+  storefrontWordPressLogin(productId: string): Promise<WordPressLogin>;
   /** Deletes a store; its backups are kept for the retention period. Platform admin only. */
   deleteStore(tenantId: string): Promise<void>;
   /** Makes a store that waits for a site moved in from another host, and answers its import code. */

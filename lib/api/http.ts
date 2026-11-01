@@ -61,7 +61,8 @@ import type {
   WebhookEndpointChange,
   WebhookEndpointInput,
   WebhookFilter,
-  WebhookSecret
+  WebhookSecret,
+  WordPressLogin
 } from "./types";
 import type {
   WireApiKey,
@@ -343,6 +344,14 @@ export class HttpAdminApi implements AdminApi {
 
   async goLive(tenantId: string): Promise<void> {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/go-live`, {});
+  }
+
+  async wordPressLogin(tenantId: string): Promise<WordPressLogin> {
+    return (await this.send<WordPressLogin>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/wp-login`, {}))!;
+  }
+
+  async storefrontWordPressLogin(productId: string): Promise<WordPressLogin> {
+    return (await this.send<WordPressLogin>("POST", this.productPath(productId, "/storefront/wp-login"), {}))!;
   }
 
   async deleteStore(tenantId: string): Promise<void> {
