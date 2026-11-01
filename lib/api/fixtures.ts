@@ -199,7 +199,10 @@ const pluginChoices = new Map<string, PluginChoice[]>([
 type FixtureKey = ApiKey & { productId: string };
 
 /** Ready-made storefronts by product; none in the sample data. */
-const storefronts = new Map<string, ReadyStorefront>();
+// Summit Sites sells from a ready-made storefront; AnyPress sells from its own site.
+const storefronts = new Map<string, ReadyStorefront>([
+  [uuid(2, 1), { id: uuid(1, 16), name: "Summit Sites", domain: "summit-sites.anypress.site", statusCode: StatusCode.Done, statusName: "Done" }]
+]);
 
 /** Applications to sell, as the marketing site's form sends them. */
 const applications: SellerApplication[] = [
