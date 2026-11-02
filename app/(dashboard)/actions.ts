@@ -34,7 +34,8 @@ import type {
   WebhookEndpointChange,
   WebhookEndpointInput,
   WebhookEventType,
-  WebhookSecret
+  WebhookSecret,
+  WordPressLogin
 } from "@/lib/api/types";
 import { BRAND_IMAGE_LIMITS } from "@/lib/branding";
 import { webhookEventLabels } from "@/lib/format";
@@ -210,6 +211,16 @@ export async function goLive(tenantId: string): Promise<ActionResult> {
     await getAdminApi().goLive(uuid(tenantId, "store"));
     return undefined;
   }, ["/stores", "/"]);
+}
+
+/** A one-time link that opens the store's wp-admin signed in. Owners and admins (run refuses members). */
+export async function wordPressLogin(tenantId: string): Promise<ActionResult<WordPressLogin>> {
+  return run(() => getAdminApi().wordPressLogin(uuid(tenantId, "store")), []);
+}
+
+/** The same for a product's ready-made storefront. */
+export async function storefrontWordPressLogin(productId: string): Promise<ActionResult<WordPressLogin>> {
+  return run(() => getAdminApi().storefrontWordPressLogin(uuid(productId, "storefront")), []);
 }
 
 /** Deletes a store; its backups are kept. Platform admin only. */

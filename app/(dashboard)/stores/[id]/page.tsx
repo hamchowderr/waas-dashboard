@@ -20,6 +20,7 @@ import { MailSender } from "./mail-sender";
 import { RestoreBackup } from "./restore-backup";
 import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
+import { WordPressLoginButton } from "../../wordpress-login";
 
 type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ product?: string }> };
 
@@ -67,6 +68,8 @@ export default async function StorePage({ params, searchParams }: Params) {
   // What the store was made with, in plain words; the values themselves stay private.
   const settings = [...new Set([...tenant.wpOptionNames, ...tenant.phpConstantNames].map(settingLabel))];
   const siteUrl = tenant.mainDomain && tenant.statusCode === StatusCode.Done ? `https://${tenant.mainDomain}/` : null;
+  // One-click sign-in to wp-admin for anyone who may change the store; members get the plain login page.
+  const canLogIn = !!viewer && canChange(viewer) && !tenant.isSuspended;
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -96,12 +99,16 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <ExternalLinkIcon />
               </a>
             </Button>
-            <Button asChild variant="outline" size="sm">
-              <a href={`${siteUrl}wp-admin/`} target="_blank" rel="noreferrer">
-                WordPress admin
-                <ExternalLinkIcon />
-              </a>
-            </Button>
+            {canLogIn ? (
+              <WordPressLoginButton tenantId={tenant.id} />
+            ) : (
+              <Button asChild variant="outline" size="sm">
+                <a href={`${siteUrl}wp-admin/`} target="_blank" rel="noreferrer">
+                  WordPress admin
+                  <ExternalLinkIcon />
+                </a>
+              </Button>
+            )}
           </>
         )}
         <Button asChild variant="outline" size="sm">

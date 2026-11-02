@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { StoreIcon } from "lucide-react";
 
-import { getViewer } from "@/auth";
+import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
@@ -17,7 +17,8 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
   const api = getAdminApi();
   const products = await api.products();
   // A customer has one storefront, so their pages open on it.
-  const isAdmin = (await getViewer())?.isAdmin === true;
+  const viewer = await getViewer();
+  const isAdmin = viewer?.isAdmin === true;
   const onlyOne = !isAdmin && products.length === 1 ? products[0] : undefined;
   const product = products.find((p) => p.id === productId) ?? onlyOne;
 
@@ -49,7 +50,7 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
         title="Store designs"
         description={`What a new store from ${product.name} gets: the WordPress version it runs on, and the template site it starts from.`}
       />
-      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} />
+      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} canLogIn={!!viewer && canChange(viewer)} />
       <VersionsManager productId={product.id} versions={versions} templates={templates} />
     </div>
   );

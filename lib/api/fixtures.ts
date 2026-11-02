@@ -72,7 +72,8 @@ import {
   type WebhookEndpointInfo,
   type WebhookEndpointInput,
   type WebhookFilter,
-  type WebhookSecret
+  type WebhookSecret,
+  type WordPressLogin
 } from "./types";
 import { AdminApiError } from "./http";
 
@@ -198,7 +199,10 @@ const pluginChoices = new Map<string, PluginChoice[]>([
 type FixtureKey = ApiKey & { productId: string };
 
 /** Ready-made storefronts by product; none in the sample data. */
-const storefronts = new Map<string, ReadyStorefront>();
+// Summit Sites sells from a ready-made storefront; AnyPress sells from its own site.
+const storefronts = new Map<string, ReadyStorefront>([
+  [uuid(2, 1), { id: uuid(1, 16), name: "Summit Sites", domain: "summit-sites.anypress.site", statusCode: StatusCode.Done, statusName: "Done" }]
+]);
 
 /** Applications to sell, as the marketing site's form sends them. */
 const applications: SellerApplication[] = [
@@ -1048,6 +1052,27 @@ export class FixtureAdminApi implements AdminApi {
     setTimeout(() => {
       if (tenant.statusCode === StatusCode.Pending) tenant.statusCode = StatusCode.Done;
     }, 5_000).unref?.();
+  }
+
+  /** Sample data has no real sites: the link goes to the sample address's wp-admin, as for a store with an older plugin. */
+  async wordPressLogin(tenantId: string): Promise<WordPressLogin> {
+    const tenant = this.changeableTenant(tenantId);
+    if (tenant.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; you can log in once it is Done");
+    if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it to log in");
+    return this.sampleLogin(tenant.mainDomain);
+  }
+
+  async storefrontWordPressLogin(productId: string): Promise<WordPressLogin> {
+    this.product(productId);
+    const storefront = storefronts.get(productId);
+    if (!storefront) throw new FixtureError(404, "This storefront has no ready-made site");
+    if (storefront.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; you can log in once it is Done");
+    return this.sampleLogin(storefront.domain);
+  }
+
+  private sampleLogin(domain: string | null): WordPressLogin {
+    if (!domain) throw new FixtureError(409, "This site has no address yet");
+    return { url: `https://${domain}/wp-admin/`, oneClick: true, expiresAt: new Date(Date.now() + 5 * 60_000).toISOString() };
   }
 
   async deleteStore(tenantId: string): Promise<void> {
