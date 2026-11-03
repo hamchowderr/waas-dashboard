@@ -44,7 +44,7 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
               id: "start-here",
               title: "Welcome to your dashboard",
               content:
-                "These are the first things to do: make a store, invite your team, add your brand and connect your shop. Each one opens the page where you do it.",
+                "This checklist shows how far your setup has got. Each step ticks itself when it's done, and the link beside it opens the page where you do it.",
               side: "bottom",
               align: "start"
             },

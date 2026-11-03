@@ -743,3 +743,21 @@ export type DashboardDomain = {
 
 /** enabled: this server offers own addresses at all. */
 export type DashboardDomainView = { enabled: boolean; dashboardDomain: DashboardDomain | null };
+
+/** One setup step, ticked from what the API holds (the API's docs/setup-checklists.md). */
+export type SetupStepState = "done" | "todo" | "not-reported";
+export type SetupStep = { key: string; label: string; state: SetupStepState; doneAt: string | null; detail: string };
+export type SetupChecklist = {
+  steps: SetupStep[];
+  done: number;
+  total: number;
+  /** The newest step done, or when the account was made. */
+  lastProgressAt: string;
+  /** Not finished, and no step done for a week. */
+  stuck: boolean;
+  /** The first step not done. */
+  next: string | null;
+};
+export type StorefrontSetup = SetupChecklist & { productId: string; name: string; resellerId: string | null; shopSite: string | null };
+export type ResellerSetup = SetupChecklist & { resellerId: string; name: string; storefronts: { ready: number; total: number } };
+export type Setup = { storefronts: StorefrontSetup[]; resellers: ResellerSetup[] };

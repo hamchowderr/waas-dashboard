@@ -5,27 +5,25 @@ import {
   ArchiveIcon,
   Check,
   ChevronRight,
-  ExternalLinkIcon,
   InboxIcon,
-  KeyRoundIcon,
   Loader2Icon,
-  PaletteIcon,
   ServerIcon,
   StoreIcon,
-  UsersIcon,
   type LucideIcon
 } from "lucide-react";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import type { Overview } from "@/lib/api/types";
+import type { Overview, ResellerSetup, Setup, StorefrontSetup } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
-import { formatDateTime, jobTypeLabel } from "@/lib/format";
+import { formatAgo, formatDateTime, jobTypeLabel } from "@/lib/format";
 import { PageHeader } from "@/components/admin/page-header";
+import { SetupProgress, SetupSteps } from "@/components/admin/setup-checklist";
 import { TakeTourButton } from "@/components/shell/dashboard-tour";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -57,24 +55,18 @@ function inProgress(o: Overview): string | null {
   return parts.length ? parts.join(" · ") : null;
 }
 
-/** A customer's first steps, each on the page that does it. */
-const firstSteps: { title: string; detail: string; href: string; icon: LucideIcon }[] = [
-  { title: "Make a store", detail: "Start a new site, or move one in from another host.", href: "/stores", icon: StoreIcon },
-  { title: "Invite your team", detail: "Who can sign in here, and who can only look.", href: "/team", icon: UsersIcon },
-  { title: "Add your brand", detail: "Your name, logo and color on this dashboard.", href: "/branding", icon: PaletteIcon },
-  { title: "Connect your shop or app", detail: "API keys for the AnyPress Host plugin, n8n, Zapier or your own code.", href: "/keys", icon: KeyRoundIcon }
-];
-
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const { product } = await searchParams;
   const api = getAdminApi();
   const viewer = await getViewer().catch(() => null);
   const isAdmin = viewer?.isAdmin ?? false;
-  const [overview, jobs, pending] = await Promise.all([
+  const [overview, jobs, pending, setup] = await Promise.all([
     api.overview(product),
     api.jobs({ productId: product }),
     // An API without applications yet answers 404: none waiting.
-    isAdmin && !product ? api.applications("pending").catch(() => []) : Promise.resolve([])
+    isAdmin && !product ? api.applications("pending").catch(() => []) : Promise.resolve([]),
+    // An API without setup checklists yet: the cards are left out.
+    api.setup().catch((): Setup | null => null)
   ]);
   // A customer sees their own storefront only, so the overview is about it.
   const storefront = product
@@ -82,7 +74,11 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     : !isAdmin && overview.products.length === 1
       ? overview.products[0]
       : undefined;
-  const shop = !isAdmin && storefront ? await api.storefront(storefront.id).catch(() => null) : null;
+  // The checklists this page shows: the storefront in view, and on a reseller's team the reseller's own.
+  const storefrontSetup = storefront && setup?.storefronts.find((s) => s.productId === storefront.id);
+  const resellerSetup = !isAdmin && viewer?.active?.resellerId ? setup?.resellers.find((r) => r.resellerId === viewer.active?.resellerId) : undefined;
+  const showChecklist = !!storefrontSetup && storefrontSetup.done < storefrontSetup.total;
+  const stuck = isAdmin && !product && setup ? [...setup.resellers, ...setup.storefronts].filter((s) => s.stuck) : [];
   const failedJobs = jobs.items.filter((job) => job.state === "failed");
   const { health } = overview;
   const t = overview.tenants;
@@ -170,7 +166,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-4 lg:space-y-6">
       <PageHeader title={storefront ? storefront.name : "Overview"} description={`${storefront ? "Your storefront" : "All storefronts"} · updated ${formatDateTime(health.checkedAt)}`}>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <HealthBadge ok={health.ok} />
           <TakeTourButton />
           <Button asChild size="sm">
@@ -182,8 +178,15 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         </div>
       </PageHeader>
 
+      {showChecklist && (
+        <StorefrontChecklist setup={storefrontSetup!} productId={isAdmin ? storefrontSetup!.productId : undefined} />
+      )}
+      {resellerSetup && resellerSetup.done < resellerSetup.total && (
+        <ResellerChecklist setup={resellerSetup} storefronts={setup!.storefronts.filter((s) => s.resellerId === resellerSetup.resellerId)} />
+      )}
+
       <div className="grid items-start gap-4 lg:gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2" data-tour-step-id="needs-you">
+        <Card className="xl:col-span-2" data-tour-step-id={isAdmin || showChecklist ? "needs-you" : "needs-you start-here"}>
           <CardHeader>
             <CardTitle className="text-lg">{todos.length ? "Needs you" : "Nothing needs you"}</CardTitle>
             <CardDescription>
@@ -279,51 +282,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         </Card>
       </div>
 
-      {/* A customer's first steps, until their storefront is set up; the platform admin knows the way. */}
-      {!isAdmin && (
-        <Card data-tour-step-id="start-here">
-          <CardHeader>
-            <CardTitle className="text-lg">Start here</CardTitle>
-            <CardDescription>
-              {shop ? (
-                <>
-                  Your shop is{" "}
-                  <a href={`https://${shop.domain}`} target="_blank" rel="noreferrer" className="text-foreground inline-flex items-center gap-1 hover:underline">
-                    {shop.domain}
-                    <ExternalLinkIcon className="size-3.5" aria-hidden />
-                  </a>
-                </>
-              ) : (
-                "The pages you need first. The sidebar has the rest."
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              {firstSteps.map((step) => (
-                <li key={step.href}>
-                  <Link
-                    href={step.href}
-                    className="hover:bg-muted/60 focus-visible:ring-ring/50 flex h-full items-start gap-3 rounded-lg border p-3 outline-none focus-visible:ring-3">
-                    <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-md border">
-                      <step.icon className="size-4" aria-hidden />
-                    </span>
-                    <span className="min-w-0 text-sm">
-                      <span className="flex items-center gap-1.5 font-medium">
-                        {step.title}
-                        {step.href === "/stores" && t.total > 0 && (
-                          <Check className="size-4 text-green-600 dark:text-green-400" aria-label="Done" />
-                        )}
-                      </span>
-                      <span className="text-muted-foreground block">{step.detail}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
+      {isAdmin && !product && setup && <StuckCard stuck={stuck} setup={setup} />}
     </div>
   );
 }
@@ -349,5 +308,127 @@ function StatusDot({ up, className }: { up: boolean; className?: string }) {
     <span
       className={cn("size-2 rounded-full", up ? "bg-green-600 dark:bg-green-400" : "bg-rose-600 dark:bg-rose-400", className)}
     />
+  );
+}
+
+/** productId: set for the platform admin, whose links open the storefront's pages. */
+function StorefrontChecklist({ setup, productId }: { setup: StorefrontSetup; productId?: string }) {
+  return (
+    <Card data-tour-step-id="start-here">
+      <CardHeader>
+        <CardTitle className="text-lg">Set up {setup.name}</CardTitle>
+        <CardDescription>
+          Each step ticks itself when it&apos;s done.{setup.next ? ` Next: ${setup.next}.` : ""}
+        </CardDescription>
+        <CardAction>
+          <SetupProgress setup={setup} hideStuck={!productId} className="w-24 sm:w-40" />
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <SetupSteps steps={setup.steps} productId={productId} />
+      </CardContent>
+    </Card>
+  );
+}
+
+function ResellerChecklist({ setup, storefronts }: { setup: ResellerSetup; storefronts: StorefrontSetup[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Set up {setup.name}</CardTitle>
+        <CardDescription>Your reseller account, and how far each of your storefronts has got.</CardDescription>
+        <CardAction>
+          <SetupProgress setup={setup} hideStuck className="w-24 sm:w-40" />
+        </CardAction>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <SetupSteps steps={setup.steps} />
+        {storefronts.length > 0 && <SetupTable rows={storefronts} forCustomer />}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Storefronts and resellers with no step done for a week. */
+function StuckCard({ stuck, setup }: { stuck: (StorefrontSetup | ResellerSetup)[]; setup: Setup }) {
+  const finished = setup.storefronts.filter((s) => s.done === s.total).length;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Stuck in setup</CardTitle>
+        <CardDescription>
+          {stuck.length
+            ? `${plural(stuck.length, "account")} with no setup step done for a week.`
+            : "Nobody is stuck: every account in setup moved forward this week."}{" "}
+          {finished} of {plural(setup.storefronts.length, "storefront")} fully set up.
+        </CardDescription>
+        <CardAction>
+          <Link
+            href="/storefronts"
+            className="text-primary inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline pointer-coarse:min-h-11">
+            Storefronts
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        </CardAction>
+      </CardHeader>
+      {stuck.length > 0 && (
+        <CardContent>
+          <SetupTable rows={stuck} showQuiet />
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+/** One row per storefront or reseller: its progress and the next step; links open its checklist. */
+function SetupTable({
+  rows,
+  showQuiet = false,
+  forCustomer = false
+}: {
+  rows: (StorefrontSetup | ResellerSetup)[];
+  showQuiet?: boolean;
+  /** A reseller's own storefronts: they switch storefront at the top of the page, so names aren't links. */
+  forCustomer?: boolean;
+}) {
+  return (
+    <div className="rounded-lg border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="pl-3">{showQuiet ? "Account" : "Storefront"}</TableHead>
+            <TableHead className="w-40">Setup</TableHead>
+            <TableHead className="max-sm:hidden">Next step</TableHead>
+            {showQuiet && <TableHead className="pr-3 text-right max-md:hidden">Last step done</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => {
+            const isReseller = !("productId" in row);
+            const href = isReseller ? `/resellers/${row.resellerId}` : `/?product=${encodeURIComponent((row as StorefrontSetup).productId)}`;
+            return (
+              <TableRow key={isReseller ? `r-${row.resellerId}` : (row as StorefrontSetup).productId}>
+                <TableCell className="pl-3 whitespace-normal">
+                  {forCustomer ? (
+                    <span className="font-medium">{row.name}</span>
+                  ) : (
+                    <Link href={href} className="font-medium hover:underline">
+                      {row.name}
+                    </Link>
+                  )}
+                  {showQuiet && <span className="text-muted-foreground block text-xs">{isReseller ? "Reseller" : "Storefront"}</span>}
+                  <span className="text-muted-foreground block text-xs sm:hidden">Next: {row.next ?? "done"}</span>
+                </TableCell>
+                <TableCell>
+                  <SetupProgress setup={row} hideStuck={forCustomer} />
+                </TableCell>
+                <TableCell className="text-muted-foreground max-sm:hidden">{row.next ?? "Done"}</TableCell>
+                {showQuiet && <TableCell className="text-muted-foreground pr-3 text-right max-md:hidden">{formatAgo(row.lastProgressAt)}</TableCell>}
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
