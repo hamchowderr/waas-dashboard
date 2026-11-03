@@ -779,7 +779,20 @@ export type Prospect = {
   rating: number | null;
   reviews: number | null;
   mapsUrl: string | null;
+  /** Google's name for the kind of business, such as "Church". */
+  type: string | null;
+  /** Opening hours, one line a day. */
+  hours: string[] | null;
 };
 
-export type ProspectSearch = { prospects: Prospect[]; usage: ProspectUsage };
+/** One page of up to 20; pass nextPageToken back (same query and place) for the next. */
+export type ProspectSearch = { prospects: Prospect[]; nextPageToken: string | null; usage: ProspectUsage };
+
+/** What a prospect's own website says about reaching them. */
+export type ProspectContacts = {
+  emails: string[];
+  contactPage: string | null;
+  socials: { network: SocialNetwork; url: string }[];
+};
+export type SocialNetwork = "facebook" | "instagram" | "linkedin" | "x" | "youtube" | "tiktok";
 

@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { DownloadIcon, ExternalLinkIcon, GlobeIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
+import { ClockIcon, DownloadIcon, ExternalLinkIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
 
-import type { Prospect, ProspectUsage } from "@/lib/api/types";
+import type { Prospect, ProspectContacts, ProspectUsage, SocialNetwork } from "@/lib/api/types";
 import type { GroupId } from "@/lib/sales-kit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "cn";
 import { prospectsCsv } from "@/lib/prospects";
-import { findProspects, prospectUsage } from "./actions";
+import { findProspects, prospectContacts, prospectUsage } from "./actions";
 
 export type FinderGroup = { id: GroupId; title: string; finder: string[] };
+
+const NETWORK_LABEL: Record<SocialNetwork, string> = { facebook: "Facebook", instagram: "Instagram", linkedin: "LinkedIn", x: "X", youtube: "YouTube", tiktok: "TikTok" };
+
+/** Today's line of Google's opening hours ("Monday: 9:00 AM – 5:00 PM" → "9:00 AM – 5:00 PM today"). */
+function todaysHours(hours: string[] | null): string | null {
+  if (!hours?.length) return null;
+  const day = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const line = hours.find((h) => h.startsWith(`${day}:`));
+  return line ? `${line.slice(day.length + 1).trim()} today` : null;
+}
 
 export function ProspectFinder({
   productId,
@@ -34,7 +44,10 @@ export function ProspectFinder({
   const [query, setQuery] = React.useState(group.finder[0] ?? "");
   const [location, setLocation] = React.useState("");
   const [usage, setUsage] = React.useState<ProspectUsage | null>(null);
-  const [results, setResults] = React.useState<{ query: string; location: string; prospects: Prospect[] } | null>(null);
+  const [results, setResults] = React.useState<{ query: string; location: string; prospects: Prospect[]; nextPageToken: string | null } | null>(null);
+  const [contacts, setContacts] = React.useState<Record<string, ProspectContacts>>({});
+  const [reading, setReading] = React.useState(false);
+  const [more, startMore] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
   const [noSiteFirst, setNoSiteFirst] = React.useState(true);
   const [pending, start] = React.useTransition();
@@ -54,14 +67,47 @@ export function ProspectFinder({
     setQuery(next.finder[0] ?? "");
   };
 
+  // Reads each new prospect's own website for emails, a contact page and social profiles.
+  const readSites = async (prospects: Prospect[]) => {
+    const urls = prospects.map((p) => p.website).filter((u): u is string => !!u);
+    if (!urls.length) return;
+    setReading(true);
+    try {
+      const found = await prospectContacts(urls);
+      setContacts((prev) => ({ ...prev, ...found }));
+    } finally {
+      setReading(false);
+    }
+  };
+
   const run = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     start(async () => {
       const result = await findProspects(productId, query, location);
       if (result.ok) {
-        setResults({ query: query.trim(), location: location.trim(), prospects: result.search.prospects });
+        setResults({ query: query.trim(), location: location.trim(), prospects: result.search.prospects, nextPageToken: result.search.nextPageToken });
+        setContacts({});
         setUsage(result.search.usage);
+        void readSites(result.search.prospects);
+      } else {
+        setError(result.error);
+        if (result.usage) setUsage(result.usage);
+      }
+    });
+  };
+
+  const loadMore = () => {
+    if (!results?.nextPageToken) return;
+    setError(null);
+    startMore(async () => {
+      const result = await findProspects(productId, results.query, results.location, results.nextPageToken!);
+      if (result.ok) {
+        const seen = new Set(results.prospects.map((p) => p.id));
+        const fresh = result.search.prospects.filter((p) => !seen.has(p.id));
+        setResults({ ...results, prospects: [...results.prospects, ...fresh], nextPageToken: result.search.nextPageToken });
+        setUsage(result.search.usage);
+        void readSites(fresh);
       } else {
         setError(result.error);
         if (result.usage) setUsage(result.usage);
@@ -73,6 +119,7 @@ export function ProspectFinder({
   const spent = usage !== null && usage.available && usage.used >= usage.limit;
   const shown = results ? (noSiteFirst ? [...results.prospects].sort((a, b) => Number(a.website !== null) - Number(b.website !== null)) : results.prospects) : [];
   const withoutSite = results?.prospects.filter((p) => !p.website).length ?? 0;
+  const withEmail = results?.prospects.filter((p) => p.website && contacts[p.website]?.emails.length).length ?? 0;
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -80,7 +127,7 @@ export function ProspectFinder({
         <CardHeader>
           <CardTitle>Find prospects near you</CardTitle>
           <CardDescription>
-            Pick who you sell to and where, and get up to 20 local businesses with their phone, website and rating. Businesses with no website come first: they need you most.
+            Pick who you sell to and where, and get local businesses 20 at a time (up to 60) with their phone, email, website, social pages, hours and rating. Businesses with no website come first: they need you most.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -147,7 +194,9 @@ export function ProspectFinder({
               </CardTitle>
               {results.prospects.length > 0 && (
                 <CardDescription>
-                  {withoutSite ? `${withoutSite} have no website. ` : ""}Check a site to get a report to send with your first email.
+                  {withoutSite ? `${withoutSite} have no website. ` : ""}
+                  {reading ? "Looking for emails on their websites… " : withEmail ? `${withEmail} have an email on their website. ` : ""}
+                  Check a site to get a report to send with your first email.
                 </CardDescription>
               )}
             </div>
@@ -160,7 +209,7 @@ export function ProspectFinder({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const url = URL.createObjectURL(new Blob([prospectsCsv(results.prospects)], { type: "text/csv;charset=utf-8" }));
+                    const url = URL.createObjectURL(new Blob([prospectsCsv(results.prospects, contacts)], { type: "text/csv;charset=utf-8" }));
                     const a = Object.assign(document.createElement("a"), { href: url, download: `${results.query}-${results.location}.csv`.toLowerCase().replace(/[^a-z0-9.]+/g, "-") });
                     a.click();
                     URL.revokeObjectURL(url);
@@ -189,7 +238,16 @@ export function ProspectFinder({
                           </span>
                         )}
                       </div>
-                      {p.address && <p className="text-muted-foreground truncate text-xs">{p.address}</p>}
+                      {(p.type || p.address) && (
+                        <p className="text-muted-foreground truncate text-xs">{[p.type, p.address].filter(Boolean).join(" · ")}</p>
+                      )}
+                      {todaysHours(p.hours) && (
+                        <p className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                          <ClockIcon className="size-3" aria-hidden />
+                          {todaysHours(p.hours)}
+                        </p>
+                      )}
+                      <ContactLine contacts={p.website ? contacts[p.website] : undefined} reading={reading && !!p.website && !contacts[p.website]} />
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-1.5">
                       {p.phone && (
@@ -224,13 +282,48 @@ export function ProspectFinder({
                   </li>
                 ))}
               </ul>
-              <p className="text-muted-foreground mt-3 flex items-center gap-1 text-xs">
-                Results from Google Maps. <ExternalLinkIcon className="size-3" aria-hidden />
-              </p>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                  Results from Google Maps. Emails and profiles come from each business&apos;s own website. <ExternalLinkIcon className="size-3" aria-hidden />
+                </p>
+                {results.nextPageToken && (
+                  <Button variant="outline" size="sm" onClick={loadMore} disabled={more || spent}>
+                    {more && <Spinner data-icon="inline-start" />}
+                    {more ? "Loading…" : "More results"}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           )}
         </Card>
       )}
+    </div>
+  );
+}
+
+/** A prospect's email and profiles from its website, once read. */
+function ContactLine({ contacts, reading }: { contacts?: ProspectContacts; reading: boolean }) {
+  if (reading) return <p className="text-muted-foreground text-xs">Looking for an email…</p>;
+  if (!contacts || (!contacts.emails.length && !contacts.socials.length && !contacts.contactPage)) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-xs">
+      {contacts.emails.map((email) => (
+        <a key={email} href={`mailto:${email}`} className="text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline">
+          <MailIcon className="size-3" aria-hidden />
+          {email}
+        </a>
+      ))}
+      {!contacts.emails.length && contacts.contactPage && (
+        <a href={contacts.contactPage} target="_blank" rel="noreferrer" className="text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline">
+          <MailIcon className="size-3" aria-hidden />
+          Contact form
+        </a>
+      )}
+      {contacts.socials.map((s) => (
+        <a key={s.network} href={s.url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground underline-offset-2 hover:underline">
+          {NETWORK_LABEL[s.network]}
+        </a>
+      ))}
     </div>
   );
 }

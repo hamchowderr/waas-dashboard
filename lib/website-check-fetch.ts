@@ -2,6 +2,8 @@ import "server-only";
 
 import { lookup } from "node:dns/promises";
 
+import type { ProspectContacts } from "./api/types";
+import { contactsFrom, mergeContacts } from "./prospect-contacts";
 import { analyze, isPrivateAddress, normalizeUrl, type Fetched, type Report } from "./website-check";
 
 const TIMEOUT_MS = 10_000;
@@ -88,6 +90,43 @@ export async function checkWebsite(input: string): Promise<Report> {
 
   const fetched: Fetched = { requested: url.href, finalUrl: page.url.href, redirectsToHttps, status: page.status, ms, bytes: page.bytes, html: page.html };
   return analyze(fetched);
+}
+
+const NO_CONTACTS: ProspectContacts = { emails: [], contactPage: null, socials: [] };
+
+/**
+ * Emails, a contact page and social profiles from a prospect's own website: its home page, then its contact page
+ * when the home page has no email. Never throws; a site that can't be read answers nothing found.
+ */
+export async function findContacts(input: string): Promise<ProspectContacts> {
+  const url = normalizeUrl(input);
+  if (!url) return NO_CONTACTS;
+  if (process.env.WAAS_API_FIXTURES === "1" && url.hostname.endsWith(".example")) return sampleContacts(url);
+  try {
+    const home = await get(url, AbortSignal.timeout(8_000));
+    if (home.status >= 400) return NO_CONTACTS;
+    let found = contactsFrom(home.html, home.url.href);
+    if (!found.emails.length && found.contactPage) {
+      const contact = await get(new URL(found.contactPage), AbortSignal.timeout(6_000)).catch(() => null);
+      if (contact && contact.status < 400) found = mergeContacts(found, contactsFrom(contact.html, contact.url.href));
+    }
+    return found;
+  } catch {
+    return NO_CONTACTS;
+  }
+}
+
+function sampleContacts(url: URL): ProspectContacts {
+  const host = url.hostname;
+  const n = host.length % 3;
+  return {
+    emails: n === 2 ? [] : [`${n ? "office" : "hello"}@${host}`],
+    contactPage: `https://${host}/contact/`,
+    socials: [
+      { network: "facebook", url: `https://www.facebook.com/${host.split(".")[0]}` },
+      ...(n ? [{ network: "instagram" as const, url: `https://www.instagram.com/${host.split(".")[0]}` }] : [])
+    ]
+  };
 }
 
 function sampleFetch(url: URL): Fetched {
