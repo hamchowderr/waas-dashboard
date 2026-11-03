@@ -9,6 +9,10 @@ export interface TemplateContents {
 
 /** Display names for the plugins our templates ship; anything else is named from its slug. */
 const pluginNames: Record<string, string> = {
+  "anypress-client": "AnyPress Client",
+  "anypress-host": "AnyPress Host",
+  "anypress-blocks": "AnyPress Blocks",
+  /** Templates built before the rename list the store plugin by its old slug. */
   "waas-client": "AnyPress Client",
   "fluent-cart": "FluentCart",
   "fluent-crm": "FluentCRM",
@@ -27,7 +31,7 @@ const pluginNames: Record<string, string> = {
 };
 
 /** Plugins that aren't on wordpress.org, so have no icon there. */
-export const offDirectory = new Set(["waas-client", "fluent-toolkit"]);
+export const offDirectory = new Set(["anypress-client", "anypress-host", "waas-client", "fluent-toolkit"]);
 
 export function pluginName(slug: string) {
   return pluginNames[slug] ?? slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
