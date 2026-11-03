@@ -644,7 +644,7 @@ export type NewSeller = {
   storefrontError?: string;
 };
 
-/** A ready-made storefront: a WordPress site with WaaS Host that the platform built and connected for a product. */
+/** A ready-made storefront: a WordPress site with AnyPress Host that the platform built and connected for a product. */
 /**
  * "Log in to WordPress": a link that opens the site's wp-admin signed in, once, for a few minutes. When oneClick is
  * false the site's plugin is older than one-click login and url is its ordinary login page.
