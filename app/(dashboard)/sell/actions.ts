@@ -3,7 +3,7 @@
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
-import type { CrmProspect, CrmTarget, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectSearch, ProspectUsage } from "@/lib/api/types";
+import type { CrmProspect, CrmTarget, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectMailbox, ProspectMailboxInput, ProspectSearch, ProspectUsage } from "@/lib/api/types";
 import type { Report } from "@/lib/website-check";
 import { CheckError, checkWebsite, findContacts } from "@/lib/website-check-fetch";
 
@@ -77,6 +77,39 @@ export async function saveHighLevelWebhook(productId: string, webhook: string | 
   if (!viewer) return { ok: false, error: "Sign in again to change this." };
   try {
     return { ok: true, crm: await getAdminApi().setProspectHighLevel(productId, webhook ? String(webhook).trim().slice(0, 2000) : null) };
+  } catch (err) {
+    return { ok: false, error: err instanceof AdminApiError && err.apiMessage ? err.apiMessage : "Something went wrong saving that. Try again." };
+  }
+}
+
+/** The seller's own mailbox for emails to prospects, or null when it can't be read. */
+export async function prospectMailbox(productId: string): Promise<ProspectMailbox | null> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return null;
+  return getAdminApi().prospectMailbox(productId).catch(() => null);
+}
+
+export type MailboxResult = { ok: true; mailbox: ProspectMailbox } | { ok: false; error: string };
+
+/** Saves (or, with null, disconnects) the mailbox; the storefront then signs in to it. */
+export async function saveMailbox(productId: string, input: ProspectMailboxInput | null): Promise<MailboxResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return { ok: false, error: "Sign in again to change this." };
+  const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const mailbox: ProspectMailboxInput | null = input
+    ? {
+        host: text(input.host, 253),
+        port: Number(input.port) || 587,
+        user: text(input.user, 254),
+        // App passwords are shown with spaces; Google and Microsoft take them either way.
+        pass: typeof input.pass === "string" ? input.pass.slice(0, 500) : "",
+        from: text(input.from, 254),
+        name: text(input.name, 100),
+        daily: Math.round(Number(input.daily) || 30)
+      }
+    : null;
+  try {
+    return { ok: true, mailbox: await getAdminApi().setProspectMailbox(productId, mailbox) };
   } catch (err) {
     return { ok: false, error: err instanceof AdminApiError && err.apiMessage ? err.apiMessage : "Something went wrong saving that. Try again." };
   }

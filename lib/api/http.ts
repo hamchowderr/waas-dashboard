@@ -9,6 +9,8 @@ import type {
   ProspectSearch,
   ProspectCrm,
   ProspectCrmResult,
+  ProspectMailbox,
+  ProspectMailboxInput,
   CrmProspect,
   CrmTarget,
   ProspectUsage,
@@ -447,6 +449,15 @@ export class HttpAdminApi implements AdminApi {
   async setProspectHighLevel(productId: string, webhook: string | null): Promise<ProspectCrm> {
     const path = this.productPath(productId, "/prospects/crm/highlevel");
     return (await (webhook ? this.send<ProspectCrm>("PUT", path, { webhook }) : this.send<ProspectCrm>("DELETE", path)))!;
+  }
+
+  async prospectMailbox(productId: string): Promise<ProspectMailbox> {
+    return (await this.get<ProspectMailbox>(this.productPath(productId, "/prospects/mailbox")))!;
+  }
+
+  async setProspectMailbox(productId: string, mailbox: ProspectMailboxInput | null): Promise<ProspectMailbox> {
+    const path = this.productPath(productId, "/prospects/mailbox");
+    return (await (mailbox ? this.send<ProspectMailbox>("PUT", path, mailbox) : this.send<ProspectMailbox>("DELETE", path)))!;
   }
 
   async addProspectsToCrm(productId: string, prospects: CrmProspect[], group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult> {

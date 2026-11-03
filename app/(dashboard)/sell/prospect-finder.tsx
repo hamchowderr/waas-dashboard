@@ -3,7 +3,7 @@
 import * as React from "react";
 import { CheckIcon, ClockIcon, DownloadIcon, PlusIcon, FacebookIcon, InstagramIcon, LinkedinIcon, MusicIcon, TwitterIcon, YoutubeIcon, ExternalLinkIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
 
-import type { CrmProspect, CrmTarget, Prospect, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectUsage, SocialNetwork } from "@/lib/api/types";
+import type { CrmProspect, CrmTarget, Prospect, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectMailbox, ProspectUsage, SocialNetwork } from "@/lib/api/types";
 import type { GroupId } from "@/lib/sales-kit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "cn";
 import { prospectsCsv } from "@/lib/prospects";
 import { toast } from "sonner";
-import { addToCrm, findProspects, prospectContacts, prospectCrm, prospectUsage } from "./actions";
-import { HighLevelConnect } from "./crm-connect";
+import { addToCrm, findProspects, prospectContacts, prospectCrm, prospectMailbox, prospectUsage } from "./actions";
+import { HighLevelConnect, MailboxConnect } from "./crm-connect";
 
 export type FinderGroup = { id: GroupId; title: string; finder: string[] };
 
@@ -74,6 +74,8 @@ export function ProspectFinder({
   const [results, setResults] = React.useState<{ query: string; location: string; group: string; prospects: Prospect[]; nextPageToken: string | null } | null>(null);
   const [crm, setCrm] = React.useState<ProspectCrm | null>(null);
   const [hlOpen, setHlOpen] = React.useState(false);
+  const [mailbox, setMailbox] = React.useState<ProspectMailbox | null>(null);
+  const [mbOpen, setMbOpen] = React.useState(false);
   const [adding, setAdding] = React.useState<Set<string>>(new Set());
   const [contacts, setContacts] = React.useState<Record<string, ProspectContacts>>({});
   const [reading, setReading] = React.useState(false);
@@ -86,6 +88,7 @@ export function ProspectFinder({
     let live = true;
     prospectUsage(productId).then((u) => live && setUsage(u));
     prospectCrm(productId).then((c) => live && setCrm(c));
+    prospectMailbox(productId).then((m) => live && setMailbox(m));
     return () => {
       live = false;
     };
@@ -310,7 +313,7 @@ export function ProspectFinder({
           </CardHeader>
           {results.prospects.length > 0 && (
             <CardContent className="space-y-3">
-              <CrmLine crm={crm} onHighLevel={() => setHlOpen(true)} />
+              <CrmLine crm={crm} mailbox={mailbox} onHighLevel={() => setHlOpen(true)} onMailbox={() => setMbOpen(true)} />
               <ul className="divide-y rounded-lg border">
                 {shown.map((p) => (
                   <li key={p.id} className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -405,24 +408,59 @@ export function ProspectFinder({
         </Card>
       )}
       <HighLevelConnect productId={productId} open={hlOpen} onOpenChange={setHlOpen} connected={!!crm?.highlevel.connected} onSaved={setCrm} />
+      {crm?.fluentcrm.available && <MailboxConnect productId={productId} open={mbOpen} onOpenChange={setMbOpen} mailbox={mailbox} onChange={setMailbox} />}
     </div>
   );
 }
 
 /** Which CRMs "Add to CRM" sends to, with HighLevel's connect button. */
-function CrmLine({ crm, onHighLevel }: { crm: ProspectCrm | null; onHighLevel: () => void }) {
+function CrmLine({
+  crm,
+  mailbox,
+  onHighLevel,
+  onMailbox
+}: {
+  crm: ProspectCrm | null;
+  mailbox: ProspectMailbox | null;
+  onHighLevel: () => void;
+  onMailbox: () => void;
+}) {
   if (!crm) return null;
   const into = [crm.fluentcrm.available && "your FluentCRM", crm.highlevel.connected && "HighLevel"].filter(Boolean).join(" and ");
+  const box = mailbox?.state ?? "none";
+  const sending = crm.fluentcrm.available
+    ? box === "connected"
+      ? ` Emails from FluentCRM to them go out from ${mailbox?.mailbox?.from}.`
+      : " Emails from FluentCRM to them go out only once you connect your own mailbox."
+    : "";
   return (
     <div className="bg-muted/50 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs">
-      <p className="text-muted-foreground min-w-0">
+      <p className="text-muted-foreground min-w-0 flex-1 basis-64">
         {into
-          ? `Add to CRM puts them in ${into}, tagged "Prospect". Nothing is emailed.`
+          ? `Add to CRM puts them in ${into}, tagged "Prospect". Nothing is emailed.${sending}`
           : (crm.fluentcrm.reason ?? "Connect HighLevel to add prospects to your CRM.")}
       </p>
-      <Button variant="outline" size="sm" className="h-7" onClick={onHighLevel}>
-        {crm.highlevel.connected ? "HighLevel connected" : "Connect HighLevel"}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        {crm.fluentcrm.available && (
+          <Button variant="outline" size="sm" className="h-7" onClick={onMailbox}>
+            {box === "connected" ? (
+              <>
+                <MailIcon data-icon="inline-start" aria-hidden />
+                Mailbox connected
+              </>
+            ) : box === "checking" ? (
+              "Checking mailbox…"
+            ) : box === "failed" ? (
+              "Fix mailbox"
+            ) : (
+              "Connect your mailbox"
+            )}
+          </Button>
+        )}
+        <Button variant="outline" size="sm" className="h-7" onClick={onHighLevel}>
+          {crm.highlevel.connected ? "HighLevel connected" : "Connect HighLevel"}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -20,6 +20,8 @@ import {
   type ProspectSearch,
   type ProspectCrm,
   type ProspectCrmResult,
+  type ProspectMailbox,
+  type ProspectMailboxInput,
   type CrmProspect,
   type CrmTarget,
   type ProspectUsage,
@@ -996,6 +998,18 @@ const prospectCrmSent = new Map<string, Set<CrmTarget>>();
 const prospectHighLevel = new Set<string>();
 const prospectCrmFor = (productId: string): ProspectCrm => ({ fluentcrm: { available: true, reason: null }, highlevel: { connected: prospectHighLevel.has(productId) } });
 
+/** Sample-mode mailboxes: "checking" for a couple of seconds, then connected (or failed for the password "wrong"). */
+const prospectMailboxes = new Map<string, { mailbox: ProspectMailboxInput; at: number }>();
+const prospectMailboxFor = (productId: string): ProspectMailbox => {
+  const saved = prospectMailboxes.get(productId);
+  if (!saved) return { state: "none", error: null, mailbox: null, unavailable: null };
+  const { pass, ...mailbox } = saved.mailbox;
+  if (Date.now() - saved.at < 2500) return { state: "checking", error: null, mailbox, unavailable: null };
+  return pass === "wrong"
+    ? { state: "failed", error: "535-5.7.8 Username and Password not accepted. For more information, go to https://support.google.com/mail/?p=BadCredentials", mailbox, unavailable: null }
+    : { state: "connected", error: null, mailbox, unavailable: null };
+};
+
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
@@ -1474,6 +1488,23 @@ export class FixtureAdminApi implements AdminApi {
     if (webhook) prospectHighLevel.add(productId);
     else prospectHighLevel.delete(productId);
     return prospectCrmFor(productId);
+  }
+
+  async prospectMailbox(productId: string): Promise<ProspectMailbox> {
+    this.product(productId);
+    return prospectMailboxFor(productId);
+  }
+
+  async setProspectMailbox(productId: string, mailbox: ProspectMailboxInput | null): Promise<ProspectMailbox> {
+    this.product(productId);
+    if (!mailbox) {
+      prospectMailboxes.delete(productId);
+      return prospectMailboxFor(productId);
+    }
+    if (/(^|\.)tosend\.com$/i.test(mailbox.host)) throw new FixtureError(400, "Prospect emails can't go through AnyPress's own email service. Use your own mailbox.");
+    if (!mailbox.host || !mailbox.user || !mailbox.pass) throw new FixtureError(400, "Enter your mail server, username and app password.");
+    prospectMailboxes.set(productId, { mailbox: { ...mailbox, from: mailbox.from || mailbox.user.toLowerCase() }, at: Date.now() });
+    return prospectMailboxFor(productId);
   }
 
   async addProspectsToCrm(productId: string, prospects: CrmProspect[], _group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult> {
