@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { CheckIcon, ChevronDownIcon, DownloadIcon, FileTextIcon, MailIcon, MapPinIcon, MegaphoneIcon, MessageSquareIcon, PhoneIcon, PresentationIcon, Share2Icon, type LucideIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, DownloadIcon, ExternalLinkIcon, FileTextIcon, MailIcon, MapPinIcon, MegaphoneIcon, MessageSquareIcon, PhoneIcon, PresentationIcon, Share2Icon, type LucideIcon } from "lucide-react";
 
 import { useSellPrices } from "@/hooks/use-sell-prices";
-import { PLAN_NAMES, fill, keep, playbookMarkdown, type KitContext, type Pitch, type Playbook, type Step } from "@/lib/sales-kit";
+import { PLAN_NAMES, fill, keep, playbookMarkdown, type Demo, type KitContext, type Pitch, type Playbook, type Step } from "@/lib/sales-kit";
 import { Inline, KitMarkdown } from "@/components/admin/kit-markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ export function Campaign({
   where,
   objections,
   demo,
+  demos,
   callScript,
   context
 }: {
@@ -43,6 +44,7 @@ export function Campaign({
   where: string;
   objections: string;
   demo: string;
+  demos: Demo[];
   callScript: string;
   context: Omit<KitContext, "prices" | "plan">;
 }) {
@@ -185,10 +187,36 @@ export function Campaign({
           </CardHeader>
           <CardContent className="space-y-3">
             <KitMarkdown source={who} ctx={ctx} />
-            <p className="text-muted-foreground text-sm">
-              <span className="text-foreground font-medium">Demo: </span>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Live demo</CardTitle>
+            <CardDescription>
               <Inline text={demo} ctx={ctx} />
-            </p>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {demos.length ? (
+              demos.map((d) => (
+                <a
+                  key={d.kit}
+                  href={d.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:bg-muted/60 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-colors"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">{d.business}</span>
+                    <span className="text-muted-foreground block text-xs">{d.kind} · opens in about 30 seconds</span>
+                  </span>
+                  <ExternalLinkIcon className="text-muted-foreground size-4 shrink-0" aria-hidden />
+                </a>
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">A demo built for this group is on the way.</p>
+            )}
           </CardContent>
         </Card>
       </aside>
