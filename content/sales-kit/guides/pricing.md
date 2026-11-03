@@ -7,9 +7,9 @@ This guide is for you, not for your customers. The numbers are suggestions; set 
 
 ## Your cost per site
 
-You pay a fixed monthly cost per site (Small size, monthly billing):
+You pay a fixed monthly cost per site (Small size, monthly billing). It drops 10%, 20% and 30% as you add sites:
 
-| Plan | Your cost | Volume 3-9 sites (10% off) | 10-24 sites (20% off) | 25+ sites (30% off) |
+| Plan | Your cost | 3-9 sites | 10-24 sites | 25+ sites |
 |---|---|---|---|---|
 | Website | $12 | $10.80 | $9.60 | $8.40 |
 | Bookings | $19 | $17.10 | $15.20 | $13.30 |

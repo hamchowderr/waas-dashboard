@@ -108,7 +108,7 @@ export function Inline({ text, ctx }: { text: string; ctx: KitContext }) {
     <>
       {fillParts(text, ctx).map((part, i) =>
         part.blank ? (
-          <span key={i} className="text-muted-foreground rounded border border-dashed px-1 font-mono text-xs">
+          <span key={i} className="text-muted-foreground border-foreground/25 bg-muted/60 rounded border border-dashed px-1 text-[0.85em]">
             {part.text}
           </span>
         ) : (

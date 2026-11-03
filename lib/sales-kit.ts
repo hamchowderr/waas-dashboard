@@ -200,3 +200,41 @@ export function customerFacingShop(domain: string | null | undefined): string | 
   if (!domain || /(^|\.)anypress\.(site|io)$/i.test(domain)) return null;
   return `https://${domain}`;
 }
+
+/** One step of a group's outreach plan: what to send or do, and on which day. */
+export type Step = {
+  /** 0 is "before you start" (a post on your own page); otherwise the day of the campaign. */
+  day: number;
+  channel: "email" | "text" | "social" | "call" | "post";
+  title: string;
+  message: Message | null;
+};
+
+/** When each email and text goes out, following the timing the playbooks' emails are written for. */
+const EMAIL_DAYS = [1, 4, 11, 25, 32];
+const TEXT_DAYS = [2, 12, 32];
+const CALL_DAY = 6;
+
+/**
+ * A playbook's outreach as a day-by-day plan: emails and texts on their days, the direct message on day 1, the call
+ * on day 6, and any post for the seller's own page before they start.
+ */
+export function campaign(playbook: Playbook): Step[] {
+  const all = messages(playbook.sections.find((s) => s.title === "Outreach")?.body ?? "");
+  const steps: Step[] = [];
+  const emails = all.filter((m) => m.kind === "email");
+  const texts = all.filter((m) => m.kind === "text");
+  const socials = all.filter((m) => m.kind === "social");
+  for (const m of socials) {
+    const post = /post/i.test(m.title);
+    steps.push({ day: post ? 0 : 1, channel: post ? "post" : "social", title: m.title, message: m });
+  }
+  emails.forEach((m, i) => steps.push({ day: EMAIL_DAYS[i] ?? 32 + i, channel: "email", title: m.title.replace(/^Email \d+:\s*/i, ""), message: m }));
+  texts.forEach((m, i) => steps.push({ day: TEXT_DAYS[i] ?? 32 + i, channel: "text", title: m.title, message: m }));
+  steps.push({ day: CALL_DAY, channel: "call", title: "Call to book a demo", message: null });
+  const order: Record<Step["channel"], number> = { post: 0, social: 1, email: 2, text: 3, call: 4 };
+  return steps.sort((a, b) => a.day - b.day || order[a.channel] - order[b.channel]);
+}
+
+/** What the seller keeps a month on one site at a given price, at list cost. */
+export const keep = (plan: Plan, price: number) => Math.max(0, price - LIST_COST[plan]);

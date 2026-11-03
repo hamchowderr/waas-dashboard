@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { GROUP_IDS, PARTS, PLANS, SUGGESTED_PRICES, fill, pitch, customerFacingShop, fillParts, messages, parseGuide, parsePlaybook, playbookMarkdown, type KitContext } from "./sales-kit";
+import { GROUP_IDS, PARTS, PLANS, SUGGESTED_PRICES, fill, pitch, campaign, customerFacingShop, fillParts, messages, parseGuide, parsePlaybook, playbookMarkdown, type KitContext } from "./sales-kit";
 
 const root = path.join(__dirname, "..", "content", "sales-kit");
 const read = (...p: string[]) => readFileSync(path.join(root, ...p), "utf8");
@@ -100,5 +100,17 @@ describe("customerFacingShop", () => {
     expect(customerFacingShop("shop.anypress.io")).toBeNull();
     expect(customerFacingShop(null)).toBeNull();
     expect(customerFacingShop("shop.summitsites.com")).toBe("https://shop.summitsites.com");
+  });
+});
+
+describe("campaign", () => {
+  it("lays every message out by day, with one call", () => {
+    for (const p of playbooks) {
+      const steps = campaign(p);
+      expect(steps.filter((s) => s.channel === "email").map((s) => s.day), p.id).toEqual([1, 4, 11, 25, 32]);
+      expect(steps.filter((s) => s.channel === "call"), p.id).toHaveLength(1);
+      expect(steps.map((s) => s.day), p.id).toEqual([...steps.map((s) => s.day)].sort((a, b) => a - b));
+      expect(steps[0]!.day, p.id).toBeLessThanOrEqual(1);
+    }
   });
 });
