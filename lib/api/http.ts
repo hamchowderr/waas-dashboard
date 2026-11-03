@@ -531,6 +531,10 @@ export class HttpAdminApi implements AdminApi {
     await this.send("DELETE", this.productPath(productId, `/keys/${encodeURIComponent(keyId)}`));
   }
 
+  async removeApiKey(productId: string, keyId: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, `/keys/${encodeURIComponent(keyId)}?forever=true`));
+  }
+
   async applications(status?: ApplicationStatus): Promise<SellerApplication[]> {
     return (await this.get<SellerApplication[]>(`/admin/applications${status ? `?status=${status}` : ""}`))!;
   }
@@ -651,6 +655,10 @@ export class HttpAdminApi implements AdminApi {
 
   async revokePartnerKey(id: string, keyId: string): Promise<void> {
     await this.send("DELETE", this.resellerPath(id, `/keys/${encodeURIComponent(keyId)}`));
+  }
+
+  async removePartnerKey(id: string, keyId: string): Promise<void> {
+    await this.send("DELETE", this.resellerPath(id, `/keys/${encodeURIComponent(keyId)}?forever=true`));
   }
 
   async branding(of: TeamOf): Promise<BrandingView> {

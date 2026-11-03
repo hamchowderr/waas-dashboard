@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NAV } from "@/components/shell/nav";
+import { ALL_LINKS, NAV } from "@/components/shell/nav";
 import { sectionSlug, tourFor } from "@/components/shell/tours";
 
 const ids = (kind: "admin" | "seller" | "reseller", canChange = true, product: string | null = null) =>
@@ -12,21 +12,21 @@ describe("tourFor", () => {
       "needs-you",
       "sidebar-nav",
       "storefront-picker",
-      "tabs-stores",
+      "group-websites",
       "store-actions",
-      "tabs-store-designs",
-      "tabs-accounts",
-      "tabs-developers",
+      "group-store-setup",
+      "group-accounts",
+      "group-developers",
       "account-menu"
     ]);
     expect(ids("seller")).toEqual([
       "start-here",
       "sidebar-nav",
-      "tabs-stores",
+      "group-websites",
       "store-actions",
-      "tabs-store-designs",
-      "tabs-team-and-brand",
-      "tabs-developers",
+      "group-store-setup",
+      "group-settings",
+      "group-developers",
       "account-menu"
     ]);
     expect(ids("reseller")).toContain("nav-reseller-account");
@@ -40,18 +40,21 @@ describe("tourFor", () => {
     const steps = tourFor({ kind: "admin", product: "p1", canChange: true }).steps;
     const byId = Object.fromEntries(steps.map((step) => [step.id, step]));
     expect(byId["storefront-picker"].nextRoute).toBe("/stores?product=p1");
-    expect(byId["tabs-stores"].previousRoute).toBe("/?product=p1");
+    expect(byId["group-websites"].previousRoute).toBe("/?product=p1");
     expect(byId["store-actions"].nextRoute).toBe("/versions?product=p1");
     // Storefronts is about every storefront, so it doesn't carry one.
-    expect(byId["tabs-store-designs"].nextRoute).toBe("/storefronts");
+    expect(byId["group-store-setup"].nextRoute).toBe("/storefronts");
     expect(byId["sidebar-nav"].nextRoute).toBeUndefined();
     expect(byId["account-menu"].nextRoute).toBeUndefined();
   });
 
-  it("points at tabs and sidebar links that exist", () => {
-    const anchors = new Set(NAV.flatMap((section) => [`tabs-${sectionSlug(section.title)}`, `nav-${sectionSlug(section.title)}`]));
+  it("points at sidebar groups and links that exist", () => {
+    const anchors = new Set([
+      ...NAV.map((section) => `group-${sectionSlug(section.title)}`),
+      ...ALL_LINKS.map((link) => `nav-${sectionSlug(link.title)}`)
+    ]);
     for (const kind of ["admin", "seller", "reseller"] as const) {
-      for (const id of ids(kind)) if (id.startsWith("tabs-") || id.startsWith("nav-")) expect(anchors).toContain(id);
+      for (const id of ids(kind)) if (id.startsWith("group-") || id.startsWith("nav-")) expect(anchors).toContain(id);
     }
   });
 });

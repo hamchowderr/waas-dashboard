@@ -31,8 +31,8 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-/** The palette button in the header and the panel it opens. */
-export function AppearancePanel() {
+/** The Appearance panel. Opened from the account menu (open/onOpenChange), or from its own palette button without them. */
+export function AppearancePanel({ open, onOpenChange }: { open?: boolean; onOpenChange?: (open: boolean) => void } = {}) {
   const { appearance, setAppearance } = useAppearance();
   const { theme: mode, setTheme: setMode } = useTheme();
   const { state, setOpen } = useSidebar();
@@ -63,13 +63,15 @@ export function AppearancePanel() {
   };
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button size="icon-sm" variant="ghost">
-          <PaletteIcon />
-          <span className="sr-only">Appearance</span>
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {open === undefined && (
+        <SheetTrigger asChild>
+          <Button size="icon-sm" variant="ghost">
+            <PaletteIcon />
+            <span className="sr-only">Appearance</span>
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent className="w-80 gap-0 sm:max-w-80">
         <SheetHeader className="border-b">
           <SheetTitle>Appearance</SheetTitle>

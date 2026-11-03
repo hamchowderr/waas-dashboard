@@ -55,7 +55,7 @@ export function StorefrontCard({
         </span>
         {storefront ? (
           <>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-48 flex-1">
               <p className="font-medium">Ready-made storefront</p>
               <p className="text-muted-foreground truncate text-sm">
                 {storefront.domain}
@@ -79,7 +79,7 @@ export function StorefrontCard({
           </>
         ) : (
           <>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-48 flex-1">
               <p className="font-medium">No ready-made storefront</p>
               <p className="text-muted-foreground text-sm">
                 They sell from their own WordPress site with WaaS Host, or you

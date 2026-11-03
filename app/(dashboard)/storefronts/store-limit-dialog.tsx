@@ -18,19 +18,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { setStoreLimit } from "../actions";
+import type { DialogControl } from "./rename-storefront-dialog";
 
 /** "Store limit": the most stores the storefront may have. Platform admin only. */
 export function StoreLimitButton({
   productId,
   maxTenants: current,
   tenantCount,
+  control,
 }: {
   productId: string;
   maxTenants: number | null;
   tenantCount: number;
+  control?: DialogControl;
 }) {
   const router = useRouter();
-  const [open, setOpen] = React.useState(false);
+  const [ownOpen, setOwnOpen] = React.useState(false);
+  const open = control?.open ?? ownOpen;
+  const setOpen = control?.onOpenChange ?? setOwnOpen;
   const [value, setValue] = React.useState(current === null ? "" : String(current));
   const [pending, startTransition] = React.useTransition();
   const text = value.trim();
@@ -52,15 +57,19 @@ export function StoreLimitButton({
 
   return (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => {
-          setValue(current === null ? "" : String(current));
-          setOpen(true);
-        }}>
-        <GaugeIcon /> Store limit: {current === null ? "none" : `${tenantCount} of ${current}`}
-      </Button>
+      {!control && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setValue(current === null ? "" : String(current));
+              setOpen(true);
+            }}>
+            <GaugeIcon /> Store limit: {current === null ? "none" : `${tenantCount} of ${current}`}
+          </Button>
+        </>
+      )}
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <DialogContent>
           <DialogHeader>

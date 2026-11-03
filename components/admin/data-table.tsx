@@ -399,7 +399,7 @@ export function AdminDataTable<T extends RowData>({
             <span className="text-muted-foreground text-sm tabular-nums">
               {firstRow} - {lastRow} of {rows.length}
             </span>
-            <div className="flex flex-wrap items-center justify-center gap-1">
+            <div className="flex items-center justify-center gap-1">
               <Button
                 variant="outline"
                 size="icon-sm"
@@ -408,16 +408,26 @@ export function AdminDataTable<T extends RowData>({
                 <span className="sr-only">Previous page</span>
                 <ChevronLeftIcon />
               </Button>
-              {Array.from({ length: pageCount }, (_, index) => (
-                <Button
-                  key={index}
-                  variant={index === pageIndex ? "outline" : "ghost"}
-                  size="icon-sm"
-                  className="tabular-nums"
-                  onClick={() => table.setPageIndex(index)}>
-                  {index + 1}
-                </Button>
-              ))}
+              {pageWindow(pageIndex, pageCount).map((index, i) =>
+                index === null ? (
+                  <span key={`gap-${i}`} className="text-muted-foreground w-6 text-center text-sm" aria-hidden>
+                    …
+                  </span>
+                ) : (
+                  <Button
+                    key={index}
+                    variant={index === pageIndex ? "outline" : "ghost"}
+                    size="icon-sm"
+                    className="hidden tabular-nums sm:inline-flex"
+                    aria-current={index === pageIndex ? "page" : undefined}
+                    onClick={() => table.setPageIndex(index)}>
+                    {index + 1}
+                  </Button>
+                )
+              )}
+              <span className="text-muted-foreground px-1 text-sm tabular-nums sm:hidden">
+                Page {pageIndex + 1} of {Math.max(pageCount, 1)}
+              </span>
               <Button
                 variant="outline"
                 size="icon-sm"
@@ -432,6 +442,24 @@ export function AdminDataTable<T extends RowData>({
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * The page numbers to show: the first, the last and the two either side of the current one, with null for each
+ * gap (drawn as …), so a long list never fills the footer with numbers. 0-based.
+ */
+export function pageWindow(current: number, count: number): (number | null)[] {
+  if (count <= 7) return Array.from({ length: count }, (_, i) => i);
+  const pages = new Set([0, count - 1, current - 1, current, current + 1]);
+  if (current <= 3) [1, 2, 3, 4].forEach((i) => pages.add(i));
+  if (current >= count - 4) [count - 5, count - 4, count - 3, count - 2].forEach((i) => pages.add(i));
+  const sorted = [...pages].filter((i) => i >= 0 && i < count).sort((a, b) => a - b);
+  const out: (number | null)[] = [];
+  sorted.forEach((page, i) => {
+    if (i > 0 && page - sorted[i - 1]! > 1) out.push(null);
+    out.push(page);
+  });
+  return out;
 }
 
 function TabCount({ count }: { count: number }) {

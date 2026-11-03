@@ -11,7 +11,7 @@ import { BillCard, InvoicesCard } from "../resellers/bill-parts";
 import { monthRange } from "../resellers/usage";
 import { AddStorefrontButton } from "./add-storefront-dialog";
 
-export const metadata: Metadata = { title: "Reseller account" };
+export const metadata: Metadata = { title: "Reseller Account" };
 
 const TABS = ["bill", "keys"] as const;
 

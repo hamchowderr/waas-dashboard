@@ -178,6 +178,8 @@ export interface AdminApi {
   rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<NewApiKey>;
   /** Stops a key now; the storefront's last key included. */
   revokeApiKey(productId: string, keyId: string): Promise<void>;
+  /** Removes a key that already stopped working from the list for good. */
+  removeApiKey(productId: string, keyId: string): Promise<void>;
 
   // Applications to sell, from the marketing site's form. Platform admin only.
   /** Newest first; every status when none is given. */
@@ -217,6 +219,7 @@ export interface AdminApi {
   /** The new key; the old one keeps working for graceHours. */
   rotatePartnerKey(id: string, keyId: string, graceHours: number): Promise<NewApiKey>;
   revokePartnerKey(id: string, keyId: string): Promise<void>;
+  removePartnerKey(id: string, keyId: string): Promise<void>;
 
   // Teams: who can sign in to a storefront, or to all of a reseller's. The API emails invitations and
   // enforces who may change what.

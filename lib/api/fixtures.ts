@@ -100,11 +100,18 @@ function uuid(n: number, kind: number): string {
 const products: Omit<Product, "tenantCount">[] = [
   // The first matches the platform's own storefront (shop.anypress.io), so a preview looks like the real dashboard.
   { id: uuid(1, 1), name: "AnyPress" },
-  { id: uuid(2, 1), name: "Summit Sites" }
+  { id: uuid(2, 1), name: "Summit Sites" },
+  { id: uuid(3, 1), name: "Summit Bookings" },
+  { id: uuid(4, 1), name: "Harbor Fitness Sites" },
+  { id: uuid(5, 1), name: "Lakeside Chamber" }
 ];
 
 /** Store limits by storefront; a storefront missing here has no limit. */
-const limits = new Map<string, number | null>([[products[0].id, 6]]);
+const limits = new Map<string, number | null>([
+  [products[0].id, 6],
+  [products[3].id, 10],
+  [products[4].id, 25]
+]);
 
 /** Reseller accounts, and which reseller each storefront belongs to. */
 type FixtureReseller = ResellerSettings & { id: string; dateCreated: string; autoInvoice: boolean; stripeCustomerId: string | null };
@@ -129,7 +136,10 @@ const resellerInvoices = new Map<string, ResellerInvoice[]>([
     ]
   ]
 ]);
-const resellerOf = new Map<string, string>([[products[1].id, resellers[0].id]]);
+const resellerOf = new Map<string, string>([
+  [products[1].id, resellers[0].id],
+  [products[2].id, resellers[0].id]
+]);
 
 type FixtureVersion = Version & { productId: string };
 
@@ -164,7 +174,15 @@ const directory: DirectoryPlugin[] = [
   ["the-events-calendar", "The Events Calendar", "6.15.0", "The Events Calendar", "Create and manage events with ease.", 88, 700_000],
   ["wordpress-seo", "Yoast SEO", "26.1", "Team Yoast", "Improve your WordPress SEO.", 96, 10_000_000],
   ["elementor", "Elementor Website Builder", "3.33.0", "Elementor.com", "The Elementor Website Builder has it all.", 90, 10_000_000],
-  ["wp-super-cache", "WP Super Cache", "3.0.1", "Automattic", "A very fast caching engine for WordPress.", 84, 1_000_000]
+  ["wp-super-cache", "WP Super Cache", "3.0.1", "Automattic", "A very fast caching engine for WordPress.", 84, 1_000_000],
+  ["wpforms-lite", "WPForms Lite", "1.9.8", "WPForms", "Drag and drop form builder for contact forms, surveys and more.", 98, 6_000_000],
+  ["ninja-forms", "Ninja Forms", "3.12.0", "Saturday Drive", "Drag and drop contact form builder.", 86, 600_000],
+  ["formidable", "Formidable Forms", "6.24", "Strategy11", "Form builder for quizzes, surveys, calculators and more.", 92, 300_000],
+  ["forminator", "Forminator Forms", "1.47.0", "WPMU DEV", "Contact forms, polls, quizzes and payment forms.", 94, 600_000],
+  ["everest-forms", "Everest Forms", "3.4.0", "WPEverest", "Drag and drop contact form builder.", 90, 100_000],
+  ["happyforms", "Happyforms", "1.26.5", "Happyforms", "Friendly drag and drop contact form builder.", 88, 80_000],
+  ["metform", "MetForm", "4.0.5", "Wpmet", "Contact form, survey and quiz builder for Elementor.", 86, 200_000],
+  ["contact-form-7-honeypot", "Honeypot for Contact Form 7", "2.1.7", "Nocean", "Add spam protection to Contact Form 7 forms.", 90, 300_000]
 ].map(([slug, name, version, author, shortDescription, rating, activeInstalls]) => ({
   slug: slug as string,
   name: name as string,
@@ -1238,8 +1256,11 @@ export class FixtureAdminApi implements AdminApi {
 
   async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {
     this.product(productId);
-    const q = query.toLowerCase();
-    const plugins = directory.filter((p) => p.slug.includes(q) || p.name.toLowerCase().includes(q));
+    // Like wordpress.org: a word matches the name, slug or description, and "forms" finds "form" too.
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean).map((w) => w.replace(/s$/, ""));
+    const plugins = directory.filter((p) =>
+      words.some((w) => p.slug.includes(w) || p.name.toLowerCase().includes(w) || p.shortDescription.toLowerCase().includes(w))
+    );
     return { page, pages: 1, results: plugins.length, plugins };
   }
 
@@ -1514,6 +1535,13 @@ export class FixtureAdminApi implements AdminApi {
     key.revokedAt = new Date().toISOString();
   }
 
+  async removeApiKey(productId: string, keyId: string): Promise<void> {
+    const index = apiKeys.findIndex((k) => k.productId === productId && k.id === keyId);
+    if (index < 0) throw new FixtureError(404, `API key ${keyId} not found`);
+    if (apiKeys[index].state !== "revoked") throw new FixtureError(409, "Delete the key first: only a key that has stopped working can be removed from the list");
+    apiKeys.splice(index, 1);
+  }
+
   private teamOf(of: TeamOf): FixtureTeam {
     const name = this.teamName(of);
     const key = teamKey(of);
@@ -1778,6 +1806,10 @@ export class FixtureAdminApi implements AdminApi {
 
   async revokePartnerKey(id: string, keyId: string): Promise<void> {
     await this.revokeApiKey(id, keyId);
+  }
+
+  async removePartnerKey(id: string, keyId: string): Promise<void> {
+    await this.removeApiKey(id, keyId);
   }
 
   /** The team's default name; throws when the storefront or reseller isn't there. */

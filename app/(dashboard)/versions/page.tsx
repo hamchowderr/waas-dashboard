@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { StorefrontCard } from "../keys/storefront-card";
 import { VersionsManager } from "./versions-manager";
 
-export const metadata: Metadata = { title: "Store designs" };
+export const metadata: Metadata = { title: "Templates" };
 
 export default async function VersionsPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const { product: productId } = await searchParams;
@@ -28,10 +28,10 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
     if (products[0]) redirect(`/versions?product=${products[0].id}`);
     return (
       <div className="space-y-4 lg:space-y-6">
-        <PageHeader title="Store designs" />
+        <PageHeader title="Templates" />
         <Card>
           <EmptyState icon={StoreIcon} title="No storefronts yet">
-            Each storefront has its own store designs. A storefront is set up when a seller or reseller is approved.
+            Each storefront has its own templates. A storefront is set up when a seller or reseller is approved.
           </EmptyState>
         </Card>
       </div>
@@ -47,11 +47,11 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
-        title="Store designs"
-        description={`What a new store from ${product.name} gets: the WordPress version it runs on, and the template site it starts from.`}
+        title="Templates"
+        description={`The website every new store from ${product.name} starts as. Change it by building a new version, check it, then make it production.`}
       />
-      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} canLogIn={!!viewer && canChange(viewer)} />
       <VersionsManager productId={product.id} versions={versions} templates={templates} />
+      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} canLogIn={!!viewer && canChange(viewer)} />
     </div>
   );
 }

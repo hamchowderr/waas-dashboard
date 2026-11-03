@@ -16,11 +16,14 @@ import {
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { deleteStorefront } from "../actions";
+import type { DialogControl } from "./rename-storefront-dialog";
 
 /** "Delete": removes a storefront that has no stores, with its keys and settings. Platform admin only. */
-export function DeleteStorefrontButton({ productId, name }: { productId: string; name: string }) {
+export function DeleteStorefrontButton({ productId, name, control }: { productId: string; name: string; control?: DialogControl }) {
   const router = useRouter();
-  const [open, setOpen] = React.useState(false);
+  const [ownOpen, setOwnOpen] = React.useState(false);
+  const open = control?.open ?? ownOpen;
+  const setOpen = control?.onOpenChange ?? setOwnOpen;
   const [pending, startTransition] = React.useTransition();
 
   const submit = () =>
@@ -38,9 +41,13 @@ export function DeleteStorefrontButton({ productId, name }: { productId: string;
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        <Trash2Icon /> Delete
-      </Button>
+      {!control && (
+        <>
+          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+            <Trash2Icon /> Delete
+          </Button>
+        </>
+      )}
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <DialogContent>
           <DialogHeader>

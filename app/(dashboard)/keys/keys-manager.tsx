@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import {
-  BanIcon,
   KeyRoundIcon,
   MoreHorizontalIcon,
   PlusIcon,
   RefreshCwIcon,
+  Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -60,6 +60,8 @@ import {
 import {
   createApiKey,
   createPartnerKey,
+  removeApiKey,
+  removePartnerKey,
   revokeApiKey,
   revokePartnerKey,
   rotateApiKey,
@@ -82,7 +84,7 @@ const stateMeta: Record<
 > = {
   active: { label: "Active", badge: "success" },
   expiring: { label: "Expiring", badge: "warning" },
-  revoked: { label: "Revoked", badge: "secondary" },
+  revoked: { label: "Deleted", badge: "secondary" },
 };
 
 /** How long a rotated key keeps working, so whatever uses it can switch over. */
@@ -124,6 +126,11 @@ export function KeysManager({
   const [rotating, setRotating] = React.useState<ApiKey | null>(null);
   const [grace, setGrace] = React.useState("24");
   const [revoking, setRevoking] = React.useState<ApiKey | null>(null);
+  const [removing, setRemoving] = React.useState<ApiKey | null>(null);
+  // Deleted keys stay listed for 30 days so the API Log can name them; they're tucked away unless asked for.
+  const [showDeleted, setShowDeleted] = React.useState(false);
+  const deletedCount = keys.filter((k) => k.state === "revoked").length;
+  const listed = showDeleted ? keys : keys.filter((k) => k.state !== "revoked");
   const [shown, setShownState] = React.useState<Shown>(null);
   const setShown = (next: Shown) =>
     setShownState(
@@ -138,8 +145,8 @@ export function KeysManager({
   const [pending, startTransition] = React.useTransition();
   const activeCount = keys.filter((k) => k.state === "active").length;
   const actions = partner
-    ? { create: createPartnerKey, rotate: rotatePartnerKey, revoke: revokePartnerKey }
-    : { create: createApiKey, rotate: rotateApiKey, revoke: revokeApiKey };
+    ? { create: createPartnerKey, rotate: rotatePartnerKey, revoke: revokePartnerKey, remove: removePartnerKey }
+    : { create: createApiKey, rotate: rotateApiKey, revoke: revokeApiKey, remove: removeApiKey };
 
   const create = () =>
     startTransition(async () => {
@@ -211,7 +218,7 @@ export function KeysManager({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {keys.length === 0 && (
+              {listed.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="p-0">
                     <EmptyState
@@ -230,7 +237,7 @@ export function KeysManager({
                   </TableCell>
                 </TableRow>
               )}
-              {keys.map((key) => (
+              {listed.map((key) => (
                 <TableRow
                   key={key.id}
                   className={
@@ -268,6 +275,12 @@ export function KeysManager({
                     {formatDate(key.dateCreated)}
                   </TableCell>
                   <TableCell>
+                    {canChange && key.state === "revoked" && (
+                      <Button variant="ghost" size="icon-sm" onClick={() => setRemoving(key)}>
+                        <span className="sr-only">Remove {keyName(key)} from the list</span>
+                        <Trash2Icon />
+                      </Button>
+                    )}
                     {canChange && key.state !== "revoked" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -290,7 +303,7 @@ export function KeysManager({
                             variant="destructive"
                             onSelect={() => setRevoking(key)}
                           >
-                            <BanIcon /> Revoke
+                            <Trash2Icon /> Delete key
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -300,6 +313,15 @@ export function KeysManager({
               ))}
             </TableBody>
           </Table>
+          {deletedCount > 0 && (
+            <div className="border-t px-(--card-spacing) py-2">
+              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setShowDeleted((was) => !was)}>
+                {showDeleted
+                  ? "Hide deleted keys"
+                  : `Show ${deletedCount} deleted ${deletedCount === 1 ? "key" : "keys"}`}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -387,10 +409,10 @@ export function KeysManager({
       <ConfirmAction
         open={revoking !== null}
         onOpenChange={(next) => !next && setRevoking(null)}
-        title={`Revoke ${revoking ? keyName(revoking) : "key"}?`}
+        title={`Delete ${revoking ? keyName(revoking) : "key"}?`}
         description={
           <>
-            <p>It stops working at once. This can&apos;t be undone.</p>
+            <p>It stops working at once, and anything still using it loses access. This can&apos;t be undone.</p>
             {!partner && revoking?.state === "active" && activeCount === 1 && (
               <p className="text-destructive font-medium">
                 This is {productName}&apos;s last active key: its storefront
@@ -399,12 +421,28 @@ export function KeysManager({
             )}
           </>
         }
-        confirmLabel="Revoke key"
+        confirmLabel="Delete key"
         destructive
         onConfirm={async () => {
           if (!revoking) return false;
           const result = await actions.revoke(productId, revoking.id);
-          if (result.ok) toast.success(`${keyName(revoking)} revoked`);
+          if (result.ok) toast.success(`${keyName(revoking)} deleted`);
+          else toast.error(result.error);
+          return result.ok;
+        }}
+      />
+
+      <ConfirmAction
+        open={removing !== null}
+        onOpenChange={(next) => !next && setRemoving(null)}
+        title={`Remove ${removing ? keyName(removing) : "key"} from the list?`}
+        description={<p>It already stopped working. Its old calls stay in the API Log.</p>}
+        confirmLabel="Remove"
+        destructive
+        onConfirm={async () => {
+          if (!removing) return false;
+          const result = await actions.remove(productId, removing.id);
+          if (result.ok) toast.success(`${keyName(removing)} removed`);
           else toast.error(result.error);
           return result.ok;
         }}
