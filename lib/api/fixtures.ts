@@ -962,14 +962,19 @@ const prospectUsageFor = (productId: string): ProspectUsage => {
     resetsAt: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString()
   };
 };
-function sampleProspects(query: string, location: string): Prospect[] {
+function sampleProspects(query: string, location: string, page: number): Prospect[] {
   const kind = query.replace(/^./, (c) => c.toUpperCase());
   const town = location.split(",")[0]!.trim() || "Springfield";
-  const names = [`${town} ${kind}`, `First ${kind} of ${town}`, `Riverside ${kind}`, `Oak Street ${kind}`, `New Hope ${kind}`, `Northside ${kind}`];
-  return names.map((name, i) => {
+  const names = page
+    ? [`Grace ${kind}`, `Hillside ${kind}`, `Westgate ${kind}`, `Lakeview ${kind}`]
+    : [`${town} ${kind}`, `First ${kind} of ${town}`, `Riverside ${kind}`, `Oak Street ${kind}`, `New Hope ${kind}`, `Northside ${kind}`];
+  return names.map((name, j) => {
+    const i = j + page * 6;
     const site = name.toLowerCase().replace(/[^a-z0-9]+/g, "") + ".example";
     return {
       id: `sample-${i}`,
+      type: kind,
+      hours: i % 2 ? null : ["Monday: 9:00 AM – 5:00 PM", "Tuesday: 9:00 AM – 5:00 PM", "Sunday: Closed"],
       name,
       address: `${100 + i * 37} Main St, ${location}`,
       phone: `(555) 010-${String(i).padStart(4, "0")}`,
@@ -1437,12 +1442,13 @@ export class FixtureAdminApi implements AdminApi {
     return prospectUsageFor(productId);
   }
 
-  async searchProspects(productId: string, query: string, location: string): Promise<ProspectSearch> {
+  async searchProspects(productId: string, query: string, location: string, pageToken?: string): Promise<ProspectSearch> {
     this.product(productId);
     const usage = prospectUsageFor(productId);
     if (usage.used >= usage.limit) throw new FixtureError(429, `You've used this month's ${usage.limit} searches. They start again on the 1st.`);
     prospectSearches.set(productId, usage.used + 1);
-    return { prospects: sampleProspects(query.trim(), location.trim()), usage: prospectUsageFor(productId) };
+    const page = pageToken === "sample-page-2" ? 1 : 0;
+    return { prospects: sampleProspects(query.trim(), location.trim(), page), nextPageToken: page ? null : "sample-page-2", usage: prospectUsageFor(productId) };
   }
 
   async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {

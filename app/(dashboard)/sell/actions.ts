@@ -3,9 +3,9 @@
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
-import type { ProspectSearch, ProspectUsage } from "@/lib/api/types";
+import type { ProspectContacts, ProspectSearch, ProspectUsage } from "@/lib/api/types";
 import type { Report } from "@/lib/website-check";
-import { CheckError, checkWebsite } from "@/lib/website-check-fetch";
+import { CheckError, checkWebsite, findContacts } from "@/lib/website-check-fetch";
 
 export type CheckResult = { ok: true; report: Report } | { ok: false; error: string };
 
@@ -28,12 +28,12 @@ export async function prospectUsage(productId: string): Promise<ProspectUsage | 
 }
 
 /** One prospect finder search for the storefront, counted against its month. */
-export async function findProspects(productId: string, query: string, location: string): Promise<ProspectResult> {
+export async function findProspects(productId: string, query: string, location: string, pageToken?: string): Promise<ProspectResult> {
   const viewer = await getViewer().catch(() => null);
   if (!viewer) return { ok: false, error: "Sign in again to search." };
   const api = getAdminApi();
   try {
-    return { ok: true, search: await api.searchProspects(productId, String(query).slice(0, 100), String(location).slice(0, 100)) };
+    return { ok: true, search: await api.searchProspects(productId, String(query).slice(0, 100), String(location).slice(0, 100), pageToken ? String(pageToken).slice(0, 2000) : undefined) };
   } catch (err) {
     const known = err instanceof AdminApiError ? err : null;
     return {
@@ -42,4 +42,22 @@ export async function findProspects(productId: string, query: string, location: 
       usage: known?.status === 429 ? ((await api.prospectUsage(productId).catch(() => null)) ?? undefined) : undefined
     };
   }
+}
+
+/** Emails, contact pages and social profiles from up to 20 prospects' own websites, a few at a time. */
+export async function prospectContacts(urls: string[]): Promise<Record<string, ProspectContacts>> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return {};
+  const list = [...new Set((Array.isArray(urls) ? urls : []).map((u) => String(u).slice(0, 500)))].slice(0, 20);
+  const out: Record<string, ProspectContacts> = {};
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: 5 }, async () => {
+      while (next < list.length) {
+        const url = list[next++]!;
+        out[url] = await findContacts(url);
+      }
+    })
+  );
+  return out;
 }
