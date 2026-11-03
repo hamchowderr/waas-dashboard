@@ -797,6 +797,19 @@ export type ProspectCrm = {
   /** The seller's HighLevel, through their workflow's Inbound Webhook. */
   highlevel: { connected: boolean };
 };
+/**
+ * The seller's own mailbox that emails to prospects go out through (the API's src/outreach.ts). Store email can't be
+ * used for cold outreach, so without one an email from FluentCRM to a "Prospect" is not sent.
+ */
+export type ProspectMailboxInput = { host: string; port: number; user: string; pass: string; from: string; name: string; daily: number };
+export type ProspectMailbox = {
+  state: "none" | "checking" | "connected" | "failed" | "removing";
+  /** Why the last check failed, in the mail server's words. */
+  error: string | null;
+  mailbox: Omit<ProspectMailboxInput, "pass"> | null;
+  /** Why this storefront can't use one, or null when it can. */
+  unavailable: string | null;
+};
 /** A business sent to a CRM: the finder's result with what its website gave. */
 export type CrmProspect = Pick<Prospect, "id" | "name" | "type" | "phone" | "website" | "address" | "mapsUrl" | "rating" | "reviews" | "hours"> & {
   email: string | null;

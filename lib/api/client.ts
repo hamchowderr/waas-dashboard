@@ -34,6 +34,8 @@ import type {
   ProspectSearch,
   ProspectCrm,
   ProspectCrmResult,
+  ProspectMailbox,
+  ProspectMailboxInput,
   CrmProspect,
   CrmTarget,
   ProspectUsage,
@@ -162,6 +164,10 @@ export interface AdminApi {
   prospectCrm(productId: string): Promise<ProspectCrm>;
   /** Sets (or, with null, removes) the HighLevel webhook prospects are posted to. */
   setProspectHighLevel(productId: string, webhook: string | null): Promise<ProspectCrm>;
+  /** The seller's own mailbox for emails to prospects; never includes the password. */
+  prospectMailbox(productId: string): Promise<ProspectMailbox>;
+  /** Saves the mailbox (the storefront then signs in to it) or, with null, removes it. */
+  setProspectMailbox(productId: string, mailbox: ProspectMailboxInput | null): Promise<ProspectMailbox>;
   /** Sends businesses into FluentCRM, HighLevel or both; each goes to each CRM once. */
   addProspectsToCrm(productId: string, prospects: CrmProspect[], group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult>;
   /** The wordpress.org plugin directory's search, 24 a page. */
