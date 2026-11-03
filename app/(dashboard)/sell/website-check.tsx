@@ -38,24 +38,44 @@ export function ScoreRing({ score, size = 96 }: { score: number; size?: number }
   );
 }
 
-export function WebsiteCheck({ productId, sender, brand }: { productId: string; sender: string | null; brand: string }) {
-  const [url, setUrl] = React.useState("");
+export function WebsiteCheck({
+  productId,
+  sender,
+  brand,
+  initialUrl
+}: {
+  productId: string;
+  sender: string | null;
+  brand: string;
+  /** Checks this address as soon as the check opens (from the prospect finder). */
+  initialUrl?: string;
+}) {
+  const [url, setUrl] = React.useState(initialUrl ?? "");
   const [report, setReport] = React.useState<Report | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [pending, start] = React.useTransition();
 
-  const run = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const check = React.useCallback((address: string) => {
     start(async () => {
-      const result = await checkProspectSite(url);
+      const result = await checkProspectSite(address);
       if (result.ok) setReport(result.report);
       else {
         setReport(null);
         setError(result.error);
       }
     });
+  }, []);
+
+  const run = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    check(url);
   };
+
+  // The check is remounted for each prospect, so this runs once per address.
+  React.useEffect(() => {
+    if (initialUrl) check(initialUrl);
+  }, [initialUrl, check]);
 
   return (
     <div className="space-y-4 lg:space-y-6">
