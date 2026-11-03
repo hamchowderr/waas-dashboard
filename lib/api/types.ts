@@ -73,6 +73,8 @@ export type TenantDetail = {
   /** When the "your website is ready" email last went to the owner, and to which address; null if never. */
   ownerNotifiedAt: string | null;
   ownerNotifiedTo: string | null;
+  /** The owner's sign-in email the store was made with; null for a site moved in. */
+  ownerEmail: string | null;
   dateCreated: string | null;
   dateChanged: string | null;
   mainDomain: string | null;

@@ -1025,6 +1025,7 @@ export class FixtureAdminApi implements AdminApi {
       ...tenant,
       ownerNotifiedAt: notified?.at ?? null,
       ownerNotifiedTo: notified?.to ?? null,
+      ownerEmail: tenant.moveIn ? null : `owner@${tenant.mainDomain}`,
       snapshotName: "Starter template",
       wpOptionNames: ["blogname", "admin_email", "woocommerce_currency"],
       phpConstantNames: ["WP_MEMORY_LIMIT", "DISALLOW_FILE_EDIT", "WP_AUTO_UPDATE_CORE"],

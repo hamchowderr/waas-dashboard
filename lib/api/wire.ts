@@ -110,6 +110,7 @@ export type WireTenantDetail = {
   dateHeld?: string | null;
   ownerNotifiedAt?: string | null;
   ownerNotifiedTo?: string | null;
+  ownerEmail?: string | null;
   dateCreated?: string;
   dateChanged?: string;
   wpOptionNames: string[];

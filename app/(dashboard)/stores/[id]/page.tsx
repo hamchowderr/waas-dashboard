@@ -104,7 +104,7 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <ExternalLinkIcon />
               </a>
             </Button>
-            {canLogIn && !tenant.onHold && <EmailOwner tenantId={tenant.id} storeName={tenant.name} lastSentAt={tenant.ownerNotifiedAt} lastSentTo={tenant.ownerNotifiedTo} />}
+            {canLogIn && !tenant.onHold && <EmailOwner tenantId={tenant.id} storeName={tenant.name} lastSentAt={tenant.ownerNotifiedAt} lastSentTo={tenant.ownerNotifiedTo} ownerEmail={tenant.ownerEmail} />}
             {canLogIn ? (
               <WordPressLoginButton tenantId={tenant.id} />
             ) : (
@@ -177,6 +177,7 @@ export default async function StorePage({ params, searchParams }: Params) {
             {tenant.keepsOwnCode && <Row label="Plugins and themes">Its own (moved in)</Row>}
             <Row label="Last changed">{formatDateTime(tenant.dateChanged)}</Row>
             {tenant.isSuspended && <Row label="Suspended">{formatDateTime(tenant.dateSuspended)}</Row>}
+            {tenant.ownerEmail && <Row label="Owner">{tenant.ownerEmail}</Row>}
             {!tenant.onHold && (
               <Row label="Owner emailed">
                 {tenant.ownerNotifiedAt ? `${formatDateTime(tenant.ownerNotifiedAt)} to ${tenant.ownerNotifiedTo}` : "Not sent"}
