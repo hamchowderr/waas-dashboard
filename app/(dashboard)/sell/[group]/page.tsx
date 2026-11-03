@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
-import { GROUP_IDS, campaign, pitch, type GroupId } from "@/lib/sales-kit";
+import { GROUP_IDS, campaign, demosFor, pitch, type GroupId } from "@/lib/sales-kit";
 import { Button } from "@/components/ui/button";
 import { loadKitFor, pickProduct } from "../load";
 import { GroupIcon } from "../kit-ui";
@@ -54,6 +54,7 @@ export default async function SellGroupPage({ params, searchParams }: { params: 
         where={section("Where to find them")}
         objections={section("Objections")}
         demo={section("Demo")}
+        demos={demosFor(playbook.id)}
         callScript={callScript?.body ?? ""}
         context={kit.context}
       />

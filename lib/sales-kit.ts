@@ -25,6 +25,32 @@ export const LIST_COST: Record<Plan, number> = { website: 12, bookings: 19, stor
 export const GROUP_IDS = ["shops", "regulated", "courses", "chambers", "churches", "franchises", "agencies", "developers"] as const;
 export type GroupId = (typeof GROUP_IDS)[number];
 
+/** A live demo website: a sample business built on the theme, opened on WordPress Playground in the prospect's browser. */
+export type Demo = { kit: string; business: string; kind: string; url: string };
+
+const playground = (kit: string, tag: string) =>
+  `https://playground.wordpress.net/?blueprint-url=${encodeURIComponent(`https://raw.githubusercontent.com/hamchowderr/anypress-theme/${tag}/demo/${kit}/blueprint.json`)}`;
+
+/** Every finished demo. A kit gets one here once its demo passes the theme's kit checklist. */
+export const DEMOS: Demo[] = [
+  { kit: "ridge", business: "Clearwater Plumbing & Heating", kind: "Plumber", url: playground("ridge", "v0.7.0") },
+  { kit: "circuit", business: "Brightline Electric", kind: "Electrician", url: playground("circuit", "v0.7.0") }
+];
+
+/** Which demos to show each group, best fit first. Groups without their own demo yet show none. */
+const GROUP_DEMOS: Record<GroupId, string[]> = {
+  shops: [],
+  regulated: [],
+  courses: [],
+  chambers: [],
+  churches: [],
+  franchises: ["ridge", "circuit"],
+  agencies: ["ridge", "circuit"],
+  developers: ["ridge", "circuit"]
+};
+
+export const demosFor = (group: GroupId): Demo[] => GROUP_DEMOS[group].map((kit) => DEMOS.find((d) => d.kit === kit)!).filter(Boolean);
+
 /** Every playbook has these parts, in this order. */
 export const PARTS = ["Who", "Where to find them", "What to lead with", "Offer", "Outreach", "Objections", "Demo"] as const;
 

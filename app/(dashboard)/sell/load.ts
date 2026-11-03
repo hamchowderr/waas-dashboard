@@ -30,6 +30,7 @@ export async function loadKitFor(product: Product) {
     shop: customerFacingShop(storefront?.domain),
     sender: viewer?.user.name || null,
     support: branding?.shown.supportEmail ?? null,
+    // Demo links stay a blank in messages: Playground links name the theme's repository, so a seller pastes their own.
     demo: null
   };
   return { ...kit, context };

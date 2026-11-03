@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { GROUP_IDS, PARTS, PLANS, SUGGESTED_PRICES, fill, pitch, campaign, customerFacingShop, fillParts, messages, parseGuide, parsePlaybook, playbookMarkdown, type KitContext } from "./sales-kit";
+import { GROUP_IDS, PARTS, PLANS, SUGGESTED_PRICES, fill, pitch, campaign, customerFacingShop, demosFor, fillParts, messages, parseGuide, parsePlaybook, playbookMarkdown, type KitContext } from "./sales-kit";
 
 const root = path.join(__dirname, "..", "content", "sales-kit");
 const read = (...p: string[]) => readFileSync(path.join(root, ...p), "utf8");
@@ -112,5 +112,14 @@ describe("campaign", () => {
       expect(steps.map((s) => s.day), p.id).toEqual([...steps.map((s) => s.day)].sort((a, b) => a - b));
       expect(steps[0]!.day, p.id).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe("demosFor", () => {
+  it("only lists finished demos, as Playground links", () => {
+    for (const id of GROUP_IDS)
+      for (const d of demosFor(id)) expect(d.url).toMatch(/^https:\/\/playground\.wordpress\.net\/\?blueprint-url=/);
+    expect(demosFor("agencies").map((d) => d.kit)).toEqual(["ridge", "circuit"]);
+    expect(demosFor("churches")).toEqual([]);
   });
 });
