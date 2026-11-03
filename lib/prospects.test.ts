@@ -13,7 +13,8 @@ const bakery = {
   reviews: 12,
   mapsUrl: "https://maps.example/1",
   type: "Bakery",
-  hours: ["Monday: 7 AM – 3 PM", "Sunday: Closed"]
+  hours: ["Monday: 7 AM – 3 PM", "Sunday: Closed"],
+  inCrm: []
 };
 
 describe("prospectsCsv", () => {

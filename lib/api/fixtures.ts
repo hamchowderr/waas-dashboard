@@ -18,6 +18,10 @@ import {
   type PluginSearch,
   type Prospect,
   type ProspectSearch,
+  type ProspectCrm,
+  type ProspectCrmResult,
+  type CrmProspect,
+  type CrmTarget,
   type ProspectUsage,
   type MoveIn,
   type SiteReport,
@@ -981,10 +985,16 @@ function sampleProspects(query: string, location: string, page: number): Prospec
       website: i % 3 === 1 ? null : `https://${site}/`,
       rating: i % 4 === 3 ? null : Math.round((3.6 + (i % 5) * 0.3) * 10) / 10,
       reviews: i % 4 === 3 ? null : 12 + i * 23,
-      mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(name)}`
+      mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(name)}`,
+      inCrm: [...(prospectCrmSent.get(`sample-${i}`) ?? [])]
     };
   });
 }
+
+/** Sample-mode CRMs: FluentCRM is there on every storefront; HighLevel once a webhook is pasted. */
+const prospectCrmSent = new Map<string, Set<CrmTarget>>();
+const prospectHighLevel = new Set<string>();
+const prospectCrmFor = (productId: string): ProspectCrm => ({ fluentcrm: { available: true, reason: null }, highlevel: { connected: prospectHighLevel.has(productId) } });
 
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
@@ -1449,6 +1459,49 @@ export class FixtureAdminApi implements AdminApi {
     prospectSearches.set(productId, usage.used + 1);
     const page = pageToken === "sample-page-2" ? 1 : 0;
     return { prospects: sampleProspects(query.trim(), location.trim(), page), nextPageToken: page ? null : "sample-page-2", usage: prospectUsageFor(productId) };
+  }
+
+  async prospectCrm(productId: string): Promise<ProspectCrm> {
+    this.product(productId);
+    return prospectCrmFor(productId);
+  }
+
+  async setProspectHighLevel(productId: string, webhook: string | null): Promise<ProspectCrm> {
+    this.product(productId);
+    if (webhook && !/^https:\/\/(services|backend)\.leadconnectorhq\.com\/hooks\//.test(webhook.trim())) {
+      throw new FixtureError(400, 'That isn\'t a HighLevel webhook address. Copy it from the "Inbound Webhook" trigger in your HighLevel workflow.');
+    }
+    if (webhook) prospectHighLevel.add(productId);
+    else prospectHighLevel.delete(productId);
+    return prospectCrmFor(productId);
+  }
+
+  async addProspectsToCrm(productId: string, prospects: CrmProspect[], _group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult> {
+    this.product(productId);
+    const result: ProspectCrmResult = {
+      fluentcrm: { queued: 0, already: 0, noEmail: 0, unavailable: null },
+      highlevel: { sent: 0, already: 0, failed: 0, unavailable: prospectHighLevel.has(productId) ? null : "Add your HighLevel webhook first." }
+    };
+    for (const p of prospects) {
+      const sent = prospectCrmSent.get(p.id) ?? new Set<CrmTarget>();
+      if (targets.includes("fluentcrm")) {
+        if (sent.has("fluentcrm")) result.fluentcrm.already++;
+        else if (!p.email) result.fluentcrm.noEmail++;
+        else {
+          sent.add("fluentcrm");
+          result.fluentcrm.queued++;
+        }
+      }
+      if (targets.includes("highlevel") && !result.highlevel.unavailable) {
+        if (sent.has("highlevel")) result.highlevel.already++;
+        else {
+          sent.add("highlevel");
+          result.highlevel.sent++;
+        }
+      }
+      prospectCrmSent.set(p.id, sent);
+    }
+    return result;
   }
 
   async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {

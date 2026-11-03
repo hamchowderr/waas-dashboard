@@ -32,6 +32,10 @@ import type {
   PluginUpload,
   PluginSearch,
   ProspectSearch,
+  ProspectCrm,
+  ProspectCrmResult,
+  CrmProspect,
+  CrmTarget,
   ProspectUsage,
   ProductDetail,
   Reseller,
@@ -154,6 +158,12 @@ export interface AdminApi {
   prospectUsage(productId: string): Promise<ProspectUsage>;
   /** Up to 20 local businesses of one kind in one place, from Google Places; counts one search. */
   searchProspects(productId: string, query: string, location: string, pageToken?: string): Promise<ProspectSearch>;
+  /** Where prospects can go: the storefront's FluentCRM and the seller's HighLevel webhook. */
+  prospectCrm(productId: string): Promise<ProspectCrm>;
+  /** Sets (or, with null, removes) the HighLevel webhook prospects are posted to. */
+  setProspectHighLevel(productId: string, webhook: string | null): Promise<ProspectCrm>;
+  /** Sends businesses into FluentCRM, HighLevel or both; each goes to each CRM once. */
+  addProspectsToCrm(productId: string, prospects: CrmProspect[], group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult>;
   /** The wordpress.org plugin directory's search, 24 a page. */
   searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch>;
   /** Adds a plugin (pinned to version, or the newest) or switches a template plugin off; replaces an earlier choice. */

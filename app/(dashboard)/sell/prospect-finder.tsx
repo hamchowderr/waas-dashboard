@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { ClockIcon, DownloadIcon, FacebookIcon, InstagramIcon, LinkedinIcon, MusicIcon, TwitterIcon, YoutubeIcon, ExternalLinkIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
+import { CheckIcon, ClockIcon, DownloadIcon, PlusIcon, FacebookIcon, InstagramIcon, LinkedinIcon, MusicIcon, TwitterIcon, YoutubeIcon, ExternalLinkIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
 
-import type { Prospect, ProspectContacts, ProspectUsage, SocialNetwork } from "@/lib/api/types";
+import type { CrmProspect, CrmTarget, Prospect, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectUsage, SocialNetwork } from "@/lib/api/types";
 import type { GroupId } from "@/lib/sales-kit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "cn";
 import { prospectsCsv } from "@/lib/prospects";
-import { findProspects, prospectContacts, prospectUsage } from "./actions";
+import { toast } from "sonner";
+import { addToCrm, findProspects, prospectContacts, prospectCrm, prospectUsage } from "./actions";
+import { HighLevelConnect } from "./crm-connect";
 
 export type FinderGroup = { id: GroupId; title: string; finder: string[] };
 
@@ -26,6 +28,23 @@ const NETWORK_ICON: Record<SocialNetwork, typeof FacebookIcon> = {
   youtube: YoutubeIcon,
   tiktok: MusicIcon
 };
+
+const CRM_LABEL: Record<CrmTarget, string> = { fluentcrm: "FluentCRM", highlevel: "HighLevel" };
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** What one add did, in a line: what went where, and what was left out. */
+function addSummary(r: ProspectCrmResult): string {
+  const parts: string[] = [];
+  if (r.fluentcrm.queued) parts.push(`${plural(r.fluentcrm.queued, "business", "businesses")} going into FluentCRM`);
+  if (r.highlevel.sent) parts.push(`${plural(r.highlevel.sent, "business", "businesses")} sent to HighLevel`);
+  if (r.fluentcrm.noEmail) parts.push(`${plural(r.fluentcrm.noEmail, "had", "had")} no email, so FluentCRM couldn't take ${r.fluentcrm.noEmail === 1 ? "it" : "them"}`);
+  if (r.highlevel.failed) parts.push(`HighLevel didn't take ${r.highlevel.failed}`);
+  const already = Math.max(r.fluentcrm.already, r.highlevel.already);
+  if (already && !parts.length) parts.push(already === 1 ? "That one is in your CRM already" : "Those are in your CRM already");
+  if (!parts.length) parts.push(r.fluentcrm.unavailable ?? r.highlevel.unavailable ?? "Nothing was added");
+  const line = parts.join(". ");
+  return line.charAt(0).toUpperCase() + line.slice(1) + ".";
+}
 
 /** Today's line of Google's opening hours ("Monday: 9:00 AM – 5:00 PM" → "9:00 AM – 5:00 PM today"). */
 function todaysHours(hours: string[] | null): string | null {
@@ -52,7 +71,10 @@ export function ProspectFinder({
   const [query, setQuery] = React.useState(group.finder[0] ?? "");
   const [location, setLocation] = React.useState("");
   const [usage, setUsage] = React.useState<ProspectUsage | null>(null);
-  const [results, setResults] = React.useState<{ query: string; location: string; prospects: Prospect[]; nextPageToken: string | null } | null>(null);
+  const [results, setResults] = React.useState<{ query: string; location: string; group: string; prospects: Prospect[]; nextPageToken: string | null } | null>(null);
+  const [crm, setCrm] = React.useState<ProspectCrm | null>(null);
+  const [hlOpen, setHlOpen] = React.useState(false);
+  const [adding, setAdding] = React.useState<Set<string>>(new Set());
   const [contacts, setContacts] = React.useState<Record<string, ProspectContacts>>({});
   const [reading, setReading] = React.useState(false);
   const [more, startMore] = React.useTransition();
@@ -63,6 +85,7 @@ export function ProspectFinder({
   React.useEffect(() => {
     let live = true;
     prospectUsage(productId).then((u) => live && setUsage(u));
+    prospectCrm(productId).then((c) => live && setCrm(c));
     return () => {
       live = false;
     };
@@ -94,7 +117,7 @@ export function ProspectFinder({
     start(async () => {
       const result = await findProspects(productId, query, location);
       if (result.ok) {
-        setResults({ query: query.trim(), location: location.trim(), prospects: result.search.prospects, nextPageToken: result.search.nextPageToken });
+        setResults({ query: query.trim(), location: location.trim(), group: group.title, prospects: result.search.prospects, nextPageToken: result.search.nextPageToken });
         setContacts({});
         setUsage(result.search.usage);
         void readSites(result.search.prospects);
@@ -123,11 +146,59 @@ export function ProspectFinder({
     });
   };
 
+  const targets: CrmTarget[] = crm ? [...(crm.fluentcrm.available ? (["fluentcrm"] as const) : []), ...(crm.highlevel.connected ? (["highlevel"] as const) : [])] : [];
+
+  const crmProspect = (p: Prospect): CrmProspect => {
+    const found = p.website ? contacts[p.website] : undefined;
+    return {
+      id: p.id,
+      name: p.name,
+      type: p.type,
+      phone: p.phone,
+      website: p.website,
+      address: p.address,
+      mapsUrl: p.mapsUrl,
+      rating: p.rating,
+      reviews: p.reviews,
+      hours: p.hours,
+      email: found?.emails[0] ?? null,
+      contactPage: found?.contactPage ?? null,
+      socials: found?.socials ?? []
+    };
+  };
+
+  // Sends businesses to every CRM this storefront has, then marks the ones each took.
+  const add = async (list: Prospect[]) => {
+    if (!results || !list.length || !targets.length) return;
+    const ids = list.map((p) => p.id);
+    setAdding((prev) => new Set([...prev, ...ids]));
+    try {
+      const sent = list.map(crmProspect);
+      const res = await addToCrm(productId, sent, results.group, targets);
+      if (!res.ok) return void toast.error(res.error);
+      const r = res.result;
+      const took = new Map<string, CrmTarget[]>();
+      for (const p of sent) {
+        const mine: CrmTarget[] = [];
+        if (targets.includes("fluentcrm") && !r.fluentcrm.unavailable && p.email) mine.push("fluentcrm");
+        if (targets.includes("highlevel") && !r.highlevel.unavailable && !r.highlevel.failed) mine.push("highlevel");
+        took.set(p.id, mine);
+      }
+      setResults((prev) =>
+        prev && { ...prev, prospects: prev.prospects.map((p) => (took.has(p.id) ? { ...p, inCrm: [...new Set([...p.inCrm, ...took.get(p.id)!])] } : p)) }
+      );
+      (r.fluentcrm.queued || r.highlevel.sent ? toast.success : toast.info)(addSummary(r));
+    } finally {
+      setAdding((prev) => new Set([...prev].filter((id) => !ids.includes(id))));
+    }
+  };
+
   const off = usage !== null && !usage.available;
   const spent = usage !== null && usage.available && usage.used >= usage.limit;
   const shown = results ? (noSiteFirst ? [...results.prospects].sort((a, b) => Number(a.website !== null) - Number(b.website !== null)) : results.prospects) : [];
   const withoutSite = results?.prospects.filter((p) => !p.website).length ?? 0;
   const withEmail = results?.prospects.filter((p) => p.website && contacts[p.website]?.emails.length).length ?? 0;
+  const notInCrm = results?.prospects.filter((p) => !p.inCrm.length) ?? [];
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -209,7 +280,15 @@ export function ProspectFinder({
               )}
             </div>
             {results.prospects.length > 0 && (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  disabled={!targets.length || reading || !notInCrm.length || adding.size > 0}
+                  onClick={() => void add(notInCrm)}
+                >
+                  {adding.size > 1 ? <Spinner data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
+                  {notInCrm.length ? "Add all to CRM" : "All in CRM"}
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setNoSiteFirst((v) => !v)}>
                   {noSiteFirst ? "Google's order" : "No website first"}
                 </Button>
@@ -230,7 +309,8 @@ export function ProspectFinder({
             )}
           </CardHeader>
           {results.prospects.length > 0 && (
-            <CardContent>
+            <CardContent className="space-y-3">
+              <CrmLine crm={crm} onHighLevel={() => setHlOpen(true)} />
               <ul className="divide-y rounded-lg border">
                 {shown.map((p) => (
                   <li key={p.id} className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -282,15 +362,34 @@ export function ProspectFinder({
                             </a>
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => onCheck(p.website!)}>
-                            Check website
+                            <span className="sm:hidden">Check</span>
+                            <span className="max-sm:hidden">Check website</span>
                           </Button>
                         </>
+                      )}
+                      {p.inCrm.length ? (
+                        <Badge variant="success" className="h-8 rounded-md px-2.5" title={`In ${p.inCrm.map((t) => CRM_LABEL[t]).join(" and ")}`}>
+                          <CheckIcon />
+                          In CRM
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!targets.length || adding.has(p.id) || (reading && !!p.website && !contacts[p.website])}
+                          onClick={() => void add([p])}
+                          aria-label={`Add ${p.name} to CRM`}
+                        >
+                          {adding.has(p.id) ? <Spinner data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
+                          <span className="sm:hidden">Add</span>
+                          <span className="max-sm:hidden">Add to CRM</span>
+                        </Button>
                       )}
                     </div>
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-muted-foreground flex items-center gap-1 text-xs">
                   Results from Google Maps. Emails and profiles come from each business&apos;s own website. <ExternalLinkIcon className="size-3" aria-hidden />
                 </p>
@@ -305,6 +404,25 @@ export function ProspectFinder({
           )}
         </Card>
       )}
+      <HighLevelConnect productId={productId} open={hlOpen} onOpenChange={setHlOpen} connected={!!crm?.highlevel.connected} onSaved={setCrm} />
+    </div>
+  );
+}
+
+/** Which CRMs "Add to CRM" sends to, with HighLevel's connect button. */
+function CrmLine({ crm, onHighLevel }: { crm: ProspectCrm | null; onHighLevel: () => void }) {
+  if (!crm) return null;
+  const into = [crm.fluentcrm.available && "your FluentCRM", crm.highlevel.connected && "HighLevel"].filter(Boolean).join(" and ");
+  return (
+    <div className="bg-muted/50 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs">
+      <p className="text-muted-foreground min-w-0">
+        {into
+          ? `Add to CRM puts them in ${into}, tagged "Prospect". Nothing is emailed.`
+          : (crm.fluentcrm.reason ?? "Connect HighLevel to add prospects to your CRM.")}
+      </p>
+      <Button variant="outline" size="sm" className="h-7" onClick={onHighLevel}>
+        {crm.highlevel.connected ? "HighLevel connected" : "Connect HighLevel"}
+      </Button>
     </div>
   );
 }
