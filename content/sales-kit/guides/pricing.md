@@ -3,7 +3,7 @@ id: pricing
 title: What to charge
 ---
 
-This guide is for you, not for your customers. The numbers are suggestions; set your own prices on your storefront and the kit fills them in wherever it says {{price.website}} and so on.
+This guide is for you, not for your customers. The numbers are suggestions; set your own prices on the Sales Kit page and every playbook and message uses them.
 
 ## Your cost per site
 

@@ -6,6 +6,7 @@ import {
   InboxIcon,
   KeyRoundIcon,
   LayersIcon,
+  MegaphoneIcon,
   ListChecksIcon,
   PaletteIcon,
   PlugIcon,
@@ -58,6 +59,13 @@ export const NAV: NavSection[] = [
     links: [
       { title: "Templates", href: "/versions", icon: LayersIcon, description: "The site new stores start from, and its versions" },
       { title: "Plugins", href: "/plugins", icon: PlugIcon, description: "Plugins your stores get on top of the template" }
+    ]
+  },
+  {
+    title: "Selling",
+    icon: MegaphoneIcon,
+    links: [
+      { title: "Sales Kit", href: "/sell", icon: MegaphoneIcon, description: "Where to find customers, what to say and what to charge" }
     ]
   },
   {
