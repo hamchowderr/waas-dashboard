@@ -29,16 +29,18 @@ export function EmailOwner({
   tenantId,
   storeName,
   lastSentAt,
-  lastSentTo
+  lastSentTo,
+  ownerEmail
 }: {
   tenantId: string;
   storeName: string;
   lastSentAt: string | null;
   lastSentTo: string | null;
+  ownerEmail: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [email, setEmail] = React.useState(lastSentTo ?? "");
+  const [email, setEmail] = React.useState(ownerEmail ?? lastSentTo ?? "");
   const [pending, startTransition] = React.useTransition();
 
   const submit = (event: React.FormEvent) => {
@@ -90,7 +92,9 @@ export function EmailOwner({
                 onChange={(event) => setEmail(event.target.value)}
               />
               <p id="email-owner-help" className="text-muted-foreground text-sm">
-                The email the site was made with.
+                {ownerEmail
+                  ? "The email the site was made with, filled in for you. It must be someone who can sign in to the site."
+                  : "The email of someone who can sign in to the site."}
               </p>
             </div>
             <DialogFooter>
