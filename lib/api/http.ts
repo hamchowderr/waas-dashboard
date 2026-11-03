@@ -484,7 +484,8 @@ export class HttpAdminApi implements AdminApi {
     const { items, total } = await this.getAll<WireWebhookDeliveriesPage["items"][number]>(
       "/admin/webhooks/deliveries",
       { productId: filter.productId, endpointId: filter.endpointId, status: filter.status, tenantId: filter.tenantId },
-      REQUEST_PAGES
+      REQUEST_PAGES,
+      { parallel: true }
     );
     return { items, total };
   }
@@ -756,13 +757,26 @@ export class HttpAdminApi implements AdminApi {
   }
 
   /** Every page of a list, up to maxPages. */
-  private async getAll<T>(path: string, params: Query = {}, maxPages = MAX_PAGES): Promise<Listing<T> & { first: WirePage<T> }> {
+  /**
+   * Every page of a listing, up to maxPages. With parallel, the pages after the first are asked for
+   * at once, so a long listing takes about as long as one page instead of one page per page.
+   */
+  private async getAll<T>(
+    path: string,
+    params: Query = {},
+    maxPages = MAX_PAGES,
+    { parallel = false } = {}
+  ): Promise<Listing<T> & { first: WirePage<T> }> {
     const first = (await this.get<WirePage<T>>(withQuery(path, { ...params, page: 1, pageSize: PAGE_SIZE })))!;
     const items = [...first.items];
     const pages = Math.min(Math.ceil(first.total / PAGE_SIZE), maxPages);
-    for (let page = 2; page <= pages; page++) {
-      const next = (await this.get<WirePage<T>>(withQuery(path, { ...params, page, pageSize: PAGE_SIZE })))!;
-      items.push(...next.items);
+    const fetchPage = async (page: number) =>
+      (await this.get<WirePage<T>>(withQuery(path, { ...params, page, pageSize: PAGE_SIZE })))!.items;
+    const rest = Array.from({ length: Math.max(pages - 1, 0) }, (_, i) => i + 2);
+    if (parallel) {
+      for (const pageItems of await Promise.all(rest.map(fetchPage))) items.push(...pageItems);
+    } else {
+      for (const page of rest) items.push(...(await fetchPage(page)));
     }
     return { items, total: first.total, first };
   }
