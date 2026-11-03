@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { GROUP_IDS, PARTS, PLANS, SUGGESTED_PRICES, fill, fillParts, messages, parseGuide, parsePlaybook, playbookMarkdown, type KitContext } from "./sales-kit";
+import { GROUP_IDS, PARTS, PLANS, SUGGESTED_PRICES, fill, pitch, customerFacingShop, fillParts, messages, parseGuide, parsePlaybook, playbookMarkdown, type KitContext } from "./sales-kit";
 
 const root = path.join(__dirname, "..", "content", "sales-kit");
 const read = (...p: string[]) => readFileSync(path.join(root, ...p), "utf8");
@@ -79,5 +79,26 @@ describe("guides", () => {
     const g = parseGuide(read("guides", "pricing.md"));
     expect(g.title).toBe("What to charge");
     expect(g.body).toContain("## Suggested prices");
+  });
+});
+
+describe("pitch", () => {
+  it("finds the pain, the answer and three things to show in every playbook", () => {
+    for (const p of playbooks) {
+      const { pain, answer, show } = pitch(p);
+      expect(pain.length, p.id).toBeGreaterThan(20);
+      expect(answer.length, p.id).toBeGreaterThan(20);
+      expect(answer, p.id).not.toMatch(/^"|"$/);
+      expect(show, p.id).toHaveLength(3);
+    }
+  });
+});
+
+describe("customerFacingShop", () => {
+  it("leaves out the platform's own addresses", () => {
+    expect(customerFacingShop("summit-sites.anypress.site")).toBeNull();
+    expect(customerFacingShop("shop.anypress.io")).toBeNull();
+    expect(customerFacingShop(null)).toBeNull();
+    expect(customerFacingShop("shop.summitsites.com")).toBe("https://shop.summitsites.com");
   });
 });

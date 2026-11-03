@@ -181,3 +181,22 @@ export function playbookMarkdown(playbook: Playbook, ctx: KitContext): string {
     ...playbook.sections.map((s) => `## ${s.title}\n\n${filled(s.body)}`)
   ].join("\n\n") + "\n";
 }
+
+/** The pitch from a playbook's "What to lead with": the pain, the one-line answer and the three things to show. */
+export type Pitch = { pain: string; answer: string; show: string[] };
+
+export function pitch(playbook: Playbook): Pitch {
+  const lead = playbook.sections.find((s) => s.title === "What to lead with")?.body ?? "";
+  const field = (name: string) => new RegExp(`\\*\\*${name}:\\*\\*\\s*(.+)`).exec(lead)?.[1]?.trim() ?? "";
+  const show = [...lead.matchAll(/^\d+\.\s+(.+)$/gm)].map((m) => m[1]!.trim());
+  return { pain: field("Their pain"), answer: field("Your answer").replace(/^"|"$/g, ""), show };
+}
+
+/**
+ * The shop address to put in front of a seller's customers, or null. A storefront still on its free platform address
+ * (<name>.anypress.site) would name the platform, so the kit leaves it out until the seller connects their own domain.
+ */
+export function customerFacingShop(domain: string | null | undefined): string | null {
+  if (!domain || /(^|\.)anypress\.(site|io)$/i.test(domain)) return null;
+  return `https://${domain}`;
+}

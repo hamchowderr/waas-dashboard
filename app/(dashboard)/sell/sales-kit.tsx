@@ -8,9 +8,11 @@ import {
   CodeXmlIcon,
   CopyIcon,
   DownloadIcon,
+  FileTextIcon,
   GraduationCapIcon,
   LandmarkIcon,
   MegaphoneIcon,
+  PresentationIcon,
   ShieldCheckIcon,
   ShoppingBagIcon,
   type LucideIcon
@@ -21,7 +23,6 @@ import {
   LIST_COST,
   PLANS,
   PLAN_NAMES,
-  SUGGESTED_PRICES,
   fill,
   messages,
   playbookMarkdown,
@@ -33,6 +34,7 @@ import {
   type Playbook
 } from "@/lib/sales-kit";
 import { Inline, KitMarkdown } from "@/components/admin/kit-markdown";
+import { useSellPrices } from "@/hooks/use-sell-prices";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,41 +66,6 @@ const TABS: { id: string; label: string; parts: string[] }[] = [
 
 type Context = Omit<KitContext, "prices" | "plan">;
 
-function useStoredPrices(productId: string) {
-  const key = `anypress:sell-prices:${productId}`;
-  // Saved prices are this browser's; the server renders the suggested ones, and the page fills in saved ones after.
-  const saved = React.useSyncExternalStore(
-    () => () => {},
-    () => {
-      try {
-        return localStorage.getItem(key);
-      } catch {
-        return null;
-      }
-    },
-    () => null
-  );
-  const [edited, setPrices] = React.useState<Record<Plan, number> | null>(null);
-  const prices = React.useMemo<Record<Plan, number>>(() => {
-    if (edited) return edited;
-    try {
-      return { ...SUGGESTED_PRICES, ...(JSON.parse(saved ?? "null") as Partial<Record<Plan, number>> | null) };
-    } catch {
-      return SUGGESTED_PRICES;
-    }
-  }, [edited, saved]);
-  const update = (plan: Plan, value: number) => {
-    const next = { ...prices, [plan]: value };
-    setPrices(next);
-    try {
-      localStorage.setItem(key, JSON.stringify(next));
-    } catch {
-      /* kept for this visit only */
-    }
-  };
-  return [prices, update] as const;
-}
-
 function download(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" }));
   const a = Object.assign(document.createElement("a"), { href: url, download: name });
@@ -121,7 +88,7 @@ export function SalesKit({
   initialGroup?: string;
   context: Context;
 }) {
-  const [prices, setPrice] = useStoredPrices(productId);
+  const [prices, setPrice] = useSellPrices(productId);
   const [groupId, setGroupId] = React.useState<GroupId>((playbooks.find((p) => p.id === initialGroup) ?? playbooks[0]!).id);
   const playbook = playbooks.find((p) => p.id === groupId)!;
   const ctx: KitContext = { ...context, prices, plan: playbook.plan };
@@ -169,10 +136,20 @@ export function SalesKit({
               Lead with {PLAN_NAMES[playbook.plan]} at ${prices[playbook.plan]} a month. Grey boxes are yours to fill in for each prospect.
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={() => download(`${slug(context.brand)}-${playbook.id}-playbook.md`, playbookMarkdown(playbook, ctx))}>
-            <DownloadIcon data-icon="inline-start" />
-            Download playbook
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {(["offer", "deck"] as const).map((kind) => (
+              <Button key={kind} variant="outline" size="sm" asChild>
+                <a href={`/print/sell?product=${encodeURIComponent(productId)}&group=${playbook.id}&kind=${kind}`} target="_blank" rel="noreferrer">
+                  {kind === "offer" ? <FileTextIcon data-icon="inline-start" /> : <PresentationIcon data-icon="inline-start" />}
+                  {kind === "offer" ? "Offer sheet" : "Pitch deck"}
+                </a>
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" onClick={() => download(`${slug(context.brand)}-${playbook.id}-playbook.md`, playbookMarkdown(playbook, ctx))}>
+              <DownloadIcon data-icon="inline-start" />
+              Playbook
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs key={playbook.id} defaultValue="who">

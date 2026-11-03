@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   // The Sales Kit page reads its playbooks from content/sales-kit at request time.
   outputFileTracingIncludes: {
     "/sell": ["./content/sales-kit/**/*"],
+    "/print/sell": ["./content/sales-kit/**/*"],
   },
   turbopack: {
     rules: {

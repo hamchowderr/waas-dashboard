@@ -4,6 +4,7 @@ import { StoreIcon } from "lucide-react";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
+import { customerFacingShop } from "@/lib/sales-kit";
 import { loadSalesKit } from "@/lib/sales-kit-files";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
@@ -55,7 +56,7 @@ export default async function SellPage({ searchParams }: { searchParams: Promise
         initialGroup={group}
         context={{
           brand,
-          shop: storefront?.domain ? `https://${storefront.domain}` : null,
+          shop: customerFacingShop(storefront?.domain),
           sender: viewer?.user.name || null,
           support: branding?.shown.supportEmail ?? null,
           demo: null
