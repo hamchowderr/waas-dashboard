@@ -31,7 +31,7 @@ describe("describeRequest", () => {
     );
     expect(describeRequest({ method: "POST", path: `/v1/tenants/${id}/backups` })).toBe("Backed up a store");
     expect(describeRequest({ method: "PUT", path: `/admin/tenants/${id}/domains/main` })).toBe("Changed a store's address");
-    expect(describeRequest({ method: "GET", path: "/v1/plugins/waas-host/update" })).toBe("Checked for a plugin update");
+    expect(describeRequest({ method: "GET", path: "/v1/plugins/anypress-host/update" })).toBe("Checked for a plugin update");
   });
 
   it("falls back to the verb and the last part of the path", () => {
