@@ -16,6 +16,9 @@ import {
   type PluginChoiceInput,
   type PluginUpload,
   type PluginSearch,
+  type Prospect,
+  type ProspectSearch,
+  type ProspectUsage,
   type MoveIn,
   type SiteReport,
   type StoreSize,
@@ -945,6 +948,36 @@ function sampleResellerSetup(reseller: FixtureReseller, storefronts: StorefrontS
   return { resellerId: reseller.id, name: reseller.name, storefronts: { ready, total: mine.length }, ...sampleChecklist(steps, created) };
 }
 
+/** Sample-mode prospect finder: searches per storefront this month, and made-up local businesses on .example sites. */
+const prospectSearches = new Map<string, number>();
+const prospectUsageFor = (productId: string): ProspectUsage => {
+  const now = new Date();
+  return {
+    available: true,
+    used: prospectSearches.get(productId) ?? 0,
+    limit: 100,
+    resetsAt: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString()
+  };
+};
+function sampleProspects(query: string, location: string): Prospect[] {
+  const kind = query.replace(/^./, (c) => c.toUpperCase());
+  const town = location.split(",")[0]!.trim() || "Springfield";
+  const names = [`${town} ${kind}`, `First ${kind} of ${town}`, `Riverside ${kind}`, `Oak Street ${kind}`, `New Hope ${kind}`, `Northside ${kind}`];
+  return names.map((name, i) => {
+    const site = name.toLowerCase().replace(/[^a-z0-9]+/g, "") + ".example";
+    return {
+      id: `sample-${i}`,
+      name,
+      address: `${100 + i * 37} Main St, ${location}`,
+      phone: `(555) 010-${String(i).padStart(4, "0")}`,
+      website: i % 3 === 1 ? null : `https://${site}/`,
+      rating: i % 4 === 3 ? null : Math.round((3.6 + (i % 5) * 0.3) * 10) / 10,
+      reviews: i % 4 === 3 ? null : 12 + i * 23,
+      mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(name)}`
+    };
+  });
+}
+
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
@@ -1377,6 +1410,19 @@ export class FixtureAdminApi implements AdminApi {
   async pluginChoices(productId: string): Promise<PluginChoice[]> {
     this.product(productId);
     return [...(pluginChoices.get(productId) ?? [])].sort((a, b) => a.slug.localeCompare(b.slug));
+  }
+
+  async prospectUsage(productId: string): Promise<ProspectUsage> {
+    this.product(productId);
+    return prospectUsageFor(productId);
+  }
+
+  async searchProspects(productId: string, query: string, location: string): Promise<ProspectSearch> {
+    this.product(productId);
+    const usage = prospectUsageFor(productId);
+    if (usage.used >= usage.limit) throw new FixtureError(429, `You've used this month's ${usage.limit} searches. They start again on the 1st.`);
+    prospectSearches.set(productId, usage.used + 1);
+    return { prospects: sampleProspects(query.trim(), location.trim()), usage: prospectUsageFor(productId) };
   }
 
   async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {

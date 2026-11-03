@@ -6,6 +6,8 @@ import type {
   PluginChoiceInput,
   PluginUpload,
   PluginSearch,
+  ProspectSearch,
+  ProspectUsage,
   BrandImage,
   BrandingFields,
   BrandingView,
@@ -420,6 +422,14 @@ export class HttpAdminApi implements AdminApi {
       inProduction: c.inProduction === true,
       latestVersion: c.latestVersion ?? null
     }));
+  }
+
+  async prospectUsage(productId: string): Promise<ProspectUsage> {
+    return (await this.get<ProspectUsage>(this.productPath(productId, "/prospects/usage")))!;
+  }
+
+  async searchProspects(productId: string, query: string, location: string): Promise<ProspectSearch> {
+    return (await this.send<ProspectSearch>("POST", this.productPath(productId, "/prospects/search"), { query, location }))!;
   }
 
   async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {

@@ -1,6 +1,9 @@
 "use server";
 
 import { getViewer } from "@/auth";
+import { getAdminApi } from "@/lib/api/client";
+import { AdminApiError } from "@/lib/api/http";
+import type { ProspectSearch, ProspectUsage } from "@/lib/api/types";
 import type { Report } from "@/lib/website-check";
 import { CheckError, checkWebsite } from "@/lib/website-check-fetch";
 
@@ -14,5 +17,29 @@ export async function checkProspectSite(url: string): Promise<CheckResult> {
     return { ok: true, report: await checkWebsite(String(url).slice(0, 500)) };
   } catch (err) {
     return { ok: false, error: err instanceof CheckError ? err.message : "Something went wrong checking that website. Try again." };
+  }
+}
+
+export type ProspectResult = { ok: true; search: ProspectSearch } | { ok: false; error: string; usage?: ProspectUsage };
+
+/** This storefront's prospect finder searches this month, or null when they can't be read. */
+export async function prospectUsage(productId: string): Promise<ProspectUsage | null> {
+  return getAdminApi().prospectUsage(productId).catch(() => null);
+}
+
+/** One prospect finder search for the storefront, counted against its month. */
+export async function findProspects(productId: string, query: string, location: string): Promise<ProspectResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return { ok: false, error: "Sign in again to search." };
+  const api = getAdminApi();
+  try {
+    return { ok: true, search: await api.searchProspects(productId, String(query).slice(0, 100), String(location).slice(0, 100)) };
+  } catch (err) {
+    const known = err instanceof AdminApiError ? err : null;
+    return {
+      ok: false,
+      error: known?.apiMessage ?? "Something went wrong searching. Try again.",
+      usage: known?.status === 429 ? ((await api.prospectUsage(productId).catch(() => null)) ?? undefined) : undefined
+    };
   }
 }

@@ -761,3 +761,22 @@ export type SetupChecklist = {
 export type StorefrontSetup = SetupChecklist & { productId: string; name: string; resellerId: string | null; shopSite: string | null };
 export type ResellerSetup = SetupChecklist & { resellerId: string; name: string; storefronts: { ready: number; total: number } };
 export type Setup = { storefronts: StorefrontSetup[]; resellers: ResellerSetup[] };
+
+/** The Sales Kit prospect finder's searches this month for one storefront (the API's src/prospects.ts). */
+export type ProspectUsage = { available: boolean; used: number; limit: number; resetsAt: string };
+
+/** A local business from Google Places, for a seller to contact. */
+export type Prospect = {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  /** Null when the business has no website on Google: the best prospects. */
+  website: string | null;
+  rating: number | null;
+  reviews: number | null;
+  mapsUrl: string | null;
+};
+
+export type ProspectSearch = { prospects: Prospect[]; usage: ProspectUsage };
+

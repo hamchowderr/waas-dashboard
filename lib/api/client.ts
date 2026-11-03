@@ -31,6 +31,8 @@ import type {
   PluginChoiceInput,
   PluginUpload,
   PluginSearch,
+  ProspectSearch,
+  ProspectUsage,
   ProductDetail,
   Reseller,
   ResellerBill,
@@ -143,6 +145,10 @@ export interface AdminApi {
   deleteTemplate(productId: string, templateId: string): Promise<void>;
   /** The storefront's plugin choices and its reseller's, with the newest wordpress.org version of each added one. */
   pluginChoices(productId: string): Promise<PluginChoice[]>;
+  /** The Sales Kit prospect finder's searches this month. */
+  prospectUsage(productId: string): Promise<ProspectUsage>;
+  /** Up to 20 local businesses of one kind in one place, from Google Places; counts one search. */
+  searchProspects(productId: string, query: string, location: string): Promise<ProspectSearch>;
   /** The wordpress.org plugin directory's search, 24 a page. */
   searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch>;
   /** Adds a plugin (pinned to version, or the newest) or switches a template plugin off; replaces an earlier choice. */

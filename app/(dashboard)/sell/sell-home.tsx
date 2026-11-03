@@ -13,9 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "cn";
 import { GroupIcon, download, slug } from "./kit-ui";
+import { ProspectFinder } from "./prospect-finder";
 import { WebsiteCheck } from "./website-check";
 
-export type GroupSummary = { id: GroupId; title: string; plan: Plan; who: string };
+export type GroupSummary = { id: GroupId; title: string; plan: Plan; who: string; finder: string[] };
 
 export function SellHome({
   productId,
@@ -29,11 +30,19 @@ export function SellHome({
   context: Omit<KitContext, "prices" | "plan">;
 }) {
   const [prices, setPrice] = useSellPrices(productId);
+  const [tab, setTab] = React.useState("groups");
+  const [checkUrl, setCheckUrl] = React.useState<{ url: string; n: number } | null>(null);
+  const openCheck = (url: string) => {
+    setCheckUrl((prev) => ({ url, n: (prev?.n ?? 0) + 1 }));
+    setTab("check");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   return (
-    <Tabs defaultValue="groups" className="gap-4 lg:gap-6">
+    <Tabs value={tab} onValueChange={setTab} className="gap-4 lg:gap-6">
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
       <TabsList variant="line" className="border-b pb-0">
         <TabsTrigger value="groups">Who to sell to</TabsTrigger>
+        <TabsTrigger value="find">Find prospects</TabsTrigger>
         <TabsTrigger value="check">Website check</TabsTrigger>
         <TabsTrigger value="prices">Your prices</TabsTrigger>
         <TabsTrigger value="guides">Guides</TabsTrigger>
@@ -67,8 +76,12 @@ export function SellHome({
         </div>
       </TabsContent>
 
+      <TabsContent value="find" forceMount className="data-[state=inactive]:hidden">
+        <ProspectFinder productId={productId} groups={groups} onCheck={openCheck} />
+      </TabsContent>
+
       <TabsContent value="check">
-        <WebsiteCheck productId={productId} sender={context.sender} brand={context.brand} />
+        <WebsiteCheck key={checkUrl?.n ?? 0} productId={productId} sender={context.sender} brand={context.brand} initialUrl={checkUrl?.url} />
       </TabsContent>
 
       <TabsContent value="prices">
