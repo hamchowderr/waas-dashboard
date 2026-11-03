@@ -97,7 +97,7 @@ export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEm
                 <ChevronsUpDownIcon size={16} className="ms-auto" aria-hidden />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-60" side={isMobile ? "top" : "right"} align="end" sideOffset={8}>
+            <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-60" side={isMobile ? "top" : "right"} align="end" sideOffset={isMobile ? 8 : 28}>
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1.5 py-2 text-left text-sm">
                   {avatar}
