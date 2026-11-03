@@ -82,7 +82,7 @@ export function StorefrontCard({
             <div className="min-w-48 flex-1">
               <p className="font-medium">No ready-made storefront</p>
               <p className="text-muted-foreground text-sm">
-                They sell from their own WordPress site with WaaS Host, or you
+                They sell from their own WordPress site with AnyPress Host, or you
                 can build them one that is already connected.
               </p>
             </div>
@@ -123,7 +123,7 @@ function BuildStorefrontButton({ productId, productName }: { productId: string; 
           <DialogHeader>
             <DialogTitle>Build a storefront</DialogTitle>
             <DialogDescription>
-              A WordPress site with WaaS Host and FluentCart, connected to{" "}
+              A WordPress site with AnyPress Host and FluentCart, connected to{" "}
               {productName} with a new API key. The owner adds a payment method
               and their plans, then sells.
             </DialogDescription>

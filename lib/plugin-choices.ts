@@ -20,7 +20,7 @@ export function siteTypesLabel(keys: string[]) {
   return [...labels, ...other].join(", ");
 }
 
-/** The AnyPress template's plugins a storefront can switch off (WaaS Client runs the store, so it stays). */
+/** The AnyPress template's plugins a storefront can switch off (AnyPress Client runs the store, so it stays). */
 export const TEMPLATE_PLUGINS = [
   "fluent-cart",
   "fluent-crm",

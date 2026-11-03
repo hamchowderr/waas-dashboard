@@ -36,7 +36,7 @@ import {
 
 /**
  * "New seller": creates the seller's storefront and its first API key, then shows the secret once. With "Build a
- * storefront for them", the platform also builds them a WordPress site with WaaS Host, already connected.
+ * storefront for them", the platform also builds them a WordPress site with AnyPress Host, already connected.
  */
 export function NewSellerButton({
   storefronts,
@@ -156,7 +156,7 @@ export function NewSellerButton({
               <div className="space-y-1">
                 <Label htmlFor="seller-build-site">Build a storefront for them</Label>
                 <p className="text-muted-foreground text-sm">
-                  A WordPress site with WaaS Host and FluentCart, already
+                  A WordPress site with AnyPress Host and FluentCart, already
                   connected. Leave it off when they sell from their own site.
                 </p>
               </div>

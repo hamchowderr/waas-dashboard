@@ -9,7 +9,7 @@ export interface TemplateContents {
 
 /** Display names for the plugins our templates ship; anything else is named from its slug. */
 const pluginNames: Record<string, string> = {
-  "waas-client": "WaaS Client",
+  "waas-client": "AnyPress Client",
   "fluent-cart": "FluentCart",
   "fluent-crm": "FluentCRM",
   fluentform: "Fluent Forms",
