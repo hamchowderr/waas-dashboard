@@ -353,6 +353,10 @@ export class HttpAdminApi implements AdminApi {
     return (await this.send<WordPressLogin>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/wp-login`, {}))!;
   }
 
+  async notifyOwner(tenantId: string, email: string): Promise<void> {
+    await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/notify-owner`, { email });
+  }
+
   async storefrontWordPressLogin(productId: string): Promise<WordPressLogin> {
     return (await this.send<WordPressLogin>("POST", this.productPath(productId, "/storefront/wp-login"), {}))!;
   }

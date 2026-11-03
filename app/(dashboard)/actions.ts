@@ -218,6 +218,16 @@ export async function wordPressLogin(tenantId: string): Promise<ActionResult<Wor
   return run(() => getAdminApi().wordPressLogin(uuid(tenantId, "store")), []);
 }
 
+/** Emails the store's owner their "website is ready" sign-in link. Owners and admins (run refuses members). */
+export async function notifyOwner(tenantId: string, email: string): Promise<ActionResult> {
+  return run(async () => {
+    const address = email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) throw new InputError("Enter the owner's email address");
+    await getAdminApi().notifyOwner(uuid(tenantId, "store"), address);
+    return undefined;
+  }, []);
+}
+
 /** The same for a product's ready-made storefront. */
 export async function storefrontWordPressLogin(productId: string): Promise<ActionResult<WordPressLogin>> {
   return run(() => getAdminApi().storefrontWordPressLogin(uuid(productId, "storefront")), []);

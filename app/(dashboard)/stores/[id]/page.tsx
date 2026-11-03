@@ -22,6 +22,7 @@ import { RestoreBackup } from "./restore-backup";
 import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
 import { WordPressLoginButton } from "../../wordpress-login";
+import { EmailOwner } from "./email-owner";
 
 type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ product?: string }> };
 
@@ -103,6 +104,7 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <ExternalLinkIcon />
               </a>
             </Button>
+            {canLogIn && !tenant.onHold && <EmailOwner tenantId={tenant.id} storeName={tenant.name} />}
             {canLogIn ? (
               <WordPressLoginButton tenantId={tenant.id} />
             ) : (

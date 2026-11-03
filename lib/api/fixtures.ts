@@ -1238,6 +1238,15 @@ export class FixtureAdminApi implements AdminApi {
     return this.sampleLogin(tenant.mainDomain);
   }
 
+  /** Sample data sends no email: it only checks what the API would. */
+  async notifyOwner(tenantId: string, email: string): Promise<void> {
+    const tenant = this.changeableTenant(tenantId);
+    if (tenant.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; the email can go once it is Done");
+    if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it first");
+    if (tenant.onHold) throw new FixtureError(409, "This site was moved in and is not live yet; make it live first");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new FixtureError(400, "Enter the owner's email address");
+  }
+
   async storefrontWordPressLogin(productId: string): Promise<WordPressLogin> {
     this.product(productId);
     const storefront = storefronts.get(productId);
