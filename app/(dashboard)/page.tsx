@@ -62,7 +62,7 @@ const firstSteps: { title: string; detail: string; href: string; icon: LucideIco
   { title: "Make a store", detail: "Start a new site, or move one in from another host.", href: "/stores", icon: StoreIcon },
   { title: "Invite your team", detail: "Who can sign in here, and who can only look.", href: "/team", icon: UsersIcon },
   { title: "Add your brand", detail: "Your name, logo and color on this dashboard.", href: "/branding", icon: PaletteIcon },
-  { title: "Connect your shop or app", detail: "API keys for the WaaS Host plugin, n8n, Zapier or your own code.", href: "/keys", icon: KeyRoundIcon }
+  { title: "Connect your shop or app", detail: "API keys for the AnyPress Host plugin, n8n, Zapier or your own code.", href: "/keys", icon: KeyRoundIcon }
 ];
 
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {

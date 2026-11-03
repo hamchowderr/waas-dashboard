@@ -41,7 +41,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
       "Sells from",
       a.wantsStorefront
         ? `A ready-made storefront${a.storefrontSubdomain ? ` at ${a.storefrontSubdomain}.${STORE_DOMAIN}` : " (no address chosen)"}`
-        : "Their own WordPress site, with WaaS Host"
+        : "Their own WordPress site, with AnyPress Host"
     ],
     ["Applied", formatDateTime(a.dateCreated)]
   ];
