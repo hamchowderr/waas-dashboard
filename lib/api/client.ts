@@ -38,6 +38,7 @@ import type {
   ResellerInvoices,
   ResellerSettings,
   ResellerUsage,
+  Setup,
   Template,
   Version,
   BackupFilter,
@@ -76,6 +77,11 @@ export interface AdminApi {
   /** Null when the tenant does not exist. */
   tenant(id: string): Promise<TenantDetail | null>;
   backups(filter?: BackupFilter): Promise<Listing<Backup>>;
+  /**
+   * Setup checklists: every storefront's and reseller's for the platform admin; a customer's own storefront,
+   * or on a reseller's team the reseller and all its storefronts.
+   */
+  setup(): Promise<Setup>;
   /** Queued, running and failed jobs (failed = used up its retries, not yet retried). */
   jobs(filter?: JobFilter): Promise<JobsList>;
   /** The newest API calls and admin changes, with counts for the last 24 hours. */

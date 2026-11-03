@@ -15,8 +15,9 @@ export const metadata: Metadata = { title: "Storefronts" };
 export default async function StorefrontsPage() {
   if (!(await getViewer())?.isAdmin) notFound();
   const api = getAdminApi();
-  const products = await api.products();
+  const [products, setup] = await Promise.all([api.products(), api.setup().catch(() => null)]);
   const shops = await Promise.all(products.map((p) => api.storefront(p.id).catch(() => null)));
+  const setupOf = new Map(setup?.storefronts.map((s) => [s.productId, s]));
   const rows: StorefrontRow[] = products.map((p, i) => ({
     id: p.id,
     name: p.name,
@@ -24,7 +25,8 @@ export default async function StorefrontsPage() {
     maxTenants: p.maxTenants,
     resellerId: p.resellerId,
     resellerName: p.resellerName,
-    domain: shops[i]?.domain ?? null
+    domain: shops[i]?.domain ?? null,
+    setup: setupOf.get(p.id) ?? null
   }));
   const stores = products.reduce((sum, p) => sum + p.tenantCount, 0);
   const resellers = new Set(products.map((p) => p.resellerId).filter(Boolean)).size;

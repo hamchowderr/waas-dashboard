@@ -63,6 +63,11 @@ import {
   type ResellerInvoices,
   type ResellerSettings,
   type ResellerUsage,
+  type ResellerSetup,
+  type Setup,
+  type SetupChecklist,
+  type SetupStep,
+  type StorefrontSetup,
   type StoreDays,
   type Template,
   type Version,
@@ -835,6 +840,111 @@ const teams: FixtureTeam[] = [
   }
 ];
 
+/** A storefront's setup steps, as the API names them. */
+const SETUP_STEPS: [key: string, label: string, todo: string][] = [
+  ["approved", "Application approved", ""],
+  ["shop-connected", "Shop connected", "Install WaaS Host on your shop and add your API key"],
+  ["starting-site", "Starting site picked", "Pick a production version on Templates"],
+  ["plans", "Plans on sale", "Checked from your shop once WaaS Host reports it"],
+  ["payments", "Payments on", "Checked from your shop once WaaS Host reports it"],
+  ["own-domain", "Own domain", "Your shop still runs on a test address"],
+  ["brand", "Brand added", "Add your name, logo and colour on Branding"],
+  ["team", "Team invited", "Invite someone on Team"],
+  ["self-building", "Stores build themselves", "Place a test order on your shop: a store should build on its own"],
+  ["first-store", "First store sold", "Ticks when your first customer's store is live"]
+];
+
+/** Sample progress per storefront: the days ago each done step was done; plans and payments are never reported yet. */
+const setupProgress: { created: number; done: Record<string, [daysAgo: number, detail: string]>; site: string | null }[] = [
+  {
+    created: 60,
+    site: "shop.anypress.io",
+    done: {
+      approved: [60, "Set up by AnyPress"],
+      "shop-connected": [0, "WaaS Host last signed in today"],
+      "starting-site": [30, "New stores start as v1.4"],
+      "own-domain": [55, "Your shop runs on shop.anypress.io"],
+      brand: [50, "Name and logo set"],
+      team: [45, "Someone else has joined your team"],
+      "self-building": [40, "Your shop made a store on its own"],
+      "first-store": [38, "First store live"]
+    }
+  },
+  {
+    created: 40,
+    site: "summitsites-shop.stores.waas.example",
+    done: {
+      approved: [40, "Approved"],
+      "shop-connected": [1, "WaaS Host last signed in yesterday"],
+      "starting-site": [20, "New stores start as v1.4"],
+      brand: [35, "Name and logo set"],
+      team: [30, "Someone else has joined your team"],
+      "first-store": [4, "First store live"]
+    }
+  },
+  {
+    created: 30,
+    site: null,
+    done: { approved: [30, "Approved"], brand: [28, "Name and logo set"], team: [12, "Someone else has joined your team"] }
+  },
+  {
+    created: 9,
+    site: "shop.harborfitness.example",
+    done: {
+      approved: [9, "Approved"],
+      "shop-connected": [2, "WaaS Host last signed in 2 days ago"],
+      "own-domain": [3, "Your shop runs on shop.harborfitness.example"],
+      brand: [5, "Name and logo set"]
+    }
+  },
+  { created: 10, site: null, done: { approved: [10, "Approved"] } }
+];
+
+function sampleChecklist(steps: SetupStep[], createdDaysAgo: number): SetupChecklist {
+  const done = steps.filter((s) => s.state === "done");
+  const last = Math.max(NOW - createdDaysAgo * DAY, ...done.map((s) => Date.parse(s.doneAt!)));
+  return {
+    steps,
+    done: done.length,
+    total: steps.length,
+    lastProgressAt: iso(last),
+    stuck: done.length < steps.length && NOW - last > 7 * DAY,
+    next: (steps.find((s) => s.state === "todo") ?? steps.find((s) => s.state !== "done"))?.label ?? null
+  };
+}
+
+function sampleStorefrontSetup(product: Omit<Product, "tenantCount">, i: number): StorefrontSetup {
+  const progress = setupProgress[i] ?? { created: 1, site: null, done: {} };
+  const steps = SETUP_STEPS.map(([key, label, todo]): SetupStep => {
+    const done = progress.done[key];
+    if (done) return { key, label, state: "done", doneAt: iso(NOW - done[0] * DAY), detail: done[1] };
+    const notReported = key === "plans" || key === "payments";
+    return { key, label, state: notReported ? "not-reported" : "todo", doneAt: null, detail: todo };
+  });
+  return {
+    productId: product.id,
+    name: product.name,
+    resellerId: resellerOf.get(product.id) ?? null,
+    shopSite: progress.site && `https://${progress.site}`,
+    ...sampleChecklist(steps, progress.created)
+  };
+}
+
+function sampleResellerSetup(reseller: FixtureReseller, storefronts: StorefrontSetup[]): ResellerSetup {
+  const mine = storefronts.filter((s) => s.resellerId === reseller.id);
+  const ready = mine.filter((s) => s.done === s.total).length;
+  const created = Math.round((NOW - Date.parse(reseller.dateCreated)) / DAY);
+  const counted = `${ready} of ${mine.length} storefronts ready`;
+  const steps: SetupStep[] = [
+    reseller.billingEmail
+      ? { key: "billing", label: "Billing details", state: "done", doneAt: reseller.dateCreated, detail: `Invoices go to ${reseller.billingEmail}` }
+      : { key: "billing", label: "Billing details", state: "todo", doneAt: null, detail: "Add the email your invoices go to" },
+    { key: "partner-key", label: "Partner key made", state: "todo", doneAt: null, detail: "Make a partner key for n8n, Zapier or your own code" },
+    { key: "storefronts-ready", label: "Every storefront set up", state: "todo", doneAt: null, detail: counted }
+  ];
+  return { resellerId: reseller.id, name: reseller.name, storefronts: { ready, total: mine.length }, ...sampleChecklist(steps, created) };
+}
+
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
@@ -882,6 +992,16 @@ export class FixtureAdminApi implements AdminApi {
       keepsOwnCode: !!tenant.moveIn,
       moveIn: tenant.moveIn ?? null
     };
+  }
+
+  async setup(): Promise<Setup> {
+    const all = products.map(sampleStorefrontSetup);
+    if (!this.scope) return { storefronts: all, resellers: resellers.map((r) => sampleResellerSetup(r, all)) };
+    // A reseller's team sees the reseller and all its storefronts; a seller, their own storefront.
+    const resellerId = resellerOf.get(this.scope);
+    const reseller = resellers.find((r) => r.id === resellerId);
+    if (!reseller) return { storefronts: all.filter((s) => s.productId === this.scope), resellers: [] };
+    return { storefronts: all.filter((s) => s.resellerId === reseller.id), resellers: [sampleResellerSetup(reseller, all)] };
   }
 
   async backups(filter: BackupFilter = {}): Promise<Listing<Backup>> {

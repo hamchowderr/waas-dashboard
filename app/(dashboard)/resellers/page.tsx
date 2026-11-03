@@ -5,8 +5,10 @@ import { notFound } from "next/navigation";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
+import type { ResellerSetup } from "@/lib/api/types";
 import { EmptyState } from "@/components/admin/empty-state";
 import { PageHeader } from "@/components/admin/page-header";
+import { SetupProgress } from "@/components/admin/setup-checklist";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { NewResellerButton } from "./new-reseller-dialog";
@@ -20,7 +22,8 @@ export default async function ResellersPage() {
   if (!(await getViewer())?.isAdmin) notFound();
   const api = getAdminApi();
   const month = monthRange(undefined);
-  const [resellers, products] = await Promise.all([api.resellers(), api.products()]);
+  const [resellers, products, setup] = await Promise.all([api.resellers(), api.products(), api.setup().catch(() => null)]);
+  const setupOf = new Map(setup?.resellers.map((s) => [s.resellerId, s]));
   const usage = await Promise.all(resellers.map((r) => api.resellerUsage(r.id, month.from, month.to)));
 
   return (
@@ -38,6 +41,7 @@ export default async function ResellersPage() {
                 <TableHead className="pl-4">Reseller</TableHead>
                 <TableHead>Storefronts</TableHead>
                 <TableHead>Stores</TableHead>
+                <TableHead className="w-44">Setup</TableHead>
                 <TableHead>Wholesale</TableHead>
                 <TableHead className="pr-4 text-right">Store-days in {month.label}</TableHead>
               </TableRow>
@@ -56,13 +60,16 @@ export default async function ResellersPage() {
                   <TableCell>
                     {r.liveTenantCount} live of {r.tenantCount} <span className="text-muted-foreground text-xs">({limit(r.maxTenants)})</span>
                   </TableCell>
+                  <TableCell>
+                    <ResellerSetupCell setup={setupOf.get(r.id)} />
+                  </TableCell>
                   <TableCell>{r.wholesalePercent}% off</TableCell>
                   <TableCell className="pr-4 text-right tabular-nums">{formatDays(totalDays(usage[i]!.storeDays))}</TableCell>
                 </TableRow>
               ))}
               {resellers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="p-0">
+                  <TableCell colSpan={6} className="p-0">
                     <EmptyState
                       icon={HandshakeIcon}
                       title="No resellers yet"
@@ -76,6 +83,19 @@ export default async function ResellersPage() {
           </Table>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function ResellerSetupCell({ setup }: { setup: ResellerSetup | undefined }) {
+  if (!setup) return <span className="text-muted-foreground text-xs">Not tracked</span>;
+  return (
+    <div>
+      <SetupProgress setup={setup} />
+      <p className="text-muted-foreground mt-1 text-xs">
+        {setup.storefronts.ready} of {setup.storefronts.total} storefronts set up
+        {setup.next && setup.next !== "Every storefront set up" ? ` · Next: ${setup.next}` : ""}
+      </p>
     </div>
   );
 }

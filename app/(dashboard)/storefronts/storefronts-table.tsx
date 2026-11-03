@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import type { StorefrontSetup } from "@/lib/api/types";
+import { SetupProgress } from "@/components/admin/setup-checklist";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -47,6 +49,8 @@ export type StorefrontRow = {
   resellerId: string | null;
   resellerName: string | null;
   domain: string | null;
+  /** Its setup checklist; null for the platform's own storefront, or an API without checklists. */
+  setup: StorefrontSetup | null;
 };
 
 /** A storefront's own pages, each opened on it, in the order the sidebar has them. */
@@ -59,7 +63,7 @@ const PAGES = [
   { title: "API Keys", href: "/keys", icon: KeyRoundIcon }
 ];
 
-type Filter = "all" | "sellers" | "resellers";
+type Filter = "all" | "sellers" | "resellers" | "stuck";
 
 const tableClass =
   "[&_td:first-child]:ps-(--card-spacing) [&_td:last-child]:pe-(--card-spacing) [&_th:first-child]:ps-(--card-spacing) [&_th:last-child]:pe-(--card-spacing)";
@@ -68,10 +72,11 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
   const [query, setQuery] = React.useState("");
   const [filter, setFilter] = React.useState<Filter>("all");
   const sellers = rows.filter((r) => !r.resellerId).length;
+  const stuck = rows.filter((r) => r.setup?.stuck).length;
   const q = query.trim().toLowerCase();
   const shown = rows.filter(
     (r) =>
-      (filter === "all" || (filter === "sellers" ? !r.resellerId : !!r.resellerId)) &&
+      (filter === "all" || (filter === "stuck" ? !!r.setup?.stuck : filter === "sellers" ? !r.resellerId : !!r.resellerId)) &&
       (!q || [r.name, r.resellerName ?? "", r.domain ?? ""].some((v) => v.toLowerCase().includes(q)))
   );
 
@@ -94,6 +99,11 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
           <ToggleGroupItem value="resellers" className="px-3">
             Resellers <Count n={rows.length - sellers} />
           </ToggleGroupItem>
+          {stuck > 0 && (
+            <ToggleGroupItem value="stuck" className="px-3">
+              Stuck <Count n={stuck} />
+            </ToggleGroupItem>
+          )}
         </ToggleGroup>
         <InputGroup className="sm:max-w-64">
           <InputGroupAddon>
@@ -112,6 +122,7 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
           <TableRow>
             <TableHead>Storefront</TableHead>
             <TableHead className="max-md:hidden">Account</TableHead>
+            <TableHead className="w-44 max-lg:hidden">Setup</TableHead>
             <TableHead className="w-44 max-sm:hidden">Stores</TableHead>
             <TableHead className="w-12 text-end sm:w-28">
               <span className="sr-only">Actions</span>
@@ -121,7 +132,7 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
         <TableBody>
           {shown.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} className="text-muted-foreground h-24 text-center">
+              <TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
                 No storefronts match.
               </TableCell>
             </TableRow>
@@ -177,6 +188,12 @@ function Row({ row }: { row: StorefrontRow }) {
             <p className="text-muted-foreground mt-0.5 text-xs sm:hidden">
               {row.resellerId ? `Reseller: ${row.resellerName ?? "unnamed"}` : "Seller"} · <StoreCount row={row} />
             </p>
+            {row.setup && (
+              <p className="text-muted-foreground mt-0.5 text-xs lg:hidden">
+                Setup {row.setup.done} of {row.setup.total}
+                {row.setup.stuck && <span className="font-medium text-orange-700 dark:text-orange-400"> · Stuck</span>}
+              </p>
+            )}
           </div>
         </div>
       </TableCell>
@@ -187,6 +204,16 @@ function Row({ row }: { row: StorefrontRow }) {
           </Badge>
         ) : (
           <Badge variant="outline">Seller</Badge>
+        )}
+      </TableCell>
+      <TableCell className="max-lg:hidden">
+        {row.setup ? (
+          <Link href={`/${q}`} className="block rounded-md hover:opacity-80" title={row.setup.next ? `Next: ${row.setup.next}` : "Set up"}>
+            <SetupProgress setup={row.setup} />
+            <p className="text-muted-foreground mt-1 truncate text-xs">{row.setup.next ? `Next: ${row.setup.next}` : "Every step done"}</p>
+          </Link>
+        ) : (
+          <span className="text-muted-foreground text-xs">Not tracked</span>
         )}
       </TableCell>
       <TableCell className="max-sm:hidden">

@@ -40,6 +40,7 @@ import type {
   ResellerInvoices,
   ResellerSettings,
   ResellerUsage,
+  Setup,
   Template,
   Version,
   Job,
@@ -834,6 +835,11 @@ export class HttpAdminApi implements AdminApi {
       keepsOwnCode: t.keepsOwnCode ?? false,
       moveIn: t.moveIn ? toMoveIn(t.moveIn) : null
     };
+  }
+
+  async setup(): Promise<Setup> {
+    const body = (await this.get<Setup>("/admin/setup"))!;
+    return { storefronts: body.storefronts ?? [], resellers: body.resellers ?? [] };
   }
 
   async backups(filter: BackupFilter = {}): Promise<Listing<Backup>> {
