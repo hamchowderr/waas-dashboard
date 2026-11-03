@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { MailIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,15 +17,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { formatDateTime } from "@/lib/format";
 import { notifyOwner } from "../../actions";
 
 /**
  * "Email the owner their sign-in link": the email New site can send when a store is made, sent later, for a
- * store made without it. The owner gets a link to set their password, in the storefront's brand.
+ * store made without it. The owner gets a link to set their password, in the storefront's brand. When it already
+ * went, the dialog says when and to whom before it goes again.
  */
-export function EmailOwner({ tenantId, storeName }: { tenantId: string; storeName: string }) {
+export function EmailOwner({
+  tenantId,
+  storeName,
+  lastSentAt,
+  lastSentTo
+}: {
+  tenantId: string;
+  storeName: string;
+  lastSentAt: string | null;
+  lastSentTo: string | null;
+}) {
+  const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState(lastSentTo ?? "");
   const [pending, startTransition] = React.useTransition();
 
   const submit = (event: React.FormEvent) => {
@@ -37,7 +51,7 @@ export function EmailOwner({ tenantId, storeName }: { tenantId: string; storeNam
       }
       toast.success(`Sent. ${email.trim()} can now set their password and sign in.`);
       setOpen(false);
-      setEmail("");
+      router.refresh();
     });
   };
 
@@ -54,9 +68,15 @@ export function EmailOwner({ tenantId, storeName }: { tenantId: string; storeNam
               <DialogTitle>Email the owner their sign-in link</DialogTitle>
               <DialogDescription>
                 They get an email saying {storeName} is ready, with a link to set their password. The link works once,
-                within a day. You can send it again at any time.
+                within a day.
               </DialogDescription>
             </DialogHeader>
+            {lastSentAt && (
+              <p className="bg-muted rounded-md px-3 py-2 text-sm">
+                Already sent {formatDateTime(lastSentAt)} to {lastSentTo}. Sending again gives them a new link; the old
+                one stops working.
+              </p>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email-owner-address">Owner&apos;s email</Label>
               <Input
@@ -79,7 +99,7 @@ export function EmailOwner({ tenantId, storeName }: { tenantId: string; storeNam
               </Button>
               <Button type="submit" disabled={pending || !email.trim()}>
                 {pending && <Spinner />}
-                Send email
+                {lastSentAt ? "Send again" : "Send email"}
               </Button>
             </DialogFooter>
           </form>

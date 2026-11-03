@@ -838,6 +838,8 @@ export class HttpAdminApi implements AdminApi {
       dateSuspended: t.dateSuspended ?? null,
       onHold: t.onHold ?? false,
       dateHeld: t.dateHeld ?? null,
+      ownerNotifiedAt: t.ownerNotifiedAt ?? null,
+      ownerNotifiedTo: t.ownerNotifiedTo ?? null,
       dateCreated: t.dateCreated ?? null,
       dateChanged: t.dateChanged ?? null,
       mainDomain: main?.domainName ?? null,

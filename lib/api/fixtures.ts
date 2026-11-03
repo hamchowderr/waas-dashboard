@@ -360,6 +360,9 @@ const seeds: TenantSeed[] = [
   { status: StatusCode.Done, custom: "store20.example" }
 ];
 
+/** When sample stores' owners were sent the "website is ready" email from the dashboard. */
+const ownerNotified = new Map<string, { at: string; to: string }>();
+
 type FixtureTenant = Tenant & {
   domains: TenantDomain[];
   dateSuspended: string | null;
@@ -1014,8 +1017,14 @@ export class FixtureAdminApi implements AdminApi {
   async tenant(id: string): Promise<TenantDetail | null> {
     const tenant = tenants.find((t) => t.id === id);
     if (!tenant) return null;
+    // Every other sample store has had its owner emailed a day ago; the rest show "Not sent".
+    const notified =
+      ownerNotified.get(id) ??
+      (tenants.indexOf(tenant) % 2 === 0 && !tenant.moveIn ? { at: iso(NOW - DAY), to: `owner@${tenant.mainDomain}` } : null);
     return {
       ...tenant,
+      ownerNotifiedAt: notified?.at ?? null,
+      ownerNotifiedTo: notified?.to ?? null,
       snapshotName: "Starter template",
       wpOptionNames: ["blogname", "admin_email", "woocommerce_currency"],
       phpConstantNames: ["WP_MEMORY_LIMIT", "DISALLOW_FILE_EDIT", "WP_AUTO_UPDATE_CORE"],
@@ -1245,6 +1254,7 @@ export class FixtureAdminApi implements AdminApi {
     if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it first");
     if (tenant.onHold) throw new FixtureError(409, "This site was moved in and is not live yet; make it live first");
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new FixtureError(400, "Enter the owner's email address");
+    ownerNotified.set(tenantId, { at: new Date().toISOString(), to: email });
   }
 
   async storefrontWordPressLogin(productId: string): Promise<WordPressLogin> {
