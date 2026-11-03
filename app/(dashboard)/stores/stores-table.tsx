@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { LegacyColumnDef as ColumnDef } from "@tanstack/react-table/legacy";
-import { GitBranchIcon, StoreIcon } from "lucide-react";
+import { GitBranchIcon, ShapesIcon, StoreIcon } from "lucide-react";
 
 import { SortableHeader } from "@/components/admin/sortable-header";
 import type { TableFacet } from "@/components/admin/table-filters";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { OnHoldBadge, StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
+import { SiteTypeIcon, siteTypeOf } from "@/components/admin/site-type";
 import { StatusCode, type Tenant } from "@/lib/api/types";
 import { formatAgo, formatDate } from "@/lib/format";
 import { pickStorefront } from "@/lib/auth-client";
@@ -35,7 +36,8 @@ const tabs: TableTab<Tenant>[] = [
 
 function readField(row: Tenant, path: string): unknown {
   if (path === "search")
-    return `${row.name} ${row.externalId} ${row.id} ${row.mainDomain ?? ""}`;
+    return `${row.name} ${row.externalId} ${row.id} ${row.mainDomain ?? ""} ${siteTypeOf(row.siteTypes).label}`;
+  if (path === "siteType") return siteTypeOf(row.siteTypes).label;
   return row[path as keyof Tenant];
 }
 
@@ -47,16 +49,20 @@ function storeColumns(onOpen: (tenant: Tenant, event: React.MouseEvent) => void)
     accessorKey: "name",
     header: ({ column }) => <SortableHeader column={column}>Store</SortableHeader>,
     cell: ({ row }) => (
-      <div className="min-w-0">
-        <Link
-          href={`/stores/${row.original.id}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpen(row.original, event);
-          }}
-          className="hover:text-primary truncate font-medium hover:underline">
-          {row.original.name}
-        </Link>
+      <div className="flex min-w-0 items-center gap-3">
+        <SiteTypeIcon siteTypes={row.original.siteTypes} />
+        <div className="min-w-0">
+          <Link
+            href={`/stores/${row.original.id}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpen(row.original, event);
+            }}
+            className="hover:text-primary block truncate font-medium hover:underline">
+            {row.original.name}
+          </Link>
+          <div className="text-muted-foreground truncate text-xs">{siteTypeOf(row.original.siteTypes).label}</div>
+        </div>
       </div>
     )
   },
@@ -143,6 +149,12 @@ export function StoresTable({
   const unique = (values: string[]) => [...new Set(values)].sort();
 
   const facets: TableFacet[] = [
+    {
+      id: "siteType",
+      label: "Type",
+      options: unique(tenants.map((t) => siteTypeOf(t.siteTypes).label)).map((v) => ({ value: v, label: v })),
+      icon: <ShapesIcon />
+    },
     {
       id: "productName",
       label: "Storefront",

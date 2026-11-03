@@ -7,7 +7,7 @@ import { ArrowUpCircleIcon, KeyRoundIcon, LayersIcon, PencilIcon, PlusIcon, Powe
 import { toast } from "sonner";
 
 import type { DirectoryPlugin, PluginChoice, PluginChoiceInput, PluginUpload } from "@/lib/api/types";
-import { formatBytes, formatDate } from "@/lib/format";
+import { formatBytes } from "@/lib/format";
 import { installsLabel, MAX_PLUGIN_ZIP, SITE_TYPES, siteTypesLabel, TEMPLATE_PLUGINS } from "@/lib/plugin-choices";
 import { uploadArchive } from "@/lib/upload-archive";
 import { ConfirmAction } from "@/components/admin/confirm-action";
@@ -18,6 +18,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
@@ -70,7 +71,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
             production, and your stores get them when they move to it.
           </p>
           <Button asChild size="sm" variant="outline">
-            <Link href={`/versions?product=${productId}`}>Versions</Link>
+            <Link href={`/versions?product=${productId}`}>Templates</Link>
           </Button>
         </div>
       )}
@@ -144,6 +145,15 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
         </CardContent>
       </Card>
 
+      {canChange && (
+        <DirectorySearch
+          productId={productId}
+          chosen={bySlug}
+          full={added.filter((c) => !c.shared).length >= 25}
+          onAdd={(plugin) => setEditing({ slug: plugin.slug, name: plugin.name, icon: plugin.icon, action: "add", siteTypes: [], licenceConstants: [] })}
+        />
+      )}
+
       <Card>
         <CardHeader className={headerClass}>
           <CardTitle>Template plugins</CardTitle>
@@ -171,15 +181,6 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
           </ul>
         </CardContent>
       </Card>
-
-      {canChange && (
-        <DirectorySearch
-          productId={productId}
-          chosen={bySlug}
-          full={added.filter((c) => !c.shared).length >= 25}
-          onAdd={(plugin) => setEditing({ slug: plugin.slug, name: plugin.name, icon: plugin.icon, action: "add", siteTypes: [], licenceConstants: [] })}
-        />
-      )}
 
       {canChange && (
         <PremiumUpload
@@ -243,7 +244,10 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
   );
 }
 
-/** wordpress.org's own plugin search, as cards with each plugin's icon and name. */
+/**
+ * wordpress.org's own plugin search. It searches as you type (a moment after the last key), and the results are a
+ * compact list in a box of fixed height that scrolls on its own, so the page doesn't grow.
+ */
 function DirectorySearch({
   productId,
   chosen,
@@ -257,13 +261,17 @@ function DirectorySearch({
 }) {
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<{ query: string; plugins: DirectoryPlugin[]; page: number; pages: number } | null>(null);
-  const [pending, startTransition] = React.useTransition();
+  const [pending, setPending] = React.useState(false);
+  // The newest search wins: an answer to an older one that arrives late is dropped.
+  const latest = React.useRef(0);
 
-  function search(page = 1) {
-    const q = query.trim();
-    if (q.length < 2) return;
-    startTransition(async () => {
+  const search = React.useCallback(
+    async (q: string, page: number) => {
+      const ticket = ++latest.current;
+      setPending(true);
       const result = await searchPlugins(productId, q, page);
+      if (ticket !== latest.current) return;
+      setPending(false);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -274,8 +282,24 @@ function DirectorySearch({
         pages: result.data.pages,
         plugins: page > 1 && before?.query === q ? [...before.plugins, ...result.data.plugins] : result.data.plugins
       }));
-    });
-  }
+    },
+    [productId]
+  );
+
+  // Search a moment after typing stops; clearing the box clears the results.
+  React.useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      latest.current++;
+      const clear = setTimeout(() => {
+        setResults(null);
+        setPending(false);
+      }, 0);
+      return () => clearTimeout(clear);
+    }
+    const timer = setTimeout(() => void search(q, 1), 350);
+    return () => clearTimeout(timer);
+  }, [query, search]);
 
   return (
     <Card>
@@ -291,84 +315,78 @@ function DirectorySearch({
           </CardAction>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">
-        <form
-          className="flex gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            search();
-          }}>
-          <Input
+      <CardContent className="space-y-3">
+        <InputGroup>
+          <InputGroupAddon>{pending ? <Spinner /> : <SearchIcon />}</InputGroupAddon>
+          <InputGroupInput
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search plugins, like forms, events or SEO"
+            onKeyDown={(event) => event.key === "Escape" && setQuery("")}
+            placeholder="Start typing, like forms, events or SEO"
             aria-label="Search wordpress.org plugins"
             maxLength={100}
           />
-          <Button type="submit" disabled={pending || query.trim().length < 2}>
-            {pending ? <Spinner /> : <SearchIcon />}
-            Search
-          </Button>
-        </form>
+          {query && (
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton size="icon-xs" aria-label="Clear search" onClick={() => setQuery("")}>
+                <XIcon />
+              </InputGroupButton>
+            </InputGroupAddon>
+          )}
+        </InputGroup>
 
-        {results && results.plugins.length === 0 && (
+        {results && results.plugins.length === 0 && !pending && (
           <p className="text-muted-foreground text-sm">Nothing on wordpress.org matches &ldquo;{results.query}&rdquo;.</p>
         )}
         {results && results.plugins.length > 0 && (
-          <>
-            <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="max-h-96 overflow-y-auto rounded-lg border" aria-live="polite">
+            <ul className="divide-y">
               {results.plugins.map((plugin) => {
                 const choice = chosen.get(plugin.slug);
                 return (
-                  <li key={plugin.slug} className="flex flex-col gap-3 rounded-lg border p-3">
-                    <div className="flex gap-3">
-                      <PluginIcon slug={plugin.slug} name={plugin.name} icon={plugin.icon} className="size-12" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium" title={plugin.name}>
-                          {plugin.name}
-                        </p>
-                        <p className="text-muted-foreground truncate text-xs">by {plugin.author}</p>
-                        <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                          <span className="flex items-center gap-1">
-                            <StarIcon className="size-3" aria-hidden={true} />
-                            {(plugin.rating / 20).toFixed(1)}
-                          </span>
-                          <span>{installsLabel(plugin.activeInstalls)} installs</span>
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-muted-foreground line-clamp-2 text-sm">{plugin.shortDescription}</p>
-                    <div className="mt-auto flex items-center gap-2">
-                      <p className="text-muted-foreground min-w-0 flex-1 text-xs">
-                        {plugin.version}
-                        {plugin.lastUpdated && ` · updated ${formatDate(plugin.lastUpdated)}`}
-                        {plugin.testedUpTo && ` · tested up to WordPress ${plugin.testedUpTo}`}
+                  <li key={plugin.slug} className="flex items-center gap-3 px-3 py-2.5">
+                    <PluginIcon slug={plugin.slug} name={plugin.name} icon={plugin.icon} className="size-9" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium" title={plugin.name}>
+                        {plugin.name}
                       </p>
-                      {plugin.blocked ? (
-                        <Badge variant="secondary" title={plugin.blocked}>
-                          Not allowed
-                        </Badge>
-                      ) : choice ? (
-                        <Badge variant={choice.action === "add" ? "success" : "secondary"}>{choice.action === "add" ? "Added" : "Switched off"}</Badge>
-                      ) : (
-                        <Button size="sm" variant="outline" disabled={full} onClick={() => onAdd(plugin)}>
-                          <PlusIcon />
-                          Add
-                        </Button>
-                      )}
+                      <p className="text-muted-foreground flex min-w-0 items-center gap-x-2 truncate text-xs">
+                        <span className="truncate">by {plugin.author}</span>
+                        <span className="flex shrink-0 items-center gap-0.5">
+                          <StarIcon className="size-3" aria-hidden={true} />
+                          {(plugin.rating / 20).toFixed(1)}
+                        </span>
+                        <span className="shrink-0 max-sm:hidden">{installsLabel(plugin.activeInstalls)} installs</span>
+                      </p>
+                      <p className="text-muted-foreground truncate text-xs max-md:hidden" title={plugin.blocked ?? plugin.shortDescription}>
+                        {plugin.blocked ?? plugin.shortDescription}
+                      </p>
                     </div>
-                    {plugin.blocked && <p className="text-muted-foreground text-xs">{plugin.blocked}</p>}
+                    {plugin.blocked ? (
+                      <Badge variant="secondary" title={plugin.blocked}>
+                        Not allowed
+                      </Badge>
+                    ) : choice ? (
+                      <Badge variant={choice.action === "add" ? "success" : "secondary"}>{choice.action === "add" ? "Added" : "Switched off"}</Badge>
+                    ) : (
+                      <Button size="sm" variant="outline" disabled={full} onClick={() => onAdd(plugin)}>
+                        <PlusIcon />
+                        Add
+                      </Button>
+                    )}
                   </li>
                 );
               })}
             </ul>
             {results.page < results.pages && (
-              <Button variant="outline" className="w-full" disabled={pending} onClick={() => search(results.page + 1)}>
-                {pending && <Spinner />}
-                More plugins
-              </Button>
+              <div className="border-t p-2">
+                <Button variant="ghost" size="sm" className="w-full" disabled={pending} onClick={() => void search(results.query, results.page + 1)}>
+                  {pending && <Spinner />}
+                  More plugins
+                </Button>
+              </div>
             )}
-          </>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -2,16 +2,16 @@ import type { Step, Tour } from "@/components/ui/tour";
 
 /**
  * The guided tour, one per kind of account. Each step points at an element by its data-tour-step-id (a
- * space-separated list, so one element can serve several steps): the sidebar (`sidebar-nav`, `nav-<section>`), the
- * tabs above a page (`tabs-<section>`, components/shell/section-tabs.tsx), the storefront picker and the account
- * menu in the header, and a few cards and buttons on the pages. A step on another page carries the route to it.
+ * space-separated list, so one element can serve several steps): the sidebar (`sidebar-nav`, each group
+ * `group-<group>`, each link `nav-<page>`), the storefront picker in the header, the account menu at the bottom of
+ * the sidebar, and a few cards and buttons on the pages. A step on another page carries the route to it.
  */
 export type TourKind = "admin" | "seller" | "reseller";
 
 /** The id a tour runs under, and the key that remembers it has been shown in this browser. */
 export const tourId = (kind: TourKind) => `dashboard-${kind}`;
 
-/** A section title as it appears in the tour's element ids: "Store designs" is store-designs. */
+/** A title as it appears in the tour's element ids: "Store Setup" is store-setup. */
 export const sectionSlug = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 type Options = {
@@ -51,7 +51,7 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
         {
           id: "sidebar-nav",
           title: "Find your way around",
-          content: "The sidebar has one link per area, and an area's other pages are tabs at the top of the page. On a phone, the button at the top left opens the sidebar.",
+          content: "Every page is in the sidebar, in small groups. Hover over a link to see what it is for. On a phone, the button at the top left opens the sidebar.",
           side: "right",
           align: "start"
         },
@@ -73,11 +73,11 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
       href: at("/stores"),
       steps: [
         {
-          id: "tabs-stores",
+          id: "group-websites",
           title: "Your stores",
           content:
-            "Stores lists every website, with its status and address. Backups has each store's saved copies, and Activity shows every task the API ran, including any that failed.",
-          side: "bottom",
+            "Stores lists every website, with its status and address. Backups has each store's saved copies, and Activity Log shows every task run on a store, including any that failed.",
+          side: "right",
           align: "start"
         },
         ...(canChange
@@ -85,7 +85,7 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
               {
                 id: "store-actions",
                 title: "Add a store",
-                content: "Create a new site from a store design, or move an existing WordPress site in with an import code.",
+                content: "Create a new site from your template, or move an existing WordPress site in with an import code.",
                 side: "bottom",
                 align: "end"
               } satisfies Step
@@ -97,12 +97,11 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
       href: at("/versions"),
       steps: [
         {
-          id: "tabs-store-designs",
-          title: "Store designs",
-          content: admin
-            ? "Each design is a version of the store template. The one marked Production is what every new store is built from. Plugins lists what each design installs."
-            : "These are the designs your new stores are built from. The one marked Production is used for every new store. Plugins lists what each design installs.",
-          side: "bottom",
+          id: "group-store-setup",
+          title: "Store setup",
+          content:
+            "Templates is the site every new store starts from. Each change to it is a new version, and the one marked Production is what new stores get. Plugins adds plugins on top, or switches template plugins off.",
+          side: "right",
           align: "start"
         }
       ]
@@ -113,11 +112,11 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
             href: "/storefronts",
             steps: [
               {
-                id: "tabs-accounts",
+                id: "group-accounts",
                 title: "Sellers and resellers",
                 content:
                   "Storefronts are the shops that sell stores. Applications are people asking to sell, waiting for your answer. Resellers are partners who run several storefronts and get one monthly bill.",
-                side: "bottom",
+                side: "right",
                 align: "start"
               } satisfies Step
             ]
@@ -147,11 +146,11 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
             href: at("/team"),
             steps: [
               {
-                id: "tabs-team-and-brand",
-                title: "Your team and brand",
+                id: "group-settings",
+                title: "Your settings",
                 content:
                   "Invite the people who work with you and choose who can change things and who can only look. Branding puts your own name, logo and color on this dashboard.",
-                side: "bottom",
+                side: "right",
                 align: "start"
               } satisfies Step
             ]
@@ -161,18 +160,18 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
       href: at("/keys"),
       steps: [
         {
-          id: "tabs-developers",
+          id: "group-developers",
           title: "Connect your shop",
           content:
-            "API keys let your shop or an automation create stores. Webhooks tell other apps when a store is ready, and API log shows every call that came in.",
-          side: "bottom",
+            "API Keys let your shop or an automation create stores. Webhooks tell other apps when a store is ready, and API Log shows every call that came in.",
+          side: "right",
           align: "start"
         },
         {
           id: "account-menu",
           title: "That's the tour",
-          content: "You can take it again any time from your account menu here.",
-          side: "bottom",
+          content: "Your account menu is here at the bottom: Team, Branding, Appearance, dark mode, help and sign out. You can take the tour again from it too.",
+          side: "right",
           align: "end"
         }
       ]

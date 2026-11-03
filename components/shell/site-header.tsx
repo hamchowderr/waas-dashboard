@@ -1,33 +1,27 @@
 "use client";
 
 import * as React from "react";
-import { useTheme } from "next-themes";
-import { MoonIcon, PanelLeftClose, PanelLeftOpen, SunIcon } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { AppearancePanel } from "@/components/shell/appearance-panel";
 import {
   MyStorefrontSwitcher,
   StorefrontSwitcher,
   type StorefrontMembership,
   type StorefrontOption
 } from "@/components/shell/storefront-switcher";
-import { UserMenu, type SignedInUser } from "@/components/shell/user-menu";
 
 export function SiteHeader({
   storefronts,
-  user,
   isFixture,
   memberships,
   viewOnly = false
 }: {
   /** Null hides the storefront switcher: a customer sees their own storefront only. */
   storefronts: StorefrontOption[] | null;
-  user: SignedInUser;
   isFixture: boolean;
   /** A customer's storefronts; with more than one, a switcher between them. */
   memberships: StorefrontMembership[];
@@ -62,30 +56,8 @@ export function SiteHeader({
               <TooltipContent>WAAS_API_FIXTURES=1: these pages show built-in sample data, not the live API.</TooltipContent>
             </Tooltip>
           )}
-          <ModeToggle />
-          <AppearancePanel />
-          <Separator orientation="vertical" className="mx-1 self-center data-[orientation=vertical]:h-4 sm:mx-2" />
-          <UserMenu user={user} />
         </div>
       </div>
     </header>
-  );
-}
-
-/** Light/dark switch. Renders after mount, since the server can't know the saved mode. */
-function ModeToggle() {
-  const { theme, setTheme } = useTheme();
-  const mounted = React.useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-  if (!mounted) return null;
-  const dark = theme === "dark";
-  return (
-    <Button variant="ghost" size="icon-sm" onClick={() => setTheme(dark ? "light" : "dark")}>
-      {dark ? <SunIcon /> : <MoonIcon />}
-      <span className="sr-only">{dark ? "Switch to light mode" : "Switch to dark mode"}</span>
-    </Button>
   );
 }

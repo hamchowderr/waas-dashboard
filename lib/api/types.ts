@@ -38,6 +38,8 @@ export type Tenant = {
   versionName: string;
   mainDomain: string | null;
   domainCount: number;
+  /** What the store was sold as: site types from the template's roles.json (website, bookings, online-store...). */
+  siteTypes: string[];
   statusCode: StatusCode;
   isSuspended: boolean;
   /** A site moved in, held until it goes live. False when the API's list doesn't say. */
@@ -58,6 +60,7 @@ export type TenantDetail = {
   versionId: string;
   versionName: string;
   snapshotName: string | null;
+  siteTypes: string[];
   statusCode: StatusCode;
   isSuspended: boolean;
   dateSuspended: string | null;

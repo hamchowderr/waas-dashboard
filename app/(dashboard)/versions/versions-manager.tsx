@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LayersIcon, MoreHorizontalIcon, PlusIcon, StarIcon, Trash2Icon, UploadIcon } from "lucide-react";
+import { ArrowRightIcon, LayersIcon, MoreHorizontalIcon, PlusIcon, RocketIcon, StarIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Template, Version } from "@/lib/api/types";
@@ -23,7 +23,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { deleteTemplate, deleteVersion, setProductionVersion } from "../actions";
 import { CreateVersionDialog } from "./create-version-dialog";
 import { CreateTemplateDialog } from "./create-template-dialog";
@@ -72,23 +71,9 @@ export function VersionsManager({
 
   return (
     <>
-      <Tabs defaultValue="versions" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="versions" className="gap-2">
-            Versions
-            <Badge variant="secondary" className="h-5 min-w-5 px-1.5 tabular-nums">
-              {versions.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="gap-2">
-            Templates
-            <Badge variant="secondary" className="h-5 min-w-5 px-1.5 tabular-nums">
-              {templates.length}
-            </Badge>
-          </TabsTrigger>
-        </TabsList>
+      <HowItWorks templates={baseTemplates.length} versions={versions.length} production={production} />
 
-        <TabsContent value="versions">
+      <div className="space-y-4 lg:space-y-6">
           <Card>
             <CardHeader className={headerClass}>
               <CardTitle>Versions</CardTitle>
@@ -109,7 +94,6 @@ export function VersionsManager({
                   <TableRow>
                     <TableHead>Version</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="max-md:hidden">Shared site</TableHead>
                     <TableHead className="max-sm:hidden">Created</TableHead>
                     <TableHead className="w-12">
                       <span className="sr-only">Actions</span>
@@ -119,7 +103,7 @@ export function VersionsManager({
                 <TableBody>
                   {sortedVersions.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="p-0">
+                      <TableCell colSpan={4} className="p-0">
                         <EmptyState icon={LayersIcon} title="No versions yet">
                           A version is the WordPress build this storefront&apos;s stores run on. Create the first one from a
                           template.
@@ -140,14 +124,12 @@ export function VersionsManager({
                         </div>
                         {/* The columns hidden on narrow screens, under the name instead. */}
                         <div className="text-muted-foreground mt-0.5 space-y-0.5 text-xs md:hidden">
-                          <div className="break-all">{version.domain}</div>
                           <div className="sm:hidden">Created {formatDate(version.dateCreated)}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <StatusBadge statusCode={version.statusCode} />
                       </TableCell>
-                      <TableCell className="text-muted-foreground max-w-72 truncate max-md:hidden">{version.domain}</TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap max-sm:hidden">
                         {formatDate(version.dateCreated)}
                       </TableCell>
@@ -181,25 +163,24 @@ export function VersionsManager({
               </Table>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="templates" className="space-y-4">
+        <div className="space-y-4 lg:space-y-6">
           <TemplatesCard
-            title="Base templates"
-            description="A new version starts from one of these: the whole WordPress site with its plugins and theme."
+            title="Templates"
+            description="The whole starting site: WordPress, the theme, plugins and starter pages. A new version is built from one of these."
             templates={baseTemplates}
             onAdd={canChange ? () => setCreatingTemplate("base") : undefined}
             onDelete={canChange ? (template) => setPending({ kind: "delete-template", template }) : undefined}
           />
           <TemplatesCard
-            title="Group templates"
-            description="Starting points for stores, copied into a version when it is created. The group name ties them to a plan."
+            title="Plan starting points"
+            description="Extra starting sites for one plan (its group name), copied into each version when it is built."
             templates={groupTemplates}
             onAdd={canChange ? () => setCreatingTemplate("group") : undefined}
             onDelete={canChange ? (template) => setPending({ kind: "delete-template", template }) : undefined}
           />
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       <CreateVersionDialog
         open={creatingVersion}
@@ -356,5 +337,56 @@ function TemplateDescription({ name, comment }: { name: string; comment: string 
       {contents.text && contents.text.toLowerCase() !== name.toLowerCase() && <p className="text-muted-foreground text-sm">{contents.text}</p>}
       <PluginList contents={contents} />
     </>
+  );
+}
+
+/**
+ * The three ideas on this page, left to right: a template (the starting site), the versions built from it, and the
+ * one version new stores get (production).
+ */
+function HowItWorks({ templates, versions, production }: { templates: number; versions: number; production?: Version }) {
+  const steps = [
+    {
+      icon: LayersIcon,
+      label: "1. Template",
+      value: `${templates} ${templates === 1 ? "template" : "templates"}`,
+      text: "What a new site starts with: WordPress, the theme, the plugins and the starter pages."
+    },
+    {
+      icon: UploadIcon,
+      label: "2. Versions",
+      value: `${versions} ${versions === 1 ? "version" : "versions"}`,
+      text: "A saved build of a template. Make a new version after you change the template or its plugins."
+    },
+    {
+      icon: RocketIcon,
+      label: "3. Production",
+      value: production ? production.name : "None yet",
+      text: production ? "Every new store is copied from this version." : "Pick a version as production so new stores can be made."
+    }
+  ];
+  return (
+    <ol className="grid grid-cols-3 gap-2 md:gap-3 lg:gap-4">
+      {steps.map((step, i) => (
+        <li key={step.label} className="relative">
+          <Card className="h-full gap-1 px-3 py-3 md:gap-2 md:px-(--card-spacing) md:py-(--card-spacing)">
+            <div className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+              <step.icon className="size-4 max-md:hidden" aria-hidden />
+              {step.label}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold md:text-lg">{step.value}</span>
+            </div>
+            <p className="text-muted-foreground text-sm max-md:hidden">{step.text}</p>
+          </Card>
+          {i < 2 && (
+            <ArrowRightIcon
+              aria-hidden
+              className="text-muted-foreground bg-background absolute top-1/2 -right-3 z-10 hidden size-5 -translate-y-1/2 rounded-full border p-0.5 md:block lg:-right-3.5"
+            />
+          )}
+        </li>
+      ))}
+    </ol>
   );
 }

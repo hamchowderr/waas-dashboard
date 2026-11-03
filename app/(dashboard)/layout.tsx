@@ -9,7 +9,6 @@ import type { StorefrontOption } from "@/components/shell/storefront-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SiteHeader } from "@/components/shell/site-header";
-import { SectionTabs } from "@/components/shell/section-tabs";
 import { DashboardTour } from "@/components/shell/dashboard-tour";
 import { SessionKeepAlive } from "@/components/auth/session-keep-alive";
 import { NoStorefront } from "@/components/auth/no-storefront";
@@ -82,8 +81,11 @@ export default async function DashboardLayout({
 
   return (
     <DashboardTour kind={viewer.isAdmin ? "admin" : active?.resellerId ? "reseller" : "seller"} canChange={canChange(viewer)}>
+      {/* On a computer the frame fills the window exactly and only the page area scrolls, and only when the page is
+          taller than the window; on a phone the whole page scrolls as usual. */}
       <SidebarProvider
         defaultOpen={defaultOpen}
+        className="md:h-svh md:overflow-hidden"
         style={
           {
             "--sidebar-width": "calc(var(--spacing) * 64)",
@@ -104,18 +106,17 @@ export default async function DashboardLayout({
           isReseller={!!viewer.active?.resellerId}
           pendingApplications={pendingApplications}
           brand={brand && { name: brand.name, logoUrl: brand.logoUrl, supportEmail: brand.supportEmail }}
+          user={user}
         />
-        <SidebarInset>
+        <SidebarInset className="md:min-h-0 md:overflow-y-auto">
           <SiteHeader
             storefronts={storefronts}
             isFixture={api.isFixture}
-            user={user}
             memberships={memberships}
             viewOnly={!canChange(viewer)}
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:w-full xl:group-data-[theme-content-layout=centered]/layout:max-w-7xl">
-              <SectionTabs isAdmin={viewer.isAdmin} isReseller={!!viewer.active?.resellerId} />
               <CanChangeProvider value={canChange(viewer)}>{children}</CanChangeProvider>
             </div>
           </div>

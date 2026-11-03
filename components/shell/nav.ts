@@ -20,69 +20,81 @@ import {
  * adminOnly: shown to the platform admin only. resellerOnly: shown to a reseller's own team only.
  * global: a page about every storefront at once, so links to it don't carry the storefront picked in the header.
  */
-export type NavLink = { title: string; href: string; icon: LucideIcon; adminOnly?: boolean; resellerOnly?: boolean; global?: boolean };
+export type NavLink = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+  description: string;
+  adminOnly?: boolean;
+  resellerOnly?: boolean;
+  global?: boolean;
+};
 
 /**
- * Every page, in the sections the sidebar shows: one sidebar link per section, and the section's pages as tabs at
- * the top of each of them (components/shell/section-tabs.tsx). ⌘K search lists every page.
+ * Every page, in the groups the sidebar shows them in (a small heading over each group; Overview has none). Every
+ * page is its own sidebar link, named in Title Case, so nothing hides behind tabs. ⌘K search lists every page.
+ * `description` says what the page is for: the sidebar shows it on hover, and search shows it under the name.
  */
 export type NavSection = { title: string; icon: LucideIcon; links: NavLink[] };
 
 export const NAV: NavSection[] = [
-  { title: "Overview", icon: GaugeIcon, links: [{ title: "Overview", href: "/", icon: GaugeIcon }] },
   {
-    title: "Stores",
+    title: "Overview",
+    icon: GaugeIcon,
+    links: [{ title: "Overview", href: "/", icon: GaugeIcon, description: "What needs you today" }]
+  },
+  {
+    title: "Websites",
     icon: StoreIcon,
     links: [
-      { title: "Stores", href: "/stores", icon: StoreIcon },
-      { title: "Backups", href: "/backups", icon: ArchiveIcon },
-      { title: "Activity", href: "/jobs", icon: ListChecksIcon }
+      { title: "Stores", href: "/stores", icon: StoreIcon, description: "Every customer website, its status and address" },
+      { title: "Backups", href: "/backups", icon: ArchiveIcon, description: "Saved copies of each store, to restore" },
+      { title: "Activity Log", href: "/jobs", icon: ListChecksIcon, description: "Every task run on a store, and any that failed" }
     ]
   },
   {
-    title: "Store designs",
+    title: "Store Setup",
     icon: LayersIcon,
     links: [
-      { title: "Store designs", href: "/versions", icon: LayersIcon },
-      { title: "Plugins", href: "/plugins", icon: PlugIcon }
+      { title: "Templates", href: "/versions", icon: LayersIcon, description: "The site new stores start from, and its versions" },
+      { title: "Plugins", href: "/plugins", icon: PlugIcon, description: "Plugins your stores get on top of the template" }
     ]
   },
   {
     title: "Accounts",
     icon: ShoppingBagIcon,
     links: [
-      { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true },
-      { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true },
-      { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true }
+      { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true, description: "Every seller and reseller shop" },
+      { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true, description: "People asking to sell, waiting for an answer" },
+      { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true, description: "Partners with several storefronts and one bill" },
+      { title: "Reseller Account", href: "/reseller", icon: HandshakeIcon, resellerOnly: true, global: true, description: "Your bill, storefronts, invoices and partner keys" }
     ]
   },
   {
-    title: "Reseller account",
-    icon: HandshakeIcon,
-    links: [{ title: "Reseller account", href: "/reseller", icon: HandshakeIcon, resellerOnly: true, global: true }]
-  },
-  {
-    title: "Team and brand",
+    title: "Settings",
     icon: UsersIcon,
     links: [
-      { title: "Team", href: "/team", icon: UsersIcon },
-      { title: "Branding", href: "/branding", icon: PaletteIcon }
+      { title: "Team", href: "/team", icon: UsersIcon, description: "Who can sign in, and what each person may change" },
+      { title: "Branding", href: "/branding", icon: PaletteIcon, description: "Your name, logo and colour on this dashboard and emails" }
     ]
   },
   {
     title: "Developers",
     icon: KeyRoundIcon,
     links: [
-      { title: "API keys", href: "/keys", icon: KeyRoundIcon },
-      { title: "Webhooks", href: "/webhooks", icon: WebhookIcon },
-      { title: "API log", href: "/requests", icon: ActivityIcon }
+      { title: "API Keys", href: "/keys", icon: KeyRoundIcon, description: "Keys that let your shop or an automation make stores" },
+      { title: "Webhooks", href: "/webhooks", icon: WebhookIcon, description: "Tell other apps when something happens to a store" },
+      { title: "API Log", href: "/requests", icon: ActivityIcon, description: "Every call made to the API, kept 30 days" }
     ]
   }
 ];
 
+/** Every link in the sidebar, flat. */
+export const ALL_LINKS = NAV.flatMap((section) => section.links);
+
 /**
- * The sections for this viewer: customers don't see the platform admin's pages, only a reseller's team sees its
- * Reseller account, and a section left empty goes.
+ * The groups for this viewer: customers don't see the platform admin's pages, only a reseller's team sees its
+ * Reseller Account, and a group left empty goes.
  */
 export function navFor(isAdmin: boolean, isReseller = false) {
   const shown = (link: NavLink) => (link.adminOnly ? isAdmin : link.resellerOnly ? isReseller && !isAdmin : true);
@@ -97,9 +109,4 @@ export function linkHref(link: NavLink, product: string | null): string {
 /** A link is current on its own page and on pages below it (a store under Stores). */
 export function isCurrent(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
-}
-
-/** The section a page belongs to, with only the pages this viewer may see; null for a page outside the sidebar. */
-export function sectionOf(pathname: string, isAdmin: boolean, isReseller = false): NavSection | null {
-  return navFor(isAdmin, isReseller).find((section) => section.links.some((link) => isCurrent(pathname, link.href))) ?? null;
 }

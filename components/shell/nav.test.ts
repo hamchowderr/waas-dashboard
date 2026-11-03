@@ -1,43 +1,35 @@
 import { describe, expect, it } from "vitest";
 
-import { NAV, linkHref, navFor, sectionOf } from "./nav";
+import { ALL_LINKS, NAV, linkHref, navFor } from "./nav";
 
-const link = (href: string) => NAV.flatMap((g) => g.links).find((l) => l.href === href)!;
+const link = (href: string) => ALL_LINKS.find((l) => l.href === href)!;
 
 describe("navFor", () => {
-  it("leaves the platform admin's pages and the empty sections out for a customer", () => {
+  it("leaves the platform admin's pages and the empty groups out for a customer", () => {
     const groups = navFor(false);
-    expect(groups.map((g) => g.title)).toEqual(["Overview", "Stores", "Store designs", "Team and brand", "Developers"]);
+    expect(groups.map((g) => g.title)).toEqual(["Overview", "Websites", "Store Setup", "Settings", "Developers"]);
     expect(groups.flatMap((g) => g.links).some((l) => l.adminOnly)).toBe(false);
   });
 
   it("shows the platform admin every page but a reseller team's own", () => {
     const links = navFor(true).flatMap((g) => g.links);
-    expect(links).toHaveLength(NAV.flatMap((g) => g.links).length - 1);
+    expect(links).toHaveLength(ALL_LINKS.length - 1);
     expect(links.some((l) => l.resellerOnly)).toBe(false);
   });
 
-  it("gives a reseller's team its Reseller account, and no admin Accounts", () => {
-    const titles = navFor(false, true).map((g) => g.title);
-    expect(titles).toContain("Reseller account");
-    expect(titles).not.toContain("Accounts");
-  });
-
-  it("keeps the sidebar short: one link per section", () => {
-    expect(navFor(true).length).toBeLessThanOrEqual(7);
+  it("gives a reseller's team its Reseller Account, and none of the admin's accounts pages", () => {
+    const accounts = navFor(false, true).find((g) => g.title === "Accounts");
+    expect(accounts?.links.map((l) => l.title)).toEqual(["Reseller Account"]);
   });
 });
 
-describe("sectionOf", () => {
-  it("finds the section of a page and of the pages below it", () => {
-    expect(sectionOf("/backups", false)?.links.map((l) => l.href)).toEqual(["/stores", "/backups", "/jobs"]);
-    expect(sectionOf("/stores/t-1", false)?.title).toBe("Stores");
-    expect(sectionOf("/", false)?.title).toBe("Overview");
-  });
-
-  it("shows a customer only the tabs they may open", () => {
-    expect(sectionOf("/storefronts", false)).toBeNull();
-    expect(sectionOf("/storefronts", true)?.links).toHaveLength(3);
+describe("names", () => {
+  it("writes every group and page in Title Case, with a line on what it is for", () => {
+    const minor = new Set(["and", "of", "the", "a", "to"]);
+    for (const title of [...NAV.map((g) => g.title), ...ALL_LINKS.map((l) => l.title)]) {
+      for (const word of title.split(" ")) if (!minor.has(word)) expect(word[0], title).toBe(word[0]!.toUpperCase());
+    }
+    for (const l of ALL_LINKS) expect(l.description.length).toBeGreaterThan(10);
   });
 });
 

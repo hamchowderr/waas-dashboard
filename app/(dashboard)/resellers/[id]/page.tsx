@@ -65,7 +65,7 @@ export default async function ResellerPage({
       </PageHeader>
       {/* One part at a time instead of one long page; ?tab= keeps the place across a month change or a reload. */}
       <Tabs defaultValue={tab} className="space-y-4">
-        <TabsList className="max-w-full justify-start overflow-x-auto">
+        <TabsList className="max-w-full justify-start overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <TabsTrigger value="bill">Bill</TabsTrigger>
           <TabsTrigger value="keys">Keys</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>

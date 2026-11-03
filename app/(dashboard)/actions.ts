@@ -693,6 +693,15 @@ export async function revokePartnerKey(id: string, keyId: string): Promise<Actio
   }, ["/resellers", "/reseller"]);
 }
 
+/** Removes a revoked partner key from the list for good. The platform admin or the reseller's team. */
+export async function removePartnerKey(id: string, keyId: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOrOwnReseller(id);
+    await getAdminApi().removePartnerKey(uuid(id, "reseller"), uuid(keyId, "key"));
+    return undefined;
+  }, ["/resellers", "/reseller"]);
+}
+
 /** Builds a ready-made storefront for an existing seller. */
 export async function buildStorefront(productId: string, name: string, request: StorefrontRequest): Promise<ActionResult<ReadyStorefront>> {
   return run(
@@ -716,6 +725,14 @@ export async function rotateApiKey(productId: string, keyId: string, graceHours:
 export async function revokeApiKey(productId: string, keyId: string): Promise<ActionResult> {
   return run(async () => {
     await getAdminApi().revokeApiKey(uuid(productId, "storefront"), uuid(keyId, "key"));
+    return undefined;
+  }, ["/keys"]);
+}
+
+/** Removes a key that already stopped working from the list for good. */
+export async function removeApiKey(productId: string, keyId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().removeApiKey(uuid(productId, "storefront"), uuid(keyId, "key"));
     return undefined;
   }, ["/keys"]);
 }

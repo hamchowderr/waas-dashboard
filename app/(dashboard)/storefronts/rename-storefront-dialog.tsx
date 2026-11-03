@@ -19,10 +19,23 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { renameStorefront } from "../actions";
 
+/** Opened from a menu instead of its own button: the menu owns whether it is open. */
+export type DialogControl = { open: boolean; onOpenChange: (open: boolean) => void };
+
 /** "Rename": changes the storefront's name everywhere the dashboard shows it. Platform admin only. */
-export function RenameStorefrontButton({ productId, name: current }: { productId: string; name: string }) {
+export function RenameStorefrontButton({
+  productId,
+  name: current,
+  control
+}: {
+  productId: string;
+  name: string;
+  control?: DialogControl;
+}) {
   const router = useRouter();
-  const [open, setOpen] = React.useState(false);
+  const [ownOpen, setOwnOpen] = React.useState(false);
+  const open = control?.open ?? ownOpen;
+  const setOpen = control?.onOpenChange ?? setOwnOpen;
   const [name, setName] = React.useState(current);
   const [pending, startTransition] = React.useTransition();
   const ready = name.trim() && name.trim() !== current;
@@ -41,15 +54,19 @@ export function RenameStorefrontButton({ productId, name: current }: { productId
 
   return (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => {
-          setName(current);
-          setOpen(true);
-        }}>
-        <PencilIcon /> Rename
-      </Button>
+      {!control && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setName(current);
+              setOpen(true);
+            }}>
+            <PencilIcon /> Rename
+          </Button>
+        </>
+      )}
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <DialogContent>
           <DialogHeader>

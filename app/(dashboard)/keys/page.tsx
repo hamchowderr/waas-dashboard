@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
 import { NewSellerButton } from "../storefronts/new-seller-dialog";
 
-export const metadata: Metadata = { title: "API keys" };
+export const metadata: Metadata = { title: "API Keys" };
 
 export default async function KeysPage({
   searchParams,
@@ -33,7 +33,7 @@ export default async function KeysPage({
     if (products[0]) redirect(`/keys?product=${products[0].id}`);
     return (
       <div className="space-y-4 lg:space-y-6">
-        <PageHeader title="API keys">{isAdmin && <NewSellerButton storefronts={products} />}</PageHeader>
+        <PageHeader title="API Keys">{isAdmin && <NewSellerButton storefronts={products} />}</PageHeader>
         <Card>
           <EmptyState icon={StoreIcon} title="No storefronts yet">
             Each storefront signs in to the API with its own keys. A storefront is set up when a seller or reseller is approved.
@@ -48,7 +48,7 @@ export default async function KeysPage({
   return (
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
-        title="API keys"
+        title="API Keys"
         description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}>
         {/* Renaming, the store limit and new sellers are on the Storefronts page. */}
         {isAdmin && (
