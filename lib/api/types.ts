@@ -785,6 +785,27 @@ export type Prospect = {
   type: string | null;
   /** Opening hours, one line a day. */
   hours: string[] | null;
+  /** The CRMs it was sent to already (or is on its way to). */
+  inCrm: CrmTarget[];
+};
+
+/** The CRMs prospects can go to (the API's src/prospectcrm.ts). */
+export type CrmTarget = "fluentcrm" | "highlevel";
+export type ProspectCrm = {
+  /** The storefront's own FluentCRM: ready-made AnyPress storefronts. reason says why not, when not. */
+  fluentcrm: { available: boolean; reason: string | null };
+  /** The seller's HighLevel, through their workflow's Inbound Webhook. */
+  highlevel: { connected: boolean };
+};
+/** A business sent to a CRM: the finder's result with what its website gave. */
+export type CrmProspect = Pick<Prospect, "id" | "name" | "type" | "phone" | "website" | "address" | "mapsUrl" | "rating" | "reviews" | "hours"> & {
+  email: string | null;
+  contactPage: string | null;
+  socials: { network: SocialNetwork; url: string }[];
+};
+export type ProspectCrmResult = {
+  fluentcrm: { queued: number; already: number; noEmail: number; unavailable: string | null };
+  highlevel: { sent: number; already: number; failed: number; unavailable: string | null };
 };
 
 /** One page of up to 20; pass nextPageToken back (same query and place) for the next. */

@@ -7,6 +7,10 @@ import type {
   PluginUpload,
   PluginSearch,
   ProspectSearch,
+  ProspectCrm,
+  ProspectCrmResult,
+  CrmProspect,
+  CrmTarget,
   ProspectUsage,
   BrandImage,
   BrandingFields,
@@ -434,6 +438,19 @@ export class HttpAdminApi implements AdminApi {
 
   async searchProspects(productId: string, query: string, location: string, pageToken?: string): Promise<ProspectSearch> {
     return (await this.send<ProspectSearch>("POST", this.productPath(productId, "/prospects/search"), pageToken ? { query, location, pageToken } : { query, location }))!;
+  }
+
+  async prospectCrm(productId: string): Promise<ProspectCrm> {
+    return (await this.get<ProspectCrm>(this.productPath(productId, "/prospects/crm")))!;
+  }
+
+  async setProspectHighLevel(productId: string, webhook: string | null): Promise<ProspectCrm> {
+    const path = this.productPath(productId, "/prospects/crm/highlevel");
+    return (await (webhook ? this.send<ProspectCrm>("PUT", path, { webhook }) : this.send<ProspectCrm>("DELETE", path)))!;
+  }
+
+  async addProspectsToCrm(productId: string, prospects: CrmProspect[], group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult> {
+    return (await this.send<ProspectCrmResult>("POST", this.productPath(productId, "/prospects/crm"), { prospects, group, targets }))!;
   }
 
   async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {

@@ -3,7 +3,7 @@
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
-import type { ProspectContacts, ProspectSearch, ProspectUsage } from "@/lib/api/types";
+import type { CrmProspect, CrmTarget, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectSearch, ProspectUsage } from "@/lib/api/types";
 import type { Report } from "@/lib/website-check";
 import { CheckError, checkWebsite, findContacts } from "@/lib/website-check-fetch";
 
@@ -60,4 +60,40 @@ export async function prospectContacts(urls: string[]): Promise<Record<string, P
     })
   );
   return out;
+}
+
+/** Where this storefront's prospects can go, or null when it can't be read. */
+export async function prospectCrm(productId: string): Promise<ProspectCrm | null> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return null;
+  return getAdminApi().prospectCrm(productId).catch(() => null);
+}
+
+export type CrmSettingResult = { ok: true; crm: ProspectCrm } | { ok: false; error: string };
+
+/** Saves (or, with null, removes) the seller's HighLevel webhook. */
+export async function saveHighLevelWebhook(productId: string, webhook: string | null): Promise<CrmSettingResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return { ok: false, error: "Sign in again to change this." };
+  try {
+    return { ok: true, crm: await getAdminApi().setProspectHighLevel(productId, webhook ? String(webhook).trim().slice(0, 2000) : null) };
+  } catch (err) {
+    return { ok: false, error: err instanceof AdminApiError && err.apiMessage ? err.apiMessage : "Something went wrong saving that. Try again." };
+  }
+}
+
+export type CrmAddResult = { ok: true; result: ProspectCrmResult } | { ok: false; error: string };
+
+/** Sends businesses from the finder into the storefront's FluentCRM, the seller's HighLevel, or both. */
+export async function addToCrm(productId: string, prospects: CrmProspect[], group: string | null, targets: CrmTarget[]): Promise<CrmAddResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return { ok: false, error: "Sign in again to add them." };
+  const list = (Array.isArray(prospects) ? prospects : []).slice(0, 60);
+  const wanted = (Array.isArray(targets) ? targets : []).filter((t): t is CrmTarget => t === "fluentcrm" || t === "highlevel");
+  if (!list.length || !wanted.length) return { ok: false, error: "Nothing to add." };
+  try {
+    return { ok: true, result: await getAdminApi().addProspectsToCrm(productId, list, group ? String(group).slice(0, 80) : null, wanted) };
+  } catch (err) {
+    return { ok: false, error: err instanceof AdminApiError && err.apiMessage ? err.apiMessage : "Something went wrong adding them. Try again." };
+  }
 }
