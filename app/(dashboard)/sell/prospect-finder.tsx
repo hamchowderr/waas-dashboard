@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ClockIcon, DownloadIcon, ExternalLinkIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
+import { ClockIcon, DownloadIcon, FacebookIcon, InstagramIcon, LinkedinIcon, MusicIcon, TwitterIcon, YoutubeIcon, ExternalLinkIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
 
 import type { Prospect, ProspectContacts, ProspectUsage, SocialNetwork } from "@/lib/api/types";
 import type { GroupId } from "@/lib/sales-kit";
@@ -18,6 +18,14 @@ import { findProspects, prospectContacts, prospectUsage } from "./actions";
 export type FinderGroup = { id: GroupId; title: string; finder: string[] };
 
 const NETWORK_LABEL: Record<SocialNetwork, string> = { facebook: "Facebook", instagram: "Instagram", linkedin: "LinkedIn", x: "X", youtube: "YouTube", tiktok: "TikTok" };
+const NETWORK_ICON: Record<SocialNetwork, typeof FacebookIcon> = {
+  facebook: FacebookIcon,
+  instagram: InstagramIcon,
+  linkedin: LinkedinIcon,
+  x: TwitterIcon,
+  youtube: YoutubeIcon,
+  tiktok: MusicIcon
+};
 
 /** Today's line of Google's opening hours ("Monday: 9:00 AM – 5:00 PM" → "9:00 AM – 5:00 PM today"). */
 function todaysHours(hours: string[] | null): string | null {
@@ -319,11 +327,15 @@ function ContactLine({ contacts, reading }: { contacts?: ProspectContacts; readi
           Contact form
         </a>
       )}
-      {contacts.socials.map((s) => (
-        <a key={s.network} href={s.url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground underline-offset-2 hover:underline">
-          {NETWORK_LABEL[s.network]}
-        </a>
-      ))}
+      {contacts.socials.map((s) => {
+        const Icon = NETWORK_ICON[s.network];
+        return (
+          <a key={s.network} href={s.url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline">
+            <Icon className="size-3" aria-hidden />
+            {NETWORK_LABEL[s.network]}
+          </a>
+        );
+      })}
     </div>
   );
 }
