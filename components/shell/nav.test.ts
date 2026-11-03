@@ -7,7 +7,7 @@ const link = (href: string) => ALL_LINKS.find((l) => l.href === href)!;
 describe("navFor", () => {
   it("leaves the platform admin's pages and the empty groups out for a customer", () => {
     const groups = navFor(false);
-    expect(groups.map((g) => g.title)).toEqual(["Overview", "Websites", "Store Setup", "Settings", "Developers"]);
+    expect(groups.map((g) => g.title)).toEqual(["Overview", "Websites", "Store Setup", "Selling", "Settings", "Developers"]);
     expect(groups.flatMap((g) => g.links).some((l) => l.adminOnly)).toBe(false);
   });
 
