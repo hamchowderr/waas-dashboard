@@ -108,6 +108,8 @@ export type WireTenantDetail = {
   dateSuspended?: string | null;
   onHold?: boolean;
   dateHeld?: string | null;
+  ownerNotifiedAt?: string | null;
+  ownerNotifiedTo?: string | null;
   dateCreated?: string;
   dateChanged?: string;
   wpOptionNames: string[];

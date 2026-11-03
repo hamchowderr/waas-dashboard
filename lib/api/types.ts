@@ -70,6 +70,9 @@ export type TenantDetail = {
    */
   onHold: boolean;
   dateHeld: string | null;
+  /** When the "your website is ready" email last went to the owner, and to which address; null if never. */
+  ownerNotifiedAt: string | null;
+  ownerNotifiedTo: string | null;
   dateCreated: string | null;
   dateChanged: string | null;
   mainDomain: string | null;

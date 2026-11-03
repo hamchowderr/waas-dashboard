@@ -122,6 +122,11 @@ export interface AdminApi {
   wordPressLogin(tenantId: string): Promise<WordPressLogin>;
   /** The same for the product's ready-made storefront. */
   storefrontWordPressLogin(productId: string): Promise<WordPressLogin>;
+  /**
+   * Emails the store's owner that their website is ready, with a fresh link to set their password: the email
+   * New site can send, sent later. `email` must be a WordPress user of the store. Owners and admins only.
+   */
+  notifyOwner(tenantId: string, email: string): Promise<void>;
   /** Deletes a store; its backups are kept for the retention period. Platform admin only. */
   deleteStore(tenantId: string): Promise<void>;
   /** Makes a store that waits for a site moved in from another host, and answers its import code. */
