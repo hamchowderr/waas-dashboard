@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "cn";
 import { GroupIcon, download, slug } from "./kit-ui";
+import { WebsiteCheck } from "./website-check";
 
 export type GroupSummary = { id: GroupId; title: string; plan: Plan; who: string };
 
@@ -30,11 +31,14 @@ export function SellHome({
   const [prices, setPrice] = useSellPrices(productId);
   return (
     <Tabs defaultValue="groups" className="gap-4 lg:gap-6">
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
       <TabsList variant="line" className="border-b pb-0">
         <TabsTrigger value="groups">Who to sell to</TabsTrigger>
+        <TabsTrigger value="check">Website check</TabsTrigger>
         <TabsTrigger value="prices">Your prices</TabsTrigger>
         <TabsTrigger value="guides">Guides</TabsTrigger>
       </TabsList>
+      </div>
 
       <TabsContent value="groups">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 lg:gap-4">
@@ -61,6 +65,10 @@ export function SellHome({
             </Link>
           ))}
         </div>
+      </TabsContent>
+
+      <TabsContent value="check">
+        <WebsiteCheck productId={productId} sender={context.sender} brand={context.brand} />
       </TabsContent>
 
       <TabsContent value="prices">

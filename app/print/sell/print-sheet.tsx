@@ -51,7 +51,7 @@ export function PrintSheet(props: Props) {
   );
 }
 
-function Brand({ brand, logo, light }: { brand: string; logo: string | null; light?: boolean }) {
+export function Brand({ brand, logo, light }: { brand: string; logo: string | null; light?: boolean }) {
   return logo ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={logo} alt={brand} className="h-9 w-auto max-w-[12rem] object-contain" />
@@ -60,7 +60,7 @@ function Brand({ brand, logo, light }: { brand: string; logo: string | null; lig
   );
 }
 
-function Contact({ sender, support, shop }: Pick<Props, "sender" | "support" | "shop">) {
+export function Contact({ sender, support, shop }: Pick<Props, "sender" | "support" | "shop">) {
   return (
     <div className="space-y-0.5 text-sm">
       {sender && <p className="font-medium">{sender}</p>}
