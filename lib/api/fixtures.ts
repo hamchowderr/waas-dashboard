@@ -472,6 +472,8 @@ const sampleSiteReport: SiteReport = {
   notes: []
 };
 
+const SAMPLE_SITE_TYPES = ["online-store", "website", "bookings", "community", "everything"];
+
 const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   const version = versions[i % 5 === 4 ? 2 : i % 4 === 1 ? 1 : 0];
   const product = products.find((p) => p.id === version.productId)!;
@@ -491,6 +493,8 @@ const tenants: FixtureTenant[] = seeds.map((seed, i) => {
     productName: product.name,
     versionId: version.id,
     versionName: version.name,
+    // Sample site types, round the plans; a store moved in from another host was never sold as one.
+    siteTypes: seed.movedIn ? [] : [SAMPLE_SITE_TYPES[i % SAMPLE_SITE_TYPES.length]],
     statusCode: seed.status,
     isSuspended: !!seed.suspended,
     dateSuspended: seed.suspended ? iso(NOW - (3 + i) * DAY) : null,
@@ -989,6 +993,7 @@ export class FixtureAdminApi implements AdminApi {
       productName: product.name,
       versionId: versions.find((v) => v.productId === product.id && v.isProduction)?.id ?? versions[0].id,
       versionName: versions.find((v) => v.productId === product.id && v.isProduction)?.name ?? versions[0].name,
+      siteTypes: moveIn ? [] : ["website"],
       statusCode: StatusCode.Pending,
       isSuspended: false,
       dateSuspended: null,

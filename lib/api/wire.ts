@@ -32,6 +32,8 @@ export type WireTenantRow = {
   domainCount: number;
   statusCode: number;
   statusName: string;
+  /** Missing from an API older than 2026-11. */
+  siteTypes?: string[];
   isSuspended: boolean;
   /** Not in the admin list's schema yet; read when present. */
   onHold?: boolean;
@@ -99,6 +101,7 @@ export type WireTenantDetail = {
   versionName: string;
   snapshotName?: string;
   snapshotGroupName?: string | null;
+  siteTypes?: string[];
   statusCode: number;
   statusName: string;
   isSuspended: boolean;

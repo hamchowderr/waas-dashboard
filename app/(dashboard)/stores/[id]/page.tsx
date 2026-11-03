@@ -1,3 +1,4 @@
+import { SiteTypeIcon, siteTypeOf } from "@/components/admin/site-type";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -80,6 +81,7 @@ export default async function StorePage({ params, searchParams }: Params) {
             <span className="sr-only">Back to stores</span>
           </Link>
         </Button>
+        <SiteTypeIcon siteTypes={tenant.siteTypes} className="size-10 max-sm:hidden" />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="truncate text-xl font-bold tracking-tight lg:text-2xl">{tenant.name}</h1>
@@ -87,7 +89,9 @@ export default async function StorePage({ params, searchParams }: Params) {
             {tenant.isSuspended && <SuspendedBadge />}
             {tenant.onHold && <OnHoldBadge />}
           </div>
-          <p className="text-muted-foreground truncate text-sm">{tenant.mainDomain ?? "No main domain"}</p>
+          <p className="text-muted-foreground truncate text-sm">
+            {siteTypeOf(tenant.siteTypes).label} · {tenant.mainDomain ?? "No main domain"}
+          </p>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">

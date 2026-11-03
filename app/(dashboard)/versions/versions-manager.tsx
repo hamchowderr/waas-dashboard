@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRightIcon, ExternalLinkIcon, LayersIcon, MoreHorizontalIcon, PlusIcon, RocketIcon, StarIcon, Trash2Icon, UploadIcon } from "lucide-react";
+import { ArrowRightIcon, LayersIcon, MoreHorizontalIcon, PlusIcon, RocketIcon, StarIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Template, Version } from "@/lib/api/types";
@@ -94,7 +94,6 @@ export function VersionsManager({
                   <TableRow>
                     <TableHead>Version</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="max-md:hidden">Shared site</TableHead>
                     <TableHead className="max-sm:hidden">Created</TableHead>
                     <TableHead className="w-12">
                       <span className="sr-only">Actions</span>
@@ -104,7 +103,7 @@ export function VersionsManager({
                 <TableBody>
                   {sortedVersions.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="p-0">
+                      <TableCell colSpan={4} className="p-0">
                         <EmptyState icon={LayersIcon} title="No versions yet">
                           A version is the WordPress build this storefront&apos;s stores run on. Create the first one from a
                           template.
@@ -125,14 +124,12 @@ export function VersionsManager({
                         </div>
                         {/* The columns hidden on narrow screens, under the name instead. */}
                         <div className="text-muted-foreground mt-0.5 space-y-0.5 text-xs md:hidden">
-                          <div className="break-all">{version.domain}</div>
                           <div className="sm:hidden">Created {formatDate(version.dateCreated)}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <StatusBadge statusCode={version.statusCode} />
                       </TableCell>
-                      <TableCell className="text-muted-foreground max-w-72 truncate max-md:hidden">{version.domain}</TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap max-sm:hidden">
                         {formatDate(version.dateCreated)}
                       </TableCell>
@@ -345,7 +342,7 @@ function TemplateDescription({ name, comment }: { name: string; comment: string 
 
 /**
  * The three ideas on this page, left to right: a template (the starting site), the versions built from it, and the
- * one version new stores get (production), with a link to look at it.
+ * one version new stores get (production).
  */
 function HowItWorks({ templates, versions, production }: { templates: number; versions: number; production?: Version }) {
   const steps = [
@@ -353,19 +350,19 @@ function HowItWorks({ templates, versions, production }: { templates: number; ve
       icon: LayersIcon,
       label: "1. Template",
       value: `${templates} ${templates === 1 ? "template" : "templates"}`,
-      text: "The starting site: WordPress, the theme, plugins and starter pages."
+      text: "What a new site starts with: WordPress, the theme, the plugins and the starter pages."
     },
     {
       icon: UploadIcon,
       label: "2. Versions",
       value: `${versions} ${versions === 1 ? "version" : "versions"}`,
-      text: "Each build of a template gets its own test site you can open and check."
+      text: "A saved build of a template. Make a new version after you change the template or its plugins."
     },
     {
       icon: RocketIcon,
       label: "3. Production",
       value: production ? production.name : "None yet",
-      text: production ? "The version every new store is made from." : "Make a version production so new stores can be made."
+      text: production ? "Every new store is copied from this version." : "Pick a version as production so new stores can be made."
     }
   ];
   return (
@@ -379,19 +376,8 @@ function HowItWorks({ templates, versions, production }: { templates: number; ve
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-semibold md:text-lg">{step.value}</span>
-              {i === 2 && production && <StatusBadge statusCode={production.statusCode} />}
             </div>
             <p className="text-muted-foreground text-sm max-md:hidden">{step.text}</p>
-            {i === 2 && production && (
-              <a
-                href={`https://${production.domain}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary mt-auto inline-flex items-center gap-1 text-xs font-medium hover:underline md:text-sm">
-                <span className="md:hidden">Test site</span>
-                <span className="max-md:hidden">Open its test site</span> <ExternalLinkIcon className="size-3.5" aria-hidden />
-              </a>
-            )}
           </Card>
           {i < 2 && (
             <ArrowRightIcon
