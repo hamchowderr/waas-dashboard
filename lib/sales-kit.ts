@@ -4,6 +4,8 @@
  * reading the files is in lib/sales-kit-files.ts (server only).
  */
 
+import type { ProspectAutomationInput } from "@/lib/api/types";
+
 export const PLANS = ["website", "bookings", "store", "community", "everything"] as const;
 export type Plan = (typeof PLANS)[number];
 
@@ -264,3 +266,20 @@ export function campaign(playbook: Playbook): Step[] {
 
 /** What the seller keeps a month on one site at a given price, at list cost. */
 export const keep = (plan: Plan, price: number) => Math.max(0, price - LIST_COST[plan]);
+
+/** FluentCRM fills these per contact: a prospect's first name is the business's name. */
+const SMARTCODES: Record<string, string> = { prospect: "there", business: "{{contact.first_name}}" };
+const BLANK = /\[([a-z.]+)\]/g;
+
+/** The group's email steps as FluentCRM emails, and the blanks the seller still has to fill in there. */
+export function outreachEmails(group: string, steps: Step[], ctx: KitContext): { input: ProspectAutomationInput; blanks: string[] } {
+  const prefill = (text: string) => fill(text.replace(/\{\{\s*(prospect|business)\s*\}\}/g, (_, name: string) => `\u0000${name}\u0000`), ctx).replace(/\u0000([a-z]+)\u0000/g, (_, name: string) => SMARTCODES[name]!);
+  const emails = steps
+    .filter((s) => s.channel === "email" && s.message)
+    .map((s) => ({ day: Math.max(1, s.day), subject: prefill(s.message!.subject ?? s.title), body: prefill(s.message!.body) }));
+  const blanks = [...new Set(emails.flatMap((e) => [...`${e.subject}\n${e.body}`.matchAll(BLANK)].map((m) => m[1]!)))];
+  const note = blanks.length
+    ? `Before you turn this on, replace ${blanks.map((b) => `[${b}]`).join(", ").replace(/, ([^,]+)$/, " and $1")} in each email. Prospects tagged Replied or Customer stop getting these emails.`
+    : "Prospects tagged Replied or Customer stop getting these emails.";
+  return { input: { group, note, emails }, blanks };
+}

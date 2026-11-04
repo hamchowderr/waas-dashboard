@@ -3,7 +3,7 @@
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
-import type { CrmProspect, CrmTarget, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectMailbox, ProspectMailboxInput, ProspectSearch, ProspectUsage } from "@/lib/api/types";
+import type { CrmProspect, CrmTarget, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectAutomationInput, ProspectAutomations, ProspectMailbox, ProspectMailboxInput, ProspectSearch, ProspectUsage } from "@/lib/api/types";
 import type { Report } from "@/lib/website-check";
 import { CheckError, checkWebsite, findContacts } from "@/lib/website-check-fetch";
 
@@ -112,6 +112,34 @@ export async function saveMailbox(productId: string, input: ProspectMailboxInput
     return { ok: true, mailbox: await getAdminApi().setProspectMailbox(productId, mailbox) };
   } catch (err) {
     return { ok: false, error: err instanceof AdminApiError && err.apiMessage ? err.apiMessage : "Something went wrong saving that. Try again." };
+  }
+}
+
+/** The group outreach plans on the storefront's FluentCRM, or null when they can't be read. */
+export async function prospectAutomations(productId: string): Promise<ProspectAutomations | null> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return null;
+  return getAdminApi().prospectAutomations(productId).catch(() => null);
+}
+
+export type AutomationResult = { ok: true; automations: ProspectAutomations } | { ok: false; error: string };
+
+/** Adds a group's outreach emails to the storefront's FluentCRM as a draft automation. */
+export async function addOutreachAutomation(productId: string, input: ProspectAutomationInput): Promise<AutomationResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return { ok: false, error: "Sign in again to add it." };
+  const emails = (Array.isArray(input?.emails) ? input.emails : []).slice(0, 10).map((e) => ({
+    day: Math.round(Number(e.day)) || 1,
+    subject: String(e.subject ?? "").slice(0, 200),
+    body: String(e.body ?? "").slice(0, 5000)
+  }));
+  try {
+    return {
+      ok: true,
+      automations: await getAdminApi().addProspectAutomation(productId, { group: String(input?.group ?? "").slice(0, 80), note: String(input?.note ?? "").slice(0, 1000), emails })
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof AdminApiError && err.apiMessage ? err.apiMessage : "Something went wrong adding it. Try again." };
   }
 }
 

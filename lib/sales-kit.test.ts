@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { GROUP_IDS, PARTS, PLANS, SUGGESTED_PRICES, fill, pitch, campaign, customerFacingShop, demosFor, fillParts, messages, parseGuide, parsePlaybook, playbookMarkdown, type KitContext } from "./sales-kit";
+import { GROUP_IDS, PARTS, PLANS, SUGGESTED_PRICES, fill, pitch, campaign, outreachEmails, customerFacingShop, demosFor, fillParts, messages, parseGuide, parsePlaybook, playbookMarkdown, type KitContext } from "./sales-kit";
 
 const root = path.join(__dirname, "..", "content", "sales-kit");
 const read = (...p: string[]) => readFileSync(path.join(root, ...p), "utf8");
@@ -121,5 +121,32 @@ describe("demosFor", () => {
       for (const d of demosFor(id)) expect(d.url).toMatch(/^https:\/\/playground\.wordpress\.net\/\?blueprint-url=/);
     expect(demosFor("agencies").map((d) => d.kit)).toEqual(["ridge", "circuit"]);
     expect(demosFor("churches")).toEqual([]);
+  });
+});
+
+describe("outreachEmails", () => {
+  it("turns every group's email steps into FluentCRM emails, with smartcodes for the business", () => {
+    for (const p of playbooks) {
+      const steps = campaign(p);
+      const { input, blanks } = outreachEmails(p.title, steps, { ...ctx, plan: p.plan });
+      expect(input.group).toBe(p.title);
+      expect(input.emails.length).toBe(steps.filter((s) => s.channel === "email").length);
+      expect(input.emails.length).toBeGreaterThan(0);
+      for (const e of input.emails) {
+        expect(e.day).toBeGreaterThanOrEqual(1);
+        expect(`${e.subject}${e.body}`).not.toMatch(/\{\{\s*(prospect|business|brand|sender)\s*\}\}|\[prospect\]|\[business\]/);
+        expect(e.body).toMatch(/^Hi there,/);
+      }
+      expect(input.emails.map((e) => e.day)).toEqual([...input.emails.map((e) => e.day)].sort((a, b) => a - b));
+      expect(blanks).not.toContain("prospect");
+      for (const b of blanks) expect(input.note).toContain(`[${b}]`);
+    }
+  });
+
+  it("names the business with FluentCRM's first name smartcode", () => {
+    const shops = playbooks.find((p) => p.id === "shops")!;
+    const { input, blanks } = outreachEmails(shops.title, campaign(shops), { ...ctx, plan: shops.plan });
+    expect(input.emails[0]!.subject).toContain("{{contact.first_name}}");
+    expect(blanks).toContain("marketplace");
   });
 });
