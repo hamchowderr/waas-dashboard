@@ -34,6 +34,8 @@ import type {
   ProspectSearch,
   ProspectCrm,
   ProspectCrmResult,
+  ProspectAutomationInput,
+  ProspectAutomations,
   ProspectMailbox,
   ProspectMailboxInput,
   CrmProspect,
@@ -168,6 +170,10 @@ export interface AdminApi {
   prospectMailbox(productId: string): Promise<ProspectMailbox>;
   /** Saves the mailbox (the storefront then signs in to it) or, with null, removes it. */
   setProspectMailbox(productId: string, mailbox: ProspectMailboxInput | null): Promise<ProspectMailbox>;
+  /** The group outreach plans added to the storefront's FluentCRM as draft automations. */
+  prospectAutomations(productId: string): Promise<ProspectAutomations>;
+  /** Adds a group's outreach emails to the storefront's FluentCRM as a draft automation; one already there is kept. */
+  addProspectAutomation(productId: string, input: ProspectAutomationInput): Promise<ProspectAutomations>;
   /** Sends businesses into FluentCRM, HighLevel or both; each goes to each CRM once. */
   addProspectsToCrm(productId: string, prospects: CrmProspect[], group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult>;
   /** The wordpress.org plugin directory's search, 24 a page. */

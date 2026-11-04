@@ -9,6 +9,8 @@ import type {
   ProspectSearch,
   ProspectCrm,
   ProspectCrmResult,
+  ProspectAutomationInput,
+  ProspectAutomations,
   ProspectMailbox,
   ProspectMailboxInput,
   CrmProspect,
@@ -458,6 +460,14 @@ export class HttpAdminApi implements AdminApi {
   async setProspectMailbox(productId: string, mailbox: ProspectMailboxInput | null): Promise<ProspectMailbox> {
     const path = this.productPath(productId, "/prospects/mailbox");
     return (await (mailbox ? this.send<ProspectMailbox>("PUT", path, mailbox) : this.send<ProspectMailbox>("DELETE", path)))!;
+  }
+
+  async prospectAutomations(productId: string): Promise<ProspectAutomations> {
+    return (await this.get<ProspectAutomations>(this.productPath(productId, "/prospects/automations")))!;
+  }
+
+  async addProspectAutomation(productId: string, input: ProspectAutomationInput): Promise<ProspectAutomations> {
+    return (await this.send<ProspectAutomations>("POST", this.productPath(productId, "/prospects/automations"), input))!;
   }
 
   async addProspectsToCrm(productId: string, prospects: CrmProspect[], group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult> {

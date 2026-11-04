@@ -20,6 +20,8 @@ import {
   type ProspectSearch,
   type ProspectCrm,
   type ProspectCrmResult,
+  type ProspectAutomationInput,
+  type ProspectAutomations,
   type ProspectMailbox,
   type ProspectMailboxInput,
   type CrmProspect,
@@ -1010,6 +1012,23 @@ const prospectMailboxFor = (productId: string): ProspectMailbox => {
     : { state: "connected", error: null, mailbox, unavailable: null };
 };
 
+/** Sample-mode outreach automations: "adding" for a couple of seconds, then added. */
+const prospectAutomationsMade = new Map<string, Map<string, number>>();
+const prospectAutomationsFor = (productId: string): ProspectAutomations => ({
+  unavailable: null,
+  automations: [...(prospectAutomationsMade.get(productId) ?? new Map<string, number>())].map(([group, at], i) => {
+    const added = Date.now() - at >= 2500;
+    return {
+      group,
+      title: `Outreach: ${group}`,
+      state: added ? ("added" as const) : ("adding" as const),
+      error: null,
+      funnelId: added ? 20 + i : null,
+      editUrl: added ? `https://summit-sites.anypress.site/wp-admin/admin.php?page=fluentcrm-admin#/funnels/${20 + i}/edit` : null
+    };
+  })
+});
+
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
@@ -1505,6 +1524,19 @@ export class FixtureAdminApi implements AdminApi {
     if (!mailbox.host || !mailbox.user || !mailbox.pass) throw new FixtureError(400, "Enter your mail server, username and app password.");
     prospectMailboxes.set(productId, { mailbox: { ...mailbox, from: mailbox.from || mailbox.user.toLowerCase() }, at: Date.now() });
     return prospectMailboxFor(productId);
+  }
+
+  async prospectAutomations(productId: string): Promise<ProspectAutomations> {
+    this.product(productId);
+    return prospectAutomationsFor(productId);
+  }
+
+  async addProspectAutomation(productId: string, input: ProspectAutomationInput): Promise<ProspectAutomations> {
+    this.product(productId);
+    const made = prospectAutomationsMade.get(productId) ?? new Map<string, number>();
+    if (!made.has(input.group)) made.set(input.group, Date.now());
+    prospectAutomationsMade.set(productId, made);
+    return prospectAutomationsFor(productId);
   }
 
   async addProspectsToCrm(productId: string, prospects: CrmProspect[], _group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult> {

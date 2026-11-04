@@ -810,6 +810,17 @@ export type ProspectMailbox = {
   /** Why this storefront can't use one, or null when it can. */
   unavailable: string | null;
 };
+/** A group's outreach emails for the storefront's FluentCRM, as a draft automation "Outreach: <group>". */
+export type ProspectAutomationInput = { group: string; note: string; emails: { day: number; subject: string; body: string }[] };
+export type ProspectAutomation = {
+  group: string;
+  title: string;
+  state: "adding" | "added" | "failed";
+  error: string | null;
+  funnelId: number | null;
+  editUrl: string | null;
+};
+export type ProspectAutomations = { unavailable: string | null; automations: ProspectAutomation[] };
 /** A business sent to a CRM: the finder's result with what its website gave. */
 export type CrmProspect = Pick<Prospect, "id" | "name" | "type" | "phone" | "website" | "address" | "mapsUrl" | "rating" | "reviews" | "hours"> & {
   email: string | null;

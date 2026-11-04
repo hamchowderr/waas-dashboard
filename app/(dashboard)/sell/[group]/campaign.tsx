@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "cn";
 import { CopyButton, download, slug } from "../kit-ui";
+import { OutreachAutomation } from "./outreach-automation";
 
 const CHANNEL: Record<Step["channel"], { icon: LucideIcon; label: string }> = {
   post: { icon: MegaphoneIcon, label: "Post" },
@@ -113,6 +114,8 @@ export function Campaign({
             </ol>
           </CardContent>
         </Card>
+
+        <OutreachAutomation productId={productId} group={playbook.title} steps={steps} ctx={ctx} />
       </div>
 
       <aside className="space-y-4 lg:sticky lg:top-20">
