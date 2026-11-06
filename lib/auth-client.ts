@@ -41,6 +41,27 @@ export async function emailSignInLink(email: string, returnTo: string): Promise<
   });
 }
 
+/** Signs in with the six-digit code from the sign-in email, for when the email's link is blocked. */
+export async function signInWithCode(email: string, code: string): Promise<void> {
+  await post("/sign-in/email-otp", { email, otp: code });
+}
+
+export interface PendingInvitation {
+  id: string;
+  organizationName: string;
+  role: string;
+  status: string;
+  expiresAt: string;
+}
+
+/** Invitations sent to the signed-in address that can still be accepted. */
+export async function pendingInvitations(): Promise<PendingInvitation[]> {
+  const response = await fetch("/api/auth/organization/list-user-invitations", { credentials: "same-origin", cache: "no-store" });
+  if (!response.ok) return [];
+  const rows = ((await response.json().catch(() => [])) ?? []) as PendingInvitation[];
+  return rows.filter((i) => i.status === "pending" && new Date(i.expiresAt).getTime() > Date.now());
+}
+
 export async function signOut(): Promise<void> {
   await post("/sign-out", {});
 }

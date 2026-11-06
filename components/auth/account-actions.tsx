@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { acceptInvitation, pickStorefront, signOut } from "@/lib/auth-client";
+import { acceptInvitation, pendingInvitations, pickStorefront, signOut, type PendingInvitation } from "@/lib/auth-client";
 
 function useAction() {
   const router = useRouter();
@@ -74,6 +74,36 @@ export function AcceptInvitationButton({ invitationId }: { invitationId: string 
       <Button className="w-full" disabled={pending !== null} onClick={() => void run("accept", () => acceptInvitation(invitationId), "/")}>
         {pending ? "Joining…" : "Accept invitation"}
       </Button>
+    </div>
+  );
+}
+
+/**
+ * Invitations to the signed-in address, each with a Join button, so someone whose invitation email
+ * was blocked can still join after signing in. Shows nothing while loading or when there are none.
+ */
+export function PendingInvitations() {
+  const { pending, error, run } = useAction();
+  const [invitations, setInvitations] = React.useState<PendingInvitation[]>([]);
+  React.useEffect(() => {
+    let live = true;
+    pendingInvitations()
+      .then((rows) => live && setInvitations(rows))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!invitations.length) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">{invitations.length === 1 ? "You have an invitation" : "You have invitations"}</p>
+      <ErrorNote error={error} />
+      {invitations.map((i) => (
+        <Button key={i.id} className="w-full" disabled={pending !== null} onClick={() => void run(i.id, () => acceptInvitation(i.id), "/")}>
+          {pending === i.id ? "Joining…" : `Join ${i.organizationName}`}
+        </Button>
+      ))}
     </div>
   );
 }
