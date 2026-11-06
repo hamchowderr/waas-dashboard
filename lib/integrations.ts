@@ -31,14 +31,20 @@ export const INTEGRATION_GROUPS: IntegrationGroup[] = [
   {
     id: "ai",
     title: "AI apps",
-    description: "Run your stores by asking in plain words, from Claude, ChatGPT or any app that takes an MCP connector.",
+    description: "Run your stores by asking in plain words, from any AI app or code editor that supports MCP.",
     items: [
       {
         id: "mcp",
-        logos: [{ src: "/integrations/claude.svg", alt: "Claude" }, { src: "/integrations/openai.svg", alt: "ChatGPT" }],
+        logos: [
+          { src: "/integrations/claude.svg", alt: "Claude" },
+          { src: "/integrations/openai.svg", alt: "ChatGPT" },
+          { src: "/integrations/cursor.svg", alt: "Cursor" },
+          { src: "/integrations/githubcopilot.svg", alt: "GitHub Copilot" },
+          { src: "/integrations/gemini.svg", alt: "Gemini" }
+        ],
         name: "AnyPress connector (MCP)",
         summary:
-          "Add it as a custom connector and sign in to AnyPress. The app can then make and back up sites, add domains, and edit a site's pages and design, with the rights your role on the team gives you.",
+          "Works in Claude, ChatGPT, Cursor, Copilot, Gemini, Devin Desktop and any other MCP app. Paste the address below and sign in, then ask it to make sites, back them up or edit their pages.",
         guide: { label: "Connect an AI app", href: `${DOCS}/connect-an-ai-app-to-anypress/` },
         action: { label: "What to ask", href: "https://anypress.io/ai" }
       }

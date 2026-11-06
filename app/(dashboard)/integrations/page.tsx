@@ -66,9 +66,9 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
               <Card key={item.id} className={`flex flex-col ${group.items.length === 1 ? "md:col-span-2" : ""}`}>
                 <CardHeader>
                   {item.logos && (
-                    <div className="mb-1 flex gap-2">
+                    <div className="mb-1 flex flex-wrap gap-2">
                       {item.logos.map((logo) => (
-                        <span key={logo.src} className="flex size-10 items-center justify-center rounded-lg border bg-white p-2 dark:border-transparent">
+                        <span key={logo.src} title={logo.alt} className="flex size-10 items-center justify-center rounded-lg border bg-white p-2 dark:border-transparent">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logo.src} alt={logo.alt} className="size-full object-contain" />
                         </span>
