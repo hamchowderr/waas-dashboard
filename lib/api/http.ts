@@ -74,7 +74,8 @@ import type {
   WebhookEndpointInput,
   WebhookFilter,
   WebhookSecret,
-  WordPressLogin
+  WordPressLogin,
+  NotificationList
 } from "./types";
 import type {
   WireApiKey,
@@ -502,6 +503,14 @@ export class HttpAdminApi implements AdminApi {
   async checkPluginUpload(productId: string, uploadId: string): Promise<PluginUpload> {
     const u = (await this.send<WirePluginUpload>("POST", this.productPath(productId, `/plugin-choices/uploads/${encodeURIComponent(uploadId)}/check`)))!;
     return { id: u.id, status: u.status, reason: u.reason ?? null, slug: u.slug ?? null, name: u.name ?? null, version: u.version ?? null };
+  }
+
+  async notifications(userId: string, limit = 20): Promise<NotificationList> {
+    return (await this.get<NotificationList>(withQuery("/admin/notifications", { userId, limit: String(limit) })))!;
+  }
+
+  async readNotifications(userId: string): Promise<void> {
+    await this.send("POST", "/admin/notifications/read", { userId });
   }
 
   async webhooks(productId?: string): Promise<WebhookEndpoint[]> {

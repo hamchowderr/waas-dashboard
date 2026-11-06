@@ -888,3 +888,22 @@ export type ProspectContacts = {
 };
 export type SocialNetwork = "facebook" | "instagram" | "linkedin" | "x" | "youtube" | "tiktok";
 
+
+/** One entry in the header's bell (the API's /notifications). */
+export type NotificationLevel = "success" | "error" | "info";
+export type Notification = {
+  id: string;
+  /** A webhook event type (tenant.ready, tenant.failed...), or application.received, restore_test.failed. */
+  type: string;
+  level: NotificationLevel;
+  title: string;
+  /** Null for a platform notification, which only the platform admin sees. */
+  productId: string | null;
+  productName: string | null;
+  tenantId: string | null;
+  versionId: string | null;
+  applicationId: string | null;
+  at: string;
+  unread: boolean;
+};
+export type NotificationList = { unread: number; readUntil: string | null; items: Notification[] };
