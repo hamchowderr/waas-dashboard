@@ -1,7 +1,7 @@
 import type { Viewer } from "@/auth";
 import { sellerAddress } from "@/lib/dashboard-host";
 import { AccountCard } from "./account-card";
-import { SignOutButton, StorefrontPicker } from "./account-actions";
+import { PendingInvitations, SignOutButton, StorefrontPicker } from "./account-actions";
 
 /** For someone signed in who isn't a platform admin and has no storefront to act for. */
 export async function NoStorefront({ viewer }: { viewer: Viewer }) {
@@ -17,7 +17,8 @@ export async function NoStorefront({ viewer }: { viewer: Viewer }) {
             in with the one they invited.
           </>
         }>
-        <SignOutButton />
+        <PendingInvitations />
+        <SignOutButton variant="ghost" />
       </AccountCard>
     );
   }
@@ -42,7 +43,8 @@ export async function NoStorefront({ viewer }: { viewer: Viewer }) {
           .
         </>
       }>
-      <SignOutButton />
+      <PendingInvitations />
+      <SignOutButton variant="ghost" />
     </AccountCard>
   );
 }

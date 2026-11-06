@@ -6,7 +6,7 @@ import { GithubIcon, MailIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { emailSignInLink, signInWith, type Provider } from "@/lib/auth-client";
+import { emailSignInLink, signInWith, signInWithCode, type Provider } from "@/lib/auth-client";
 
 type SocialProvider = Exclude<Provider, "email">;
 
@@ -31,10 +31,14 @@ function Alert({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Emails a one-time sign-in link, then says where to look. */
+/**
+ * Emails a one-time sign-in link and code, then says where to look. The code is for mail systems that
+ * block or rewrite links: typed here, it signs the person in without opening the email's link.
+ */
 function EmailSignIn({ returnTo }: { returnTo: string }) {
   const [email, setEmail] = React.useState("");
-  const [state, setState] = React.useState<"idle" | "sending" | "sent">("idle");
+  const [code, setCode] = React.useState("");
+  const [state, setState] = React.useState<"idle" | "sending" | "sent" | "checking">("idle");
   const [error, setError] = React.useState<string | null>(null);
 
   async function submit(event: React.FormEvent) {
@@ -50,18 +54,58 @@ function EmailSignIn({ returnTo }: { returnTo: string }) {
     }
   }
 
-  if (state === "sent") {
+  async function submitCode(event: React.FormEvent) {
+    event.preventDefault();
+    setState("checking");
+    setError(null);
+    try {
+      await signInWithCode(email.trim(), code.replace(/\D/g, ""));
+      window.location.assign(returnTo);
+    } catch {
+      setError("That code didn't work. Check it, or ask for a new email.");
+      setState("sent");
+    }
+  }
+
+  if (state === "sent" || state === "checking") {
     return (
-      <div className="space-y-3 rounded-md border p-4 text-sm">
+      <form onSubmit={submitCode} className="space-y-3 rounded-md border p-4 text-sm">
         <p className="font-medium">Check your email</p>
         <p className="text-muted-foreground">
-          We sent a sign-in link to <span className="text-foreground">{email.trim()}</span>. It works once and expires in
-          15 minutes.
+          We sent a sign-in link and a six-digit code to <span className="text-foreground">{email.trim()}</span>. Open the
+          link, or type the code here. Both work once and expire in 15 minutes.
         </p>
-        <Button type="button" variant="link" className="h-auto p-0" onClick={() => setState("idle")}>
-          Use a different address
+        {error && <Alert>{error}</Alert>}
+        <div className="space-y-2">
+          <Label htmlFor="code">Code from the email</Label>
+          <Input
+            id="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required
+            pattern="[0-9 ]{6,7}"
+            maxLength={7}
+            placeholder="123456"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="h-11 text-center font-mono text-lg tracking-widest lg:h-9"
+          />
+        </div>
+        <Button type="submit" className="h-11 w-full lg:h-8" disabled={state === "checking"}>
+          {state === "checking" ? "Signing in…" : "Sign in with code"}
         </Button>
-      </div>
+        <Button
+          type="button"
+          variant="link"
+          className="h-auto p-0"
+          onClick={() => {
+            setCode("");
+            setError(null);
+            setState("idle");
+          }}>
+          Use a different address or send a new email
+        </Button>
+      </form>
     );
   }
 
