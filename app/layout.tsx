@@ -1,5 +1,5 @@
 import React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "next-themes";
 
@@ -15,7 +15,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export const metadata: Metadata = {
   title: { default: "AnyPress", template: "%s · AnyPress" },
   description: "Operations dashboard for the WaaS provisioning API.",
-  robots: { index: false, follow: false }
+  robots: { index: false, follow: false },
+  // Installed on a phone's home screen, it opens in its own window (app/manifest.ts).
+  appleWebApp: { capable: true, title: "AnyPress", statusBarStyle: "default" }
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" }
+  ]
 };
 
 export default async function RootLayout({

@@ -91,7 +91,9 @@ import {
   type WebhookEndpointInput,
   type WebhookFilter,
   type WebhookSecret,
-  type WordPressLogin
+  type WordPressLogin,
+  type Notification,
+  type NotificationList
 } from "./types";
 import { AdminApiError } from "./http";
 
@@ -1088,6 +1090,35 @@ const prospectAutomationsFor = (productId: string): ProspectAutomations => ({
   })
 });
 
+/** Sample bell entries, made from the sample stores so their links open. Read state is per process. */
+const notificationReads = new Map<string, number>();
+function sampleNotifications(): Notification[] {
+  const now = Date.now();
+  const at = (minutes: number) => new Date(now - minutes * 60_000).toISOString();
+  const store = (i: number) => tenants[i % tenants.length]!;
+  const entry = (n: number, type: string, level: Notification["level"], title: string, minutes: number, t?: FixtureTenant): Omit<Notification, "unread"> => ({
+    id: uuid(n, 9),
+    type,
+    level,
+    title,
+    productId: t?.productId ?? null,
+    productName: t?.productName ?? null,
+    tenantId: t?.id ?? null,
+    versionId: null,
+    applicationId: null,
+    at: at(minutes)
+  });
+  const rows = [
+    entry(1, "tenant.ready", "success", `${store(0).name} is ready`, 4, store(0)),
+    entry(2, "tenant.failed", "error", `A job on ${store(3).name} failed`, 38, store(3)),
+    entry(3, "tenant.live", "success", `${store(1).name} is live`, 95, store(1)),
+    entry(4, "tenant.backup_failed", "error", `A backup of ${store(5).name} failed`, 60 * 7, store(5)),
+    entry(5, "tenant.ready", "success", `${store(2).name} is ready`, 60 * 26, store(2)),
+    { ...entry(6, "application.received", "info", "New seller application from Summit Web Studio", 60 * 30), applicationId: applications[0]?.id ?? null }
+  ];
+  return rows.map((r) => ({ ...r, unread: false }));
+}
+
 export class FixtureAdminApi implements AdminApi {
   readonly isFixture = true;
 
@@ -1959,6 +1990,22 @@ export class FixtureAdminApi implements AdminApi {
     }
     team.organization ??= { id: uuid(teams.length, 12), name };
     return team;
+  }
+
+  async notifications(userId: string, limit = 20): Promise<NotificationList> {
+    const readUntil = notificationReads.get(userId) ?? null;
+    const items = sampleNotifications()
+      .filter((n) => (this.scope ? n.productId === this.scope : true))
+      .map((n) => ({ ...n, unread: readUntil === null || Date.parse(n.at) > readUntil }));
+    return {
+      unread: items.filter((n) => n.unread).length,
+      readUntil: readUntil === null ? null : new Date(readUntil).toISOString(),
+      items: items.slice(0, limit)
+    };
+  }
+
+  async readNotifications(userId: string): Promise<void> {
+    notificationReads.set(userId, Date.now());
   }
 
   async applications(status?: ApplicationStatus): Promise<SellerApplication[]> {

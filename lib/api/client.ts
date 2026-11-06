@@ -60,6 +60,7 @@ import type {
   ImportCode,
   StoreSize,
   MailDomain,
+  NotificationList,
   Overview,
   RequestFilter,
   RequestLog,
@@ -105,6 +106,11 @@ export interface AdminApi {
   webhooks(productId?: string): Promise<WebhookEndpoint[]>;
   /** The newest webhook deliveries, newest first. */
   webhookDeliveries(filter?: WebhookFilter): Promise<Listing<WebhookDelivery>>;
+
+  /** The header bell: the newest notifications and how many `userId` hasn't seen (on /account, the session's own). */
+  notifications(userId: string, limit?: number): Promise<NotificationList>;
+  /** Marks `userId`'s bell read up to now. Members may do this too: it changes only their own bell. */
+  readNotifications(userId: string): Promise<void>;
 
   // Changes. Each throws AdminApiError with the API's message when the API refuses.
   /** Re-queues a failed job; the store or version goes back to Pending. */

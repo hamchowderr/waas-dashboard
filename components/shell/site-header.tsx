@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { NotificationBell } from "@/components/shell/notification-bell";
 import {
   MyStorefrontSwitcher,
   StorefrontSwitcher,
@@ -56,6 +57,8 @@ export function SiteHeader({
               <TooltipContent>WAAS_API_FIXTURES=1: these pages show built-in sample data, not the live API.</TooltipContent>
             </Tooltip>
           )}
+          {/* The platform admin sees every storefront's, so each says whose. */}
+          <NotificationBell showStorefront={!!storefronts} />
         </div>
       </div>
     </header>

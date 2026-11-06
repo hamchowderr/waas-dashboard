@@ -19,6 +19,7 @@ import type {
   PluginUpload,
   ImportCode,
   MailDomain,
+  NotificationList,
   StoreSize,
   ApprovedApplication,
   NewSeller,
@@ -878,4 +879,31 @@ export async function checkDashboardDomain(productId: string): Promise<ActionRes
 
 export async function removeDashboardDomain(productId: string): Promise<ActionResult<DashboardDomainView>> {
   return run(() => getAdminApi().removeDashboardDomain(uuid(productId, "storefront")), ["/branding"]);
+}
+
+// --- The header's bell. Anyone who can open the dashboard has one, view-only members too. ---
+
+/** The bell's newest notifications and unread count, for the signed-in person. */
+export async function loadNotifications(): Promise<ActionResult<NotificationList>> {
+  const viewer = await getViewer().catch(() => null);
+  if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
+  try {
+    return { ok: true, data: await getAdminApi().notifications(viewer.user.id) };
+  } catch (error) {
+    if (error instanceof AdminApiError) return { ok: false, error: error.apiMessage ?? error.message };
+    return { ok: false, error: "The provisioning API did not answer. Try again." };
+  }
+}
+
+/** Marks everything in the signed-in person's bell as read. */
+export async function readNotifications(): Promise<ActionResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
+  try {
+    await getAdminApi().readNotifications(viewer.user.id);
+    return { ok: true, data: undefined };
+  } catch (error) {
+    if (error instanceof AdminApiError) return { ok: false, error: error.apiMessage ?? error.message };
+    return { ok: false, error: "The provisioning API did not answer. Try again." };
+  }
 }
