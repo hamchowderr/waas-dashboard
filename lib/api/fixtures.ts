@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 
 import type { AdminApi } from "./client";
 import {
+  type JobProgress,
   type Branding,
   type BrandImage,
   type BrandingFields,
@@ -343,15 +344,16 @@ type TenantSeed = {
   extra?: string[];
   /** A site moved in: "held" is built and on hold until it goes live, "failed" is a move that failed. */
   movedIn?: "held" | "failed";
+  job?: Omit<SampleJob, "startedAt">;
 };
 
 const seeds: TenantSeed[] = [
   { status: StatusCode.Done, custom: "shop.store1.example", extra: ["store1.example"] },
   { status: StatusCode.Done },
   { status: StatusCode.Done, custom: "store3.example", movedIn: "held" },
-  { status: StatusCode.Pending },
+  { status: StatusCode.Pending, job: { type: "tenant.create", loop: true } },
   { status: StatusCode.Done, suspended: true },
-  { status: StatusCode.Failed, movedIn: "failed" },
+  { status: StatusCode.Failed, movedIn: "failed", job: { type: "tenant.import", failedAt: 2 } },
   { status: StatusCode.Done, custom: "store7.example" },
   { status: StatusCode.Done },
   { status: StatusCode.Done, suspended: true, custom: "store9.example" },
@@ -359,9 +361,9 @@ const seeds: TenantSeed[] = [
   { status: StatusCode.Removing },
   { status: StatusCode.Done, custom: "store12.example", extra: ["www.store12.example"] },
   { status: StatusCode.Done },
-  { status: StatusCode.Pending },
+  { status: StatusCode.Pending, job: { type: "tenant.move", loop: true } },
   { status: StatusCode.Done },
-  { status: StatusCode.Pending, custom: "store16.example" },
+  { status: StatusCode.Pending, custom: "store16.example", job: { type: "tenant.domains", loop: true } },
   { status: StatusCode.Done },
   { status: StatusCode.Done },
   { status: StatusCode.Done },
@@ -371,7 +373,9 @@ const seeds: TenantSeed[] = [
 /** When sample stores' owners were sent the "website is ready" email from the dashboard. */
 const ownerNotified = new Map<string, { at: string; to: string }>();
 
-type FixtureTenant = Tenant & {
+type FixtureTenant = Omit<Tenant, "progress"> & {
+  /** A job the sample store is running, shown as moving through its steps (sampleProgress). */
+  job?: SampleJob;
   domains: TenantDomain[];
   dateSuspended: string | null;
   dateHeld: string | null;
@@ -491,6 +495,55 @@ const sampleSiteReport: SiteReport = {
   notes: []
 };
 
+/** The steps of each store job, in the API's words (src/progress.ts in waas-provisioning-api). */
+const SAMPLE_PLANS: Record<string, string[]> = {
+  "tenant.create": ["Getting server space ready", "Starting the website", "Copying the site in", "Adding the theme and plugins", "Setting up the site"],
+  "tenant.import": [
+    "Getting server space ready",
+    "Starting the website",
+    "Copying the site in",
+    "Updating the database",
+    "Adding the theme and plugins",
+    "Setting up the site",
+    "Checking the site works"
+  ],
+  "tenant.move": ["Switching to the new version", "Starting the website", "Adding the theme and plugins", "Updating the database"],
+  "tenant.domains": ["Updating the web address", "Starting the website", "Setting up the site"]
+};
+/** How long each sample step takes. */
+const SAMPLE_STEP_MS = 5_000;
+
+/** `loop`: starts over when done, so the preview always has a store mid-job. `failedAt`: the step it stopped at. */
+type SampleJob = { type: keyof typeof SAMPLE_PLANS; startedAt: number; loop?: boolean; failedAt?: number };
+
+/** Where a sample store's job is now; a job that ran through its steps leaves the store Done. */
+function sampleProgress(t: FixtureTenant): JobProgress | null {
+  const job = t.job;
+  if (!job) return null;
+  const steps = SAMPLE_PLANS[job.type];
+  const runMs = steps.length * SAMPLE_STEP_MS;
+  let elapsed = Date.now() - job.startedAt;
+  if (job.loop) elapsed %= runMs + SAMPLE_STEP_MS;
+  const at = job.failedAt ?? Math.min(Math.floor(elapsed / SAMPLE_STEP_MS), steps.length);
+  if (at >= steps.length) {
+    if (job.loop) return null;
+    delete t.job;
+    if (t.statusCode === StatusCode.Pending) t.statusCode = StatusCode.Done;
+    return null;
+  }
+  const startedAt = job.loop ? Date.now() - elapsed : job.startedAt;
+  return {
+    job: job.type === "tenant.import" ? "tenant.create" : job.type,
+    label: steps[at],
+    index: at + 1,
+    total: steps.length,
+    steps,
+    startedAt: iso(startedAt),
+    stepStartedAt: iso(startedAt + at * SAMPLE_STEP_MS),
+    failedAt: job.failedAt === undefined ? null : iso(startedAt + (at + 0.6) * SAMPLE_STEP_MS)
+  };
+}
+
 const SAMPLE_SITE_TYPES = ["online-store", "website", "bookings", "community", "everything"];
 
 const tenants: FixtureTenant[] = seeds.map((seed, i) => {
@@ -520,6 +573,7 @@ const tenants: FixtureTenant[] = seeds.map((seed, i) => {
     onHold: seed.movedIn === "held",
     dateHeld: seed.movedIn === "held" ? iso(NOW - 2 * DAY) : null,
     ...(seed.movedIn && { moveIn: sampleMoveIn(seed.movedIn, NOW - 2 * DAY - 2 * HOUR) }),
+    ...(seed.job && { job: { ...seed.job, startedAt: seed.job.failedAt === undefined ? Date.now() - i * 1_700 : NOW - 2 * DAY } }),
     mainDomain: domains.find((d) => d.isMain)!.domainName,
     domainCount: domains.length,
     domains,
@@ -585,7 +639,7 @@ function job(
   n: number,
   state: Job["state"],
   type: string,
-  tenant: Tenant,
+  tenant: Pick<Tenant, "id" | "name" | "productId" | "productName">,
   minutesAgo: number,
   extra: Partial<Job> = {}
 ): Job {
@@ -822,7 +876,10 @@ function without<T extends object, K extends keyof T>(item: T, ...keys: K[]): Om
   return copy;
 }
 
-const toRow = (t: FixtureTenant): Tenant => without(t, "domains", "dateSuspended", "dateHeld", "dateChanged", "moveIn");
+const toRow = (t: FixtureTenant): Tenant => {
+  const progress = sampleProgress(t);
+  return { ...without(t, "domains", "dateSuspended", "dateHeld", "dateChanged", "moveIn", "job"), progress };
+};
 
 /** key: the product id, or "reseller:<id>" for a reseller's team. */
 type FixtureTeam = Team & { key: string };
@@ -1069,8 +1126,10 @@ export class FixtureAdminApi implements AdminApi {
     const notified =
       ownerNotified.get(id) ??
       (tenants.indexOf(tenant) % 2 === 0 && !tenant.moveIn ? { at: iso(NOW - DAY), to: `owner@${tenant.mainDomain}` } : null);
+    const progress = sampleProgress(tenant);
     return {
-      ...tenant,
+      ...without(tenant, "job"),
+      progress,
       ownerNotifiedAt: notified?.at ?? null,
       ownerNotifiedTo: notified?.to ?? null,
       ownerEmail: tenant.moveIn ? null : `owner@${tenant.mainDomain}`,
@@ -1216,7 +1275,8 @@ export class FixtureAdminApi implements AdminApi {
       latestBackupAt: null,
       dateCreated: now,
       dateChanged: now,
-      ...(moveIn && { moveIn })
+      // A site moved in waits for its upload first; a new store goes through its steps at once.
+      ...(moveIn ? { moveIn } : { job: { type: "tenant.create", startedAt: Date.now() } })
     });
     return id;
   }

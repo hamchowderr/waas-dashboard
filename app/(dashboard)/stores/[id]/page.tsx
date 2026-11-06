@@ -23,6 +23,7 @@ import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
 import { WordPressLoginButton } from "../../wordpress-login";
 import { EmailOwner } from "./email-owner";
+import { AutoRefresh, JobProgressCard } from "@/components/admin/job-progress";
 
 type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ product?: string }> };
 
@@ -72,6 +73,9 @@ export default async function StorePage({ params, searchParams }: Params) {
   const siteUrl = tenant.mainDomain && tenant.statusCode === StatusCode.Done ? `https://${tenant.mainDomain}/` : null;
   // One-click sign-in to wp-admin for anyone who may change the store; members get the plain login page.
   const canLogIn = !!viewer && canChange(viewer) && !tenant.isSuspended;
+  // A job is running: a store being made or changed, or a backup (which leaves the store Ready meanwhile).
+  const waitingForSite = !!tenant.moveIn && !tenant.moveIn.startedAt;
+  const working = (tenant.statusCode === StatusCode.Pending && !waitingForSite) || (!!tenant.progress && !tenant.progress.failedAt);
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -130,6 +134,14 @@ export default async function StorePage({ params, searchParams }: Params) {
           />
         )}
       </div>
+
+      {/* While a job runs, its steps; the page checks again every few seconds until it's done. */}
+      <AutoRefresh active={working} />
+      <JobProgressCard
+        progress={tenant.progress}
+        waiting={tenant.statusCode === StatusCode.Pending && !waitingForSite}
+        gaveUp={tenant.statusCode === StatusCode.Failed}
+      />
 
       {tenant.onHold && (
         <Card data-testid="on-hold">
