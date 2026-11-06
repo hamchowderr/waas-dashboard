@@ -15,8 +15,11 @@ import {
   SearchIcon,
   StoreIcon,
   Trash2Icon,
-  UsersIcon
+  UsersIcon,
+  WorkflowIcon
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import type { StorefrontSetup } from "@/lib/api/types";
@@ -26,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -39,6 +43,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { RenameStorefrontButton } from "./rename-storefront-dialog";
 import { StoreLimitButton } from "./store-limit-dialog";
 import { DeleteStorefrontButton } from "./delete-storefront-dialog";
+import { setHighLevelAgency } from "../actions";
 
 /** One storefront as this page lists it. domain: its ready-made shop's address; null when it sells from its own site. */
 export type StorefrontRow = {
@@ -48,6 +53,8 @@ export type StorefrontRow = {
   maxTenants: number | null;
   resellerId: string | null;
   resellerName: string | null;
+  /** A HighLevel agency's storefront: its sites get the HighLevel site type. */
+  highlevelAgency: boolean;
   domain: string | null;
   /** Its setup checklist; null for the platform's own storefront, or an API without checklists. */
   setup: StorefrontSetup | null;
@@ -251,6 +258,7 @@ function Row({ row }: { row: StorefrontRow }) {
               <DropdownMenuItem onSelect={() => control("limit").onOpenChange(true)}>
                 <GaugeIcon /> Store limit
               </DropdownMenuItem>
+              <HighLevelAgencyItem productId={row.id} on={row.highlevelAgency} />
               {row.tenantCount === 0 && (
                 <>
                   <DropdownMenuSeparator />
@@ -273,6 +281,37 @@ function Row({ row }: { row: StorefrontRow }) {
         {row.tenantCount === 0 && <DeleteStorefrontButton productId={row.id} name={row.name} control={control("delete")} />}
       </TableCell>
     </TableRow>
+  );
+}
+
+/**
+ * "HighLevel agency": its sites get the HighLevel site type (HighLevel's own plugin, no Fluent CRM, forms or shop).
+ * Turning it on also moves its sites that have no site type, which have every plugin on.
+ */
+function HighLevelAgencyItem({ productId, on }: { productId: string; on: boolean }) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  return (
+    <DropdownMenuCheckboxItem
+      checked={on}
+      disabled={pending}
+      onCheckedChange={(next) =>
+        startTransition(async () => {
+          const result = await setHighLevelAgency(productId, next === true);
+          if (!result.ok) {
+            toast.error(result.error);
+            return;
+          }
+          toast.success(
+            next
+              ? "HighLevel agency: its sites get the HighLevel site type"
+              : "Not a HighLevel agency: new sites need a site type"
+          );
+          router.refresh();
+        })
+      }>
+      <WorkflowIcon /> HighLevel agency
+    </DropdownMenuCheckboxItem>
   );
 }
 

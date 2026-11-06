@@ -25,6 +25,7 @@ export default async function StorefrontsPage() {
     maxTenants: p.maxTenants,
     resellerId: p.resellerId,
     resellerName: p.resellerName,
+    highlevelAgency: p.highlevelAgency,
     domain: shops[i]?.domain ?? null,
     setup: setupOf.get(p.id) ?? null
   }));

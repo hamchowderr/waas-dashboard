@@ -209,6 +209,7 @@ export interface AdminApi {
   renameStorefront(productId: string, name: string): Promise<void>;
   /** Sets the most stores a storefront may have; null is no limit. Lowering it deletes nothing. Platform admin only. */
   setStoreLimit(productId: string, maxTenants: number | null): Promise<void>;
+  setHighLevelAgency(productId: string, on: boolean): Promise<void>;
   /** Deletes a storefront with no stores and no ready-made storefront, with its keys. Platform admin only. */
   deleteStorefront(productId: string): Promise<void>;
   /** The product's ready-made storefront, or null. */
