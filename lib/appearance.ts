@@ -137,8 +137,9 @@ export function appearanceVars(appearance: Appearance): Record<string, string> {
       "--ring": color,
       "--sidebar-primary": color,
       "--sidebar-primary-foreground": "var(--color-white)",
-      "--sidebar-accent": `color-mix(in oklab, ${color} 15%, transparent)`,
-      "--sidebar-accent-foreground": "var(--foreground)",
+      // One flat colour on the main buttons in place of the ribbon gradient, with a matching glow.
+      "--primary-gradient": `linear-gradient(${color}, ${color})`,
+      "--primary-glow": `0 6px 16px -6px color-mix(in oklab, ${color} 55%, transparent)`,
       "--sidebar-ring": color
     });
   }

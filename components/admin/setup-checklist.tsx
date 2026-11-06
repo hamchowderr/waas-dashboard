@@ -30,11 +30,11 @@ export function SetupSteps({ steps, productId, className }: { steps: SetupStep[]
         const link = stepLink(step, productId);
         const done = step.state === "done";
         return (
-          <li key={step.key} className="flex items-center gap-3 rounded-lg border px-3 py-2.5">
+          <li key={step.key} className="bg-muted flex items-center gap-3 rounded-2xl px-3.5 py-3">
             <span
               className={cn(
-                "flex size-6 shrink-0 items-center justify-center rounded-full border",
-                done && "border-green-600 bg-green-600 text-white dark:border-green-500 dark:bg-green-500",
+                "bg-card flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#bdb4aa] shadow-xs dark:border-white/25",
+                done && "border-green-600 bg-green-600 text-white ring-3 ring-green-600/15 dark:border-green-500 dark:bg-green-500",
                 step.state === "not-reported" && "border-dashed"
               )}>
               {done ? <CheckIcon className="size-3.5" aria-label="Done" /> : <span className="sr-only">Not done</span>}
@@ -85,7 +85,7 @@ export function SetupProgress({ setup, className, hideStuck = false }: { setup: 
       </div>
       <div className="bg-muted h-1.5 overflow-hidden rounded-full">
         <div
-          className={cn("h-full rounded-full", finished ? "bg-green-600 dark:bg-green-400" : stuck ? "bg-orange-500" : "bg-primary")}
+          className={cn("h-full rounded-full", finished ? "bg-green-600 dark:bg-green-400" : stuck ? "bg-orange-500" : "bg-primary bg-(image:--primary-gradient)")}
           style={{ width: `${share}%` }}
         />
       </div>

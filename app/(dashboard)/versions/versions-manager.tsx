@@ -382,7 +382,7 @@ function HowItWorks({ templates, versions, production }: { templates: number; ve
           {i < 2 && (
             <ArrowRightIcon
               aria-hidden
-              className="text-muted-foreground bg-background absolute top-1/2 -right-3 z-10 hidden size-5 -translate-y-1/2 rounded-full border p-0.5 md:block lg:-right-3.5"
+              className="text-muted-foreground bg-card absolute top-1/2 -right-3 z-10 hidden size-5 -translate-y-1/2 rounded-full border p-0.5 md:block lg:-right-3.5"
             />
           )}
         </li>

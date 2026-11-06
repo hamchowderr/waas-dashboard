@@ -49,7 +49,7 @@ export function SiteTypeIcon({ siteTypes, className }: { siteTypes: string[]; cl
     <span
       title={type.label}
       className={cn(
-        "bg-muted flex size-8 shrink-0 items-center justify-center rounded-md border",
+        "bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-xl",
         !type.known && "text-muted-foreground",
         className
       )}>

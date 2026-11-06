@@ -6,13 +6,13 @@ import { cn } from "@/lib/utils";
 // google queries have exactly one entry"), on CI and on Vercel, and a local file needs no
 // network at build time. Each font sets a --font-* variable that the Appearance panel's font
 // choices point at (lib/appearance.ts). next/font/local only accepts literal
-// options, hence one call per font. Variable fonts (Inter, Geist, DM Sans) use the
+// options, hence one call per font. Variable fonts (Plus Jakarta Sans, Inter, Geist) use the
 // @fontsource-variable file with their full weight range.
 
-/** The default UI font, --font-sans. */
-export const dmSans = localFont({
-  src: "../node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2",
-  weight: "100 1000",
+/** The default UI font, --font-sans: Plus Jakarta Sans (the Studio look). */
+export const uiSans = localFont({
+  src: "../node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2",
+  weight: "200 800",
   variable: "--font-sans"
 });
 
@@ -100,22 +100,7 @@ const outfit = localFont({
   variable: "--font-outfit"
 });
 
-/** Preview looks (lib/looks.ts): the anypress.io fonts. */
-export const hankenGrotesk = localFont({
-  src: "../node_modules/@fontsource-variable/hanken-grotesk/files/hanken-grotesk-latin-wght-normal.woff2",
-  weight: "100 900",
-  variable: "--font-hanken"
-});
-
-export const caveat = localFont({
-  src: "../node_modules/@fontsource-variable/caveat/files/caveat-latin-wght-normal.woff2",
-  weight: "400 700",
-  variable: "--font-caveat"
-});
-
 export const fontVariables = cn(
-  hankenGrotesk.variable,
-  caveat.variable,
   geist.variable,
   inter.variable,
   roboto.variable,

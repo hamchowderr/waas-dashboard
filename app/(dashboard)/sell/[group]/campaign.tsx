@@ -98,7 +98,7 @@ export function Campaign({
               {days.map((day, i) => (
                 <li key={day} className="relative grid grid-cols-[1.75rem_1fr] gap-x-3 pb-6 last:pb-0">
                   {i < days.length - 1 && <span className="bg-border absolute top-7 bottom-0 left-[0.8125rem] w-px" aria-hidden />}
-                  <span className="bg-background text-muted-foreground relative z-10 flex size-7 items-center justify-center rounded-full border text-xs font-semibold tabular-nums">
+                  <span className="bg-card text-muted-foreground relative z-10 flex size-7 items-center justify-center rounded-full border text-xs font-semibold tabular-nums">
                     {day === 0 ? <CheckIcon className="size-3.5" aria-hidden /> : day}
                   </span>
                   <div className="min-w-0 space-y-2">

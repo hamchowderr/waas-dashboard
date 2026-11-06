@@ -5,76 +5,87 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/*
+ * The Studio look (owner's pick, 2026-11-06): white panels floating on a warm canvas, soft shadows
+ * instead of outlines, rounded shapes, and the logo's ribbon pink on the main actions. DESIGN.md.
+ */
 :root {
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: #f3efea;
+  --foreground: #1b1917;
+  --card: #ffffff;
+  --card-foreground: #1b1917;
+  --popover: #ffffff;
+  --popover-foreground: #1b1917;
+  --primary: #c8264d;
+  --primary-foreground: #ffffff;
+  --primary-gradient: linear-gradient(135deg, #ee2f5e 0%, #c8264d 55%, #a81e72 100%);
+  --primary-glow: 0 6px 16px -6px rgb(200 38 77 / 0.55);
+  --secondary: #efeae4;
+  --secondary-foreground: #1b1917;
+  --muted: #f6f3ef;
+  --muted-foreground: #6f6962;
+  --accent: #f1ece6;
+  --accent-foreground: #1b1917;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(97.391% 0.00104 11.32);
-  --sidebar-foreground: oklch(50.323% 0.00006 271.152);
-  --sidebar-primary: oklch(26.033% 0.00003 271.152);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(90.975% 0.0001 271.152);
-  --sidebar-accent-foreground: oklch(0% 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: #ebe5de;
+  --input: #e2dbd3;
+  --ring: #c8264d;
+  --chart-1: #ee2f5e;
+  --chart-2: #ffb338;
+  --chart-3: #d21fa4;
+  --chart-4: #ff7a2a;
+  --chart-5: #8a8178;
+  --radius: 0.875rem;
+  --shadow-card: 0 1px 2px rgb(27 25 23 / 0.04), 0 10px 30px -12px rgb(27 25 23 / 0.14);
+  --shadow-raised: 0 1px 2px rgb(27 25 23 / 0.06), 0 0 0 1px rgb(27 25 23 / 0.06);
+  --sidebar: #f3efea;
+  --sidebar-foreground: #5c5650;
+  --sidebar-primary: #c8264d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffffff;
+  --sidebar-accent-foreground: #1b1917;
+  --sidebar-border: rgb(27 25 23 / 0.07);
+  --sidebar-ring: #c8264d;
 
-  --display-weight: 700;
-
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --display-weight: 800;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #141210;
+  --foreground: #f4f1ee;
+  --card: #1f1c19;
+  --card-foreground: #f4f1ee;
+  --popover: #24211e;
+  --popover-foreground: #f4f1ee;
+  --primary: #f0476f;
+  --primary-foreground: #ffffff;
+  --primary-gradient: linear-gradient(135deg, #ff5a82 0%, #e23a64 55%, #c02a85 100%);
+  --primary-glow: 0 6px 18px -6px rgb(240 71 111 / 0.45);
+  --secondary: #2a2623;
+  --secondary-foreground: #f4f1ee;
+  --muted: #292522;
+  --muted-foreground: #a69e96;
+  --accent: #2a2623;
+  --accent-foreground: #f4f1ee;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(75.721% 0.00009 271.152);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(29.313% 0.00003 271.152);
-  --sidebar-accent-foreground: oklch(100% 0.00011 271.152);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: rgb(255 255 255 / 0.08);
+  --input: rgb(255 255 255 / 0.12);
+  --ring: #f0476f;
+  --chart-1: #ff5a82;
+  --chart-2: #ffc75a;
+  --chart-3: #e24fc0;
+  --chart-4: #ff8f4d;
+  --chart-5: #8f867d;
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -14px rgb(0 0 0 / 0.6);
+  --shadow-raised: 0 0 0 1px rgb(255 255 255 / 0.08);
+  --sidebar: #141210;
+  --sidebar-foreground: #b3aba3;
+  --sidebar-primary: #f0476f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #24211e;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.07);
+  --sidebar-ring: #f0476f;
 }
 
 @theme inline {
@@ -130,6 +141,8 @@
   --display-weight: var(--display-weight);
   --font-sans: var(--font-sans);
   --font-heading: var(--font-sans);
+  --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
@@ -137,6 +150,11 @@
 
 body {
   @apply overscroll-none bg-transparent antialiased;
+}
+
+/* The page header floats on the canvas: no rule under it. (Its markup is in components/shell/site-header.tsx.) */
+[data-slot="sidebar-inset"] > header {
+  border-bottom-color: transparent;
 }
 
 * {
@@ -150,6 +168,12 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
   }
 
   .font-display {

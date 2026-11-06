@@ -6,15 +6,6 @@ const SESSION_COOKIES = ["__Secure-better-auth.session_token", "better-auth.sess
 // A quick check that a session cookie is there, so signed-out visitors go straight to sign-in.
 // Whether the session is real, and what it may see, is checked by the API on every request.
 export function proxy(request: NextRequest) {
-  // Sample-data previews: ?look=<name> picks a redesign look (lib/looks.ts) and drops the parameter.
-  if (process.env.WAAS_API_FIXTURES === "1" && request.nextUrl.searchParams.has("look")) {
-    const look = request.nextUrl.searchParams.get("look") ?? "";
-    const clean = request.nextUrl.clone();
-    clean.searchParams.delete("look");
-    const res = NextResponse.redirect(clean);
-    res.cookies.set("dashboard_look", look, { path: "/", maxAge: look ? 31536000 : 0, sameSite: "lax" });
-    return res;
-  }
   if (process.env.WAAS_API_FIXTURES === "1") return NextResponse.next();
   if (SESSION_COOKIES.some((name) => request.cookies.has(name))) return NextResponse.next();
   const login = new URL("/login", request.url);
