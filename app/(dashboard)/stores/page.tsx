@@ -22,7 +22,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
     getAdminApi().products()
   ]);
   // On one storefront's list, a new site or one moved in goes to that storefront.
-  const choices = (product ? products.filter((p) => p.id === product) : products).map((p) => ({ id: p.id, name: p.name }));
+  const choices = (product ? products.filter((p) => p.id === product) : products).map((p) => ({ id: p.id, name: p.name, highlevelAgency: p.highlevelAgency }));
 
   return (
     <div className="space-y-4 lg:space-y-6">

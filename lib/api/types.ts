@@ -268,6 +268,8 @@ export type ProductDetail = Product & {
   /** The reseller it belongs to; null for a storefront of its own. */
   resellerId: string | null;
   resellerName: string | null;
+  /** A HighLevel agency's storefront: its new sites default to the HighLevel site type. */
+  highlevelAgency: boolean;
 };
 
 /** A partner that sells stores from one or more storefronts and pays a wholesale price for each live store. */

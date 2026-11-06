@@ -210,6 +210,8 @@ export type WireProduct = {
   /** Added with reseller accounts; absent from an older API. */
   resellerId?: string | null;
   resellerName?: string | null;
+  /** A HighLevel agency's storefront: its sites default to the HighLevel site type. Absent from an older API. */
+  highlevelAgency?: boolean;
   dateCreated: string;
 };
 
