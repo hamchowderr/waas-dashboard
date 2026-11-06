@@ -33,3 +33,10 @@ describe("publicApiUrl", () => {
     expect(publicApiUrl()).toBe("https://api.example.com");
   });
 });
+
+describe("logos", () => {
+  it("points every logo at a file that exists", async () => {
+    const { existsSync } = await import("node:fs");
+    for (const logo of items.flatMap((i) => i.logos ?? [])) expect(existsSync(`public${logo.src}`), logo.src).toBe(true);
+  });
+});
