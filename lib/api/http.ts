@@ -279,7 +279,8 @@ export class HttpAdminApi implements AdminApi {
       versionCount: p.versionCount,
       productionVersionId: p.productionVersionId,
       resellerId: p.resellerId ?? null,
-      resellerName: p.resellerName ?? null
+      resellerName: p.resellerName ?? null,
+      highlevelAgency: p.highlevelAgency ?? false
     }));
   }
 
@@ -332,7 +333,7 @@ export class HttpAdminApi implements AdminApi {
     return (await this.send<ImportCode>("POST", this.productPath(productId, "/imports"), input))!;
   }
 
-  async createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize; notifyOwner?: boolean }): Promise<{ tenantId: string }> {
+  async createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize; siteType: string; notifyOwner?: boolean }): Promise<{ tenantId: string }> {
     const made = (await this.send<{ tenantId: string }>("POST", this.productPath(productId, "/tenants"), input))!;
     return { tenantId: made.tenantId };
   }

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { createStore } from "../actions";
+import { NEW_SITE_TYPE_HELP, NEW_SITE_TYPES, siteTypeOf } from "@/components/admin/site-type";
 
 const SIZES = [
   { value: "small", label: "Small (5 GB)" },
@@ -39,7 +40,7 @@ const SIZES = [
 export function NewSite({
   products,
 }: {
-  products: { id: string; name: string }[];
+  products: { id: string; name: string; highlevelAgency?: boolean }[];
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -47,6 +48,9 @@ export function NewSite({
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [size, setSize] = React.useState("small");
+  // A HighLevel agency's storefront starts on the HighLevel site type.
+  const defaultType = (id: string) => (products.find((p) => p.id === id)?.highlevelAgency ? "highlevel" : "website");
+  const [siteType, setSiteType] = React.useState(() => defaultType(products[0]?.id ?? ""));
   const [notify, setNotify] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
 
@@ -62,7 +66,7 @@ export function NewSite({
 
   const submit = () =>
     startTransition(async () => {
-      const result = await createStore(productId, name, email, size, notify);
+      const result = await createStore(productId, name, email, size, siteType, notify);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -101,7 +105,10 @@ export function NewSite({
                 <Label htmlFor="new-site-storefront">Storefront</Label>
                 <Select
                   value={productId}
-                  onValueChange={setProductId}
+                  onValueChange={(id) => {
+                    setProductId(id);
+                    setSiteType(defaultType(id));
+                  }}
                   disabled={pending}
                 >
                   <SelectTrigger id="new-site-storefront" className="w-full">
@@ -144,6 +151,24 @@ export function NewSite({
               />
               <p id="new-site-email-help" className="text-muted-foreground text-sm">
                 They sign in to the site with this email.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-site-type">Site type</Label>
+              <Select value={siteType} onValueChange={setSiteType} disabled={pending}>
+                <SelectTrigger id="new-site-type" className="w-full" aria-describedby="new-site-type-help">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NEW_SITE_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {siteTypeOf([type]).label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p id="new-site-type-help" className="text-muted-foreground text-sm">
+                {NEW_SITE_TYPE_HELP[siteType as (typeof NEW_SITE_TYPES)[number]]}
               </p>
             </div>
             <div className="flex items-start gap-2">

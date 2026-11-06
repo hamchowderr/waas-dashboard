@@ -1152,7 +1152,8 @@ export class FixtureAdminApi implements AdminApi {
       versionCount: versions.filter((v) => v.productId === p.id).length,
       productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null,
       resellerId: resellerOf.get(p.id) ?? null,
-      resellerName: resellers.find((r) => r.id === resellerOf.get(p.id))?.name ?? null
+      resellerName: resellers.find((r) => r.id === resellerOf.get(p.id))?.name ?? null,
+      highlevelAgency: false
     }));
   }
 
@@ -1184,12 +1185,12 @@ export class FixtureAdminApi implements AdminApi {
     return this.importCode(id);
   }
 
-  async createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize; notifyOwner?: boolean }): Promise<{ tenantId: string }> {
-    return { tenantId: this.addTenant(productId, input.name) };
+  async createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize; siteType: string; notifyOwner?: boolean }): Promise<{ tenantId: string }> {
+    return { tenantId: this.addTenant(productId, input.name, undefined, input.siteType) };
   }
 
   /** A new store of the product, being built; `moveIn` when it waits for a site moved in. */
-  private addTenant(productId: string, rawName: string, moveIn?: (typeof tenants)[number]["moveIn"]): string {
+  private addTenant(productId: string, rawName: string, moveIn?: (typeof tenants)[number]["moveIn"], siteType = "website"): string {
     const product = this.product(productId);
     const name = rawName.trim();
     if (!name) throw new FixtureError(400, "name is required");
@@ -1204,7 +1205,7 @@ export class FixtureAdminApi implements AdminApi {
       productName: product.name,
       versionId: versions.find((v) => v.productId === product.id && v.isProduction)?.id ?? versions[0].id,
       versionName: versions.find((v) => v.productId === product.id && v.isProduction)?.name ?? versions[0].name,
-      siteTypes: moveIn ? [] : ["website"],
+      siteTypes: moveIn ? [] : [siteType],
       statusCode: StatusCode.Pending,
       isSuspended: false,
       dateSuspended: null,
