@@ -54,6 +54,7 @@ import {
   type JobsList,
   type Listing,
   type DomainConnectLink,
+  type DomainSetup,
   type MailDomain,
   type Overview,
   type Product,
@@ -1395,6 +1396,37 @@ export class FixtureAdminApi implements AdminApi {
       dnsProvider: "Example DNS",
       supported: true,
       url: `https://domainconnect.example.com/v2/domainTemplates/providers/anypress.io/services/${service}/apply?${query}`
+    };
+  }
+
+  async domainSetup(tenantId: string, domainName: string): Promise<DomainSetup> {
+    const tenant = tenants.find((t) => t.id === tenantId);
+    if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const domain = domainName.trim().toLowerCase();
+    if (tenant.domains.some((d) => d.domainName === domain && d.isBase)) {
+      throw new FixtureError(400, `${domain} is the store's own address on the platform and needs no DNS records`);
+    }
+    if (tenants.some((t) => t.id !== tenantId && t.domains.some((d) => d.domainName === domain))) {
+      throw new FixtureError(400, `Domain ${domain} is already in use`);
+    }
+    // The sample stores' own domains point here already; a new one doesn't yet. Names under
+    // other.example are at a DNS host without one-click setup.
+    const pointsHere = tenant.domains.some((d) => d.domainName === domain);
+    const zone = domain.split(".").slice(-2).join(".");
+    const name = domain === zone ? "@" : domain.slice(0, -zone.length - 1);
+    const records: DomainSetup["records"] = [
+      { type: "A", name, host: domain, value: "203.0.113.7" },
+      { type: "AAAA", name, host: domain, value: "2001:db8::7" }
+    ];
+    const query = new URLSearchParams({ domain: zone, ...(name !== "@" ? { host: name } : {}), ip: "203.0.113.7", ipv6: "2001:db8::7" });
+    return {
+      domainName: domain,
+      records,
+      currentAddresses: pointsHere ? ["203.0.113.7", "2001:db8::7"] : domain.startsWith("www.") ? [] : ["198.51.100.20"],
+      pointsHere,
+      connect: zone === "other.example"
+        ? { dnsProvider: null, supported: false, url: null }
+        : { dnsProvider: "Cloudflare", supported: true, url: `https://dash.cloudflare.example/domainconnect/v2/domainTemplates/providers/anypress.io/services/website/apply?${query}` }
     };
   }
 

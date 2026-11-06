@@ -27,6 +27,7 @@ import type {
   NewStorefrontInput,
   ReadyStorefront,
   Reseller,
+  DomainSetup,
   ResellerInvoice,
   ResellerSettings,
   TeamOf,
@@ -126,6 +127,21 @@ export async function setMainDomain(tenantId: string, domainName: string): Promi
     await getAdminApi().setMainDomain(uuid(tenantId, "store"), domain);
     return undefined;
   }, ["/stores", "/"]);
+}
+
+/**
+ * The DNS records a custom domain needs and whether it has them yet: read before a store moves to it.
+ * Changes nothing, but needs the same right to change the store as the move itself.
+ */
+export async function getDomainSetup(tenantId: string, domainName: string): Promise<ActionResult<DomainSetup>> {
+  return run(async () => {
+    const domain = text(domainName, "Address", 253)
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "");
+    if (!DOMAIN.test(domain)) throw new InputError("Enter an address like shop.example.com");
+    return getAdminApi().domainSetup(uuid(tenantId, "store"), domain);
+  }, []);
 }
 
 /** Gives a store its own sending domain; it sends from it once toSend has verified the DNS records. */
