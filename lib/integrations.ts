@@ -40,12 +40,11 @@ export const INTEGRATION_GROUPS: IntegrationGroup[] = [
           { src: "/integrations/openai.svg", alt: "ChatGPT" },
           { src: "/integrations/cursor.svg", alt: "Cursor" },
           { src: "/integrations/githubcopilot.svg", alt: "GitHub Copilot" },
-          { src: "/integrations/gemini.svg", alt: "Gemini" },
-          { src: "/integrations/windsurf.svg", alt: "Windsurf" }
+          { src: "/integrations/gemini.svg", alt: "Gemini" }
         ],
         name: "AnyPress connector (MCP)",
         summary:
-          "Works in any app that connects to MCP servers, such as Claude, ChatGPT, Cursor, VS Code with GitHub Copilot, Gemini and Windsurf. Add the address below and sign in to AnyPress; an app that can't sign in can use your API key and secret instead. It can then make and back up sites, add domains, and edit a site's pages and design, with the rights your role on the team gives you.",
+          "Works in Claude, ChatGPT, Cursor, Copilot, Gemini, Devin Desktop and any other MCP app. Paste the address below and sign in, then ask it to make sites, back them up or edit their pages.",
         guide: { label: "Connect an AI app", href: `${DOCS}/connect-an-ai-app-to-anypress/` },
         action: { label: "What to ask", href: "https://anypress.io/ai" }
       }
