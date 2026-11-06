@@ -530,6 +530,8 @@ export type DomainSetup = {
   pointsHere: boolean;
   /** One-click setup at the DNS host; null when Domain Connect is off on the API. */
   connect: DomainConnectLink | null;
+  /** Who runs the domain's DNS (GoDaddy, Cloudflare...), from its nameservers; null when unknown. */
+  dnsHost: { name: string; nameservers: string[] } | null;
 };
 
 /** A store's own sending domain: it sends email from no-reply@ this domain once toSend has verified it. */

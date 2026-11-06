@@ -1486,6 +1486,10 @@ export class FixtureAdminApi implements AdminApi {
       records,
       currentAddresses: pointsHere ? ["203.0.113.7", "2001:db8::7"] : domain.startsWith("www.") ? [] : ["198.51.100.20"],
       pointsHere,
+      dnsHost:
+        zone === "other.example"
+          ? { name: "GoDaddy", nameservers: ["ns07.domaincontrol.com", "ns08.domaincontrol.com"] }
+          : { name: "Cloudflare", nameservers: ["ada.ns.cloudflare.com", "dee.ns.cloudflare.com"] },
       connect: zone === "other.example"
         ? { dnsProvider: null, supported: false, url: null }
         : { dnsProvider: "Cloudflare", supported: true, url: `https://dash.cloudflare.example/domainconnect/v2/domainTemplates/providers/anypress.io/services/website/apply?${query}` }
