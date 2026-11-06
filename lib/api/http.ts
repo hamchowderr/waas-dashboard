@@ -59,6 +59,7 @@ import type {
   JobsList,
   Listing,
   DomainConnectLink,
+  DomainSetup,
   MailDomain,
   Overview,
   RequestFilter,
@@ -387,6 +388,11 @@ export class HttpAdminApi implements AdminApi {
   async domainConnect(tenantId: string, domainName: string, service: "website" | "email"): Promise<DomainConnectLink> {
     const query = new URLSearchParams({ domainName, service });
     return (await this.get<DomainConnectLink>(`/admin/tenants/${encodeURIComponent(tenantId)}/domain-connect?${query}`))!;
+  }
+
+  async domainSetup(tenantId: string, domainName: string): Promise<DomainSetup> {
+    const query = new URLSearchParams({ domainName });
+    return (await this.get<DomainSetup>(`/admin/tenants/${encodeURIComponent(tenantId)}/domain-setup?${query}`))!;
   }
 
   async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {

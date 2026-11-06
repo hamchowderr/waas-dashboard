@@ -27,7 +27,7 @@ const STATUS = {
   removing: { label: "Removing", variant: "outline" }
 } as const;
 
-function CopyButton({ value, label }: { value: string; label: string }) {
+export function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = React.useState(false);
   return (
     <Button

@@ -489,6 +489,27 @@ export type DomainConnectLink = {
   conflict?: string;
 };
 
+/** One record a custom domain needs at its DNS host to reach the store. */
+export type DomainRecord = {
+  type: "A" | "AAAA";
+  /** Relative to the domain the DNS host holds: @ for the domain itself. */
+  name: string;
+  host: string;
+  value: string;
+};
+
+/** What a custom domain needs before the store can use it, and whether it has it yet. */
+export type DomainSetup = {
+  domainName: string;
+  records: DomainRecord[];
+  /** The A and AAAA addresses the domain has now. */
+  currentAddresses: string[];
+  /** True when the domain already points only at the store server. */
+  pointsHere: boolean;
+  /** One-click setup at the DNS host; null when Domain Connect is off on the API. */
+  connect: DomainConnectLink | null;
+};
+
 /** A store's own sending domain: it sends email from no-reply@ this domain once toSend has verified it. */
 export type MailDomain = {
   domainName: string;

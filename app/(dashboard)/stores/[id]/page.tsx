@@ -16,6 +16,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChangeAddress } from "./change-address";
+import { DomainDnsButton } from "./domain-setup";
 import { GoLive } from "./go-live";
 import { MailSender } from "./mail-sender";
 import { RestoreBackup } from "./restore-backup";
@@ -60,6 +61,13 @@ export default async function StorePage({ params, searchParams }: Params) {
     mailDomain?.status === "pending"
       ? await getAdminApi().domainConnect(id, mailDomain.domainName, "email").catch(() => null)
       : null;
+  // Each custom domain's DNS records and whether it reaches the store yet; a lookup that fails shows nothing.
+  const custom = tenant.domains.filter((d) => !d.isBase);
+  const setups = new Map(
+    (await Promise.all(custom.map((d) => getAdminApi().domainSetup(id, d.domainName).catch(() => null))))
+      .filter((s) => s !== null)
+      .map((s) => [s.domainName, s])
+  );
   // A store being removed or that failed can't be rolled back until it's fixed.
   const canRestore = tenant.statusCode !== StatusCode.Removing && tenant.statusCode !== StatusCode.Failed;
   // Suspend and delete are the platform admin's; a seller's stores follow their shop's subscriptions.
@@ -242,7 +250,7 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Domain</TableHead>
-                    <TableHead className="w-32 text-end">Role</TableHead>
+                    <TableHead className="w-44 text-end">Role</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -250,7 +258,14 @@ export default async function StorePage({ params, searchParams }: Params) {
                     <TableRow key={domain.domainName}>
                       <TableCell className="font-medium break-all whitespace-normal">{domain.domainName}</TableCell>
                       <TableCell className="text-end">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1">
+                          {setups.has(domain.domainName) && (
+                            <DomainDnsButton
+                              key={`${domain.domainName}-${setups.get(domain.domainName)!.pointsHere}`}
+                              tenantId={tenant.id}
+                              initial={setups.get(domain.domainName)!}
+                            />
+                          )}
                           {domain.isMain && <Badge variant="success">Main</Badge>}
                           {domain.isBase && <Badge variant="outline">Base</Badge>}
                           {!domain.isMain && !domain.isBase && (

@@ -56,6 +56,7 @@ import type {
   JobsList,
   Listing,
   DomainConnectLink,
+  DomainSetup,
   ImportCode,
   StoreSize,
   MailDomain,
@@ -151,6 +152,8 @@ export interface AdminApi {
   removeMailDomain(tenantId: string): Promise<void>;
   /** A Domain Connect link for one of the store's domains (website) or its sending domain (email). */
   domainConnect(tenantId: string, domainName: string, service: "website" | "email"): Promise<DomainConnectLink>;
+  /** The DNS records a custom domain needs, whether it has them, and its one-click link; works before it is added. */
+  domainSetup(tenantId: string, domainName: string): Promise<DomainSetup>;
   createVersion(productId: string, input: CreateVersionInput): Promise<Created>;
   setProductionVersion(productId: string, versionId: string): Promise<void>;
   deleteVersion(productId: string, versionId: string): Promise<void>;
