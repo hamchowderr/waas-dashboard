@@ -81,27 +81,6 @@ export const INTEGRATION_GROUPS: IntegrationGroup[] = [
     ]
   },
   {
-    id: "selling",
-    title: "Your shop and CRM",
-    description: "What's already connected on your storefront and on every store you sell.",
-    items: [
-      {
-        id: "storefront",
-        name: "Storefront orders",
-        summary: "Every paid FluentCart order on your storefront builds the client's site, with nothing to set up beyond the product.",
-        guide: { label: "Sites from storefront orders", href: `${DOCS}/sites-from-storefront-orders/` }
-      },
-      {
-        id: "crm",
-        name: "FluentCRM, WP Fusion and HighLevel",
-        summary:
-          "Every store ships with FluentCRM, its contact form and lifecycle tags. WP Fusion connects a store to another CRM. The Sales Kit adds your outreach emails to FluentCRM, or to HighLevel.",
-        guide: { label: "Create client sites automatically", href: `${DOCS}/create-client-sites-automatically/` },
-        action: { label: "Open the Sales Kit", href: "/sell" }
-      }
-    ]
-  },
-  {
     id: "developers",
     title: "Build your own",
     description: "For your own app or a tool not listed here. Every call signs in with your storefront's API key and secret.",

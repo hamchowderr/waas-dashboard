@@ -6,7 +6,7 @@ const items = INTEGRATION_GROUPS.flatMap((g) => g.items);
 
 describe("integrations", () => {
   it("lists every integration a seller can use, the MCP connector included", () => {
-    expect(items.map((i) => i.id)).toEqual(expect.arrayContaining(["n8n", "zapier", "make", "highlevel", "mcp", "storefront", "crm", "api", "webhooks"]));
+    expect(items.map((i) => i.id)).toEqual(expect.arrayContaining(["n8n", "zapier", "make", "highlevel", "mcp", "api", "webhooks"]));
   });
 
   it("gives each one a guide on the shop's docs, and keeps dashboard links inside the dashboard", () => {
