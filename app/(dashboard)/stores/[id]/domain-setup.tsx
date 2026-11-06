@@ -33,8 +33,15 @@ export function DomainRecords({ setup }: { setup: DomainSetup }) {
   const oneClick = connect?.supported && connect.url?.startsWith("https://") ? connect.url : null;
   return (
     <div className="space-y-3 text-sm" data-testid="domain-setup">
-      <div className="flex items-center justify-between gap-3">
-        <span className="min-w-0 font-medium break-all">{setup.domainName}</span>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="font-medium break-all">{setup.domainName}</div>
+          {setup.dnsHost && (
+            <div className="text-muted-foreground text-xs" title={setup.dnsHost.nameservers.join(", ")}>
+              DNS at {setup.dnsHost.name}
+            </div>
+          )}
+        </div>
         <PointsBadge pointsHere={setup.pointsHere} />
       </div>
       {setup.pointsHere ? (
@@ -61,8 +68,9 @@ export function DomainRecords({ setup }: { setup: DomainSetup }) {
             </p>
           )}
           <p className="text-muted-foreground">
-            {oneClick ? "To add them by hand, open" : "Open"} the DNS settings where the domain was bought and add
-            these records. Delete any other A or AAAA records with the same name.
+            {oneClick ? "To add them by hand, open" : "Open"} the DNS settings{" "}
+            {setup.dnsHost ? `at ${setup.dnsHost.name}` : "where the domain was bought"} and add these records. Delete any
+            other A or AAAA records with the same name.
           </p>
         </>
       )}
