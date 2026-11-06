@@ -7,7 +7,8 @@ export const LOOK_COOKIE = "dashboard_look";
 export const LOOKS = [
   { value: "sketch", number: 1, label: "Sketchbook", note: "The anypress.io look: ink outlines, warm paper, honey highlights" },
   { value: "console", number: 2, label: "Console", note: "Dark sidebar, open page, no boxes: sections and big numbers" },
-  { value: "studio", number: 3, label: "Studio", note: "Soft floating panels on a warm canvas, rounder and friendlier" }
+  { value: "studio", number: 3, label: "Studio", note: "Soft floating panels on a warm canvas, rounder and friendlier" },
+  { value: "mix", number: 4, label: "Mix", note: "Studio's soft panels with Console's dark sidebar" }
 ] as const;
 
 export type Look = (typeof LOOKS)[number]["value"];

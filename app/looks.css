@@ -286,7 +286,7 @@ html:not(.dark) body[data-look="console"] [role="progressbar"] > div {
 /* ───────────────────────── 3 · Studio ───────────────────────── */
 /* Soft, floating white panels on a warm canvas; rounder shapes, ribbon colour on the main actions. */
 
-html:not(.dark) body[data-look="studio"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) {
   --background: #ffffff;
   --foreground: #1b1917;
   --card: #ffffff;
@@ -310,91 +310,144 @@ html:not(.dark) body[data-look="studio"] {
   --font-sans: var(--font-plus-jakarta-sans);
   font-family: var(--font-plus-jakarta-sans), system-ui, sans-serif;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="sidebar-wrapper"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="sidebar-wrapper"] {
   background: var(--canvas);
 }
-html:not(.dark) body[data-look="studio"] [data-slot="sidebar-inset"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="sidebar-inset"] {
   background: transparent !important;
   box-shadow: none !important;
 }
-html:not(.dark) body[data-look="studio"] header {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) header {
   background: rgba(241, 237, 232, 0.8);
   border-bottom-color: transparent;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="sidebar-footer"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="sidebar-footer"] {
   border-top-color: rgba(27, 25, 23, 0.07);
 }
-html:not(.dark) body[data-look="studio"] [data-slot="sidebar-group-label"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="sidebar-group-label"] {
   font-weight: 700;
   color: #9a928a;
   font-size: 11.5px;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="sidebar-menu-button"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="sidebar-menu-button"] {
   border-radius: 12px;
   font-weight: 500;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="sidebar-menu-button"][data-active="true"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="sidebar-menu-button"][data-active="true"] {
   background: #ffffff;
   box-shadow: var(--lift);
   font-weight: 700;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="sidebar-menu-button"][data-active="true"] svg {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="sidebar-menu-button"][data-active="true"] svg {
   color: #c8264d;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="page-title"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="page-title"] {
   font-weight: 800;
   font-size: clamp(1.6rem, 2.8vw, 2.2rem);
   letter-spacing: -0.03em;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="card"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="card"] {
   border-radius: 22px;
   --tw-ring-shadow: 0 0 #0000;
   box-shadow: var(--lift);
   --card-spacing: 1.375rem;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="card-title"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="card-title"] {
   font-weight: 700;
   font-size: 1.1rem;
   letter-spacing: -0.015em;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="button"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="button"] {
   border-radius: 999px;
   font-weight: 600;
   padding-inline: 0.9rem;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="button"][data-size^="icon"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="button"][data-size^="icon"] {
   padding-inline: 0;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="button"][data-variant="default"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="button"][data-variant="default"] {
   background: linear-gradient(135deg, #ee2f5e, #c8264d 55%, #a81e72);
   box-shadow: 0 6px 16px -6px rgba(200, 38, 77, 0.55);
 }
-html:not(.dark) body[data-look="studio"] [data-slot="button"][data-variant="outline"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="button"][data-variant="outline"] {
   border-color: transparent;
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(27, 25, 23, 0.06), 0 0 0 1px rgba(27, 25, 23, 0.06);
 }
-html:not(.dark) body[data-look="studio"] [data-slot="input"],
-html:not(.dark) body[data-look="studio"] [data-slot="sidebar-input"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="input"],
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="sidebar-input"] {
   background: #ffffff;
   border-radius: 12px;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="card"] .rounded-lg.border:not([data-slot]) {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="card"] .rounded-lg.border:not([data-slot]) {
   border-color: transparent;
   background: #f8f6f3;
   border-radius: 14px;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="tabs-list"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="tabs-list"] {
   background: #f1ede8;
   border-radius: 999px;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="tabs-trigger"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="tabs-trigger"] {
   border-radius: 999px;
 }
-html:not(.dark) body[data-look="studio"] [data-slot="badge"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="badge"] {
   font-weight: 600;
 }
-html:not(.dark) body[data-look="studio"] [role="progressbar"] > div,
-html:not(.dark) body[data-look="studio"] [data-slot="progress-indicator"] {
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [role="progressbar"] > div,
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="progress-indicator"] {
   background: linear-gradient(90deg, #ffb338, #ee2f5e);
+}
+
+/* Step circles: clear on the soft tiles. Not done is a white circle with a firm outline; done is solid green with a halo. */
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="card"] li > .rounded-full.border {
+  background: #ffffff;
+  border: 1.5px solid #bdb4aa;
+  box-shadow: 0 1px 2px rgba(27, 25, 23, 0.08);
+}
+html:not(.dark) :is(body[data-look="studio"], body[data-look="mix"]) [data-slot="card"] li > .rounded-full.border.bg-green-600 {
+  background: #16a34a;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+}
+
+/* ───────────────────────── 4 · Mix ───────────────────────── */
+/* Studio's soft panels with Console's dark ink sidebar. */
+
+html:not(.dark) body[data-look="mix"] [data-slot="sidebar"] {
+  --sidebar: #141312;
+  --sidebar-foreground: #aaa59f;
+  --sidebar-accent: #24221f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a2826;
+  --foreground: #f5f4f2;
+  --muted-foreground: #8c8781;
+  --border: #2a2826;
+  --muted: #1f1d1b;
+  --background: #1a1918;
+  --input: #2e2b28;
+}
+html:not(.dark) body[data-look="mix"] [data-slot="sidebar-container"],
+html:not(.dark) body[data-look="mix"] [data-slot="sidebar-inner"] {
+  background: #141312;
+}
+html:not(.dark) body[data-look="mix"] [data-slot="sidebar-input"] {
+  background: #1f1d1b;
+}
+html:not(.dark) body[data-look="mix"] [data-slot="sidebar-group-label"] {
+  color: #77716b;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10.5px;
+}
+html:not(.dark) body[data-look="mix"] [data-slot="sidebar-menu-button"][data-active="true"] {
+  background: #24221f;
+  color: #ffffff;
+  box-shadow: inset 3px 0 0 #ee2f5e;
+}
+html:not(.dark) body[data-look="mix"] [data-slot="sidebar-menu-button"][data-active="true"] svg {
+  color: #ff6b8e;
+}
+html:not(.dark) body[data-look="mix"] [data-slot="sidebar-footer"] {
+  border-top-color: #2a2826;
 }
