@@ -23,6 +23,10 @@ type ConnectRequest = {
   /** True when the API took this person as a platform admin: every storefront is listed. */
   asAdmin?: boolean;
   storefronts: { productId: string; name: string; role: string; canChange: boolean }[];
+  /** The HighLevel app, connecting as an agency: it makes sites for the agency's sub-accounts. */
+  forApps?: boolean;
+  /** For the HighLevel app, someone with no storefront may make one here. */
+  canCreateStorefront?: boolean;
 };
 
 /**
@@ -35,11 +39,27 @@ export default async function ConnectPage({ params }: { params: Promise<{ id: st
   const viewer = await getViewer();
   if (!viewer) redirect(`/login?callbackUrl=${encodeURIComponent(`/connect/${id}`)}`);
 
-  const request = UUID.test(id) && process.env.WAAS_API_URL ? await load(id, viewer) : null;
+  const request = !UUID.test(id) ? null : process.env.WAAS_API_FIXTURES === "1" ? sampleRequest(id) : process.env.WAAS_API_URL ? await load(id, viewer) : null;
   if (!request) {
     return (
       <AccountCard title="This link has expired" description="Go back to the app and connect again. Each link works once, for 10 minutes.">
         <SignOutButton variant="ghost" />
+      </AccountCard>
+    );
+  }
+
+  if (request.storefronts.length === 0 && request.canCreateStorefront) {
+    return (
+      <AccountCard
+        title={`Connect ${request.clientName}`}
+        description={
+          <>
+            <strong>{request.clientName}</strong> wants to make and manage websites for your sub-accounts, as you ({viewer.user.email}). Name your
+            AnyPress storefront: it keeps every site your sub-accounts make, each tied to its own sub-account. After you approve, you go back to{" "}
+            <code>{request.returnTo}</code>.
+          </>
+        }>
+        <ConnectForm id={request.id} areas={request.areas ?? []} storefronts={[]} asAdmin={false} newStorefront />
       </AccountCard>
     );
   }
@@ -82,4 +102,23 @@ async function load(id: string, viewer: { cookie: string; isAdmin: boolean }): P
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Provisioning API returned ${response.status} for the connection request`);
   return (await response.json()) as ConnectRequest;
+}
+
+/** Sample mode (WAAS_API_FIXTURES=1): the HighLevel app connecting for an agency with no storefront yet. */
+function sampleRequest(id: string): ConnectRequest {
+  const box = (scope: string, label: string) => ({ scope, label, ticked: true });
+  return {
+    id,
+    clientName: "HighLevel",
+    returnTo: "services.leadconnectorhq.com",
+    wantsWrite: true,
+    readOnly: false,
+    areas: [
+      { area: "stores", name: "Stores", read: box("stores:read", "See your stores and their status"), write: box("stores:write", "Create, change, suspend, resume, move and delete stores") },
+      { area: "webhooks", name: "Webhooks", read: box("webhooks:read", "See webhook endpoints and their deliveries"), write: box("webhooks:write", "Add, change, test and remove webhook endpoints") }
+    ],
+    storefronts: [],
+    forApps: true,
+    canCreateStorefront: true
+  };
 }

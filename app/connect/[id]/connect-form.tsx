@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { chosenScopes, initialScopes, toggleScope, type ScopeArea } from "@/lib/connect-scopes";
@@ -11,9 +12,23 @@ import { answerConnection, type ConnectAnswer } from "./actions";
 
 type Storefront = { productId: string; name: string; role: string; canChange: boolean };
 
-export function ConnectForm({ id, areas, storefronts, asAdmin }: { id: string; areas: ScopeArea[]; storefronts: Storefront[]; asAdmin: boolean }) {
-  const [productId, setProductId] = React.useState(storefronts[0]!.productId);
-  const chosen = storefronts.find((s) => s.productId === productId)!;
+/** `newStorefront`: the person has no storefront yet and names one, made as they approve (the HighLevel app). */
+export function ConnectForm({
+  id,
+  areas,
+  storefronts,
+  asAdmin,
+  newStorefront = false
+}: {
+  id: string;
+  areas: ScopeArea[];
+  storefronts: Storefront[];
+  asAdmin: boolean;
+  newStorefront?: boolean;
+}) {
+  const [productId, setProductId] = React.useState(storefronts[0]?.productId ?? "");
+  const [newName, setNewName] = React.useState("");
+  const chosen: Storefront = storefronts.find((s) => s.productId === productId) ?? { productId: "", name: newName, role: "owner", canChange: true };
   const [ticked, setTicked] = React.useState(() => initialScopes(areas, chosen.canChange));
   const [pending, setPending] = React.useState<"approve" | "deny" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -41,7 +56,13 @@ export function ConnectForm({ id, areas, storefronts, asAdmin }: { id: string; a
 
   return (
     <div className="space-y-4">
-      {storefronts.length > 1 ? (
+      {newStorefront ? (
+        <div className="space-y-1.5">
+          <Label htmlFor="new-storefront">Storefront name</Label>
+          <Input id="new-storefront" value={newName} maxLength={100} placeholder="Your agency's name" onChange={(e) => setNewName(e.target.value)} />
+          <p className="text-muted-foreground text-xs">It holds your sites, with room for 3 to start.</p>
+        </div>
+      ) : storefronts.length > 1 ? (
         <div className="space-y-1.5">
           <Label>Storefront</Label>
           <Select value={productId} onValueChange={pick}>
@@ -107,7 +128,10 @@ export function ConnectForm({ id, areas, storefronts, asAdmin }: { id: string; a
         <Button variant="outline" disabled={pending !== null} onClick={() => void answer({ action: "deny" })}>
           {pending === "deny" ? "Cancelling…" : "Cancel"}
         </Button>
-        <Button className="flex-1" disabled={pending !== null || scopes.length === 0} onClick={() => void answer({ action: "approve", productId, scopes })}>
+        <Button
+          className="flex-1"
+          disabled={pending !== null || scopes.length === 0 || (newStorefront && !newName.trim())}
+          onClick={() => void answer(newStorefront ? { action: "approve", newStorefront: newName, scopes } : { action: "approve", productId, scopes })}>
           {pending === "approve" ? "Connecting…" : "Approve"}
         </Button>
       </div>

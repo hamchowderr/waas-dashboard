@@ -7,7 +7,10 @@ import { connectHeaders } from "./headers";
 // The API checks everything again: the request, that the storefront is theirs, their role and the scopes.
 // For a platform admin the admin token goes along too, which lets them approve for any storefront.
 
-export type ConnectAnswer = { action: "approve"; productId: string; scopes: string[] } | { action: "deny" };
+export type ConnectAnswer =
+  | { action: "approve"; productId: string; scopes: string[] }
+  | { action: "approve"; newStorefront: string; scopes: string[] }
+  | { action: "deny" };
 export type ConnectResult = { ok: true; redirectUrl: string } | { ok: false; error: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -21,10 +24,18 @@ export async function answerConnection(id: string, answer: ConnectAnswer): Promi
   if (answer.action === "approve") {
     const scopes = Array.isArray(answer.scopes) ? answer.scopes.map(String).filter((s) => SCOPE.test(s)) : [];
     if (!scopes.length) return { ok: false, error: "Tick at least one thing the app may see." };
-    body = { action: "approve", productId: String(answer.productId), scopes };
+    if ("newStorefront" in answer) {
+      const name = String(answer.newStorefront).trim();
+      if (!name) return { ok: false, error: "Name your storefront." };
+      body = { action: "approve", newStorefront: name.slice(0, 100), scopes };
+    } else {
+      body = { action: "approve", productId: String(answer.productId), scopes };
+    }
   } else {
     body = { action: "deny" };
   }
+  // Sample mode has no API: approving goes back to the dashboard.
+  if (process.env.WAAS_API_FIXTURES === "1") return { ok: true, redirectUrl: "/" };
   try {
     const response = await fetch(new URL(`/account/oauth/requests/${id}`, process.env.WAAS_API_URL), {
       method: "POST",
