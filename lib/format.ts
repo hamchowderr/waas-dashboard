@@ -6,7 +6,7 @@ export const statusMeta: Record<
   StatusCode,
   { label: string; badge: "success" | "warning" | "destructive" | "info" }
 > = {
-  [StatusCode.Pending]: { label: "Pending", badge: "warning" },
+  [StatusCode.Pending]: { label: "In progress", badge: "warning" },
   [StatusCode.Done]: { label: "Ready", badge: "success" },
   [StatusCode.Failed]: { label: "Failed", badge: "destructive" },
   [StatusCode.Removing]: { label: "Removing", badge: "info" }

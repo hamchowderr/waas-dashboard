@@ -358,7 +358,7 @@ const seeds: TenantSeed[] = [
   { status: StatusCode.Done },
   { status: StatusCode.Done, suspended: true, custom: "store9.example" },
   { status: StatusCode.Done },
-  { status: StatusCode.Removing },
+  { status: StatusCode.Removing, job: { type: "tenant.delete", loop: true } },
   { status: StatusCode.Done, custom: "store12.example", extra: ["www.store12.example"] },
   { status: StatusCode.Done },
   { status: StatusCode.Pending, job: { type: "tenant.move", loop: true } },
@@ -497,18 +497,19 @@ const sampleSiteReport: SiteReport = {
 
 /** The steps of each store job, in the API's words (src/progress.ts in waas-provisioning-api). */
 const SAMPLE_PLANS: Record<string, string[]> = {
-  "tenant.create": ["Getting server space ready", "Starting the website", "Copying the site in", "Adding the theme and plugins", "Setting up the site"],
+  "tenant.create": ["Making room for the site", "Starting the website", "Copying the site in", "Adding the theme and plugins", "Putting in the site's settings"],
   "tenant.import": [
-    "Getting server space ready",
+    "Making room for the site",
     "Starting the website",
     "Copying the site in",
-    "Updating the database",
+    "Updating WordPress",
     "Adding the theme and plugins",
-    "Setting up the site",
+    "Putting in the site's settings",
     "Checking the site works"
   ],
-  "tenant.move": ["Switching to the new version", "Starting the website", "Adding the theme and plugins", "Updating the database"],
-  "tenant.domains": ["Updating the web address", "Starting the website", "Setting up the site"]
+  "tenant.move": ["Switching to the new version", "Starting the website", "Adding the theme and plugins", "Updating WordPress"],
+  "tenant.domains": ["Updating the web address", "Starting the website", "Putting in the site's settings"],
+  "tenant.delete": ["Turning off its email", "Removing the website and its files", "Keeping its backups in case you want it back"]
 };
 /** How long each sample step takes. */
 const SAMPLE_STEP_MS = 5_000;

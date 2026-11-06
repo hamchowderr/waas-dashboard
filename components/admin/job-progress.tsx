@@ -18,7 +18,8 @@ const JOB_TITLES: Record<string, string> = {
   "tenant.domains": "Changing the web address",
   "tenant.update": "Saving the new settings",
   "tenant.backup": "Saving a backup",
-  "tenant.suspend": "Saving a backup before pausing"
+  "tenant.suspend": "Saving a backup before pausing",
+  "tenant.delete": "Removing this site"
 };
 
 export function jobTitle(job: string): string {
@@ -100,12 +101,12 @@ export function JobProgressCard({
   return (
     <Card data-testid="job-progress" aria-live="polite">
       <CardHeader>
-        <CardTitle>{failed ? `${jobTitle(progress.job)} stopped` : jobTitle(progress.job)}</CardTitle>
+        <CardTitle>{failed ? `${jobTitle(progress.job)}: something went wrong` : jobTitle(progress.job)}</CardTitle>
         <CardDescription>
           {failed && gaveUp
-            ? `It stopped at "${progress.label}". The jobs list below says why, and an admin can try it again from the Jobs page.`
+            ? `It stopped at "${progress.label}". We've been sent an email about it and will sort it out, so you don't need to do anything.`
             : failed
-              ? `It stopped at "${progress.label}". It tries again on its own in a moment.`
+              ? `It hit a problem at "${progress.label}" and is trying again on its own.`
               : "This page updates on its own. You can leave it and come back."}
         </CardDescription>
       </CardHeader>
@@ -117,7 +118,7 @@ export function JobProgressCard({
             </span>
             {ended !== null && (
               <span className="text-muted-foreground tabular-nums">
-                {failed ? "Ran for" : "Running for"} {duration(ended - started)}
+                {failed ? `Ran for ${duration(ended - started)}` : `${duration(ended - started)} so far`}
               </span>
             )}
           </div>
@@ -187,11 +188,11 @@ export function JobProgressInline({ progress }: { progress: JobProgress }) {
           />
         </div>
         <span className="text-muted-foreground text-xs tabular-nums">
-          {progress.index}/{progress.total}
+          {progress.index} of {progress.total}
         </span>
       </div>
       <p className={cn("truncate text-xs", failed ? "text-destructive" : "text-muted-foreground")}>
-        {failed ? `Stopped: ${progress.label}` : progress.label}
+        {failed ? `Problem at: ${progress.label}` : progress.label}
       </p>
     </div>
   );
