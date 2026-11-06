@@ -1,4 +1,4 @@
-import { CalendarCheckIcon, GlobeIcon, GraduationCapIcon, LayersIcon, ShoppingBagIcon, type LucideIcon } from "lucide-react";
+import { CalendarCheckIcon, GlobeIcon, GraduationCapIcon, LayersIcon, ShoppingBagIcon, WorkflowIcon, type LucideIcon } from "lucide-react";
 
 import { cn } from "cn";
 
@@ -12,7 +12,23 @@ const SITE_TYPES: Record<string, { label: string; icon: LucideIcon }> = {
   "online-store": { label: "Store", icon: ShoppingBagIcon },
   store: { label: "Store", icon: ShoppingBagIcon },
   community: { label: "Community & courses", icon: GraduationCapIcon },
-  everything: { label: "Everything", icon: LayersIcon }
+  everything: { label: "Everything", icon: LayersIcon },
+  highlevel: { label: "HighLevel site", icon: WorkflowIcon }
+};
+
+/**
+ * The site types New site offers, with the plugins each turns on. A site needs one: without it every plugin of the
+ * store template stays on. HighLevel is for an agency that runs its clients' CRM, forms and calendars in HighLevel.
+ */
+export const NEW_SITE_TYPES = ["website", "bookings", "online-store", "community", "everything", "highlevel"] as const;
+
+export const NEW_SITE_TYPE_HELP: Record<(typeof NEW_SITE_TYPES)[number], string> = {
+  website: "Pages, contact form, CRM and email marketing.",
+  bookings: "Website, plus online booking, payments and a help desk.",
+  "online-store": "Website, plus a shop, a help desk and affiliates.",
+  community: "Website, plus a members' community, courses and payments.",
+  everything: "Every plugin the template has.",
+  highlevel: "Pages and SEO, with HighLevel's own plugin for forms, chat and calendars. No Fluent CRM, forms or shop."
 };
 
 const OTHER = { label: "Other site", icon: GlobeIcon };

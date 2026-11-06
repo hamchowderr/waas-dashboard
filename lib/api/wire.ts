@@ -1,4 +1,4 @@
-import type { ApiRequest, FluentRoute, MoveIn, SiteReport, SiteReportArea, SiteReportItem, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
+import type { ApiRequest, FluentRoute, JobProgress, MoveIn, SiteReport, SiteReportArea, SiteReportItem, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
 
 /**
  * The admin API's response bodies, exactly as openapi/admin/admin-api.yaml (v0.1.0) in
@@ -20,6 +20,19 @@ export type WireOverview = {
 
 export type WirePage<T> = { items: T[]; total: number; page: number; pageSize: number };
 
+/** openapi/admin JobProgress. Missing from an API older than 2026-11-06. */
+export type WireJobProgress = {
+  job: string;
+  step: string;
+  label: string;
+  index: number;
+  total: number;
+  steps?: string[];
+  startedAt: string;
+  stepStartedAt: string;
+  failedAt?: string;
+} | null;
+
 export type WireTenantRow = {
   id: string;
   externalId: string;
@@ -37,6 +50,7 @@ export type WireTenantRow = {
   isSuspended: boolean;
   /** Not in the admin list's schema yet; read when present. */
   onHold?: boolean;
+  progress?: WireJobProgress;
   latestBackupAt: string | null;
   dateCreated: string;
 };
@@ -108,6 +122,7 @@ export type WireTenantDetail = {
   dateSuspended?: string | null;
   onHold?: boolean;
   dateHeld?: string | null;
+  progress?: WireJobProgress;
   ownerNotifiedAt?: string | null;
   ownerNotifiedTo?: string | null;
   ownerEmail?: string | null;
@@ -181,6 +196,21 @@ export function toSiteReport(wire: unknown): SiteReport | null {
   return { items, plugins, notes: texts(report.notes) };
 }
 
+/** A running job's step as the dashboard shows it; null when none runs or the API is older. */
+export function toProgress(wire: WireJobProgress | undefined): JobProgress | null {
+  if (!wire) return null;
+  return {
+    job: wire.job,
+    label: wire.label,
+    index: wire.index,
+    total: wire.total,
+    steps: wire.steps ?? [],
+    startedAt: wire.startedAt,
+    stepStartedAt: wire.stepStartedAt,
+    failedAt: wire.failedAt ?? null
+  };
+}
+
 /**
  * A store's move-in as the dashboard shows it. The API already words a failed health check as one of
  * the warnings, so the check itself isn't shown again; blank reasons and warnings are dropped.
@@ -210,6 +240,8 @@ export type WireProduct = {
   /** Added with reseller accounts; absent from an older API. */
   resellerId?: string | null;
   resellerName?: string | null;
+  /** A HighLevel agency's storefront: its sites default to the HighLevel site type. Absent from an older API. */
+  highlevelAgency?: boolean;
   dateCreated: string;
 };
 
