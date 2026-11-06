@@ -21,7 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar
 } from "@/components/ui/sidebar";
-import { BrandMark } from "@/components/shell/brand-mark";
+import { BrandMark, PlainMark } from "@/components/shell/brand-mark";
 import { CommandSearch } from "@/components/shell/command-search";
 import { MotionConfig } from "motion/react";
 
@@ -89,6 +89,8 @@ export function AppSidebar({
                       alt=""
                       className="me-1 h-8 max-w-28 shrink-0 object-contain group-data-[collapsible=icon]:size-8"
                     />
+                  ) : brand?.name ? (
+                    <PlainMark />
                   ) : (
                     <BrandMark />
                   )}
@@ -152,6 +154,7 @@ const NAV_ICONS: Record<string, Animated.AnimatedIcon> = {
   "/reseller": Animated.HeartHandshakeIcon,
   "/team": Animated.UsersIcon,
   "/branding": Animated.PaletteIcon,
+  "/integrations": Animated.BlocksIcon,
   "/keys": Animated.KeyIcon,
   "/webhooks": Animated.WebhookIcon,
   "/requests": Animated.ActivityIcon

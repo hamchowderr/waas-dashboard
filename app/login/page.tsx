@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ServerCogIcon } from "lucide-react";
+import { BrandMark } from "@/components/shell/brand-mark";
 
 import { getViewer } from "@/auth";
 import { SignInButtons } from "@/components/auth/sign-in-buttons";
@@ -76,7 +76,7 @@ export default async function LoginPage({
     </div>
   ) : (
     <div className="flex items-center gap-2 font-semibold">
-      <ServerCogIcon className="size-5" />
+      <BrandMark className="size-7" />
       AnyPress
     </div>
   );
@@ -132,8 +132,8 @@ export default async function LoginPage({
           {!seller && (
             <p className="text-muted-foreground text-center text-sm">
               Bought a website from AnyPress?{" "}
-              <a href="https://anypress.io/account" className="text-foreground font-medium underline-offset-4 hover:underline">
-                Manage it at anypress.io/account
+              <a href="https://shop.anypress.io/account" className="text-foreground font-medium underline-offset-4 hover:underline">
+                Manage it at shop.anypress.io/account
               </a>
             </p>
           )}

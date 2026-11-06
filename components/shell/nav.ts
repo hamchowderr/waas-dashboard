@@ -8,6 +8,7 @@ import {
   LayersIcon,
   MegaphoneIcon,
   ListChecksIcon,
+  BlocksIcon,
   PaletteIcon,
   PlugIcon,
   ShoppingBagIcon,
@@ -90,6 +91,7 @@ export const NAV: NavSection[] = [
     title: "Developers",
     icon: KeyRoundIcon,
     links: [
+      { title: "Integrations", href: "/integrations", icon: BlocksIcon, description: "n8n, Zapier, Make, HighLevel, AI apps and the API, with how-to guides" },
       { title: "API Keys", href: "/keys", icon: KeyRoundIcon, description: "Keys that let your shop or an automation make stores" },
       { title: "Webhooks", href: "/webhooks", icon: WebhookIcon, description: "Tell other apps when something happens to a store" },
       { title: "API Log", href: "/requests", icon: ActivityIcon, description: "Every call made to the API, kept 30 days" }

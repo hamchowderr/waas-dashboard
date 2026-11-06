@@ -1,4 +1,4 @@
-import { ServerCogIcon } from "lucide-react";
+import { BrandMark } from "@/components/shell/brand-mark";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -16,7 +16,7 @@ export function AccountCard({
     <main className="flex min-h-dvh items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex items-center justify-center gap-2 font-semibold">
-          <ServerCogIcon className="size-5" />
+          <BrandMark className="size-7" />
           AnyPress
         </div>
         <Card>
