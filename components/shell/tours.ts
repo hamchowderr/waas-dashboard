@@ -157,13 +157,13 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
           }
         ]),
     {
-      href: at("/keys"),
+      href: at("/integrations"),
       steps: [
         {
           id: "group-developers",
-          title: "Connect your shop",
+          title: "Connect your tools",
           content:
-            "API Keys let your shop or an automation create stores. Webhooks tell other apps when a store is ready, and API Log shows every call that came in.",
+            "Integrations lists every way to connect: n8n, Zapier, Make, HighLevel, AI apps like Claude and ChatGPT, and the API, each with its how-to guide. API Keys, Webhooks and API Log are here too.",
           side: "right",
           align: "start"
         },
