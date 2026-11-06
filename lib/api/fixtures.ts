@@ -124,6 +124,9 @@ const products: Omit<Product, "tenantCount">[] = [
   { id: uuid(5, 1), name: "Lakeside Chamber" }
 ];
 
+/** Storefronts marked as a HighLevel agency's. */
+const highlevelAgencies = new Set<string>();
+
 /** Store limits by storefront; a storefront missing here has no limit. */
 const limits = new Map<string, number | null>([
   [products[0].id, 6],
@@ -1214,7 +1217,7 @@ export class FixtureAdminApi implements AdminApi {
       productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null,
       resellerId: resellerOf.get(p.id) ?? null,
       resellerName: resellers.find((r) => r.id === resellerOf.get(p.id))?.name ?? null,
-      highlevelAgency: false
+      highlevelAgency: highlevelAgencies.has(p.id)
     }));
   }
 
@@ -1881,6 +1884,12 @@ export class FixtureAdminApi implements AdminApi {
 
   async setStoreLimit(productId: string, maxTenants: number | null): Promise<void> {
     limits.set(this.product(productId).id, maxTenants);
+  }
+
+  async setHighLevelAgency(productId: string, on: boolean): Promise<void> {
+    const id = this.product(productId).id;
+    if (on) highlevelAgencies.add(id);
+    else highlevelAgencies.delete(id);
   }
 
   async deleteStorefront(productId: string): Promise<void> {

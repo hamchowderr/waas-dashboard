@@ -500,6 +500,17 @@ export async function renameStorefront(productId: string, name: string): Promise
   }, ["/"]);
 }
 
+/**
+ * Makes a storefront a HighLevel agency's, or not (platform admin only). On, its sites get the HighLevel site type,
+ * including the ones it already has without a site type.
+ */
+export async function setHighLevelAgency(productId: string, on: boolean): Promise<ActionResult<null>> {
+  return run(async () => {
+    await getAdminApi().setHighLevelAgency(uuid(productId, "storefront"), on === true);
+    return null;
+  }, ["/", "/stores"]);
+}
+
 /** Sets a storefront's store limit; null is no limit (platform admin only). */
 export async function setStoreLimit(productId: string, maxTenants: number | null): Promise<ActionResult<null>> {
   return run(async () => {

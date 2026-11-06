@@ -565,6 +565,10 @@ export class HttpAdminApi implements AdminApi {
     await this.send("PUT", this.productPath(productId, ""), { maxTenants });
   }
 
+  async setHighLevelAgency(productId: string, on: boolean): Promise<void> {
+    await this.send("PUT", this.productPath(productId, ""), { highlevelAgency: on });
+  }
+
   async deleteStorefront(productId: string): Promise<void> {
     await this.send("DELETE", this.productPath(productId, ""));
   }
