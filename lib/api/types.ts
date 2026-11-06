@@ -27,6 +27,22 @@ export type Overview = {
   jobs: { queued: number; running: number; failed: number };
 };
 
+/**
+ * The step a store's running job is on, for its progress bar ("Step 3 of 5: Copying the site in"). Null when
+ * no job runs. failedAt is set when the job stopped at that step.
+ */
+export type JobProgress = {
+  job: string;
+  label: string;
+  index: number;
+  total: number;
+  /** Every step of the job in plain words, in order. */
+  steps: string[];
+  startedAt: string;
+  stepStartedAt: string;
+  failedAt: string | null;
+};
+
 /** One row of the stores list. */
 export type Tenant = {
   id: string;
@@ -44,6 +60,8 @@ export type Tenant = {
   isSuspended: boolean;
   /** A site moved in, held until it goes live. False when the API's list doesn't say. */
   onHold: boolean;
+  /** What a running job is doing now; null when none runs or the API is older. */
+  progress: JobProgress | null;
   latestBackupAt: string | null;
   dateCreated: string;
 };
@@ -70,6 +88,8 @@ export type TenantDetail = {
    */
   onHold: boolean;
   dateHeld: string | null;
+  /** What a running job is doing now; null when none runs or the API is older. */
+  progress: JobProgress | null;
   /** When the "your website is ready" email last went to the owner, and to which address; null if never. */
   ownerNotifiedAt: string | null;
   ownerNotifiedTo: string | null;

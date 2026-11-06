@@ -113,7 +113,7 @@ import type {
   WireWebhookEndpointParams,
   WireWebhookSecret
 } from "./wire";
-import { toMoveIn } from "./wire";
+import { toMoveIn, toProgress } from "./wire";
 
 export class AdminApiError extends Error {
   constructor(
@@ -864,6 +864,7 @@ export class HttpAdminApi implements AdminApi {
         statusCode: t.statusCode as StatusCode,
         isSuspended: t.isSuspended,
         onHold: t.onHold ?? false,
+        progress: toProgress(t.progress),
         latestBackupAt: t.latestBackupAt,
         dateCreated: t.dateCreated
       }))
@@ -897,6 +898,7 @@ export class HttpAdminApi implements AdminApi {
       dateSuspended: t.dateSuspended ?? null,
       onHold: t.onHold ?? false,
       dateHeld: t.dateHeld ?? null,
+      progress: toProgress(t.progress),
       ownerNotifiedAt: t.ownerNotifiedAt ?? null,
       ownerNotifiedTo: t.ownerNotifiedTo ?? null,
       ownerEmail: t.ownerEmail ?? null,

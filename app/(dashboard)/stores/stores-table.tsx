@@ -12,6 +12,7 @@ import type { TableFacet } from "@/components/admin/table-filters";
 import { AdminDataTable, type TableTab } from "@/components/admin/data-table";
 import { OnHoldBadge, StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
 import { SiteTypeIcon, siteTypeOf } from "@/components/admin/site-type";
+import { AutoRefresh, JobProgressInline } from "@/components/admin/job-progress";
 import { StatusCode, type Tenant } from "@/lib/api/types";
 import { formatAgo, formatDate } from "@/lib/format";
 import { pickStorefront } from "@/lib/auth-client";
@@ -85,10 +86,13 @@ function storeColumns(onOpen: (tenant: Tenant, event: React.MouseEvent) => void)
     accessorKey: "statusCode",
     header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
     cell: ({ row }) => (
-      <div className="flex items-center gap-1.5">
-        <StatusBadge statusCode={row.original.statusCode} />
-        {row.original.isSuspended && <SuspendedBadge />}
-        {row.original.onHold && <OnHoldBadge />}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5">
+          <StatusBadge statusCode={row.original.statusCode} />
+          {row.original.isSuspended && <SuspendedBadge />}
+          {row.original.onHold && <OnHoldBadge />}
+        </div>
+        {row.original.progress && <JobProgressInline progress={row.original.progress} />}
       </div>
     )
   },
@@ -169,22 +173,28 @@ export function StoresTable({
     }
   ];
 
+  // A store being made or changed: the list checks again every few seconds until it's done.
+  const working = tenants.some((t) => t.statusCode === StatusCode.Pending || (t.progress && !t.progress.failedAt));
+
   return (
-    <AdminDataTable
-      data={tenants}
-      columns={table.list}
-      columnLabels={columnLabels}
-      getRowId={(t) => t.id}
-      searchPlaceholder="Name, subscription, domain..."
-      facets={facets}
-      readField={readField}
-      tabs={tabs}
-      tabCounts
-      initialTab={initialTab && tabs.some((t) => t.value === initialTab) ? initialTab : "all"}
-      initialSorting={[{ id: "dateCreated", desc: true }]}
-      emptyText="No stores match these filters."
-      onRowClick={table.openStore}
-      cardFields={["mainDomain", "statusCode"]}
-    />
+    <>
+      <AutoRefresh active={working} everyMs={5000} />
+      <AdminDataTable
+        data={tenants}
+        columns={table.list}
+        columnLabels={columnLabels}
+        getRowId={(t) => t.id}
+        searchPlaceholder="Name, subscription, domain..."
+        facets={facets}
+        readField={readField}
+        tabs={tabs}
+        tabCounts
+        initialTab={initialTab && tabs.some((t) => t.value === initialTab) ? initialTab : "all"}
+        initialSorting={[{ id: "dateCreated", desc: true }]}
+        emptyText="No stores match these filters."
+        onRowClick={table.openStore}
+        cardFields={["mainDomain", "statusCode"]}
+      />
+    </>
   );
 }
