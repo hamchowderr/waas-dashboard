@@ -30,7 +30,13 @@ export function ChangeAddress({ tenantId, mainDomain }: { tenantId: string; main
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [domain, setDomain] = React.useState("");
-  const [setup, setSetup] = React.useState<DomainSetup | null>(null);
+  const [setup, setSetupState] = React.useState<DomainSetup | null>(null);
+  // "Move anyway" asks once more, since the site stops loading until the records are in place.
+  const [confirming, setConfirming] = React.useState(false);
+  const setSetup = (next: DomainSetup | null) => {
+    setSetupState(next);
+    setConfirming(false);
+  };
   const [pending, startTransition] = React.useTransition();
   const { checking, check } = useDomainCheck(tenantId);
   const busy = pending || checking;
@@ -78,7 +84,18 @@ export function ChangeAddress({ tenantId, mainDomain }: { tenantId: string; main
             </DialogDescription>
           </DialogHeader>
           {setup ? (
-            <DomainRecords setup={setup} />
+            <>
+              <DomainRecords setup={setup} />
+              {confirming && (
+                <p
+                  role="alert"
+                  className="rounded-md border border-orange-400 bg-orange-50 p-2.5 text-sm text-orange-800 dark:bg-orange-900/70 dark:text-white/80">
+                  <span className="font-medium">Are you sure?</span> The site won&apos;t load at {setup.domainName} until
+                  these records are in place. Move now only if you have just added them and the check hasn&apos;t caught
+                  up yet.
+                </p>
+              )}
+            </>
           ) : (
             <form
               className="space-y-2"
@@ -110,10 +127,16 @@ export function ChangeAddress({ tenantId, mainDomain }: { tenantId: string; main
                   </Button>
                 ) : (
                   <>
-                    <Button variant="outline" disabled={busy} onClick={move}>
-                      {pending && <Spinner />}
-                      Move anyway
-                    </Button>
+                    {confirming ? (
+                      <Button variant="destructive" disabled={busy} onClick={move}>
+                        {pending && <Spinner />}
+                        Yes, move now
+                      </Button>
+                    ) : (
+                      <Button variant="outline" disabled={busy} onClick={() => setConfirming(true)}>
+                        Move anyway
+                      </Button>
+                    )}
                     <Button disabled={busy} onClick={() => check(setup.domainName, setSetup)}>
                       {checking ? <Spinner /> : <RefreshCw />}
                       Check again
