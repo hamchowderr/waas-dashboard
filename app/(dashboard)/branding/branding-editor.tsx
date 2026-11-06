@@ -126,7 +126,7 @@ export function BrandingEditor({
                   type="color"
                   aria-label="Pick the main color"
                   className="h-9 w-12 shrink-0 cursor-pointer rounded-md border bg-transparent p-1 disabled:cursor-not-allowed"
-                  value={colorValid && form.color ? form.color : (view.shown.color ?? "#171717")}
+                  value={colorValid && form.color ? form.color : (view.shown.color ?? "#c8264d")}
                   disabled={!canEdit}
                   onChange={(e) => setForm({ ...form, color: e.target.value })}
                 />
@@ -239,7 +239,7 @@ export function BrandingEditor({
 
 function BrandPreview({ brand }: { brand: Branding }) {
   return (
-    <div className="bg-sidebar space-y-3 rounded-md border p-3" style={brandColorVars(brand.color ?? "#171717") as React.CSSProperties}>
+    <div className="bg-sidebar space-y-3 rounded-2xl p-3" style={(brand.color ? brandColorVars(brand.color) : {}) as React.CSSProperties}>
       <div className="flex items-center gap-2">
         {brand.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element

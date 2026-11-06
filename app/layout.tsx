@@ -6,7 +6,7 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 import { cn } from "@/lib/utils";
-import { dmSans, fontVariables } from "@/lib/fonts";
+import { uiSans, fontVariables } from "@/lib/fonts";
 import { AppearanceProvider } from "@/components/appearance-provider";
 import { appearanceLetterSpacing, appearanceVars, readAppearance } from "@/lib/appearance";
 import { Toaster } from "@/components/ui/sonner";
@@ -31,7 +31,7 @@ export default async function RootLayout({
   } as React.CSSProperties;
 
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", dmSans.variable)}>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", uiSans.variable)}>
       <body
         suppressHydrationWarning
         className={cn("bg-background group/layout font-sans", fontVariables)}

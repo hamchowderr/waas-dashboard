@@ -86,18 +86,21 @@ export default async function StorePage({ params, searchParams }: Params) {
   const working = (tenant.statusCode === StatusCode.Pending && !waitingForSite) || (!!tenant.progress && !tenant.progress.failedAt);
 
   return (
-    <div className="space-y-4 lg:space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="space-y-5 lg:space-y-7">
+      {/* The store's own header: who it is, how it's doing, and what you can do with it, on one panel. */}
+      <Card>
+        <CardContent className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
         <Button asChild variant="outline" size="icon">
           <Link href={storesHref}>
             <ChevronLeft />
             <span className="sr-only">Back to stores</span>
           </Link>
         </Button>
-        <SiteTypeIcon siteTypes={tenant.siteTypes} className="size-10 max-sm:hidden" />
+        <SiteTypeIcon siteTypes={tenant.siteTypes} className="size-14 rounded-2xl max-sm:hidden [&_svg]:size-6" />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-xl font-bold tracking-tight lg:text-2xl">{tenant.name}</h1>
+            <h1 className="truncate text-2xl font-extrabold tracking-[-0.03em] lg:text-[1.75rem]">{tenant.name}</h1>
             <StatusBadge statusCode={tenant.statusCode} />
             {tenant.isSuspended && <SuspendedBadge />}
             {tenant.onHold && <OnHoldBadge />}
@@ -107,7 +110,7 @@ export default async function StorePage({ params, searchParams }: Params) {
           </p>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 xl:justify-end">
         {siteUrl && (
           <>
             <Button asChild size="sm">
@@ -142,6 +145,8 @@ export default async function StorePage({ params, searchParams }: Params) {
           />
         )}
       </div>
+        </CardContent>
+      </Card>
 
       {/* While a job runs, its steps; the page checks again every few seconds until it's done. */}
       <AutoRefresh active={working} />
