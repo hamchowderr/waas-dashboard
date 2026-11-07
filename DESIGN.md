@@ -11,6 +11,7 @@ colors:
   secondary: "#efeae4"
   muted: "#f6f3ef"
   muted-foreground: "#6f6962"
+  step-ring: "#bdb4aa"
   border: "#ebe5de"
   input: "#e2dbd3"
   ring: "#c8264d"
@@ -119,7 +120,7 @@ Plus Jakarta Sans (variable, `lib/fonts.ts`, `--font-sans`) for everything; syst
 - **Buttons:** default = ribbon gradient pill, white text, glow, brighter on hover. Outline = white pill with `shadow-raised`. Ghost = no fill, `muted` on hover. Destructive stays a tint, never solid red.
 - **Tabs:** `secondary` pill track, active segment a white pill.
 - **Tables:** 12px semibold muted heads, hairline row rules, hover tint.
-- **Setup steps:** `muted` tiles; open steps have a white circle with a firm 1.5px outline, done steps a solid green circle with a soft green halo.
+- **Setup steps:** `muted` tiles; open steps have a white circle with a firm 1.5px `step-ring` outline, done steps a solid green circle with a soft green halo.
 - **Guided tour:** steps point at `data-tour-step-id`; keep those ids when moving things.
 
 ## Do's and Don'ts

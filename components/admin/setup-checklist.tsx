@@ -33,7 +33,7 @@ export function SetupSteps({ steps, productId, className }: { steps: SetupStep[]
           <li key={step.key} className="bg-muted flex items-center gap-3 rounded-2xl px-3.5 py-3">
             <span
               className={cn(
-                "bg-card flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#bdb4aa] shadow-xs dark:border-white/25",
+                "bg-card flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-step-ring shadow-xs",
                 done && "border-green-600 bg-green-600 text-white ring-3 ring-green-600/15 dark:border-green-500 dark:bg-green-500",
                 step.state === "not-reported" && "border-dashed"
               )}>

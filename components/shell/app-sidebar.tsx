@@ -102,9 +102,9 @@ export function AppSidebar({
           <CommandSearch isAdmin={isAdmin} isReseller={isReseller} product={product} />
         </SidebarHeader>
         <SidebarContent>
-          <ScrollArea className="h-full [&>[data-slot=scroll-area-viewport]]:scroll-fade">
+          <ScrollArea className="h-full [&>[data-slot=scroll-area-scrollbar]]:hidden [&>[data-slot=scroll-area-viewport]]:scroll-fade">
             {/* Every page is a link, in small groups with a heading (Overview stands alone at the top). */}
-            <div data-tour-step-id="sidebar-nav">
+            <nav aria-label="Main" data-tour-step-id="sidebar-nav">
               {navFor(isAdmin, isReseller).map((section) => {
                 const single = section.links.length === 1 && section.links[0].title === section.title;
                 return (
@@ -126,7 +126,7 @@ export function AppSidebar({
                   </SidebarGroup>
                 );
               })}
-            </div>
+            </nav>
           </ScrollArea>
         </SidebarContent>
         <SidebarFooter className="border-t">

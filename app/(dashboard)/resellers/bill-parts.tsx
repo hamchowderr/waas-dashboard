@@ -79,7 +79,7 @@ export function BillCard({
         </div>
       </CardHeader>
       <CardContent className="px-0">
-        <Table>
+        <Table scrollLabel={`Bill for ${month.label}`}>
           <TableHeader>
             <TableRow>
               <TableHead className="pl-6">Storefront</TableHead>
@@ -148,7 +148,7 @@ export function InvoicesCard({
         {action}
       </CardHeader>
       <CardContent className="px-0">
-        <Table>
+        <Table scrollLabel="Invoices">
           <TableHeader>
             <TableRow>
               <TableHead className="pl-6">Month</TableHead>

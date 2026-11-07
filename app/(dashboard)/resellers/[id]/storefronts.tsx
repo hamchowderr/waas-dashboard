@@ -65,7 +65,7 @@ export function ResellerStorefronts({
       {available.length > 0 && (
         <div className="flex gap-2">
           <Select value={adding} onValueChange={setAdding}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full" aria-label="Storefront to add">
               <SelectValue placeholder="A storefront of its own" />
             </SelectTrigger>
             <SelectContent>

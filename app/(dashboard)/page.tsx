@@ -406,7 +406,7 @@ function HealthBadge({ ok }: { ok: boolean }) {
       className={cn(
         "gap-1.5",
         ok
-          ? "border-green-600/30 text-green-700 dark:border-green-400/30 dark:text-green-400"
+          ? "border-green-600/30 text-green-800 dark:border-green-400/30 dark:text-green-400"
           : "border-rose-600/30 text-rose-700 dark:border-rose-400/30 dark:text-rose-400"
       )}>
       <StatusDot up={ok} className="size-1.5" />

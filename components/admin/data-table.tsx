@@ -274,7 +274,7 @@ export function AdminDataTable<T extends RowData>({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <Columns3Icon />
-                <span className="hidden lg:inline">Columns</span>
+                <span className="max-lg:sr-only">Columns</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -383,7 +383,7 @@ export function AdminDataTable<T extends RowData>({
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             Rows per page
             <Select value={String(pageSize)} onValueChange={(value) => table.setPageSize(Number(value))}>
-              <SelectTrigger size="sm" className="w-fit">
+              <SelectTrigger size="sm" className="w-fit" aria-label="Rows per page">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
