@@ -43,6 +43,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
         ? `A ready-made storefront${a.storefrontSubdomain ? ` at ${a.storefrontSubdomain}.${STORE_DOMAIN}` : " (no address chosen)"}`
         : "Their own WordPress site, with AnyPress Host"
     ],
+    ["HighLevel agency", a.highLevelAgency ? "Yes, set them up with the AnyPress app for HighLevel" : "No"],
     ["Applied", formatDateTime(a.dateCreated)]
   ];
   if (a.dateDecided) rows.push([a.status === "approved" ? "Approved" : "Declined", formatDateTime(a.dateDecided)]);

@@ -7,6 +7,7 @@ import { getAdminApi } from "@/lib/api/client";
 import type { ApplicationStatus } from "@/lib/api/types";
 import { formatAgo } from "@/lib/format";
 import { PageHeader } from "@/components/admin/page-header";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,6 +62,11 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
                     <Link href={`/applications/${a.id}`} className="hover:underline">
                       {a.business}
                     </Link>
+                    {a.highLevelAgency && (
+                      <Badge variant="secondary" className="ml-2 align-middle">
+                        HighLevel
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div>{a.name}</div>
