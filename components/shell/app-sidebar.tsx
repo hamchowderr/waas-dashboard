@@ -152,6 +152,7 @@ const NAV_ICONS: Record<string, Animated.AnimatedIcon> = {
   "/applications": Animated.MailboxIcon,
   "/resellers": Animated.HeartHandshakeIcon,
   "/reseller": Animated.HeartHandshakeIcon,
+  "/notifications": Animated.BellIcon,
   "/team": Animated.UsersIcon,
   "/branding": Animated.PaletteIcon,
   "/integrations": Animated.BlocksIcon,

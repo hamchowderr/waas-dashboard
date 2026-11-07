@@ -10,7 +10,8 @@ import { keyBytes, needsHomeScreen } from "@/lib/push";
 
 type State =
   | { kind: "loading" }
-  | { kind: "hidden" }
+  | { kind: "off" }
+  | { kind: "error"; message: string }
   | { kind: "unsupported" }
   | { kind: "home-screen" }
   | { kind: "blocked" }
@@ -25,9 +26,9 @@ async function currentSubscription(): Promise<PushSubscription | null> {
 
 /**
  * "Alerts on this device" in the bell: phone and computer alerts for the important notices, through
- * the service worker in public/sw.js. Hidden when the API has no push keys.
+ * the service worker in public/sw.js. Shown in the bell and on the Notifications page (`variant="card"`).
  */
-export function AlertsToggle() {
+export function AlertsToggle({ variant = "bell" }: { variant?: "bell" | "card" }) {
   const [state, setState] = React.useState<State>({ kind: "loading" });
   const [busy, setBusy] = React.useState(false);
 
@@ -36,7 +37,8 @@ export function AlertsToggle() {
     (async () => {
       const result = await getPushSettings().catch(() => null);
       if (!live) return;
-      if (!result?.ok || !result.data.enabled || !result.data.publicKey) return setState({ kind: "hidden" });
+      if (!result?.ok) return setState({ kind: "error", message: result?.error ?? "The provisioning API did not answer." });
+      if (!result.data.enabled || !result.data.publicKey) return setState({ kind: "off" });
       const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
       if (needsHomeScreen(navigator.userAgent, standalone)) return setState({ kind: "home-screen" });
       if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return setState({ kind: "unsupported" });
@@ -91,10 +93,14 @@ export function AlertsToggle() {
     }
   }
 
-  if (state.kind === "loading" || state.kind === "hidden") return null;
+  if (state.kind === "loading") return null;
 
   const note =
-    state.kind === "home-screen"
+    state.kind === "off"
+      ? "Alerts aren't switched on for this dashboard yet."
+      : state.kind === "error"
+        ? `Couldn't check alerts: ${state.message}`
+        : state.kind === "home-screen"
       ? "On iPhone and iPad, add AnyPress to your Home Screen first (Share, then Add to Home Screen), then open it from there."
       : state.kind === "unsupported"
         ? "This browser can't show alerts."
@@ -103,7 +109,7 @@ export function AlertsToggle() {
           : "Ready stores, failed jobs and backups, and new applications, even when the dashboard is closed.";
 
   return (
-    <div className="flex items-start gap-3 border-t px-4 py-3">
+    <div className={variant === "bell" ? "flex items-start gap-3 border-t px-4 py-3" : "flex items-start gap-3"}>
       <BellRingIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1">
         <label htmlFor="alerts-on-device" className="text-sm font-medium">

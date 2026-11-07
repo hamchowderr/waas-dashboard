@@ -1,5 +1,6 @@
 import {
   ActivityIcon,
+  BellIcon,
   ArchiveIcon,
   GaugeIcon,
   HandshakeIcon,
@@ -83,6 +84,7 @@ export const NAV: NavSection[] = [
     title: "Settings",
     icon: UsersIcon,
     links: [
+      { title: "Notifications", href: "/notifications", icon: BellIcon, global: true, description: "Everything the bell shows, and alerts on your phone or computer" },
       { title: "Team", href: "/team", icon: UsersIcon, description: "Who can sign in, and what each person may change" },
       { title: "Branding", href: "/branding", icon: PaletteIcon, description: "Your name, logo and colour on this dashboard and emails" }
     ]
