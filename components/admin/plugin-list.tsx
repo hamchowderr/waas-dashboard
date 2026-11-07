@@ -8,14 +8,35 @@ import { offDirectory, type TemplateContents } from "@/lib/template-contents";
 /** wordpress.org keeps each plugin's icon under one of these names; tried in order. */
 const iconFiles = ["icon-128x128.png", "icon-128x128.gif", "icon.svg", "icon-128x128.jpg"];
 
+/** Our own plugins, which aren't on wordpress.org, show the dashboard's own mark. */
+const ownPlugin = (slug: string) => slug.startsWith("anypress-") || slug.startsWith("waas-");
+
+/**
+ * The picture our own plugins get: the AnyPress mark, or on a branded dashboard the brand's icon or logo
+ * (null: its letter), since those stores show AnyPress Client in the seller's brand.
+ */
+const OwnPluginMark = React.createContext<string | null>("/anypress-mark.svg");
+
+export function OwnPluginMarkProvider({ mark, children }: { mark: string | null; children: React.ReactNode }) {
+  return <OwnPluginMark.Provider value={mark}>{children}</OwnPluginMark.Provider>;
+}
+
 /**
  * A plugin's wordpress.org icon (the given one first, when known), or a letter tile for one that has none.
  * size-6 by default; pass a size class for another.
  */
 export function PluginIcon({ slug, name, icon, className = "size-6" }: { slug: string; name: string; icon?: string | null; className?: string }) {
+  const ownMark = React.useContext(OwnPluginMark);
   const sources = React.useMemo(
-    () => (offDirectory.has(slug) ? [] : [...(icon ? [icon] : []), ...iconFiles.map((file) => `https://ps.w.org/${slug}/assets/${file}`)]),
-    [slug, icon]
+    () =>
+      ownPlugin(slug)
+        ? ownMark
+          ? [ownMark]
+          : []
+        : offDirectory.has(slug)
+          ? []
+          : [...(icon ? [icon] : []), ...iconFiles.map((file) => `https://ps.w.org/${slug}/assets/${file}`)],
+    [slug, icon, ownMark]
   );
   const [attempt, setAttempt] = React.useState(0);
   if (attempt >= sources.length) {

@@ -128,6 +128,21 @@ const products: Omit<Product, "tenantCount">[] = [
   { id: uuid(5, 1), name: "Lakeside Chamber" }
 ];
 
+/** Sample uploaded logos for the storefront switcher; the others show their first letter. */
+const sampleMarks: Record<string, string> = {
+  [uuid(1, 1)]: "/anypress-mark.svg",
+  [uuid(2, 1)]:
+    "data:image/svg+xml," +
+    encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0f766e"/><path d="M6 23.5 13 12.5l4.5 6.5 3-4 5.5 8.5z" fill="#fff"/><circle cx="21.5" cy="9.5" r="2.5" fill="#fde68a"/></svg>'
+    ),
+  [uuid(4, 1)]:
+    "data:image/svg+xml," +
+    encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1e3a8a"/><path d="M6 20.5c3.3-2.4 6.7-2.4 10 0s6.7 2.4 10 0v3.5c-3.3 2.4-6.7 2.4-10 0s-6.7-2.4-10 0z" fill="#93c5fd"/><path d="M16 7.5v9M11.5 12h9" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>'
+    )
+};
+
 /** Storefronts marked as a HighLevel agency's. */
 const highlevelAgencies = new Set<string>();
 
@@ -1144,7 +1159,14 @@ export class FixtureAdminApi implements AdminApi {
       health: health(),
       products: products
         .filter((p) => !this.scope || p.id === this.scope)
-        .map((p) => ({ ...p, tenantCount: tenants.filter((t) => t.productId === p.id).length })),
+        .map((p) => {
+          const brand = brands.get(teamKey(p.id));
+          return {
+            ...p,
+            tenantCount: tenants.filter((t) => t.productId === p.id).length,
+            markUrl: brand?.iconUrl ?? brand?.logoUrl ?? sampleMarks[p.id] ?? null
+          };
+        }),
       tenants: { ...counts(mine), total: mine.length, suspended: mine.filter((t) => t.isSuspended).length },
       versions: { pending: 0, done: versions.length, failed: 0, removing: 0 },
       backups: { ...counts(myBackups), total: myBackups.length },

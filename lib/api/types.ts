@@ -20,7 +20,8 @@ export type StatusCounts = { pending: number; done: number; failed: number; remo
 
 export type Overview = {
   health: Health;
-  products: Product[];
+  /** markUrl: the storefront's uploaded icon, else its logo (from its reseller when unset); null when none. */
+  products: (Product & { markUrl?: string | null })[];
   tenants: StatusCounts & { total: number; suspended: number };
   versions: StatusCounts;
   backups: StatusCounts & { total: number };
