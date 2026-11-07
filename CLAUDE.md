@@ -15,4 +15,5 @@ The AnyPress dashboard (app.anypress.io): a Next.js app that manages everything 
 - **Pull requests:** open them ready for review, not as drafts, so CI runs. Merge a PR yourself once CI is green and the work was asked for.
 - **No "WPCS" wording.** The old platform is gone. Say "the AnyPress API" or "the API's key and secret login". Don't add the word anywhere.
 - **Public docs are for users.** READMEs and `docs/` explain how to use and run the code. Internal notes (server and Coolify ids, Beads, deployment steps) go in the obsidian-vault repository under `1. Projects/WaaS/`. Never put how or why AnyPress started in public copy.
+- **Official SDKs, always.** Call every outside service through its official SDK or library and configure it to fit (custom storage, base URL, options), rather than writing the HTTP calls by hand. Read the SDK's options before deciding it doesn't fit. Only where no official SDK exists, write the client yourself and say so in the PR.
 - **Verify before claiming.** Check npm, wordpress.org or the official docs before calling a version or spec "the latest", and check a fix on the running system before calling it fixed.
