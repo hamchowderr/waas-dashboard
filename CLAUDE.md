@@ -11,6 +11,7 @@ The AnyPress dashboard (app.anypress.io): a Next.js app that manages everything 
 
 ## Rules for every change
 
+- **No new stores, sellers or storefronts for tests.** Never create a store, product (seller), reseller or ready-made storefront to try, check or demo something. Check on WordPress Playground, or reuse an existing test store. If a check truly needs a new one on the server (payments, the real approval flow), ask the owner first, say why Playground can't do it, and delete it as soon as the check is done.
 - **Beads, every time.** Each piece of work gets a Beads issue before it starts (check for a duplicate first). Put the id in the branch, the PR and the status, and close the issue when the PR merges or the change is live. Run `bd` in the session doing the work; the SessionStart hook in `.claude/settings.json` loads the Dolt login, then `bd dolt push` syncs it. This repository's issues are in DoltHub `chowderr/waas (ids `waas-*`); API-side work uses `waas-api-*` in chowderr/waas_api`.
 - **Pull requests:** open them ready for review, not as drafts, so CI runs. Merge a PR yourself once CI is green and the work was asked for.
 - **No "WPCS" wording.** The old platform is gone. Say "the AnyPress API" or "the API's key and secret login". Don't add the word anywhere.
