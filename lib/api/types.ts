@@ -727,6 +727,8 @@ export type SellerApplication = {
   /** They have no WordPress site to sell from and want a ready-made storefront. */
   wantsStorefront: boolean;
   storefrontSubdomain: string | null;
+  /** They run a HighLevel agency, so they'll want the AnyPress app for their sub-accounts. */
+  highLevelAgency: boolean;
   status: ApplicationStatus;
   /** The storefront made when it was approved. */
   productId: string | null;
