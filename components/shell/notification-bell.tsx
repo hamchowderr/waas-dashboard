@@ -106,13 +106,18 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
           )}
         </ScrollArea>
         <AlertsToggle />
-        <div className="text-muted-foreground border-t px-4 py-2 text-xs">Kept for 30 days. Webhooks send the same events to your own tools.</div>
+        <div className="text-muted-foreground flex items-center justify-between gap-3 border-t px-4 py-2 text-xs">
+          <span>Kept for 30 days.</span>
+          <Link href="/notifications" onClick={() => onOpenChange(false)} className="text-foreground font-medium underline-offset-4 hover:underline">
+            See all and alert settings
+          </Link>
+        </div>
       </PopoverContent>
     </Popover>
   );
 }
 
-function NotificationRow({ n, showStorefront, onPick }: { n: Notification; showStorefront: boolean; onPick: () => void }) {
+export function NotificationRow({ n, showStorefront, onPick }: { n: Notification; showStorefront: boolean; onPick?: () => void }) {
   const { Icon, className } = LEVEL_ICON[n.level] ?? LEVEL_ICON.info;
   const href = notificationHref(n);
   const body = (

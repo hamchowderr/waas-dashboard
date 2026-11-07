@@ -927,8 +927,10 @@ export async function getPushSettings(): Promise<ActionResult<PushSettings>> {
   if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
   try {
     return { ok: true, data: await getAdminApi().pushSettings() };
-  } catch {
-    return { ok: true, data: { enabled: false, publicKey: null } };
+  } catch (error) {
+    console.error("alerts: settings not loaded", error);
+    if (error instanceof AdminApiError) return { ok: false, error: error.apiMessage ?? error.message };
+    return { ok: false, error: "The provisioning API did not answer. Try again." };
   }
 }
 

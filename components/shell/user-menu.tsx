@@ -21,6 +21,7 @@ import { signOut } from "@/lib/auth-client";
 import { useStartTour } from "@/components/shell/dashboard-tour";
 import { AppearancePanel } from "@/components/shell/appearance-panel";
 import {
+  BellIcon,
   BookTextIcon,
   ChevronsUpDownIcon,
   CircleHelpIcon,
@@ -42,7 +43,7 @@ const SUPPORT_EMAIL = "support@anypress.io";
 const DOCS_URL = "https://shop.anypress.io/docs/";
 
 /**
- * The signed-in person at the bottom of the sidebar, and the menu it opens: settings (Team, Branding, Appearance),
+ * The signed-in person at the bottom of the sidebar, and the menu it opens: settings (Notifications, Team, Branding, Appearance),
  * dark mode, the tour, help and sign out.
  */
 export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEmail?: string | null }) {
@@ -110,6 +111,9 @@ export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEm
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">Settings</DropdownMenuLabel>
               <DropdownMenuGroup>
+                <MenuItem icon={BellIcon} href="/notifications">
+                  Notifications
+                </MenuItem>
                 <MenuItem icon={UsersIcon} href={keep("/team")}>
                   Team
                 </MenuItem>

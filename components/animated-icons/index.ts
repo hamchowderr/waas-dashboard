@@ -7,6 +7,7 @@
 import type * as React from "react";
 
 export { ActivityIcon } from "./activity";
+export { BellIcon } from "./bell";
 export { BlocksIcon } from "./blocks";
 export { BookTextIcon } from "./book-text";
 export { CartIcon } from "./cart";
