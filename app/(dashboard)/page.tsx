@@ -225,8 +225,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         ))}
       </ul>
 
-      <div className="grid items-start gap-5 lg:gap-7 xl:grid-cols-3">
-        <div className="space-y-5 lg:space-y-7 xl:col-span-2">
+      <div className="grid grid-cols-1 items-start gap-5 lg:gap-7 xl:grid-cols-3">
+        <div className="min-w-0 space-y-5 lg:space-y-7 xl:col-span-2">
           <Card data-tour-step-id={isAdmin || showChecklist ? "needs-you" : "needs-you start-here"}>
             <CardHeader>
               <CardTitle className="text-lg">{todos.length ? "Needs you" : "Nothing needs you"}</CardTitle>
@@ -258,7 +258,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
               ) : (
                 <ul className="space-y-2">
                   {todos.map((todo) => (
-                    <li key={todo.key} className="bg-muted flex items-center gap-3 rounded-2xl p-3">
+                    <li key={todo.key} className="bg-muted flex flex-wrap items-center gap-3 rounded-2xl p-3">
                       <span
                         className={cn(
                           "flex size-10 shrink-0 items-center justify-center rounded-full",
@@ -266,11 +266,11 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                         )}>
                         <todo.icon className="size-4.5" aria-hidden />
                       </span>
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 max-sm:basis-[calc(100%-3.25rem)]">
                         <p className="text-sm font-semibold">{todo.title}</p>
                         {todo.detail && <p className="text-muted-foreground truncate text-sm">{todo.detail}</p>}
                       </div>
-                      <Button asChild size="sm" variant="outline" className="shrink-0">
+                      <Button asChild size="sm" variant="outline" className="shrink-0 max-sm:ms-13">
                         <Link href={todo.href.startsWith("/stores/") || todo.href === "/applications" ? todo.href : withProduct(todo.href, product)}>
                           {todo.action}
                           <ChevronRight aria-hidden />
