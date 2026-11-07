@@ -20,6 +20,8 @@ import type {
   ImportCode,
   MailDomain,
   NotificationList,
+  PushSettings,
+  PushSubscriptionInput,
   StoreSize,
   ApprovedApplication,
   NewSeller,
@@ -912,6 +914,49 @@ export async function readNotifications(): Promise<ActionResult> {
   if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
   try {
     await getAdminApi().readNotifications(viewer.user.id);
+    return { ok: true, data: undefined };
+  } catch (error) {
+    if (error instanceof AdminApiError) return { ok: false, error: error.apiMessage ?? error.message };
+    return { ok: false, error: "The provisioning API did not answer. Try again." };
+  }
+}
+
+/** Whether phone and computer alerts are on in the API, and its public key. Off when the API can't say. */
+export async function getPushSettings(): Promise<ActionResult<PushSettings>> {
+  const viewer = await getViewer().catch(() => null);
+  if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
+  try {
+    return { ok: true, data: await getAdminApi().pushSettings() };
+  } catch {
+    return { ok: true, data: { enabled: false, publicKey: null } };
+  }
+}
+
+/** Turns alerts on for this device: the browser's push subscription, saved for the signed-in person. */
+export async function enablePush(subscription: PushSubscriptionInput): Promise<ActionResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
+  const endpoint = typeof subscription?.endpoint === "string" ? subscription.endpoint : "";
+  const p256dh = subscription?.keys?.p256dh;
+  const auth = subscription?.keys?.auth;
+  if (!endpoint.startsWith("https://") || typeof p256dh !== "string" || typeof auth !== "string")
+    return { ok: false, error: "This browser gave an unusable alert sign-up. Try again." };
+  try {
+    await getAdminApi().savePushSubscription(viewer.user.id, { endpoint, keys: { p256dh, auth } });
+    return { ok: true, data: undefined };
+  } catch (error) {
+    if (error instanceof AdminApiError) return { ok: false, error: error.apiMessage ?? error.message };
+    return { ok: false, error: "The provisioning API did not answer. Try again." };
+  }
+}
+
+/** Turns alerts off for this device. */
+export async function disablePush(endpoint: string): Promise<ActionResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!canUseDashboard(viewer)) return { ok: false, error: "You are signed out. Sign in again." };
+  if (typeof endpoint !== "string" || !endpoint) return { ok: false, error: "Missing device" };
+  try {
+    await getAdminApi().removePushSubscription(viewer.user.id, endpoint);
     return { ok: true, data: undefined };
   } catch (error) {
     if (error instanceof AdminApiError) return { ok: false, error: error.apiMessage ?? error.message };

@@ -8,6 +8,7 @@ import { loadNotifications, readNotifications } from "@/app/(dashboard)/actions"
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AlertsToggle } from "@/components/shell/alerts-toggle";
 import { formatAgo } from "@/lib/format";
 import type { Notification, NotificationList } from "@/lib/api/types";
 import { notificationHref } from "@/lib/notifications";
@@ -104,6 +105,7 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
             </ul>
           )}
         </ScrollArea>
+        <AlertsToggle />
         <div className="text-muted-foreground border-t px-4 py-2 text-xs">Kept for 30 days. Webhooks send the same events to your own tools.</div>
       </PopoverContent>
     </Popover>

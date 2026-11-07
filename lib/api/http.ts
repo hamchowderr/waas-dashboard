@@ -75,7 +75,9 @@ import type {
   WebhookFilter,
   WebhookSecret,
   WordPressLogin,
-  NotificationList
+  NotificationList,
+  PushSettings,
+  PushSubscriptionInput
 } from "./types";
 import type {
   WireApiKey,
@@ -511,6 +513,18 @@ export class HttpAdminApi implements AdminApi {
 
   async readNotifications(userId: string): Promise<void> {
     await this.send("POST", "/admin/notifications/read", { userId });
+  }
+
+  async pushSettings(): Promise<PushSettings> {
+    return (await this.get<PushSettings>("/admin/notifications/push"))!;
+  }
+
+  async savePushSubscription(userId: string, subscription: PushSubscriptionInput): Promise<void> {
+    await this.send("POST", "/admin/notifications/push", { userId, subscription });
+  }
+
+  async removePushSubscription(userId: string, endpoint: string): Promise<void> {
+    await this.send("POST", "/admin/notifications/push/remove", { userId, endpoint });
   }
 
   async webhooks(productId?: string): Promise<WebhookEndpoint[]> {
