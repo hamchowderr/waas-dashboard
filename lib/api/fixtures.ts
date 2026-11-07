@@ -134,12 +134,12 @@ const sampleMarks: Record<string, string> = {
   [uuid(2, 1)]:
     "data:image/svg+xml," +
     encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0f766e"/><path d="M5 24 13 11l5 7 3-4 6 10z" fill="#fff"/><circle cx="23" cy="9" r="2.5" fill="#fde68a"/></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0f766e"/><path d="M6 23.5 13 12.5l4.5 6.5 3-4 5.5 8.5z" fill="#fff"/><circle cx="21.5" cy="9.5" r="2.5" fill="#fde68a"/></svg>'
     ),
   [uuid(4, 1)]:
     "data:image/svg+xml," +
     encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1e3a8a"/><path d="M4 20c4-3 8-3 12 0s8 3 12 0v4c-4 3-8 3-12 0s-8-3-12 0z" fill="#93c5fd"/><path d="M16 6v10M11 11h10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1e3a8a"/><path d="M6 20.5c3.3-2.4 6.7-2.4 10 0s6.7 2.4 10 0v3.5c-3.3 2.4-6.7 2.4-10 0s-6.7-2.4-10 0z" fill="#93c5fd"/><path d="M16 7.5v9M11.5 12h9" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>'
     )
 };
 
