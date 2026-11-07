@@ -907,3 +907,8 @@ export type Notification = {
   unread: boolean;
 };
 export type NotificationList = { unread: number; readUntil: string | null; items: Notification[] };
+
+/** Phone and computer alerts: whether the API has push keys, and the key browsers sign up with. */
+export type PushSettings = { enabled: boolean; publicKey: string | null };
+/** What PushManager.subscribe() gives, as JSON. */
+export type PushSubscriptionInput = { endpoint: string; keys: { p256dh: string; auth: string } };

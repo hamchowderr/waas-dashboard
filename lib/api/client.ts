@@ -61,6 +61,8 @@ import type {
   StoreSize,
   MailDomain,
   NotificationList,
+  PushSettings,
+  PushSubscriptionInput,
   Overview,
   RequestFilter,
   RequestLog,
@@ -111,6 +113,12 @@ export interface AdminApi {
   notifications(userId: string, limit?: number): Promise<NotificationList>;
   /** Marks `userId`'s bell read up to now. Members may do this too: it changes only their own bell. */
   readNotifications(userId: string): Promise<void>;
+  /** Whether phone and computer alerts are on in the API, and its public push key. */
+  pushSettings(): Promise<PushSettings>;
+  /** Turns alerts on for one of `userId`'s devices. */
+  savePushSubscription(userId: string, subscription: PushSubscriptionInput): Promise<void>;
+  /** Turns alerts off for one of `userId`'s devices. */
+  removePushSubscription(userId: string, endpoint: string): Promise<void>;
 
   // Changes. Each throws AdminApiError with the API's message when the API refuses.
   /** Re-queues a failed job; the store or version goes back to Pending. */

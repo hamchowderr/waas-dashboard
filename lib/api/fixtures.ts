@@ -93,7 +93,9 @@ import {
   type WebhookSecret,
   type WordPressLogin,
   type Notification,
-  type NotificationList
+  type NotificationList,
+  type PushSettings,
+  type PushSubscriptionInput
 } from "./types";
 import { AdminApiError } from "./http";
 
@@ -1095,6 +1097,8 @@ const prospectAutomationsFor = (productId: string): ProspectAutomations => ({
 
 /** Sample bell entries, made from the sample stores so their links open. Read state is per process. */
 const notificationReads = new Map<string, number>();
+/** A valid-looking VAPID public key for sample data (not a real server's), so browsers accept the sign-up. */
+const SAMPLE_PUSH_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
 function sampleNotifications(): Notification[] {
   const now = Date.now();
   const at = (minutes: number) => new Date(now - minutes * 60_000).toISOString();
@@ -2019,6 +2023,21 @@ export class FixtureAdminApi implements AdminApi {
 
   async readNotifications(userId: string): Promise<void> {
     notificationReads.set(userId, Date.now());
+  }
+
+  // Sample data has no push service: the button shows, but sign-ups go nowhere.
+  async pushSettings(): Promise<PushSettings> {
+    return { enabled: true, publicKey: SAMPLE_PUSH_KEY };
+  }
+
+  async savePushSubscription(userId: string, subscription: PushSubscriptionInput): Promise<void> {
+    void userId;
+    void subscription;
+  }
+
+  async removePushSubscription(userId: string, endpoint: string): Promise<void> {
+    void userId;
+    void endpoint;
   }
 
   async applications(status?: ApplicationStatus): Promise<SellerApplication[]> {
