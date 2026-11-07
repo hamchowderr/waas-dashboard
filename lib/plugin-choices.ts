@@ -20,20 +20,25 @@ export function siteTypesLabel(keys: string[]) {
   return [...labels, ...other].join(", ");
 }
 
-/** The AnyPress template's plugins a storefront can switch off (AnyPress Client runs the store, so it stays). */
+/**
+ * The AnyPress template's plugins a storefront can switch off (AnyPress Client runs the store, so it stays), in the
+ * order AnyPress lists plugins everywhere.
+ */
 export const TEMPLATE_PLUGINS = [
-  "fluent-cart",
+  "fluent-security",
+  "fluent-smtp",
   "fluent-crm",
   "fluentform",
   "fluent-booking",
-  "fluent-support",
-  "fluent-affiliate",
+  "fluent-cart",
   "fluent-community",
+  "fluent-player",
+  "fluent-affiliate",
+  "fluent-support",
   "easy-code-manager",
   "seo-by-rank-math",
-  "wp-fusion-lite",
   "automatorwp",
-  "fluent-security",
+  "wp-fusion-lite",
   "fluent-toolkit"
 ].map((slug) => ({ slug, name: pluginName(slug) }));
 

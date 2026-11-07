@@ -18,6 +18,22 @@ describe("template contents", () => {
     ]);
   });
 
+  it("lists plugins in AnyPress's order, others after them", () => {
+    const contents = parseTemplateContents(
+      '{"plugins":{"anypress-client":"2.12.0","my-plugin":"1.0","fluent-cart":"2.2.0","wp-fusion-lite":"3.48.0","fluent-crm":"3.3.1","fluent-player":"1.4.0","fluent-security":"3.1.0","anypress-blocks":"0.3.0"}}'
+    );
+    expect(contents.plugins.map((p) => p.slug)).toEqual([
+      "anypress-client",
+      "fluent-security",
+      "fluent-crm",
+      "fluent-cart",
+      "fluent-player",
+      "wp-fusion-lite",
+      "anypress-blocks",
+      "my-plugin"
+    ]);
+  });
+
   it("keeps a short label in front of the build details", () => {
     expect(parseTemplateContents('AnyPress store (Ollie). {"plugins":{"fluent-crm":"3.2.6"}}').text).toBe("AnyPress store (Ollie)");
   });

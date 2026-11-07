@@ -2,6 +2,7 @@ import { AlertTriangle, ChevronRight } from "lucide-react";
 
 import type { SiteReport, SiteReportArea, SiteReportItem } from "@/lib/api/types";
 import { Badge } from "@/components/ui/badge";
+import { sortPlugins } from "@/lib/template-contents";
 
 const AREA_NAMES: Record<SiteReportArea, string> = {
   forms: "Forms",
@@ -126,7 +127,7 @@ export function SiteReportSection({ report }: { report: SiteReport }) {
             All active plugins ({report.plugins.length})
           </summary>
           <ul className="mt-2 space-y-1">
-            {report.plugins.map((plugin) => (
+            {sortPlugins(report.plugins).map((plugin) => (
               <li key={plugin.slug} className="flex items-baseline justify-between gap-4">
                 <span className="min-w-0 break-words">{plugin.name}</span>
                 <span className="text-muted-foreground shrink-0 tabular-nums">{plugin.version || "—"}</span>
