@@ -13,6 +13,7 @@ import { DashboardTour } from "@/components/shell/dashboard-tour";
 import { SessionKeepAlive } from "@/components/auth/session-keep-alive";
 import { NoStorefront } from "@/components/auth/no-storefront";
 import { CanChangeProvider } from "@/components/auth/can-change";
+import { OwnPluginMarkProvider } from "@/components/admin/plugin-list";
 import { readAppearance } from "@/lib/appearance";
 import { brandColorVars } from "@/lib/branding";
 
@@ -117,7 +118,9 @@ export default async function DashboardLayout({
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:w-full xl:group-data-[theme-content-layout=centered]/layout:max-w-7xl">
-              <CanChangeProvider value={canChange(viewer)}>{children}</CanChangeProvider>
+              <CanChangeProvider value={canChange(viewer)}>
+                <OwnPluginMarkProvider mark={brand ? (brand.iconUrl ?? brand.logoUrl) : "/anypress-mark.svg"}>{children}</OwnPluginMarkProvider>
+              </CanChangeProvider>
             </div>
           </div>
         </SidebarInset>

@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckIcon, ChevronsUpDown } from "lucide-react";
+import * as React from "react";
+import { CheckIcon, ChevronsUpDown, LayersIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -16,29 +17,49 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
-export type StorefrontOption = { id: string; name: string; tenantCount: number };
+export type StorefrontOption = { id: string; name: string; tenantCount: number; markUrl?: string | null };
 
-/** Each storefront gets a dot color by its place in the list; "All storefronts" is gray. */
-const DOTS = [
-  "bg-gradient-to-br from-violet-500 to-purple-700",
-  "bg-gradient-to-br from-amber-400 to-orange-600",
-  "bg-gradient-to-br from-sky-400 to-blue-600",
-  "bg-gradient-to-br from-emerald-400 to-green-600"
-];
-const ALL_DOT = "bg-gradient-to-br from-zinc-300 to-zinc-500";
-
-function Dot({ index, className }: { index: number; className: string }) {
-  return <span className={cn("shrink-0 rounded-full", index < 0 ? ALL_DOT : DOTS[index % DOTS.length], className)} />;
+/**
+ * A storefront's uploaded icon or logo (Branding page); without one, its first letter on a quiet tile.
+ * "All storefronts" (no storefront) is a stack.
+ */
+function Mark({ storefront, className }: { storefront: { name: string; markUrl?: string | null } | null; className: string }) {
+  // Remembers which picture failed, so picking another storefront tries its own.
+  const [brokenUrl, setBrokenUrl] = React.useState<string | null>(null);
+  const url = storefront?.markUrl;
+  if (url && url !== brokenUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt=""
+        aria-hidden
+        className={cn("bg-background shrink-0 rounded-md border object-contain", className)}
+        onError={() => setBrokenUrl(url)}
+      />
+    );
+  }
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded-md border text-[0.6875rem] font-semibold",
+        className
+      )}>
+      {storefront ? (storefront.name.trim().charAt(0).toUpperCase() || "?") : <LayersIcon className="size-3/5" />}
+    </span>
+  );
 }
 
 function Option({
-  index,
+  storefront,
   name,
   count,
   checked,
   onSelect
 }: {
-  index: number;
+  /** Null for "All storefronts". */
+  storefront: { name: string; markUrl?: string | null } | null;
   name: string;
   /** Left out where the store count isn't known (a customer's own storefronts). */
   count?: number;
@@ -47,7 +68,7 @@ function Option({
 }) {
   return (
     <DropdownMenuItem onSelect={onSelect} className="gap-3 py-2">
-      <Dot index={index} className="size-6" />
+      <Mark storefront={storefront} className="size-7" />
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-medium">{name}</span>
         {count !== undefined && <span className="text-muted-foreground text-xs">{count} stores</span>}
@@ -66,8 +87,7 @@ export function StorefrontSwitcher({ storefronts }: { storefronts: StorefrontOpt
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("product");
-  const selectedIndex = storefronts.findIndex((s) => s.id === selectedId);
-  const selected = selectedIndex >= 0 ? storefronts[selectedIndex] : null;
+  const selected = storefronts.find((s) => s.id === selectedId) ?? null;
 
   const select = (id: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -83,7 +103,7 @@ export function StorefrontSwitcher({ storefronts }: { storefronts: StorefrontOpt
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" data-tour-step-id="storefront-picker">
-          <Dot index={selectedIndex} className="size-4" />
+          <Mark storefront={selected} className="size-5" />
           <span className="font-medium max-md:sr-only">{selected ? selected.name : "All storefronts"}</span>
           <ChevronsUpDown className="text-muted-foreground size-3.5!" />
         </Button>
@@ -91,17 +111,17 @@ export function StorefrontSwitcher({ storefronts }: { storefronts: StorefrontOpt
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuLabel>Storefronts</DropdownMenuLabel>
         <Option
-          index={-1}
+          storefront={null}
           name="All storefronts"
           count={storefronts.reduce((sum, s) => sum + s.tenantCount, 0)}
           checked={!selected}
           onSelect={() => select(null)}
         />
         {storefronts.length > 0 && <DropdownMenuSeparator />}
-        {storefronts.map((storefront, index) => (
+        {storefronts.map((storefront) => (
           <Option
             key={storefront.id}
-            index={index}
+            storefront={storefront}
             name={storefront.name}
             count={storefront.tenantCount}
             checked={storefront.id === selectedId}
@@ -122,8 +142,7 @@ export type StorefrontMembership = { organizationId: string; productId: string; 
  */
 export function MyStorefrontSwitcher({ memberships }: { memberships: StorefrontMembership[] }) {
   const router = useRouter();
-  const activeIndex = memberships.findIndex((m) => m.active);
-  const active = memberships[activeIndex];
+  const active = memberships.find((m) => m.active);
 
   async function switchTo(storefront: StorefrontMembership) {
     try {
@@ -139,17 +158,17 @@ export function MyStorefrontSwitcher({ memberships }: { memberships: StorefrontM
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm">
-          <Dot index={activeIndex} className="size-4" />
+          <Mark storefront={active ? { name: active.productName } : null} className="size-5" />
           <span className="hidden font-medium md:inline">{active?.productName ?? "Choose a storefront"}</span>
           <ChevronsUpDown className="text-muted-foreground size-3.5!" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuLabel>Your storefronts</DropdownMenuLabel>
-        {memberships.map((m, index) => (
+        {memberships.map((m) => (
           <Option
             key={m.productId}
-            index={index}
+            storefront={{ name: m.productName }}
             name={m.productName}
             checked={m.active}
             onSelect={() => {
