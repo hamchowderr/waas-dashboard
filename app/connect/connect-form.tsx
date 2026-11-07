@@ -14,13 +14,13 @@ type Storefront = { productId: string; name: string; role: string; canChange: bo
 
 /** `newStorefront`: the person has no storefront yet and names one, made as they approve (the HighLevel app). */
 export function ConnectForm({
-  id,
+  oauthQuery,
   areas,
   storefronts,
   asAdmin,
   newStorefront = false
 }: {
-  id: string;
+  oauthQuery: string;
   areas: ScopeArea[];
   storefronts: Storefront[];
   asAdmin: boolean;
@@ -44,7 +44,7 @@ export function ConnectForm({
   async function answer(a: ConnectAnswer) {
     setPending(a.action);
     setError(null);
-    const result = await answerConnection(id, a);
+    const result = await answerConnection(oauthQuery, a);
     if (!result.ok) {
       setError(result.error);
       setPending(null);

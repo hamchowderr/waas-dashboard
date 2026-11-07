@@ -7,6 +7,8 @@ const SESSION_COOKIES = ["__Secure-better-auth.session_token", "better-auth.sess
 // Whether the session is real, and what it may see, is checked by the API on every request.
 export function proxy(request: NextRequest) {
   if (process.env.WAAS_API_FIXTURES === "1") return NextResponse.next();
+  // An AI app's sign-in: "Sign in with your website" needs no account, and the page sends everyone else to sign-in itself.
+  if (request.nextUrl.pathname === "/connect") return NextResponse.next();
   if (SESSION_COOKIES.some((name) => request.cookies.has(name))) return NextResponse.next();
   const login = new URL("/login", request.url);
   const back = request.nextUrl.pathname + request.nextUrl.search;
