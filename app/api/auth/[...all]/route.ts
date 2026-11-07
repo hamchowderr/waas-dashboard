@@ -17,6 +17,10 @@ async function forward(request: NextRequest): Promise<Response> {
   for (const name of DROP_REQUEST) headers.delete(name);
   headers.set("x-forwarded-host", request.nextUrl.host);
   headers.set("x-forwarded-proto", request.nextUrl.protocol.replace(":", ""));
+  // fetch below sends its own Sec-Fetch-Mode ("cors"), so the browser's goes along separately: the
+  // API's sign-in redirects a browser that navigates to it (an AI app's sign-in) and answers scripts JSON.
+  const mode = request.headers.get("sec-fetch-mode");
+  if (mode) headers.set("x-forwarded-sec-fetch-mode", mode);
   let upstream: Response;
   try {
     upstream = await fetch(url, {
