@@ -7,18 +7,16 @@ import { SignOutButton } from "@/components/auth/account-actions";
 import type { ScopeArea } from "@/lib/connect-scopes";
 import { connectHeaders } from "./headers";
 import { ConnectForm } from "./connect-form";
+import { SiteForm } from "./site-form";
 
 export const metadata: Metadata = { title: "Connect an app" };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 type ConnectRequest = {
-  id: string;
   clientName: string;
   returnTo: string;
   wantsWrite: boolean;
   readOnly: boolean;
-  /** One per area (stores, backups, domains, email, versions, site): a box to see and a box to change. */
+  /** One per area the app asked for: a box to see and a box to change. */
   areas: ScopeArea[];
   /** True when the API took this person as a platform admin: every storefront is listed. */
   asAdmin?: boolean;
@@ -29,24 +27,44 @@ type ConnectRequest = {
   canCreateStorefront?: boolean;
 };
 
-/**
- * Where an AI app's connection lands when the person chooses to sign in (the API's approve page
- * sends them here): they pick a storefront, tick what the app may see and change, approve, and go
- * back to the app. A platform admin can pick any storefront.
- */
-export default async function ConnectPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const viewer = await getViewer();
-  if (!viewer) redirect(`/login?callbackUrl=${encodeURIComponent(`/connect/${id}`)}`);
+type Query = Record<string, string | string[] | undefined>;
 
-  const request = !UUID.test(id) ? null : process.env.WAAS_API_FIXTURES === "1" ? sampleRequest(id) : process.env.WAAS_API_URL ? await load(id, viewer) : null;
-  if (!request) {
+/** The sign-in request as the API's sign-in (Better Auth's MCP plugin) signed it, in its own order. */
+function signedQuery(query: Query): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    for (const v of Array.isArray(value) ? value : value === undefined ? [] : [value]) params.append(key, v);
+  }
+  return params.toString();
+}
+
+/**
+ * Where an AI app's sign-in lands (the API's sign-in sends the browser here, with its signed request):
+ * the person signs in, picks a storefront, ticks what the app may see and change, approves, and goes
+ * back to the app. A platform admin can pick any storefront. An app connecting to one website
+ * (/mcp/site) asks for that website's address instead, and its owner approves in its WordPress dashboard.
+ */
+export default async function ConnectPage({ searchParams }: { searchParams: Promise<Query> }) {
+  const oauthQuery = signedQuery(await searchParams);
+  const params = new URLSearchParams(oauthQuery);
+  if (!params.get("sig")) return <Expired />;
+
+  if ((params.get("resource") ?? "").endsWith("/mcp/site")) {
     return (
-      <AccountCard title="This link has expired" description="Go back to the app and connect again. Each link works once, for 10 minutes.">
-        <SignOutButton variant="ghost" />
+      <AccountCard
+        title="Connect your website"
+        description="Type your website's address. You'll approve the app in your website's WordPress dashboard, and it can then work on that website only.">
+        <SiteForm oauthQuery={oauthQuery} />
       </AccountCard>
     );
   }
+
+  const here = `/connect?${oauthQuery}`;
+  const viewer = await getViewer();
+  if (!viewer) redirect(`/login?callbackUrl=${encodeURIComponent(here)}`);
+
+  const request = process.env.WAAS_API_FIXTURES === "1" ? sampleRequest() : process.env.WAAS_API_URL ? await load(oauthQuery, viewer) : null;
+  if (!request) return <Expired />;
 
   if (request.storefronts.length === 0 && request.canCreateStorefront) {
     return (
@@ -59,7 +77,7 @@ export default async function ConnectPage({ params }: { params: Promise<{ id: st
             <code>{request.returnTo}</code>.
           </>
         }>
-        <ConnectForm id={request.id} areas={request.areas ?? []} storefronts={[]} asAdmin={false} newStorefront />
+        <ConnectForm oauthQuery={oauthQuery} areas={request.areas ?? []} storefronts={[]} asAdmin={false} newStorefront />
       </AccountCard>
     );
   }
@@ -74,7 +92,7 @@ export default async function ConnectPage({ params }: { params: Promise<{ id: st
             you, or sign in with another address.
           </>
         }>
-        <SignOutButton variant="ghost" then={`/login?callbackUrl=${encodeURIComponent(`/connect/${id}`)}`} />
+        <SignOutButton variant="ghost" then={`/login?callbackUrl=${encodeURIComponent(here)}`} />
       </AccountCard>
     );
   }
@@ -88,27 +106,32 @@ export default async function ConnectPage({ params }: { params: Promise<{ id: st
           <code>{request.returnTo}</code>.
         </>
       }>
-      <ConnectForm id={request.id} areas={request.areas ?? []} storefronts={request.storefronts} asAdmin={request.asAdmin === true} />
+      <ConnectForm oauthQuery={oauthQuery} areas={request.areas ?? []} storefronts={request.storefronts} asAdmin={request.asAdmin === true} />
     </AccountCard>
   );
 }
 
-async function load(id: string, viewer: { cookie: string; isAdmin: boolean }): Promise<ConnectRequest | null> {
-  const response = await fetch(new URL(`/account/oauth/requests/${id}`, process.env.WAAS_API_URL), {
-    headers: await connectHeaders(viewer),
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000)
-  });
-  if (response.status === 404) return null;
+function Expired() {
+  return (
+    <AccountCard title="This link has expired" description="Go back to the app and connect again.">
+      <SignOutButton variant="ghost" />
+    </AccountCard>
+  );
+}
+
+async function load(oauthQuery: string, viewer: { cookie: string; isAdmin: boolean }): Promise<ConnectRequest | null> {
+  const url = new URL("/account/oauth/connect", process.env.WAAS_API_URL);
+  url.searchParams.set("oauth_query", oauthQuery);
+  const response = await fetch(url, { headers: await connectHeaders(viewer), cache: "no-store", signal: AbortSignal.timeout(10_000) });
+  if (response.status === 404 || response.status === 400) return null;
   if (!response.ok) throw new Error(`Provisioning API returned ${response.status} for the connection request`);
   return (await response.json()) as ConnectRequest;
 }
 
 /** Sample mode (WAAS_API_FIXTURES=1): the HighLevel app connecting for an agency with no storefront yet. */
-function sampleRequest(id: string): ConnectRequest {
+function sampleRequest(): ConnectRequest {
   const box = (scope: string, label: string) => ({ scope, label, ticked: true });
   return {
-    id,
     clientName: "HighLevel",
     returnTo: "services.leadconnectorhq.com",
     wantsWrite: true,

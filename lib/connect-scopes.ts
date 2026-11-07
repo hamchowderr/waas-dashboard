@@ -1,4 +1,4 @@
-// The boxes on the connect page (app/connect/[id]): what an AI app may see and change, area by area.
+// The boxes on the connect page (app/connect): what an AI app may see and change, area by area.
 // The API sends one entry per area with its read and write scope and whether each box starts ticked;
 // it checks everything again when the person approves.
 
