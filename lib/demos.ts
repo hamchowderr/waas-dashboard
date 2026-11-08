@@ -1,16 +1,22 @@
-// The demo websites the /demo page opens: the AnyPress theme's business demos (demo/<kit>/<business>/build.php in
-// hamchowderr/anypress-theme), each built on WordPress Playground in the visitor's own browser. Nothing is made on the
-// server, and a visitor's changes vanish when they close the tab.
+// The demo websites the /demo page opens: the AnyPress theme's demos (demo/<kit>/build.php and
+// demo/<kit>/<business>/build.php in hamchowderr/anypress-theme), each built on WordPress Playground in the visitor's
+// own browser. Nothing is made on the server, and a visitor's changes vanish when they close the tab.
 
 const THEME_REPO = "https://github.com/hamchowderr/anypress-theme";
-const BLOCKS_REPO = "https://github.com/hamchowderr/anypress-blocks";
 /**
- * The theme commit the demos are built from. Business demos ship in the repository, not in the theme zip stores get,
- * so a demo needs the commit that added it; move this forward when the theme adds or fixes demos.
+ * The theme release the demos are built from. The theme comes from its small release zip; the demo's own files (in the
+ * repository, not the zip) come from the same tag, one demo at a time, so a visitor downloads a few megabytes rather
+ * than every demo's photos. Move this forward when the theme releases new or fixed demos.
  */
-export const THEME_COMMIT = "00e30691aabd63c4eec6d6cd7e875f53678dfa01";
+export const THEME_TAG = "v0.10.0";
 /** The AnyPress Blocks release the demos use (blocks such as the before-and-after slider and the phone bar). */
 export const BLOCKS_TAG = "v0.4.0";
+
+const THEME_ZIP = `${THEME_REPO}/releases/download/${THEME_TAG}/anypress.zip`;
+const BLOCKS_ZIP = `https://github.com/hamchowderr/anypress-blocks/releases/download/${BLOCKS_TAG}/anypress-blocks.zip`;
+/** raw.githubusercontent.com answers any site, so Playground reads these files without its proxy. */
+const themeFile = (path: string) => `https://raw.githubusercontent.com/hamchowderr/anypress-theme/${THEME_TAG}/${path}`;
+const THEME_DIR = "/wordpress/wp-content/themes/anypress";
 
 export type Demo = {
   /** demo/<id>/build.php in the theme; also the ?d= value that opens it. */
@@ -18,14 +24,15 @@ export type Demo = {
   business: string;
   /** The kind of business, as a customer would say it. */
   kind: string;
-  city: string;
+  /** Where it is, for a local business. */
+  city?: string;
   /** A photo from the demo itself, for its card. */
   photo: string;
   /** What to try on it, in a line. */
   about: string;
 };
 
-const photo = (path: string) => `https://cdn.jsdelivr.net/gh/hamchowderr/anypress-theme@${THEME_COMMIT}/demo/${path}`;
+const photo = (path: string) => `https://cdn.jsdelivr.net/gh/hamchowderr/anypress-theme@${THEME_TAG}/demo/${path}`;
 
 export const DEMOS: Demo[] = [
   {
@@ -67,12 +74,71 @@ export const DEMOS: Demo[] = [
     city: "Nashville",
     photo: photo("ridge/greenline-landscaping/photos/canna-bed.jpg"),
     about: "Lawn care plans, design projects, a free estimate form and a blog."
+  },
+  {
+    id: "ridge/guardian-pest-control",
+    business: "Guardian Pest Control",
+    kind: "Pest control",
+    city: "Houston",
+    photo: photo("ridge/guardian-pest-control/photos/wasp-nest-spraying.jpg"),
+    about: "Pest guides, protection plans, a free inspection form and a blog."
+  },
+  {
+    id: "ridge/fixwell-handyman",
+    business: "Fixwell Handyman",
+    kind: "Handyman",
+    city: "Orlando",
+    photo: photo("ridge/fixwell-handyman/photos/carpenter-measuring.jpg"),
+    about: "Home repairs, project photos, a quote form and reviews."
+  },
+  {
+    id: "circuit/main-street-auto",
+    business: "Main Street Auto Care",
+    kind: "Auto repair",
+    city: "Boise",
+    photo: photo("circuit/main-street-auto/photos/mechanic-suspension.jpg"),
+    about: "Repair services, an appointment form, offers and reviews."
+  },
+  {
+    id: "commons",
+    business: "Springfield Chamber of Commerce",
+    kind: "Chamber of commerce",
+    city: "Springfield",
+    photo: photo("commons/photos/hero.jpg"),
+    about: "Membership, events, local news and a join form."
+  },
+  {
+    id: "chapter",
+    business: "Draw with Mara",
+    kind: "Online courses",
+    photo: photo("chapter/photos/sketchbook.jpg"),
+    about: "Drawing courses, weekend workshops in six cities and a sign-up form."
+  },
+  {
+    id: "launch",
+    business: "Tally",
+    kind: "Software app",
+    photo: photo("launch/photos/typing.jpg"),
+    about: "Features, pricing plans, customer stories and a free trial sign-up."
   }
 ];
 
 export const findDemo = (id: string | null | undefined): Demo | undefined => DEMOS.find((d) => d.id === id);
 
-/** The Playground Blueprint that builds a demo: the theme and its blocks, Fluent Forms, then the demo's build script. */
+/**
+ * The files a demo's build reads besides its photos: the shared builder, and the demo's build script and JSON. A
+ * business on a kit (demo/<kit>/<business>) also has swap.json, the kit's words swapped for its own.
+ */
+export function demoFiles(demo: Demo): string[] {
+  const own = ["build.php", "photos.json", "services.json", "towns.json", "posts.json"];
+  if (demo.id.includes("/")) own.push("swap.json");
+  return ["demo/trades.php", ...own.map((file) => `demo/${demo.id}/${file}`)];
+}
+
+/**
+ * The Playground Blueprint that builds a demo: the theme and its blocks from their release zips, Fluent Forms, the
+ * demo's own files and photos, then its build script.
+ */
 export function demoBlueprint(demo: Demo) {
   return {
     $schema: "https://playground.wordpress.net/blueprint-schema.json",
@@ -84,14 +150,14 @@ export function demoBlueprint(demo: Demo) {
     steps: [
       {
         step: "installTheme",
-        themeData: { resource: "git:directory", url: THEME_REPO, ref: THEME_COMMIT, refType: "commit" },
+        themeData: { resource: "url", url: THEME_ZIP },
         options: { activate: true, targetFolderName: "anypress" },
-        // Playground's loading screen shows these, in place of the repository's address.
+        // Playground's loading screen shows these, in place of the addresses it downloads from.
         progress: { caption: "Setting up the design" }
       },
       {
         step: "installPlugin",
-        pluginData: { resource: "git:directory", url: BLOCKS_REPO, ref: BLOCKS_TAG, refType: "tag" },
+        pluginData: { resource: "url", url: BLOCKS_ZIP },
         options: { activate: true, targetFolderName: "anypress-blocks" },
         progress: { caption: "Adding the page sections" }
       },
@@ -100,6 +166,24 @@ export function demoBlueprint(demo: Demo) {
         pluginData: { resource: "wordpress.org/plugins", slug: "fluentform" },
         options: { activate: true },
         progress: { caption: "Adding the forms" }
+      },
+      {
+        step: "mkdir",
+        path: `${THEME_DIR}/demo/${demo.id}`,
+        progress: { caption: `Writing ${demo.business}'s pages` }
+      },
+      ...demoFiles(demo).map((path) => ({
+        step: "writeFile",
+        path: `${THEME_DIR}/${path}`,
+        data: { resource: "url", url: themeFile(path) },
+        progress: { caption: `Writing ${demo.business}'s pages` }
+      })),
+      {
+        // Only this demo's photos, not the whole repository's.
+        step: "writeFiles",
+        writeToPath: `${THEME_DIR}/demo/${demo.id}/photos`,
+        filesTree: { resource: "git:directory", url: THEME_REPO, ref: THEME_TAG, refType: "tag", path: `demo/${demo.id}/photos` },
+        progress: { caption: `Adding ${demo.business}'s photos` }
       },
       {
         step: "runPHP",
@@ -113,7 +197,7 @@ export function demoBlueprint(demo: Demo) {
 /**
  * The address that opens the demo: WordPress Playground's own site in its seamless mode (WordPress alone, none of
  * Playground's toolbar), with the Blueprint in the address. Playground's own site, not a client on this page,
- * because only Playground's sites may use its proxy to read the theme from GitHub.
+ * because only Playground's sites may use its proxy to download from GitHub.
  */
 export function playgroundUrl(demo: Demo): string {
   return `https://playground.wordpress.net/?mode=seamless#${encodeURIComponent(JSON.stringify(demoBlueprint(demo)))}`;
