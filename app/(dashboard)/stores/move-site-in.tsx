@@ -84,7 +84,7 @@ export function MoveSiteIn({
             </DialogTitle>
             <DialogDescription>
               {made
-                ? "The store is waiting for the site. Give the site owner these steps, or do them yourself."
+                ? "The store is waiting for the site. Open the store to copy it with Reprint, the easiest way, or give the site owner these steps for the AnyPress Export plugin."
                 : "Brings a WordPress site from another host into a new store. It keeps its own plugins, themes, content and users."}
             </DialogDescription>
           </DialogHeader>

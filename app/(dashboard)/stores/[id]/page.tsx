@@ -249,10 +249,10 @@ export default async function StorePage({ params, searchParams }: Params) {
             <Card>
               <CardHeader>
                 <CardTitle>Moving the site in</CardTitle>
-                <CardDescription>This store is built from a WordPress site sent with the AnyPress Export plugin.</CardDescription>
+                <CardDescription>This store is built from a WordPress site copied with Reprint or sent with the AnyPress Export plugin.</CardDescription>
               </CardHeader>
               <CardContent>
-                <MoveInStatus tenantId={tenant.id} moveIn={tenant.moveIn} />
+                <MoveInStatus tenantId={tenant.id} moveIn={tenant.moveIn} statusCode={tenant.statusCode} onHold={tenant.onHold} />
               </CardContent>
             </Card>
           )}

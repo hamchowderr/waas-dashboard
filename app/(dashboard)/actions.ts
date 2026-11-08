@@ -242,6 +242,15 @@ export async function renewImportCode(tenantId: string): Promise<ActionResult<Im
   return run(() => getAdminApi().renewImportCode(uuid(tenantId, "store")), ["/stores"]);
 }
 
+/** Copies the store's old site in with Reprint, or copies it again while the store is on hold. */
+export async function copyWithReprint(tenantId: string, siteUrl: string): Promise<ActionResult> {
+  return run(async () => {
+    const address = text(siteUrl, "The old site's address", 500);
+    await getAdminApi().copyWithReprint(uuid(tenantId, "store"), address);
+    return undefined;
+  }, ["/stores"]);
+}
+
 /** Rolls a live store back to one of its backups; with takeBackup, its current state is backed up first. */
 export async function restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<ActionResult> {
   return run(async () => {

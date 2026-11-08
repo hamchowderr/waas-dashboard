@@ -24,7 +24,18 @@ describe("toMoveIn", () => {
       source: null,
       reason: null,
       warnings: [],
-      siteReport: null
+      siteReport: null,
+      migrationToken: null,
+      reprintSite: null,
+      reprintCopies: 0
+    });
+  });
+
+  it("passes the Migration Token and where Reprint copied the site from", () => {
+    expect(toMoveIn({ ...base, migrationToken: "MIIBtoken", reprintSite: "https://old.example", reprintCopies: 2 })).toMatchObject({
+      migrationToken: "MIIBtoken",
+      reprintSite: "https://old.example",
+      reprintCopies: 2
     });
   });
 

@@ -424,7 +424,10 @@ function sampleMoveIn(kind: "held" | "failed", startedAt: number): MoveIn {
       source,
       reason: "The database holds two sets of WordPress tables whose names collide. Remove the old copy's tables from the old site's database, then export again.",
       warnings: [],
-      siteReport: null
+      siteReport: null,
+      migrationToken: SAMPLE_MIGRATION_TOKEN,
+      reprintSite: null,
+      reprintCopies: 0
     };
   return {
     expiresAt: iso(startedAt + 6 * DAY),
@@ -435,9 +438,15 @@ function sampleMoveIn(kind: "held" | "failed", startedAt: number): MoveIn {
       "The old site ran PHP 8.1 and this store runs PHP 8.3. Check that its plugins and theme work.",
       "After the move the home page answered 500 and the login page 200, and PHP stopped with: Uncaught Error: Call to undefined function create_function() in wp-content/plugins/old-slider/slider.php:42. Fix or switch off the plugin or theme at fault."
     ],
-    siteReport: sampleSiteReport
+    siteReport: sampleSiteReport,
+    migrationToken: SAMPLE_MIGRATION_TOKEN,
+    reprintSite: source.home,
+    reprintCopies: 1
   };
 }
+
+/** A sample Migration Token: the one-line public half of an RSA key, as Reprint takes it (not a real key). */
+const SAMPLE_MIGRATION_TOKEN = `MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA${"sampleKeyForTheDashboardPreviewOnly".repeat(14)}IDAQAB`;
 
 /** What the API's report says about a sample site moved in: Contact Form 7, WooCommerce and MailPoet. */
 const sampleSiteReport: SiteReport = {
@@ -1309,7 +1318,10 @@ export class FixtureAdminApi implements AdminApi {
       source: null,
       reason: null,
       warnings: [],
-      siteReport: null
+      siteReport: null,
+      migrationToken: SAMPLE_MIGRATION_TOKEN,
+      reprintSite: null,
+      reprintCopies: 0
     });
     return this.importCode(id);
   }
@@ -1358,6 +1370,32 @@ export class FixtureAdminApi implements AdminApi {
     if (!tenant.moveIn || tenant.moveIn.startedAt) throw new FixtureError(400, "This store is not waiting for a site to be moved in");
     tenant.moveIn.expiresAt = new Date(Date.now() + 7 * DAY).toISOString();
     return this.importCode(tenantId);
+  }
+
+  /** Like the API: the store is Pending while it copies, then on hold with the site copied (a few seconds here). */
+  async copyWithReprint(tenantId: string, siteUrl: string): Promise<void> {
+    const tenant = tenants.find((t) => t.id === tenantId);
+    if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    if (!tenant.moveIn) throw new FixtureError(400, "This store was not moved in from another host");
+    const waiting = !tenant.moveIn.startedAt;
+    if (!(waiting || tenant.statusCode === StatusCode.Failed || (tenant.statusCode === StatusCode.Done && tenant.onHold))) {
+      throw new FixtureError(409, tenant.statusCode === StatusCode.Done ? "This site is live: it can no longer be copied again." : "This site is being moved in right now. Wait until it is done.");
+    }
+    let url: URL;
+    try {
+      url = new URL(siteUrl.includes("://") ? siteUrl : `https://${siteUrl}`);
+    } catch {
+      throw new FixtureError(400, "siteUrl must be the old site's address, such as https://example.com");
+    }
+    if (url.protocol !== "https:") throw new FixtureError(400, "siteUrl must start with https://: Reprint copies a site over HTTPS only");
+    const site = `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+    const now = new Date().toISOString();
+    Object.assign(tenant.moveIn, { startedAt: now, reason: null, reprintSite: site, reprintCopies: tenant.moveIn.reprintCopies + 1, source: { ...tenant.moveIn.source, home: site } });
+    Object.assign(tenant, { statusCode: StatusCode.Pending, dateChanged: now });
+    setTimeout(() => {
+      if (tenant.statusCode !== StatusCode.Pending) return;
+      Object.assign(tenant, { statusCode: StatusCode.Done, onHold: true, dateHeld: tenant.dateHeld ?? new Date().toISOString() });
+    }, 5_000).unref?.();
   }
 
   private importCode(tenantId: string): ImportCode {

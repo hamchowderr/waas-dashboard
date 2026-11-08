@@ -146,6 +146,9 @@ export type WireMoveIn = {
   check?: { ok?: boolean; home?: number; login?: number; loaded?: boolean; fatal?: string | null; error?: string };
   warnings?: string[];
   siteReport?: unknown;
+  migrationToken?: string;
+  reprintSite?: string | null;
+  reprintCopies?: number;
 };
 
 const text = (value: unknown): string | null => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -222,7 +225,10 @@ export function toMoveIn(wire: WireMoveIn): MoveIn {
     source: wire.source as MoveIn["source"],
     reason: text(wire.reason),
     warnings: texts(wire.warnings),
-    siteReport: toSiteReport(wire.siteReport)
+    siteReport: toSiteReport(wire.siteReport),
+    migrationToken: text(wire.migrationToken),
+    reprintSite: text(wire.reprintSite),
+    reprintCopies: typeof wire.reprintCopies === "number" ? wire.reprintCopies : 0
   };
 }
 
