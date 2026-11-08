@@ -56,6 +56,9 @@ import {
   type JobsList,
   type Listing,
   type DomainConnectLink,
+  type BoughtDomain,
+  type DomainContact,
+  type DomainOffer,
   type DomainSetup,
   type MailDomain,
   type Overview,
@@ -102,6 +105,7 @@ import { AdminApiError } from "./http";
 
 /** Sample stores' own sending domains, by tenant id. */
 const mailDomains = new Map<string, MailDomain>();
+const boughtDomains: BoughtDomain[] = [];
 import { FIXTURE_UPLOAD_URL } from "./upload";
 
 // Sample data for building and reviewing the UI before the admin endpoints exist.
@@ -1558,6 +1562,62 @@ export class FixtureAdminApi implements AdminApi {
         ? { dnsProvider: null, supported: false, url: null }
         : { dnsProvider: "Cloudflare", supported: true, url: `https://dash.cloudflare.example/domainconnect/v2/domainTemplates/providers/anypress.io/services/website/apply?${query}` }
     };
+  }
+
+  async searchDomains(tenantId: string, query: string): Promise<DomainOffer[]> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const q = query.trim().toLowerCase();
+    if (!q) throw new FixtureError(400, "Send a name to search for (query)");
+    // Sample prices: .com $15, .shop $8, .net $17 a first year (markup included); names with "taken" are taken.
+    const prices: Record<string, [number, number]> = { com: [1500, 1700], shop: [800, 4500], net: [1700, 1900] };
+    const names = q.includes(".") ? [q] : Object.keys(prices).map((tld) => `${q.replace(/[^a-z0-9-]/g, "")}.${tld}`);
+    const taken = boughtDomains.filter((b) => b.status !== "cancelled" && b.status !== "failed").map((b) => b.domainName);
+    return names.map((domainName) => {
+      const tld = domainName.slice(domainName.indexOf(".") + 1);
+      const price = prices[tld];
+      const reason = !price ? `Domains ending in .${tld} are not sold here` : domainName.includes("taken") || taken.includes(domainName) ? "This domain is taken" : null;
+      return { domainName, available: reason === null, priceCents: reason ? null : price![0], renewalPriceCents: reason ? null : price![1], reason };
+    });
+  }
+
+  async buyDomain(tenantId: string, domainName: string, contact: DomainContact): Promise<BoughtDomain> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const [offer] = await this.searchDomains(tenantId, domainName);
+    if (!offer?.available) throw new FixtureError(409, `${domainName} can't be bought: ${offer?.reason ?? "unknown"}`);
+    const id = uuid(boughtDomains.length + 1, 9);
+    const bought: BoughtDomain = {
+      id,
+      tenantId,
+      domainName: offer.domainName,
+      status: "awaiting_payment",
+      priceCents: offer.priceCents!,
+      renewalPriceCents: offer.renewalPriceCents!,
+      payUrl: `https://invoice.stripe.com/i/sample_${id.slice(0, 8)}?for=${encodeURIComponent(contact.email)}`,
+      autoRenew: true,
+      renewalPayUrl: null,
+      expiresAt: null,
+      error: null,
+      dateCreated: new Date().toISOString()
+    };
+    boughtDomains.unshift(bought);
+    return bought;
+  }
+
+  async boughtDomains(tenantId: string): Promise<BoughtDomain[]> {
+    return boughtDomains.filter((b) => b.tenantId === tenantId);
+  }
+
+  async setDomainAutoRenew(tenantId: string, domainName: string, autoRenew: boolean): Promise<BoughtDomain> {
+    const bought = boughtDomains.find((b) => b.tenantId === tenantId && b.domainName === domainName && b.status === "active");
+    if (!bought) throw new FixtureError(400, `${domainName} is not a domain bought for this store`);
+    bought.autoRenew = autoRenew;
+    return bought;
+  }
+
+  async domainTransferCode(tenantId: string, domainName: string): Promise<string> {
+    const bought = boughtDomains.find((b) => b.tenantId === tenantId && b.domainName === domainName && b.status === "active");
+    if (!bought) throw new FixtureError(400, `${domainName} is not a domain bought for this store`);
+    return "Sample-EPP-7f3K9q";
   }
 
   async retryFailure(failureId: string): Promise<void> {

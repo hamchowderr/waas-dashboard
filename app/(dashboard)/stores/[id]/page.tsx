@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BoughtDomainRow, BuyDomain } from "./buy-domain";
 import { ChangeAddress } from "./change-address";
 import { DomainDnsButton } from "./domain-setup";
 import { GoLive } from "./go-live";
@@ -48,10 +49,12 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default async function StorePage({ params, searchParams }: Params) {
   const { id } = await params;
   const { product } = await searchParams;
-  const [tenant, mailDomain, viewer] = await Promise.all([
+  const [tenant, mailDomain, viewer, bought] = await Promise.all([
     getAdminApi().tenant(id),
     getAdminApi().mailDomain(id).catch(() => null),
-    getViewer()
+    getViewer(),
+    // Domains bought for the store; none when buying isn't set up on the API.
+    getAdminApi().boughtDomains(id).catch(() => [])
   ]);
   if (!tenant) notFound();
   // The admin works one storefront at a time (?product=); a store page opens in its own storefront, so the
@@ -258,7 +261,8 @@ export default async function StorePage({ params, searchParams }: Params) {
             <CardHeader>
               <CardTitle>Domains</CardTitle>
               <CardDescription>The main domain serves the store; the others redirect to it.</CardDescription>
-              <CardAction>
+              <CardAction className="flex flex-wrap justify-end gap-2">
+                <BuyDomain tenantId={tenant.id} ownerEmail={tenant.ownerEmail} />
                 <ChangeAddress tenantId={tenant.id} mainDomain={tenant.mainDomain} />
               </CardAction>
             </CardHeader>
@@ -294,6 +298,16 @@ export default async function StorePage({ params, searchParams }: Params) {
                   ))}
                 </TableBody>
               </Table>
+              {bought.length > 0 && (
+                <div className="border-t">
+                  <div className="text-muted-foreground px-(--card-spacing) pt-3 text-xs font-medium">Bought here</div>
+                  <div className="divide-y">
+                    {bought.map((b) => (
+                      <BoughtDomainRow key={b.id} tenantId={tenant.id} domain={b} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
           <Card>

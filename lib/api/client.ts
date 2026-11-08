@@ -56,6 +56,9 @@ import type {
   JobsList,
   Listing,
   DomainConnectLink,
+  BoughtDomain,
+  DomainContact,
+  DomainOffer,
   DomainSetup,
   ImportCode,
   StoreSize,
@@ -168,6 +171,16 @@ export interface AdminApi {
   domainConnect(tenantId: string, domainName: string, service: "website" | "email"): Promise<DomainConnectLink>;
   /** The DNS records a custom domain needs, whether it has them, and its one-click link; works before it is added. */
   domainSetup(tenantId: string, domainName: string): Promise<DomainSetup>;
+  /** Domains to buy for a keyword or an exact name, with prices; 503 when buying is not set up on the API. */
+  searchDomains(tenantId: string, query: string): Promise<DomainOffer[]>;
+  /** Orders a domain for the store: the contact gets a Stripe invoice, and the domain is registered once it is paid. */
+  buyDomain(tenantId: string, domainName: string, contact: DomainContact): Promise<BoughtDomain>;
+  /** Domains bought for the store, newest first. */
+  boughtDomains(tenantId: string): Promise<BoughtDomain[]>;
+  /** Turns a bought domain's yearly renewal on or off. */
+  setDomainAutoRenew(tenantId: string, domainName: string, autoRenew: boolean): Promise<BoughtDomain>;
+  /** The code that moves a bought domain to another registrar. */
+  domainTransferCode(tenantId: string, domainName: string): Promise<string>;
   createVersion(productId: string, input: CreateVersionInput): Promise<Created>;
   setProductionVersion(productId: string, versionId: string): Promise<void>;
   deleteVersion(productId: string, versionId: string): Promise<void>;

@@ -6,6 +6,9 @@ import { canChange, canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
 import type {
+  BoughtDomain,
+  DomainContact,
+  DomainOffer,
   AddedStorefront,
   BrandImage,
   BrandingFields,
@@ -146,6 +149,50 @@ export async function getDomainSetup(tenantId: string, domainName: string): Prom
     if (!DOMAIN.test(domain)) throw new InputError("Enter an address like shop.example.com");
     return getAdminApi().domainSetup(uuid(tenantId, "store"), domain);
   }, []);
+}
+
+/** Domains to buy for the store, with prices. Changes nothing. */
+export async function searchDomainsToBuy(tenantId: string, query: string): Promise<ActionResult<DomainOffer[]>> {
+  return run(async () => {
+    const q = text(query, "Name", 63).trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    return getAdminApi().searchDomains(uuid(tenantId, "store"), q);
+  }, []);
+}
+
+/** Orders a domain for the store; the contact is emailed a Stripe invoice and the domain is registered once it is paid. */
+export async function buyDomain(tenantId: string, domainName: string, contact: DomainContact): Promise<ActionResult<BoughtDomain>> {
+  return run(async () => {
+    const domain = text(domainName, "Domain", 253).toLowerCase();
+    if (!DOMAIN.test(domain)) throw new InputError("Pick a domain like mybakery.com");
+    const field = (value: unknown, what: string, max = 200, required = true) =>
+      required ? text(value, what, max).trim() : typeof value === "string" && value.trim() ? value.trim().slice(0, max) : undefined;
+    const clean: DomainContact = {
+      firstName: field(contact?.firstName, "First name")!,
+      lastName: field(contact?.lastName, "Last name")!,
+      companyName: field(contact?.companyName, "Company", 200, false),
+      address1: field(contact?.address1, "Address")!,
+      address2: field(contact?.address2, "Address line 2", 200, false),
+      city: field(contact?.city, "City")!,
+      state: field(contact?.state, "State or region")!,
+      zip: field(contact?.zip, "ZIP or postal code", 20)!,
+      country: field(contact?.country, "Country", 2)!.toUpperCase(),
+      email: field(contact?.email, "Email")!.toLowerCase(),
+      phone: field(contact?.phone, "Phone", 20)!
+    };
+    if (!/^[A-Z]{2}$/.test(clean.country)) throw new InputError("Country must be a two-letter code, like US");
+    if (!/^\+\d{1,3}\.\d{4,14}$/.test(clean.phone)) throw new InputError("Write the phone like +1.5555555555");
+    return getAdminApi().buyDomain(uuid(tenantId, "store"), domain, clean);
+  }, ["/stores"]);
+}
+
+/** Turns a bought domain's yearly renewal on or off. */
+export async function setDomainAutoRenew(tenantId: string, domainName: string, autoRenew: boolean): Promise<ActionResult<BoughtDomain>> {
+  return run(() => getAdminApi().setDomainAutoRenew(uuid(tenantId, "store"), text(domainName, "Domain", 253), autoRenew === true), ["/stores"]);
+}
+
+/** The code that moves a bought domain to another registrar. */
+export async function getDomainTransferCode(tenantId: string, domainName: string): Promise<ActionResult<string>> {
+  return run(() => getAdminApi().domainTransferCode(uuid(tenantId, "store"), text(domainName, "Domain", 253)), []);
 }
 
 /** Gives a store its own sending domain; it sends from it once toSend has verified the DNS records. */

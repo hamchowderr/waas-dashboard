@@ -59,6 +59,9 @@ import type {
   JobsList,
   Listing,
   DomainConnectLink,
+  BoughtDomain,
+  DomainContact,
+  DomainOffer,
   DomainSetup,
   MailDomain,
   Overview,
@@ -397,6 +400,29 @@ export class HttpAdminApi implements AdminApi {
   async domainSetup(tenantId: string, domainName: string): Promise<DomainSetup> {
     const query = new URLSearchParams({ domainName });
     return (await this.get<DomainSetup>(`/admin/tenants/${encodeURIComponent(tenantId)}/domain-setup?${query}`))!;
+  }
+
+  async searchDomains(tenantId: string, query: string): Promise<DomainOffer[]> {
+    const q = new URLSearchParams({ query });
+    return (await this.get<{ results: DomainOffer[] }>(`/admin/tenants/${encodeURIComponent(tenantId)}/domains/search?${q}`))!.results;
+  }
+
+  async buyDomain(tenantId: string, domainName: string, contact: DomainContact): Promise<BoughtDomain> {
+    return (await this.send<BoughtDomain>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/domains/buy`, { domainName, contact }))!;
+  }
+
+  async boughtDomains(tenantId: string): Promise<BoughtDomain[]> {
+    const res = await this.get<{ domains: BoughtDomain[] }>(`/admin/tenants/${encodeURIComponent(tenantId)}/domains/bought`, { allow404: true });
+    return res?.domains ?? [];
+  }
+
+  async setDomainAutoRenew(tenantId: string, domainName: string, autoRenew: boolean): Promise<BoughtDomain> {
+    return (await this.send<BoughtDomain>("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/domains/bought/auto-renew`, { domainName, autoRenew }))!;
+  }
+
+  async domainTransferCode(tenantId: string, domainName: string): Promise<string> {
+    const q = new URLSearchParams({ domainName });
+    return (await this.get<{ authCode: string }>(`/admin/tenants/${encodeURIComponent(tenantId)}/domains/bought/transfer-code?${q}`))!.authCode;
   }
 
   async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {
