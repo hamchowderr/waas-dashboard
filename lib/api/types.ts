@@ -771,6 +771,8 @@ export type Branding = {
   /** #rrggbb */
   color: string | null;
   supportEmail: string | null;
+  /** Where customers buy: the "Start your website" button on the demo page. */
+  shopUrl: string | null;
   logoUrl: string | null;
   iconUrl: string | null;
 };
@@ -779,7 +781,16 @@ export type Branding = {
 export type BrandingView = Branding & { shown: Branding };
 
 /** The fields a form sets; null clears one. */
-export type BrandingFields = { name: string | null; color: string | null; supportEmail: string | null };
+export type BrandingFields = { name: string | null; color: string | null; supportEmail: string | null; shopUrl: string | null };
+
+/** GET /branding/demo/{id} (public): the look of a seller's or reseller's demo page. */
+export type DemoBrand = {
+  /** The brand's name, else the storefront's or reseller's own. */
+  name: string;
+  brand: Branding | null;
+  /** Where "Start your website" goes; null leaves the button out. */
+  shopUrl: string | null;
+};
 
 export type BrandImage = "logo" | "icon";
 

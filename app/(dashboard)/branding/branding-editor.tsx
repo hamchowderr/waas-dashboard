@@ -13,9 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { removeBrandImage, saveBranding, uploadBrandImage } from "../actions";
 
-type Form = { name: string; color: string; supportEmail: string };
+type Form = { name: string; color: string; supportEmail: string; shopUrl: string };
 
-const toForm = (b: Branding): Form => ({ name: b.name ?? "", color: b.color ?? "", supportEmail: b.supportEmail ?? "" });
+const toForm = (b: Branding): Form => ({ name: b.name ?? "", color: b.color ?? "", supportEmail: b.supportEmail ?? "", shopUrl: b.shopUrl ?? "" });
 
 const IMAGES: { kind: BrandImage; title: string; about: string; key: "logoUrl" | "iconUrl" }[] = [
   { kind: "logo", key: "logoUrl", title: "Logo", about: "Shown at the top of the sidebar and on the sign-in page. PNG, JPEG or WebP, up to 256 KB. A square or wide logo on a clear background works best." },
@@ -46,6 +46,7 @@ export function BrandingEditor({
   const [busyImage, setBusyImage] = React.useState<BrandImage | null>(null);
   const changed = JSON.stringify(toForm(view)) !== JSON.stringify(form);
   const colorValid = !form.color || /^#[0-9a-f]{6}$/i.test(form.color);
+  const shopValid = !form.shopUrl.trim() || /^https?:\/\/\S+\.\S+$/i.test(form.shopUrl.trim());
 
   const applied = (next: BrandingView) => {
     setView(next);
@@ -57,7 +58,8 @@ export function BrandingEditor({
       const result = await saveBranding(of, {
         name: form.name.trim() || null,
         color: form.color.trim() || null,
-        supportEmail: form.supportEmail.trim() || null
+        supportEmail: form.supportEmail.trim() || null,
+        shopUrl: form.shopUrl.trim() || null
       });
       if (!result.ok) return void toast.error(result.error);
       applied(result.data);
@@ -161,8 +163,24 @@ export function BrandingEditor({
               />
               <p className="text-muted-foreground text-xs">Shown at the bottom of the sidebar, so your team knows who to ask.</p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="brand-shop">Shop link</Label>
+              <Input
+                id="brand-shop"
+                type="url"
+                maxLength={500}
+                value={form.shopUrl}
+                disabled={!canEdit}
+                placeholder={fromParent(view.shopUrl, view.shown.shopUrl) ?? "https://shop.yourbusiness.com"}
+                aria-invalid={!shopValid}
+                onChange={(e) => setForm({ ...form, shopUrl: e.target.value })}
+              />
+              <p className="text-muted-foreground text-xs">
+                Where customers buy a website from you. The &ldquo;Start your website&rdquo; button on your demo page goes here.
+              </p>
+            </div>
             {canEdit && (
-              <Button size="sm" disabled={!changed || !colorValid || pending} onClick={save}>
+              <Button size="sm" disabled={!changed || !colorValid || !shopValid || pending} onClick={save}>
                 {pending && <Spinner />}
                 Save
               </Button>

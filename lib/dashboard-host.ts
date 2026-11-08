@@ -12,6 +12,8 @@ import type { Branding } from "@/lib/api/types";
  */
 export interface SellerAddress {
   host: string;
+  /** The storefront the address belongs to (older APIs leave it out). */
+  productId: string | null;
   productName: string | null;
   brand: Branding | null;
 }
@@ -37,8 +39,8 @@ export const sellerAddress = cache(async (): Promise<SellerAddress | null> => {
       signal: AbortSignal.timeout(5_000)
     });
     if (!response.ok) return null;
-    const body = (await response.json()) as { productName: string | null; brand: Branding | null };
-    return { host, productName: body.productName, brand: body.brand };
+    const body = (await response.json()) as { productId?: string; productName: string | null; brand: Branding | null };
+    return { host, productId: body.productId ?? null, productName: body.productName, brand: body.brand };
   } catch {
     return null;
   }

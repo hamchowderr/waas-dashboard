@@ -857,7 +857,9 @@ export async function saveBranding(of: TeamOf, fields: BrandingFields): Promise<
     if (color && !HEX_COLOR.test(color)) throw new InputError("Choose a color like #1d4ed8");
     const supportEmail = optional(fields?.supportEmail, "Support email", 254);
     if (supportEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(supportEmail)) throw new InputError("Enter a support email address");
-    return getAdminApi().updateBranding(checked, { name: optional(fields?.name, "Name", 60), color, supportEmail });
+    const shopUrl = optional(fields?.shopUrl, "Shop link", 500);
+    if (shopUrl && !/^https?:\/\/\S+\.\S+$/i.test(shopUrl)) throw new InputError("Enter the shop link starting with https://");
+    return getAdminApi().updateBranding(checked, { name: optional(fields?.name, "Name", 60), color, supportEmail, shopUrl });
   });
 }
 
