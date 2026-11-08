@@ -18,11 +18,11 @@ describe("demo websites", () => {
     }
   });
 
-  it("downloads the theme zip and only the opened demo's own files, with no git step", () => {
+  it("downloads the theme zip through the API and only the opened demo's own files, with no git step", () => {
     for (const demo of DEMOS) {
       const steps = demoBlueprint(demo).steps;
       const blueprint = JSON.stringify(steps);
-      expect(steps[0]).toMatchObject({ step: "installTheme", themeData: { resource: "url", url: expect.stringContaining(`/${THEME_TAG}/anypress.zip`) } });
+      expect(steps[0]).toMatchObject({ step: "installTheme", themeData: { resource: "url", url: `https://api.anypress.io/branding/demo-files/anypress-theme-${THEME_TAG}.zip` } });
       expect(blueprint).not.toContain("git:directory");
       for (const file of demoFiles(demo)) expect(blueprint).toContain(`anypress-theme@${THEME_TAG}/${file}`);
       expect(demoFiles(demo).filter((f) => f.startsWith(`demo/${demo.id}/photos/`)).length).toBeGreaterThan(5);

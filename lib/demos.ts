@@ -4,7 +4,6 @@
 
 import demoPhotos from "./demo-photos.json";
 
-const THEME_REPO = "https://github.com/hamchowderr/anypress-theme";
 /**
  * The theme release the demos are built from. The theme comes from its small release zip; the demo's own files and
  * photos (in the repository, not the zip) come from the same tag, file by file, so a visitor downloads only the demo
@@ -14,8 +13,13 @@ export const THEME_TAG = "v0.10.0";
 /** The AnyPress Blocks release the demos use (blocks such as the before-and-after slider and the phone bar). */
 export const BLOCKS_TAG = "v0.4.0";
 
-const THEME_ZIP = `${THEME_REPO}/releases/download/${THEME_TAG}/anypress.zip`;
-const BLOCKS_ZIP = `https://github.com/hamchowderr/anypress-blocks/releases/download/${BLOCKS_TAG}/anypress-blocks.zip`;
+/**
+ * The zips come through the AnyPress API, not straight from GitHub: GitHub's release downloads don't let Playground's
+ * site read them, and Playground's own download helper turns visitors away after a few demos.
+ */
+const ZIPS = "https://api.anypress.io/branding/demo-files";
+const THEME_ZIP = `${ZIPS}/anypress-theme-${THEME_TAG}.zip`;
+const BLOCKS_ZIP = `${ZIPS}/anypress-blocks-${BLOCKS_TAG}.zip`;
 /** jsDelivr answers any site, so Playground downloads these files directly, without its proxy or its git add-on. */
 const themeFile = (path: string) => `https://cdn.jsdelivr.net/gh/hamchowderr/anypress-theme@${THEME_TAG}/${path}`;
 const THEME_DIR = "/wordpress/wp-content/themes/anypress";
