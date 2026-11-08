@@ -180,7 +180,7 @@ function DemoCard({ demo, onOpen }: { demo: Demo; onOpen: () => void }) {
       </div>
       <div className="flex flex-1 flex-col gap-1.5 p-5">
         <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          {demo.kind} · {demo.city}
+          {demo.city ? `${demo.kind} · ${demo.city}` : demo.kind}
         </span>
         <span className="text-lg leading-tight font-extrabold tracking-tight">{demo.business}</span>
         <span className="text-muted-foreground text-sm">{demo.about}</span>
@@ -202,7 +202,11 @@ function DemoFrame({ demo }: { demo: Demo }) {
           <p className="flex-1">
             <span className="text-foreground font-semibold">{demo.business}</span> is being built in your browser; the first time takes about a minute.
             <span className="hidden sm:inline"> You&apos;re signed in as the owner, so try <b className="text-foreground">Edit Site</b> at the top.</span>{" "}
-            Runs on{" "}
+            Not loading?{" "}
+            <a href={playgroundUrl(demo)} target="_blank" rel="noopener" className="hover:text-foreground underline underline-offset-2">
+              Open it in a new tab
+            </a>
+            . Runs on{" "}
             <a href={PLAYGROUND} target="_blank" rel="noopener" className="hover:text-foreground inline-flex items-center underline underline-offset-2">
               WordPress Playground
               <ArrowUpRightIcon className="size-3" />
