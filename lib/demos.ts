@@ -2,20 +2,26 @@
 // demo/<kit>/<business>/build.php in hamchowderr/anypress-theme), each built on WordPress Playground in the visitor's
 // own browser. Nothing is made on the server, and a visitor's changes vanish when they close the tab.
 
-const THEME_REPO = "https://github.com/hamchowderr/anypress-theme";
+import demoPhotos from "./demo-photos.json";
+
 /**
- * The theme release the demos are built from. The theme comes from its small release zip; the demo's own files (in the
- * repository, not the zip) come from the same tag, one demo at a time, so a visitor downloads a few megabytes rather
- * than every demo's photos. Move this forward when the theme releases new or fixed demos.
+ * The theme release the demos are built from. The theme comes from its small release zip; the demo's own files and
+ * photos (in the repository, not the zip) come from the same tag, file by file, so a visitor downloads only the demo
+ * they open. Move this forward when the theme releases new or fixed demos, then run `node scripts/demo-photos.mjs`.
  */
 export const THEME_TAG = "v0.10.0";
 /** The AnyPress Blocks release the demos use (blocks such as the before-and-after slider and the phone bar). */
 export const BLOCKS_TAG = "v0.4.0";
 
-const THEME_ZIP = `${THEME_REPO}/releases/download/${THEME_TAG}/anypress.zip`;
-const BLOCKS_ZIP = `https://github.com/hamchowderr/anypress-blocks/releases/download/${BLOCKS_TAG}/anypress-blocks.zip`;
-/** raw.githubusercontent.com answers any site, so Playground reads these files without its proxy. */
-const themeFile = (path: string) => `https://raw.githubusercontent.com/hamchowderr/anypress-theme/${THEME_TAG}/${path}`;
+/**
+ * The zips come through the AnyPress API, not straight from GitHub: GitHub's release downloads don't let Playground's
+ * site read them, and Playground's own download helper turns visitors away after a few demos.
+ */
+const ZIPS = "https://api.anypress.io/branding/demo-files";
+const THEME_ZIP = `${ZIPS}/anypress-theme-${THEME_TAG}.zip`;
+const BLOCKS_ZIP = `${ZIPS}/anypress-blocks-${BLOCKS_TAG}.zip`;
+/** jsDelivr answers any site, so Playground downloads these files directly, without its proxy or its git add-on. */
+const themeFile = (path: string) => `https://cdn.jsdelivr.net/gh/hamchowderr/anypress-theme@${THEME_TAG}/${path}`;
 const THEME_DIR = "/wordpress/wp-content/themes/anypress";
 
 export type Demo = {
@@ -32,7 +38,7 @@ export type Demo = {
   about: string;
 };
 
-const photo = (path: string) => `https://cdn.jsdelivr.net/gh/hamchowderr/anypress-theme@${THEME_TAG}/demo/${path}`;
+const photo = (path: string) => themeFile(`demo/${path}`);
 
 export const DEMOS: Demo[] = [
   {
@@ -126,18 +132,20 @@ export const DEMOS: Demo[] = [
 export const findDemo = (id: string | null | undefined): Demo | undefined => DEMOS.find((d) => d.id === id);
 
 /**
- * The files a demo's build reads besides its photos: the shared builder, and the demo's build script and JSON. A
- * business on a kit (demo/<kit>/<business>) also has swap.json, the kit's words swapped for its own.
+ * The files a demo's build reads: the shared builder, the demo's build script and JSON, and its photos (listed in
+ * demo-photos.json). A business on a kit (demo/<kit>/<business>) also has swap.json, the kit's words swapped for its own.
  */
 export function demoFiles(demo: Demo): string[] {
   const own = ["build.php", "photos.json", "services.json", "towns.json", "posts.json"];
   if (demo.id.includes("/")) own.push("swap.json");
-  return ["demo/trades.php", ...own.map((file) => `demo/${demo.id}/${file}`)];
+  const photos = (demoPhotos.photos as Record<string, string[]>)[demo.id] ?? [];
+  return ["demo/trades.php", ...own.map((file) => `demo/${demo.id}/${file}`), ...photos.map((file) => `demo/${demo.id}/photos/${file}`)];
 }
 
 /**
  * The Playground Blueprint that builds a demo: the theme and its blocks from their release zips, Fluent Forms, the
- * demo's own files and photos, then its build script.
+ * demo's own files and photos, then its build script. No git step: Playground loads that from a separate file, which
+ * a browser holding an older copy of Playground can fail to fetch.
  */
 export function demoBlueprint(demo: Demo) {
   return {
@@ -169,22 +177,15 @@ export function demoBlueprint(demo: Demo) {
       },
       {
         step: "mkdir",
-        path: `${THEME_DIR}/demo/${demo.id}`,
+        path: `${THEME_DIR}/demo/${demo.id}/photos`,
         progress: { caption: `Writing ${demo.business}'s pages` }
       },
       ...demoFiles(demo).map((path) => ({
         step: "writeFile",
         path: `${THEME_DIR}/${path}`,
         data: { resource: "url", url: themeFile(path) },
-        progress: { caption: `Writing ${demo.business}'s pages` }
+        progress: { caption: path.includes("/photos/") ? `Adding ${demo.business}'s photos` : `Writing ${demo.business}'s pages` }
       })),
-      {
-        // Only this demo's photos, not the whole repository's.
-        step: "writeFiles",
-        writeToPath: `${THEME_DIR}/demo/${demo.id}/photos`,
-        filesTree: { resource: "git:directory", url: THEME_REPO, ref: THEME_TAG, refType: "tag", path: `demo/${demo.id}/photos` },
-        progress: { caption: `Adding ${demo.business}'s photos` }
-      },
       {
         step: "runPHP",
         code: `<?php require '/wordpress/wp-load.php'; require get_theme_file_path( 'demo/${demo.id}/build.php' );`,
