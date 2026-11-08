@@ -7,6 +7,7 @@ import {
   type JobProgress,
   type Branding,
   type BrandImage,
+  type DemoBrand,
   type BrandingFields,
   type BrandingView,
   type DashboardDomainView,
@@ -910,7 +911,7 @@ const toRow = (t: FixtureTenant): Tenant => {
 
 /** key: the product id, or "reseller:<id>" for a reseller's team. */
 type FixtureTeam = Team & { key: string };
-const emptyBrand = (): Branding => ({ name: null, color: null, supportEmail: null, logoUrl: null, iconUrl: null });
+const emptyBrand = (): Branding => ({ name: null, color: null, supportEmail: null, shopUrl: null, logoUrl: null, iconUrl: null });
 const brands = new Map<string, Branding>();
 const dashboardDomains = new Map<string, DashboardDomainView["dashboardDomain"]>();
 
@@ -2439,4 +2440,33 @@ export class FixtureAdminApi implements AdminApi {
     dashboardDomains.delete(productId);
     return this.dashboardDomain(productId);
   }
+}
+
+/** The sample reseller's look until someone sets one on the Branding page, so a demo page preview shows a brand. */
+const sampleResellerBrand = (r: FixtureReseller): Branding => ({
+  name: r.brandName,
+  color: "#0f766e",
+  supportEmail: "hello@summitweb.example",
+  shopUrl: r.brandUrl,
+  logoUrl: sampleMarks[uuid(2, 1)] ?? null,
+  iconUrl: null
+});
+
+const mergeBrand = (own: Branding, parent: Branding): Branding =>
+  Object.fromEntries((Object.keys(own) as (keyof Branding)[]).map((k) => [k, own[k] ?? parent[k]])) as Branding;
+const anyField = (b: Branding) => Object.values(b).some((v) => v !== null);
+
+/** GET /branding/demo/{id} on sample data: a storefront's or reseller's demo page look. */
+export function sampleDemoBrand(id: string): DemoBrand | null {
+  const product = products.find((p) => p.id === id);
+  if (product) {
+    const reseller = resellers.find((r) => r.id === resellerOf.get(id));
+    const parent = reseller ? (brands.get(teamKey({ resellerId: reseller.id })) ?? sampleResellerBrand(reseller)) : emptyBrand();
+    const brand = mergeBrand(brands.get(teamKey(id)) ?? emptyBrand(), parent);
+    return { name: brand.name ?? product.name, brand: anyField(brand) ? brand : null, shopUrl: brand.shopUrl ?? reseller?.brandUrl ?? null };
+  }
+  const reseller = resellers.find((r) => r.id === id);
+  if (!reseller) return null;
+  const brand = brands.get(teamKey({ resellerId: id })) ?? sampleResellerBrand(reseller);
+  return { name: brand.name ?? reseller.brandName ?? reseller.name, brand: anyField(brand) ? brand : null, shopUrl: brand.shopUrl ?? reseller.brandUrl };
 }

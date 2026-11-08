@@ -16,8 +16,8 @@ export function proxy(request: NextRequest) {
   return NextResponse.redirect(login);
 }
 
-// Everything except the sign-in page, its public motion files (/motion), the sign-in routes,
+// Everything except the sign-in page, the public demo pages (/demo), its public motion files (/motion), the sign-in routes,
 // the install manifest, the alerts service worker and static files needs a session.
 export const config = {
-  matcher: ["/((?!login|motion/|api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:png|svg|ico)$).*)"]
+  matcher: ["/((?!login|demo|motion/|api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:png|svg|ico)$).*)"]
 };

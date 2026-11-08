@@ -10,6 +10,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KeysManager } from "../../keys/keys-manager";
 import { BrandingEditor } from "../../branding/branding-editor";
+import { DemoPageCard } from "../../branding/demo-page-card";
 import { TeamManager } from "../../team/team-manager";
 import { formatMoney, monthRange } from "../usage";
 import { DeleteReseller } from "./delete-reseller";
@@ -134,6 +135,7 @@ export default async function ResellerPage({
             logo and color on its Branding page.
           </p>
           <BrandingEditor of={{ resellerId: reseller.id }} initial={branding} canEdit brandName={reseller.brandName} />
+          <DemoPageCard id={reseller.id} whose="this reseller's" />
         </TabsContent>
         <TabsContent value="settings">
           <Card className="max-w-3xl">
