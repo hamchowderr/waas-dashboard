@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import demoPhotos from "./demo-photos.json";
 import { DEMOS, THEME_TAG, demoBlueprint, demoFiles, findDemo, playgroundUrl } from "./demos";
 
 describe("demo websites", () => {
@@ -17,20 +18,22 @@ describe("demo websites", () => {
     }
   });
 
-  it("downloads the theme zip and only the opened demo's own files, never the whole theme repository", () => {
+  it("downloads the theme zip and only the opened demo's own files, with no git step", () => {
     for (const demo of DEMOS) {
       const steps = demoBlueprint(demo).steps;
       const blueprint = JSON.stringify(steps);
       expect(steps[0]).toMatchObject({ step: "installTheme", themeData: { resource: "url", url: expect.stringContaining(`/${THEME_TAG}/anypress.zip`) } });
-      for (const step of steps) {
-        const tree = (step as { filesTree?: { resource: string; path?: string } }).filesTree;
-        if (tree?.resource === "git:directory") expect(tree.path).toBe(`demo/${demo.id}/photos`);
-      }
-      for (const file of demoFiles(demo)) expect(blueprint).toContain(`anypress-theme/${THEME_TAG}/${file}`);
-      expect(blueprint).not.toContain('"refType":"commit"');
+      expect(blueprint).not.toContain("git:directory");
+      for (const file of demoFiles(demo)) expect(blueprint).toContain(`anypress-theme@${THEME_TAG}/${file}`);
+      expect(demoFiles(demo).filter((f) => f.startsWith(`demo/${demo.id}/photos/`)).length).toBeGreaterThan(5);
     }
     expect(demoFiles(findDemo("ridge/spotless-nest")!)).toContain("demo/ridge/spotless-nest/swap.json");
     expect(demoFiles(findDemo("ridge")!)).not.toContain("demo/ridge/swap.json");
+  });
+
+  it("has the photo list for the pinned theme release (run node scripts/demo-photos.mjs after moving it)", () => {
+    expect(demoPhotos.tag).toBe(THEME_TAG);
+    expect(Object.keys(demoPhotos.photos).sort()).toEqual(DEMOS.map((d) => d.id).sort());
   });
 
   it("opens Playground's own site in seamless mode with the Blueprint in the address", () => {
