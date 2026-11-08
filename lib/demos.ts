@@ -197,9 +197,10 @@ export function demoBlueprint(demo: Demo) {
 
 /**
  * Our own copy of WordPress Playground, built from its official source (waas-provisioning-api/playground). Not
- * playground.wordpress.net: its bot check fails inside another site's page, so the demo would not load embedded.
+ * playground.wordpress.net: its bot check fails inside another site's page, so the demo would not load embedded. On
+ * anypress.site (the stores' domain), away from anypress.io's sign-ins, since anyone can open it with a Blueprint.
  */
-export const PLAYGROUND_SITE = "https://demo.anypress.io";
+export const PLAYGROUND_SITE = "https://demo.anypress.site";
 
 /**
  * The address that opens the demo: Playground in its seamless mode (WordPress alone, none of Playground's toolbar),
