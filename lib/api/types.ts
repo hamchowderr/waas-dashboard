@@ -535,6 +535,48 @@ export type DomainSetup = {
   dnsHost: { name: string; nameservers: string[] } | null;
 };
 
+/** A domain name the store can buy, or why it can't. Prices in cents (USD), markup included. */
+export type DomainOffer = {
+  domainName: string;
+  available: boolean;
+  priceCents: number | null;
+  renewalPriceCents: number | null;
+  reason: string | null;
+};
+
+/** The person or business a bought domain is registered to. Phone as +1.5555555555. */
+export type DomainContact = {
+  firstName: string;
+  lastName: string;
+  companyName?: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  email: string;
+  phone: string;
+};
+
+/** A domain bought (or being bought) for a store. */
+export type BoughtDomain = {
+  id: string;
+  tenantId: string | null;
+  domainName: string;
+  /** awaiting_payment until the invoice is paid; active once registered and pointed at the store. */
+  status: "awaiting_payment" | "registering" | "active" | "cancelled" | "failed" | "expired";
+  priceCents: number;
+  renewalPriceCents: number;
+  /** The invoice page to pay while the order waits for payment. */
+  payUrl: string | null;
+  autoRenew: boolean;
+  renewalPayUrl: string | null;
+  expiresAt: string | null;
+  error: string | null;
+  dateCreated: string;
+};
+
 /** A store's own sending domain: it sends email from no-reply@ this domain once toSend has verified it. */
 export type MailDomain = {
   domainName: string;
