@@ -161,6 +161,11 @@ export interface AdminApi {
   createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize; siteType: string; notifyOwner?: boolean }): Promise<{ tenantId: string }>;
   /** A new import code for a store still waiting for its site; the old one stops working. */
   renewImportCode(tenantId: string): Promise<ImportCode>;
+  /**
+   * Copies the store's old site in with Reprint, from `siteUrl`: for a store waiting for its site, one whose move
+   * failed, or one on hold, which is copied again. The old site must have authorized the store's Migration Token.
+   */
+  copyWithReprint(tenantId: string, siteUrl: string): Promise<void>;
   /** The store's own sending domain with its DNS records; null when it sends from the platform's address. */
   mailDomain(tenantId: string): Promise<MailDomain | null>;
   /** Gives the store its own sending domain; it is used once toSend has verified its DNS records. */

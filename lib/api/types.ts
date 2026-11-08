@@ -123,6 +123,15 @@ export type MoveIn = {
   warnings: string[];
   /** What's on the moved site, counted once it was built; null before that or from an older API. */
   siteReport: SiteReport | null;
+  /**
+   * The token to paste in Reprint on the old site (Tools, Reprint Server) so this store may copy it; null once
+   * the site is live, or from an older API.
+   */
+  migrationToken: string | null;
+  /** The address Reprint last copied the site from; null when it wasn't copied with Reprint. */
+  reprintSite: string | null;
+  /** How many times the site was copied with Reprint. */
+  reprintCopies: number;
 };
 
 /** The parts of a site the report groups plugins by. */

@@ -349,6 +349,10 @@ export class HttpAdminApi implements AdminApi {
     return (await this.send<ImportCode>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/import-code`))!;
   }
 
+  async copyWithReprint(tenantId: string, siteUrl: string): Promise<void> {
+    await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/import-reprint`, { siteUrl });
+  }
+
   async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/restore`, { backupId, takeBackup });
   }
