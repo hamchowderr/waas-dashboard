@@ -196,10 +196,16 @@ export function demoBlueprint(demo: Demo) {
 }
 
 /**
- * The address that opens the demo: WordPress Playground's own site in its seamless mode (WordPress alone, none of
- * Playground's toolbar), with the Blueprint in the address. Playground's own site, not a client on this page,
- * because only Playground's sites may use its proxy to download from GitHub.
+ * Our own copy of WordPress Playground, built from its official source (waas-provisioning-api/playground). Not
+ * playground.wordpress.net: its bot check fails inside another site's page, so the demo would not load embedded. On
+ * anypress.site (the stores' domain), away from anypress.io's sign-ins, since anyone can open it with a Blueprint.
+ */
+export const PLAYGROUND_SITE = "https://demo.anypress.site";
+
+/**
+ * The address that opens the demo: Playground in its seamless mode (WordPress alone, none of Playground's toolbar),
+ * with the Blueprint in the address, so the visitor sees the website first and reaches wp-admin from its admin bar.
  */
 export function playgroundUrl(demo: Demo): string {
-  return `https://playground.wordpress.net/?mode=seamless#${encodeURIComponent(JSON.stringify(demoBlueprint(demo)))}`;
+  return `${PLAYGROUND_SITE}/?mode=seamless#${encodeURIComponent(JSON.stringify(demoBlueprint(demo)))}`;
 }
