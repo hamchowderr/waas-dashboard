@@ -39,7 +39,7 @@ describe("demo websites", () => {
   it("opens Playground's own site in seamless mode with the Blueprint in the address", () => {
     const demo = findDemo("ridge/ironclad-roofing")!;
     const url = new URL(playgroundUrl(demo));
-    expect(url.origin + url.pathname + url.search).toBe("https://playground.wordpress.net/?mode=seamless");
+    expect(url.origin + url.pathname + url.search).toBe("https://demo.anypress.io/?mode=seamless");
     expect(JSON.parse(decodeURIComponent(url.hash.slice(1)))).toEqual(demoBlueprint(demo));
     expect(findDemo("nope")).toBeUndefined();
   });
