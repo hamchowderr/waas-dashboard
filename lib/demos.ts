@@ -11,7 +11,7 @@ import demoPhotos from "./demo-photos.json";
  */
 export const THEME_TAG = "v0.10.0";
 /** The AnyPress Blocks release the demos use (blocks such as the before-and-after slider and the phone bar). */
-export const BLOCKS_TAG = "v0.4.0";
+export const BLOCKS_TAG = "v0.4.2";
 
 /**
  * The zips come through the AnyPress API, not straight from GitHub: GitHub's release downloads don't let Playground's
