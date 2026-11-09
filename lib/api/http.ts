@@ -2,6 +2,7 @@ import "server-only";
 
 import type { AdminApi } from "./client";
 import type {
+  HighLevelCheck,
   PluginChoice,
   PluginChoiceInput,
   PluginUpload,
@@ -367,6 +368,10 @@ export class HttpAdminApi implements AdminApi {
 
   async goLive(tenantId: string): Promise<void> {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/go-live`, {});
+  }
+
+  async checkHighLevel(tenantId: string): Promise<HighLevelCheck> {
+    return (await this.send<HighLevelCheck>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/highlevel-check`, {}))!;
   }
 
   async wordPressLogin(tenantId: string): Promise<WordPressLogin> {
@@ -959,6 +964,7 @@ export class HttpAdminApi implements AdminApi {
       ownerNotifiedAt: t.ownerNotifiedAt ?? null,
       ownerNotifiedTo: t.ownerNotifiedTo ?? null,
       ownerEmail: t.ownerEmail ?? null,
+      highLevel: t.highLevel ?? null,
       dateCreated: t.dateCreated ?? null,
       dateChanged: t.dateChanged ?? null,
       mainDomain: main?.domainName ?? null,

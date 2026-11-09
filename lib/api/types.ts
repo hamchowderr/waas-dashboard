@@ -69,6 +69,22 @@ export type Tenant = {
 
 export type TenantDomain = { domainName: string; isMain: boolean; isBase: boolean };
 
+/**
+ * A HighLevel site's link to its sub-account, as the site last checked it (every hour, or at once after "Check
+ * now"). connected: the site was given the sub-account's token, so its WP Fusion sends new users as contacts.
+ */
+export type HighLevelLink = {
+  locationId: string;
+  /** The sub-account's name as HighLevel gave it; null until the site was first connected. */
+  locationName: string | null;
+  connected: boolean;
+  connectedAt: string | null;
+  lastCheckAt: string | null;
+};
+
+/** What "Check now" found: what the site said, and its link as recorded after the check. */
+export type HighLevelCheck = { siteLinked: boolean; wpFusionConnected: boolean; highLevel: HighLevelLink | null };
+
 /** One store's page. Option and constant names only, never their values. */
 export type TenantDetail = {
   id: string;
@@ -96,6 +112,8 @@ export type TenantDetail = {
   ownerNotifiedTo: string | null;
   /** The owner's sign-in email the store was made with; null for a site moved in. */
   ownerEmail: string | null;
+  /** A HighLevel site's sub-account link; null when it has no sub-account. */
+  highLevel: HighLevelLink | null;
   dateCreated: string | null;
   dateChanged: string | null;
   mainDomain: string | null;

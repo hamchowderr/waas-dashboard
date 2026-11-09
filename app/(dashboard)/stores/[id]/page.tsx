@@ -25,6 +25,7 @@ import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
 import { WordPressLoginButton } from "../../wordpress-login";
 import { EmailOwner } from "./email-owner";
+import { HighLevelLinkPanel } from "./highlevel-link";
 import { AutoRefresh, JobProgressCard } from "@/components/admin/job-progress";
 
 type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ product?: string }> };
@@ -310,6 +311,21 @@ export default async function StorePage({ params, searchParams }: Params) {
               )}
             </CardContent>
           </Card>
+          {(tenant.highLevel || tenant.siteTypes.includes("highlevel")) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>HighLevel</CardTitle>
+                <CardDescription>Where this site&apos;s WP Fusion sends new users as contacts.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HighLevelLinkPanel
+                  tenantId={tenant.id}
+                  link={tenant.highLevel}
+                  canCheck={canLogIn && tenant.statusCode === StatusCode.Done}
+                />
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Email sender</CardTitle>

@@ -4,6 +4,8 @@ import { randomBytes } from "node:crypto";
 
 import type { AdminApi } from "./client";
 import {
+  type HighLevelCheck,
+  type HighLevelLink,
   type JobProgress,
   type Branding,
   type BrandImage,
@@ -624,6 +626,14 @@ const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   };
 });
 
+// Two HighLevel sites, each tied to a sub-account: Example Store 2 connected an hour's check ago, Example Store 8
+// tied but not connected yet ("Check now" connects it).
+const highLevelLinks = new Map<string, HighLevelLink>([
+  [tenants[1]!.id, { locationId: "loc-summit-1", locationName: "Summit Web Studio", connected: true, connectedAt: iso(NOW - 25 * 60_000), lastCheckAt: iso(NOW - 25 * 60_000) }],
+  [tenants[7]!.id, { locationId: "loc-summit-2", locationName: null, connected: false, connectedAt: null, lastCheckAt: iso(NOW - 40 * 60_000) }]
+]);
+for (const id of highLevelLinks.keys()) tenants.find((t) => t.id === id)!.siteTypes = ["highlevel"];
+
 const backups: Backup[] = [];
 tenants.forEach((tenant, i) => {
   const count = tenant.isSuspended ? 2 : i % 3 === 0 ? 1 : 0;
@@ -1212,6 +1222,7 @@ export class FixtureAdminApi implements AdminApi {
       ownerNotifiedAt: notified?.at ?? null,
       ownerNotifiedTo: notified?.to ?? null,
       ownerEmail: tenant.moveIn ? null : `owner@${tenant.mainDomain}`,
+      highLevel: highLevelLinks.get(id) ?? null,
       snapshotName: "Starter template",
       wpOptionNames: ["blogname", "admin_email", "woocommerce_currency"],
       phpConstantNames: ["WP_MEMORY_LIMIT", "DISALLOW_FILE_EDIT", "WP_AUTO_UPDATE_CORE"],
@@ -1455,6 +1466,21 @@ export class FixtureAdminApi implements AdminApi {
     setTimeout(() => {
       if (tenant.statusCode === StatusCode.Pending) tenant.statusCode = StatusCode.Done;
     }, 5_000).unref?.();
+  }
+
+  /** Sample data has no real sites: the site "answers" as a current AnyPress Client would, connected. */
+  async checkHighLevel(tenantId: string): Promise<HighLevelCheck> {
+    const tenant = this.changeableTenant(tenantId);
+    if (!tenant.siteTypes.includes("highlevel")) throw new FixtureError(409, "This is not a HighLevel site");
+    if (tenant.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; check once it is Done");
+    if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it to check");
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    const link = highLevelLinks.get(tenantId);
+    if (!link) return { siteLinked: false, wpFusionConnected: false, highLevel: null };
+    const now = new Date().toISOString();
+    const checked = { ...link, locationName: link.locationName ?? "Summit Web Studio (Denver)", connected: true, connectedAt: now, lastCheckAt: now };
+    highLevelLinks.set(tenantId, checked);
+    return { siteLinked: true, wpFusionConnected: true, highLevel: checked };
   }
 
   /** Sample data has no real sites: the link goes to the sample address's wp-admin, as for a store with an older plugin. */
