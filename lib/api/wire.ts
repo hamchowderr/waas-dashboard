@@ -1,4 +1,4 @@
-import type { ApiRequest, FluentRoute, JobProgress, MoveIn, SiteReport, SiteReportArea, SiteReportItem, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
+import type { ApiRequest, FluentRoute, HighLevelLink, JobProgress, MoveIn, SiteReport, SiteReportArea, SiteReportItem, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
 
 /**
  * The admin API's response bodies, exactly as openapi/admin/admin-api.yaml (v0.1.0) in
@@ -126,6 +126,7 @@ export type WireTenantDetail = {
   ownerNotifiedAt?: string | null;
   ownerNotifiedTo?: string | null;
   ownerEmail?: string | null;
+  highLevel?: HighLevelLink | null;
   dateCreated?: string;
   dateChanged?: string;
   wpOptionNames: string[];

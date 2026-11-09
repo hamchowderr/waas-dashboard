@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import type {
+  HighLevelCheck,
   ApiKey,
   ApplicationStatus,
   BrandImage,
@@ -144,6 +145,11 @@ export interface AdminApi {
    * may index it. The store is Pending until that's done; one not on hold is left as it is.
    */
   goLive(tenantId: string): Promise<void>;
+  /**
+   * "Check now" for a HighLevel site: the site asks for its sub-account and token at once instead of within the
+   * hour. Owners and admins only.
+   */
+  checkHighLevel(tenantId: string): Promise<HighLevelCheck>;
   /** A one-time link that opens the store's wp-admin signed in. Owners and admins only. */
   wordPressLogin(tenantId: string): Promise<WordPressLogin>;
   /** The same for the product's ready-made storefront. */

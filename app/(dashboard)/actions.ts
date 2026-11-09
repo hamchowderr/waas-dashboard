@@ -42,7 +42,8 @@ import type {
   WebhookEndpointInput,
   WebhookEventType,
   WebhookSecret,
-  WordPressLogin
+  WordPressLogin,
+  HighLevelCheck
 } from "@/lib/api/types";
 import { BRAND_IMAGE_LIMITS } from "@/lib/branding";
 import { NEW_SITE_TYPES } from "@/components/admin/site-type";
@@ -288,6 +289,12 @@ export async function goLive(tenantId: string): Promise<ActionResult> {
     await getAdminApi().goLive(uuid(tenantId, "store"));
     return undefined;
   }, ["/stores", "/"]);
+}
+
+/** "Check now" for a HighLevel site's sub-account link. Owners and admins (run refuses members). */
+export async function checkHighLevel(tenantId: string): Promise<ActionResult<HighLevelCheck>> {
+  const id = tenantId;
+  return run(() => getAdminApi().checkHighLevel(uuid(id, "store")), [`/stores/${id}`]);
 }
 
 /** A one-time link that opens the store's wp-admin signed in. Owners and admins (run refuses members). */
