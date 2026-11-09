@@ -4,7 +4,7 @@
 # Sync: `bd dolt pull` to get the latest, `bd dolt push` to publish yours.
 
 sync:
-    remote: chowderr/waas
+    remote: chowderr/waas_dashboard
 export:
     auto: true
     git-add: false
