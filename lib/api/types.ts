@@ -85,6 +85,12 @@ export type HighLevelLink = {
 /** What "Check now" found: what the site said, and its link as recorded after the check. */
 export type HighLevelCheck = { siteLinked: boolean; wpFusionConnected: boolean; highLevel: HighLevelLink | null };
 
+/** A plugin that comes installed on a store, and one line on what it is for. */
+export type SitePlugin = { file: string; name: string; about: string | null };
+
+/** What comes installed on a store: its site types' plugins, and whether the owner may add plugins of their own. */
+export type TenantPlugins = { siteTypes: { key: string; title: string }[]; ownPlugins: boolean; plugins: SitePlugin[] };
+
 /** One store's page. Option and constant names only, never their values. */
 export type TenantDetail = {
   id: string;
