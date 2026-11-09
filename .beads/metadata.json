@@ -2,6 +2,6 @@
   "database": "dolt",
   "backend": "dolt",
   "dolt_mode": "embedded",
-  "dolt_database": "waas",
-  "project_id": "95898709-b3c9-48b0-b089-5543c830c3b8"
+  "dolt_database": "dashboard",
+  "project_id": "d6ade598-7b85-403f-aac7-94eff2e0c7e6"
 }
