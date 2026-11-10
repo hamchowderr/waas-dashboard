@@ -11,7 +11,7 @@ import demoPhotos from "./demo-photos.json";
  */
 export const THEME_TAG = "v0.10.0";
 /** The AnyPress Blocks release the demos use (blocks such as the before-and-after slider and the phone bar). */
-export const BLOCKS_TAG = "v0.4.2";
+const BLOCKS_TAG = "v0.4.2";
 
 /**
  * The zips come through the AnyPress API, not straight from GitHub: GitHub's release downloads don't let Playground's
@@ -200,7 +200,7 @@ export function demoBlueprint(demo: Demo) {
  * playground.wordpress.net: its bot check fails inside another site's page, so the demo would not load embedded. On
  * anypress.site (the stores' domain), away from anypress.io's sign-ins, since anyone can open it with a Blueprint.
  */
-export const PLAYGROUND_SITE = "https://demo.anypress.site";
+const PLAYGROUND_SITE = "https://demo.anypress.site";
 
 /**
  * The address that opens the demo: Playground in its seamless mode (WordPress alone, none of Playground's toolbar),

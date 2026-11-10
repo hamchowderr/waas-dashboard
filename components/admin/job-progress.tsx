@@ -22,12 +22,12 @@ const JOB_TITLES: Record<string, string> = {
   "tenant.delete": "Removing this site"
 };
 
-export function jobTitle(job: string): string {
+function jobTitle(job: string): string {
   return JOB_TITLES[job] ?? "Working on this site";
 }
 
 /** How far along the bar is: half of the current step counts, so it moves as soon as a step starts. */
-export function progressShare(p: JobProgress): number {
+function progressShare(p: JobProgress): number {
   return Math.round(((p.index - (p.failedAt ? 1 : 0.5)) / Math.max(p.total, 1)) * 100);
 }
 
