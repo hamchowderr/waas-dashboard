@@ -4,7 +4,7 @@ import * as React from "react";
 import { CheckIcon, ChevronDownIcon, DownloadIcon, ExternalLinkIcon, FileTextIcon, MailIcon, MapPinIcon, MegaphoneIcon, MessageSquareIcon, PhoneIcon, PresentationIcon, Share2Icon, type LucideIcon } from "lucide-react";
 
 import { useSellPrices } from "@/hooks/use-sell-prices";
-import { PLAN_NAMES, fill, keep, playbookMarkdown, type Demo, type KitContext, type Pitch, type Playbook, type Step } from "@/lib/sales-kit";
+import { PLAN_NAMES, fill, keep, playbookMarkdown, type KitDemo, type KitContext, type Pitch, type Playbook, type Step } from "@/lib/sales-kit";
 import { Inline, KitMarkdown } from "@/components/admin/kit-markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ export function Campaign({
   where: string;
   objections: string;
   demo: string;
-  demos: Demo[];
+  demos: KitDemo[];
   callScript: string;
   context: Omit<KitContext, "prices" | "plan">;
 }) {
