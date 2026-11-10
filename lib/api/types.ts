@@ -89,7 +89,7 @@ export type HighLevelCheck = { siteLinked: boolean; wpFusionConnected: boolean; 
 export type SitePlugin = { file: string; name: string; about: string | null };
 
 /** What comes installed on a store: its site types' plugins, and whether the owner may add plugins of their own. */
-/** A store's languages (AnyPress Client 2.22.0, Polylang): the site's own first; choices are what it can add. */
+/** A store's languages (AnyPress Client 2.25.0, Polylang): the site's own first; choices are what it can add. */
 export type SiteLanguage = { locale: string; name: string; default: boolean; code?: string; pages?: number };
 export type SiteLanguages = {
   on: boolean;
