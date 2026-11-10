@@ -27,6 +27,7 @@ import { WordPressLoginButton } from "../../wordpress-login";
 import { EmailOwner } from "./email-owner";
 import { HighLevelLinkPanel } from "./highlevel-link";
 import { SitePluginsCard } from "./site-plugins";
+import { SiteLanguagesPanel } from "./site-languages";
 import { AutoRefresh, JobProgressCard } from "@/components/admin/job-progress";
 
 type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ product?: string }> };
@@ -90,6 +91,9 @@ export default async function StorePage({ params, searchParams }: Params) {
   const canLogIn = !!viewer && canChange(viewer) && !tenant.isSuspended;
   // A job is running: a store being made or changed, or a backup (which leaves the store Ready meanwhile).
   const waitingForSite = !!tenant.moveIn && !tenant.moveIn.startedAt;
+  // The store's languages, asked of the store itself once it is up; nothing shows when it can't say.
+  const languages =
+    tenant.statusCode === StatusCode.Done && !tenant.isSuspended ? await getAdminApi().tenantLanguages(id).catch(() => null) : null;
   const working = (tenant.statusCode === StatusCode.Pending && !waitingForSite) || (!!tenant.progress && !tenant.progress.failedAt);
 
   return (
@@ -326,6 +330,17 @@ export default async function StorePage({ params, searchParams }: Params) {
                   link={tenant.highLevel}
                   canCheck={canLogIn && tenant.statusCode === StatusCode.Done}
                 />
+              </CardContent>
+            </Card>
+          )}
+          {languages && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Languages</CardTitle>
+                <CardDescription>The site in more than one language, with a language switcher in its menu.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SiteLanguagesPanel tenantId={tenant.id} languages={languages} canChange={canLogIn} />
               </CardContent>
             </Card>
           )}
