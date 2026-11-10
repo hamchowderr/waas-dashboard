@@ -3,6 +3,7 @@ import "server-only";
 import type { AdminApi } from "./client";
 import type {
   HighLevelCheck,
+  SiteLanguages,
   TenantPlugins,
   PluginChoice,
   PluginChoiceInput,
@@ -423,6 +424,14 @@ export class HttpAdminApi implements AdminApi {
 
   async tenantPlugins(tenantId: string): Promise<TenantPlugins | null> {
     return this.get<TenantPlugins>(`/admin/tenants/${encodeURIComponent(tenantId)}/plugins`, { allow404: true });
+  }
+
+  async tenantLanguages(tenantId: string): Promise<SiteLanguages | null> {
+    return this.get<SiteLanguages>(`/admin/tenants/${encodeURIComponent(tenantId)}/languages`, { allow404: true });
+  }
+
+  async setTenantLanguages(tenantId: string, on: boolean, languages?: string[]): Promise<SiteLanguages> {
+    return (await this.send<SiteLanguages>("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/languages`, { on, ...(languages ? { languages } : {}) }))!;
   }
 
   async boughtDomains(tenantId: string): Promise<BoughtDomain[]> {

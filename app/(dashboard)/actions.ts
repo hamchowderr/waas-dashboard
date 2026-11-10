@@ -43,7 +43,8 @@ import type {
   WebhookEventType,
   WebhookSecret,
   WordPressLogin,
-  HighLevelCheck
+  HighLevelCheck,
+  SiteLanguages
 } from "@/lib/api/types";
 import { BRAND_IMAGE_LIMITS } from "@/lib/branding";
 import { NEW_SITE_TYPES } from "@/components/admin/site-type";
@@ -295,6 +296,11 @@ export async function goLive(tenantId: string): Promise<ActionResult> {
 export async function checkHighLevel(tenantId: string): Promise<ActionResult<HighLevelCheck>> {
   const id = tenantId;
   return run(() => getAdminApi().checkHighLevel(uuid(id, "store")), [`/stores/${id}`]);
+}
+
+/** Turns the store's languages on (with the languages besides its own) or off. Owners and admins (run refuses members). */
+export async function setTenantLanguages(tenantId: string, on: boolean, languages?: string[]): Promise<ActionResult<SiteLanguages>> {
+  return run(() => getAdminApi().setTenantLanguages(uuid(tenantId, "store"), on, languages), [`/stores/${tenantId}`]);
 }
 
 /** A one-time link that opens the store's wp-admin signed in. Owners and admins (run refuses members). */
