@@ -4,7 +4,7 @@
 
 The AnyPress dashboard (app.anypress.io): a Next.js app that manages everything the provisioning API runs. It has no database of its own; every read and write goes through the API, which also runs sign-in (Better Auth, passed through at `/api/auth/*`) and decides what each person may see.
 
-- Before pushing, run what CI runs: `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`.
+- Before pushing, run what CI runs: `npm ci`, `npm run typecheck`, `npm run lint`, `npm run deadcode`, `npm test`, `npm run build`. `npm run deadcode` (Fallow, `.fallowrc.json`) fails on unused files, exports, types and packages: remove them rather than ignoring them. On a pull request CI also runs `fallow audit`, which fails on duplicated or overly complex code the change adds.
 - The look is in `DESIGN.md` (quiet, neutral, data-first, shadcn/ui components in `components/`). Follow its tokens; don't add colours or a second component kit.
 - A change that needs a new API route goes into `waas-provisioning-api` first (with its OpenAPI entry), then here.
 - Merging doesn't always reach app.anypress.io: after a merge, check the live deployment is on the new commit.

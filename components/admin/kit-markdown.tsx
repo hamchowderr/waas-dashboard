@@ -18,7 +18,7 @@ type Block =
 
 const cells = (line: string) => line.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
 
-export function blocks(source: string): Block[] {
+function blocks(source: string): Block[] {
   const out: Block[] = [];
   for (const chunk of source.trim().split(/\n\s*\n/)) {
     const lines = chunk.split("\n").filter((l) => l.trim());

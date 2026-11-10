@@ -34,7 +34,7 @@ const playground = (kit: string, tag: string) =>
   `https://playground.wordpress.net/?blueprint-url=${encodeURIComponent(`https://raw.githubusercontent.com/hamchowderr/anypress-theme/${tag}/demo/${kit}/blueprint.json`)}`;
 
 /** Every finished demo. A kit gets one here once its demo passes the theme's kit checklist. */
-export const DEMOS: Demo[] = [
+const DEMOS: Demo[] = [
   { kit: "ridge", business: "Clearwater Plumbing & Heating", kind: "Plumber", url: playground("ridge", "v0.7.0") },
   { kit: "circuit", business: "Brightline Electric", kind: "Electrician", url: playground("circuit", "v0.7.0") }
 ];
@@ -70,7 +70,7 @@ export type Playbook = {
 export type Guide = { id: string; title: string; body: string };
 
 /** Splits `---` front matter (key: value, key: [a, b]) from the body. */
-export function frontMatter(source: string): { data: Record<string, string | string[]>; body: string } {
+function frontMatter(source: string): { data: Record<string, string | string[]>; body: string } {
   const match = /^---\n([\s\S]*?)\n---\n?/.exec(source);
   if (!match) return { data: {}, body: source };
   const data: Record<string, string | string[]> = {};
@@ -85,7 +85,7 @@ export function frontMatter(source: string): { data: Record<string, string | str
 }
 
 /** The body's `## ` sections, in order. */
-export function sections(body: string): Section[] {
+function sections(body: string): Section[] {
   const out: Section[] = [];
   for (const chunk of body.split(/^## /m).slice(1)) {
     const newline = chunk.indexOf("\n");
@@ -153,7 +153,7 @@ export type KitContext = {
 const PLACEHOLDER = /\{\{\s*([a-z.]+)\s*\}\}/g;
 
 /** The value for one placeholder, or null when the seller fills it in per message. */
-export function valueFor(name: string, ctx: KitContext): string | null {
+function valueFor(name: string, ctx: KitContext): string | null {
   if (name.startsWith("price.")) {
     const plan = name.slice(6) as Plan;
     return plan in ctx.prices ? `$${ctx.prices[plan]}` : null;
@@ -179,7 +179,7 @@ export function valueFor(name: string, ctx: KitContext): string | null {
 }
 
 /** A label for a placeholder the seller fills in, such as [prospect]. */
-export const blank = (name: string) => `[${name}]`;
+const blank = (name: string) => `[${name}]`;
 
 /** The text with every known placeholder filled and the rest left as [name] for the seller. */
 export function fill(text: string, ctx: KitContext): string {

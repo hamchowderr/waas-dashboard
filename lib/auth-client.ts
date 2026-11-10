@@ -82,7 +82,7 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
 }
 
 /** Picks the organization the session acts for, for someone in more than one. */
-export async function setActiveOrganization(organizationId: string): Promise<void> {
+async function setActiveOrganization(organizationId: string): Promise<void> {
   await unwrap(authClient.organization.setActive({ organizationId }));
 }
 
