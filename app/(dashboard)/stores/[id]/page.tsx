@@ -26,6 +26,7 @@ import { StoreActions } from "./store-actions";
 import { WordPressLoginButton } from "../../wordpress-login";
 import { EmailOwner } from "./email-owner";
 import { HighLevelLinkPanel } from "./highlevel-link";
+import { SitePluginsCard } from "./site-plugins";
 import { AutoRefresh, JobProgressCard } from "@/components/admin/job-progress";
 
 type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ product?: string }> };
@@ -50,12 +51,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default async function StorePage({ params, searchParams }: Params) {
   const { id } = await params;
   const { product } = await searchParams;
-  const [tenant, mailDomain, viewer, bought] = await Promise.all([
+  const [tenant, mailDomain, viewer, bought, plugins] = await Promise.all([
     getAdminApi().tenant(id),
     getAdminApi().mailDomain(id).catch(() => null),
     getViewer(),
     // Domains bought for the store; none when buying isn't set up on the API.
-    getAdminApi().boughtDomains(id).catch(() => [])
+    getAdminApi().boughtDomains(id).catch(() => []),
+    // What comes installed; nothing shows when the API can't say.
+    getAdminApi().tenantPlugins(id).catch(() => null)
   ]);
   if (!tenant) notFound();
   // The admin works one storefront at a time (?product=); a store page opens in its own storefront, so the
@@ -337,6 +340,8 @@ export default async function StorePage({ params, searchParams }: Params) {
           </Card>
         </div>
       </div>
+
+      {plugins && <SitePluginsCard plugins={plugins} highLevel={tenant.highLevel} />}
 
       <Card>
         <CardHeader>

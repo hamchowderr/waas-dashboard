@@ -3,6 +3,7 @@ import "server-only";
 import type { AdminApi } from "./client";
 import type {
   HighLevelCheck,
+  TenantPlugins,
   PluginChoice,
   PluginChoiceInput,
   PluginUpload,
@@ -418,6 +419,10 @@ export class HttpAdminApi implements AdminApi {
 
   async buyDomain(tenantId: string, domainName: string, contact: DomainContact): Promise<BoughtDomain> {
     return (await this.send<BoughtDomain>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/domains/buy`, { domainName, contact }))!;
+  }
+
+  async tenantPlugins(tenantId: string): Promise<TenantPlugins | null> {
+    return this.get<TenantPlugins>(`/admin/tenants/${encodeURIComponent(tenantId)}/plugins`, { allow404: true });
   }
 
   async boughtDomains(tenantId: string): Promise<BoughtDomain[]> {
