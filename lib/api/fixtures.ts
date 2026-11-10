@@ -104,7 +104,7 @@ import {
   type PushSubscriptionInput,
   type SitePlugin,
   type SiteLanguages,
-  type TenantPlugins,
+  type TenantPlugins
 } from "./types";
 import { AdminApiError } from "./http";
 
@@ -125,10 +125,7 @@ const RETENTION_DAYS = 90;
 const iso = (time: number) => new Date(time).toISOString();
 
 function uuid(n: number, kind: number): string {
-  const hex = (n * 7919 + kind * 104729)
-    .toString(16)
-    .padStart(12, "0")
-    .slice(-12);
+  const hex = (n * 7919 + kind * 104729).toString(16).padStart(12, "0").slice(-12);
   return `${kind.toString(16).padStart(8, "0")}-0000-4000-8000-${hex}`;
 }
 
@@ -138,7 +135,7 @@ const products: Omit<Product, "tenantCount">[] = [
   { id: uuid(2, 1), name: "Summit Sites" },
   { id: uuid(3, 1), name: "Summit Bookings" },
   { id: uuid(4, 1), name: "Harbor Fitness Sites" },
-  { id: uuid(5, 1), name: "Lakeside Chamber" },
+  { id: uuid(5, 1), name: "Lakeside Chamber" }
 ];
 
 /** Sample uploaded logos for the storefront switcher; the others show their first letter. */
@@ -147,607 +144,153 @@ const sampleMarks: Record<string, string> = {
   [uuid(2, 1)]:
     "data:image/svg+xml," +
     encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0f766e"/><path d="M6 23.5 13 12.5l4.5 6.5 3-4 5.5 8.5z" fill="#fff"/><circle cx="21.5" cy="9.5" r="2.5" fill="#fde68a"/></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0f766e"/><path d="M6 23.5 13 12.5l4.5 6.5 3-4 5.5 8.5z" fill="#fff"/><circle cx="21.5" cy="9.5" r="2.5" fill="#fde68a"/></svg>'
     ),
   [uuid(4, 1)]:
     "data:image/svg+xml," +
     encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1e3a8a"/><path d="M6 20.5c3.3-2.4 6.7-2.4 10 0s6.7 2.4 10 0v3.5c-3.3 2.4-6.7 2.4-10 0s-6.7-2.4-10 0z" fill="#93c5fd"/><path d="M16 7.5v9M11.5 12h9" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>',
-    ),
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1e3a8a"/><path d="M6 20.5c3.3-2.4 6.7-2.4 10 0s6.7 2.4 10 0v3.5c-3.3 2.4-6.7 2.4-10 0s-6.7-2.4-10 0z" fill="#93c5fd"/><path d="M16 7.5v9M11.5 12h9" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>'
+    )
 };
 
 /** Storefronts marked as a HighLevel agency's. */
 /** The store template's site types (its roles.json): what each turns on and what each plugin is for. */
-const SAMPLE_SITE_PLUGINS: Record<
-  string,
-  { title: string; ownPlugins: boolean; plugins: SitePlugin[] }
-> = {
+const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; plugins: SitePlugin[] }> = {
   website: {
     title: "Website",
     ownPlugins: false,
     plugins: [
-      {
-        file: "fluent-security/fluent-security.php",
-        name: "FluentAuth",
-        about:
-          "Login protection: blocks password guessing and adds two-step sign-in.",
-      },
-      {
-        file: "fluent-smtp/fluent-smtp.php",
-        name: "FluentSMTP",
-        about:
-          "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you.",
-      },
-      {
-        file: "fluent-crm/fluent-crm.php",
-        name: "FluentCRM",
-        about:
-          "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations.",
-      },
-      {
-        file: "fluentform/fluentform.php",
-        name: "Fluent Forms",
-        about:
-          "Forms: contact, quote, sign-up and survey forms, with entries kept on the site.",
-      },
-      {
-        file: "fluent-player/fluent-player.php",
-        name: "FluentPlayer",
-        about: "Video and audio player for pages and posts.",
-      },
-      {
-        file: "easy-code-manager/easy-code-manager.php",
-        name: "FluentSnippets",
-        about:
-          "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin.",
-      },
-      {
-        file: "seo-by-rank-math/rank-math.php",
-        name: "Rank Math SEO",
-        about: "SEO: page titles, descriptions, sitemaps and search previews.",
-      },
-      {
-        file: "automatorwp/automatorwp.php",
-        name: "AutomatorWP",
-        about:
-          "Automations between WordPress and its plugins: when this happens, do that.",
-      },
-      {
-        file: "wp-fusion-lite/wp-fusion-lite.php",
-        name: "WP Fusion Lite",
-        about:
-          "Keeps your contacts in step: new users and buyers go to FluentCRM with tags.",
-      },
-      {
-        file: "fluent-toolkit/fluent-toolkit.php",
-        name: "FluentHub",
-        about:
-          "FluentHub: one dashboard to install and update the Fluent plugins.",
-      },
-      {
-        file: "anypress-blocks/anypress-blocks.php",
-        name: "AnyPress Blocks",
-        about:
-          "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more.",
-      },
-    ],
+      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
+      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
+      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
+      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
+    ]
   },
   bookings: {
     title: "Bookings",
     ownPlugins: false,
     plugins: [
-      {
-        file: "fluent-security/fluent-security.php",
-        name: "FluentAuth",
-        about:
-          "Login protection: blocks password guessing and adds two-step sign-in.",
-      },
-      {
-        file: "fluent-smtp/fluent-smtp.php",
-        name: "FluentSMTP",
-        about:
-          "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you.",
-      },
-      {
-        file: "fluent-crm/fluent-crm.php",
-        name: "FluentCRM",
-        about:
-          "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations.",
-      },
-      {
-        file: "fluentform/fluentform.php",
-        name: "Fluent Forms",
-        about:
-          "Forms: contact, quote, sign-up and survey forms, with entries kept on the site.",
-      },
-      {
-        file: "fluent-booking/fluent-booking.php",
-        name: "FluentBooking",
-        about:
-          "Online booking: let visitors book calls and appointments in your calendar.",
-      },
-      {
-        file: "fluent-cart/fluent-cart.php",
-        name: "FluentCart",
-        about:
-          "Your shop: products, checkout, payments, orders and subscriptions.",
-      },
-      {
-        file: "fluent-player/fluent-player.php",
-        name: "FluentPlayer",
-        about: "Video and audio player for pages and posts.",
-      },
-      {
-        file: "fluent-support/fluent-support.php",
-        name: "Fluent Support",
-        about:
-          "Help desk: customer questions come in as tickets you answer from the site.",
-      },
-      {
-        file: "easy-code-manager/easy-code-manager.php",
-        name: "FluentSnippets",
-        about:
-          "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin.",
-      },
-      {
-        file: "seo-by-rank-math/rank-math.php",
-        name: "Rank Math SEO",
-        about: "SEO: page titles, descriptions, sitemaps and search previews.",
-      },
-      {
-        file: "automatorwp/automatorwp.php",
-        name: "AutomatorWP",
-        about:
-          "Automations between WordPress and its plugins: when this happens, do that.",
-      },
-      {
-        file: "wp-fusion-lite/wp-fusion-lite.php",
-        name: "WP Fusion Lite",
-        about:
-          "Keeps your contacts in step: new users and buyers go to FluentCRM with tags.",
-      },
-      {
-        file: "fluent-toolkit/fluent-toolkit.php",
-        name: "FluentHub",
-        about:
-          "FluentHub: one dashboard to install and update the Fluent plugins.",
-      },
-      {
-        file: "anypress-blocks/anypress-blocks.php",
-        name: "AnyPress Blocks",
-        about:
-          "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more.",
-      },
-    ],
+      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
+      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
+      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
+      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
+      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
+      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
+      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
+    ]
   },
   "online-store": {
     title: "Online store",
     ownPlugins: false,
     plugins: [
-      {
-        file: "fluent-security/fluent-security.php",
-        name: "FluentAuth",
-        about:
-          "Login protection: blocks password guessing and adds two-step sign-in.",
-      },
-      {
-        file: "fluent-smtp/fluent-smtp.php",
-        name: "FluentSMTP",
-        about:
-          "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you.",
-      },
-      {
-        file: "fluent-crm/fluent-crm.php",
-        name: "FluentCRM",
-        about:
-          "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations.",
-      },
-      {
-        file: "fluentform/fluentform.php",
-        name: "Fluent Forms",
-        about:
-          "Forms: contact, quote, sign-up and survey forms, with entries kept on the site.",
-      },
-      {
-        file: "fluent-cart/fluent-cart.php",
-        name: "FluentCart",
-        about:
-          "Your shop: products, checkout, payments, orders and subscriptions.",
-      },
-      {
-        file: "fluent-player/fluent-player.php",
-        name: "FluentPlayer",
-        about: "Video and audio player for pages and posts.",
-      },
-      {
-        file: "fluent-affiliate/fluent-affiliate.php",
-        name: "FluentAffiliate",
-        about:
-          "Affiliates: people who send you customers get a link and earn commission.",
-      },
-      {
-        file: "fluent-support/fluent-support.php",
-        name: "Fluent Support",
-        about:
-          "Help desk: customer questions come in as tickets you answer from the site.",
-      },
-      {
-        file: "easy-code-manager/easy-code-manager.php",
-        name: "FluentSnippets",
-        about:
-          "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin.",
-      },
-      {
-        file: "seo-by-rank-math/rank-math.php",
-        name: "Rank Math SEO",
-        about: "SEO: page titles, descriptions, sitemaps and search previews.",
-      },
-      {
-        file: "automatorwp/automatorwp.php",
-        name: "AutomatorWP",
-        about:
-          "Automations between WordPress and its plugins: when this happens, do that.",
-      },
-      {
-        file: "wp-fusion-lite/wp-fusion-lite.php",
-        name: "WP Fusion Lite",
-        about:
-          "Keeps your contacts in step: new users and buyers go to FluentCRM with tags.",
-      },
-      {
-        file: "fluent-toolkit/fluent-toolkit.php",
-        name: "FluentHub",
-        about:
-          "FluentHub: one dashboard to install and update the Fluent plugins.",
-      },
-      {
-        file: "anypress-blocks/anypress-blocks.php",
-        name: "AnyPress Blocks",
-        about:
-          "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more.",
-      },
-    ],
+      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
+      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
+      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
+      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
+      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
+      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
+      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
+    ]
   },
   community: {
     title: "Community & courses",
     ownPlugins: false,
     plugins: [
-      {
-        file: "fluent-security/fluent-security.php",
-        name: "FluentAuth",
-        about:
-          "Login protection: blocks password guessing and adds two-step sign-in.",
-      },
-      {
-        file: "fluent-smtp/fluent-smtp.php",
-        name: "FluentSMTP",
-        about:
-          "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you.",
-      },
-      {
-        file: "fluent-crm/fluent-crm.php",
-        name: "FluentCRM",
-        about:
-          "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations.",
-      },
-      {
-        file: "fluentform/fluentform.php",
-        name: "Fluent Forms",
-        about:
-          "Forms: contact, quote, sign-up and survey forms, with entries kept on the site.",
-      },
-      {
-        file: "fluent-cart/fluent-cart.php",
-        name: "FluentCart",
-        about:
-          "Your shop: products, checkout, payments, orders and subscriptions.",
-      },
-      {
-        file: "fluent-community/fluent-community.php",
-        name: "FluentCommunity",
-        about:
-          "Members' community and courses: spaces, posts, lessons and member profiles.",
-      },
-      {
-        file: "fluent-player/fluent-player.php",
-        name: "FluentPlayer",
-        about: "Video and audio player for pages and posts.",
-      },
-      {
-        file: "easy-code-manager/easy-code-manager.php",
-        name: "FluentSnippets",
-        about:
-          "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin.",
-      },
-      {
-        file: "seo-by-rank-math/rank-math.php",
-        name: "Rank Math SEO",
-        about: "SEO: page titles, descriptions, sitemaps and search previews.",
-      },
-      {
-        file: "automatorwp/automatorwp.php",
-        name: "AutomatorWP",
-        about:
-          "Automations between WordPress and its plugins: when this happens, do that.",
-      },
-      {
-        file: "wp-fusion-lite/wp-fusion-lite.php",
-        name: "WP Fusion Lite",
-        about:
-          "Keeps your contacts in step: new users and buyers go to FluentCRM with tags.",
-      },
-      {
-        file: "fluent-toolkit/fluent-toolkit.php",
-        name: "FluentHub",
-        about:
-          "FluentHub: one dashboard to install and update the Fluent plugins.",
-      },
-      {
-        file: "anypress-blocks/anypress-blocks.php",
-        name: "AnyPress Blocks",
-        about:
-          "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more.",
-      },
-    ],
+      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
+      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
+      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
+      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
+      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
+      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
+    ]
   },
   everything: {
     title: "Everything",
     ownPlugins: false,
     plugins: [
-      {
-        file: "fluent-security/fluent-security.php",
-        name: "FluentAuth",
-        about:
-          "Login protection: blocks password guessing and adds two-step sign-in.",
-      },
-      {
-        file: "fluent-smtp/fluent-smtp.php",
-        name: "FluentSMTP",
-        about:
-          "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you.",
-      },
-      {
-        file: "fluent-crm/fluent-crm.php",
-        name: "FluentCRM",
-        about:
-          "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations.",
-      },
-      {
-        file: "fluentform/fluentform.php",
-        name: "Fluent Forms",
-        about:
-          "Forms: contact, quote, sign-up and survey forms, with entries kept on the site.",
-      },
-      {
-        file: "fluent-booking/fluent-booking.php",
-        name: "FluentBooking",
-        about:
-          "Online booking: let visitors book calls and appointments in your calendar.",
-      },
-      {
-        file: "fluent-cart/fluent-cart.php",
-        name: "FluentCart",
-        about:
-          "Your shop: products, checkout, payments, orders and subscriptions.",
-      },
-      {
-        file: "fluent-community/fluent-community.php",
-        name: "FluentCommunity",
-        about:
-          "Members' community and courses: spaces, posts, lessons and member profiles.",
-      },
-      {
-        file: "fluent-player/fluent-player.php",
-        name: "FluentPlayer",
-        about: "Video and audio player for pages and posts.",
-      },
-      {
-        file: "fluent-affiliate/fluent-affiliate.php",
-        name: "FluentAffiliate",
-        about:
-          "Affiliates: people who send you customers get a link and earn commission.",
-      },
-      {
-        file: "fluent-support/fluent-support.php",
-        name: "Fluent Support",
-        about:
-          "Help desk: customer questions come in as tickets you answer from the site.",
-      },
-      {
-        file: "easy-code-manager/easy-code-manager.php",
-        name: "FluentSnippets",
-        about:
-          "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin.",
-      },
-      {
-        file: "seo-by-rank-math/rank-math.php",
-        name: "Rank Math SEO",
-        about: "SEO: page titles, descriptions, sitemaps and search previews.",
-      },
-      {
-        file: "automatorwp/automatorwp.php",
-        name: "AutomatorWP",
-        about:
-          "Automations between WordPress and its plugins: when this happens, do that.",
-      },
-      {
-        file: "wp-fusion-lite/wp-fusion-lite.php",
-        name: "WP Fusion Lite",
-        about:
-          "Keeps your contacts in step: new users and buyers go to FluentCRM with tags.",
-      },
-      {
-        file: "fluent-toolkit/fluent-toolkit.php",
-        name: "FluentHub",
-        about:
-          "FluentHub: one dashboard to install and update the Fluent plugins.",
-      },
-      {
-        file: "anypress-blocks/anypress-blocks.php",
-        name: "AnyPress Blocks",
-        about:
-          "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more.",
-      },
-    ],
+      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
+      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
+      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
+      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
+      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
+      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
+      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
+      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
+      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
+    ]
   },
   store: {
     title: "Everything (stores bought before site types)",
     ownPlugins: false,
     plugins: [
-      {
-        file: "fluent-security/fluent-security.php",
-        name: "FluentAuth",
-        about:
-          "Login protection: blocks password guessing and adds two-step sign-in.",
-      },
-      {
-        file: "fluent-smtp/fluent-smtp.php",
-        name: "FluentSMTP",
-        about:
-          "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you.",
-      },
-      {
-        file: "fluent-crm/fluent-crm.php",
-        name: "FluentCRM",
-        about:
-          "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations.",
-      },
-      {
-        file: "fluentform/fluentform.php",
-        name: "Fluent Forms",
-        about:
-          "Forms: contact, quote, sign-up and survey forms, with entries kept on the site.",
-      },
-      {
-        file: "fluent-booking/fluent-booking.php",
-        name: "FluentBooking",
-        about:
-          "Online booking: let visitors book calls and appointments in your calendar.",
-      },
-      {
-        file: "fluent-cart/fluent-cart.php",
-        name: "FluentCart",
-        about:
-          "Your shop: products, checkout, payments, orders and subscriptions.",
-      },
-      {
-        file: "fluent-community/fluent-community.php",
-        name: "FluentCommunity",
-        about:
-          "Members' community and courses: spaces, posts, lessons and member profiles.",
-      },
-      {
-        file: "fluent-player/fluent-player.php",
-        name: "FluentPlayer",
-        about: "Video and audio player for pages and posts.",
-      },
-      {
-        file: "fluent-affiliate/fluent-affiliate.php",
-        name: "FluentAffiliate",
-        about:
-          "Affiliates: people who send you customers get a link and earn commission.",
-      },
-      {
-        file: "fluent-support/fluent-support.php",
-        name: "Fluent Support",
-        about:
-          "Help desk: customer questions come in as tickets you answer from the site.",
-      },
-      {
-        file: "easy-code-manager/easy-code-manager.php",
-        name: "FluentSnippets",
-        about:
-          "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin.",
-      },
-      {
-        file: "seo-by-rank-math/rank-math.php",
-        name: "Rank Math SEO",
-        about: "SEO: page titles, descriptions, sitemaps and search previews.",
-      },
-      {
-        file: "automatorwp/automatorwp.php",
-        name: "AutomatorWP",
-        about:
-          "Automations between WordPress and its plugins: when this happens, do that.",
-      },
-      {
-        file: "wp-fusion-lite/wp-fusion-lite.php",
-        name: "WP Fusion Lite",
-        about:
-          "Keeps your contacts in step: new users and buyers go to FluentCRM with tags.",
-      },
-      {
-        file: "fluent-toolkit/fluent-toolkit.php",
-        name: "FluentHub",
-        about:
-          "FluentHub: one dashboard to install and update the Fluent plugins.",
-      },
-      {
-        file: "anypress-blocks/anypress-blocks.php",
-        name: "AnyPress Blocks",
-        about:
-          "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more.",
-      },
-    ],
+      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
+      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
+      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
+      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
+      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
+      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
+      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
+      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
+      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
+    ]
   },
   highlevel: {
     title: "HighLevel site",
     ownPlugins: true,
     plugins: [
-      {
-        file: "fluent-security/fluent-security.php",
-        name: "FluentAuth",
-        about:
-          "Login protection: blocks password guessing and adds two-step sign-in.",
-      },
-      {
-        file: "fluent-player/fluent-player.php",
-        name: "FluentPlayer",
-        about: "Video and audio player for pages and posts.",
-      },
-      {
-        file: "easy-code-manager/easy-code-manager.php",
-        name: "FluentSnippets",
-        about:
-          "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin.",
-      },
-      {
-        file: "seo-by-rank-math/rank-math.php",
-        name: "Rank Math SEO",
-        about: "SEO: page titles, descriptions, sitemaps and search previews.",
-      },
-      {
-        file: "automatorwp/automatorwp.php",
-        name: "AutomatorWP",
-        about:
-          "Automations between WordPress and its plugins: when this happens, do that.",
-      },
-      {
-        file: "wp-fusion-lite/wp-fusion-lite.php",
-        name: "WP Fusion Lite",
-        about:
-          "Sends new users and sign-ups to your HighLevel sub-account as contacts. Connected for you.",
-      },
-      {
-        file: "leadconnector/leadconnector.php",
-        name: "LeadConnector",
-        about:
-          "HighLevel's own plugin: your HighLevel forms, chat widget and calendars on this site.",
-      },
-      {
-        file: "fluent-toolkit/fluent-toolkit.php",
-        name: "FluentHub",
-        about:
-          "FluentHub: one dashboard to install and update the Fluent plugins.",
-      },
-      {
-        file: "anypress-blocks/anypress-blocks.php",
-        name: "AnyPress Blocks",
-        about:
-          "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more.",
-      },
-    ],
-  },
+      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Sends new users and sign-ups to your HighLevel sub-account as contacts. Connected for you." },
+      { file: "leadconnector/leadconnector.php", name: "LeadConnector", about: "HighLevel's own plugin: your HighLevel forms, chat widget and calendars on this site." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
+    ]
+  }
 };
 
 const highlevelAgencies = new Set<string>();
@@ -756,31 +299,13 @@ const highlevelAgencies = new Set<string>();
 const limits = new Map<string, number | null>([
   [products[0].id, 6],
   [products[3].id, 10],
-  [products[4].id, 25],
+  [products[4].id, 25]
 ]);
 
 /** Reseller accounts, and which reseller each storefront belongs to. */
-type FixtureReseller = ResellerSettings & {
-  id: string;
-  dateCreated: string;
-  autoInvoice: boolean;
-  stripeCustomerId: string | null;
-};
+type FixtureReseller = ResellerSettings & { id: string; dateCreated: string; autoInvoice: boolean; stripeCustomerId: string | null };
 const resellers: FixtureReseller[] = [
-  {
-    id: uuid(1, 13),
-    name: "Summit Web Studio",
-    maxProducts: 3,
-    maxTenants: 50,
-    wholesalePercent: 40,
-    billingEmail: "billing@summitweb.example",
-    brandName: "Summit Web Studio",
-    brandUrl: "https://summitweb.example",
-    listPriceCents: { small: 1200, medium: 2400, large: 4800 },
-    autoInvoice: true,
-    stripeCustomerId: "cus_SummitWebStudio",
-    dateCreated: iso(NOW - 40 * DAY),
-  },
+  { id: uuid(1, 13), name: "Summit Web Studio", maxProducts: 3, maxTenants: 50, wholesalePercent: 40, billingEmail: "billing@summitweb.example", brandName: "Summit Web Studio", brandUrl: "https://summitweb.example", listPriceCents: { small: 1200, medium: 2400, large: 4800 }, autoInvoice: true, stripeCustomerId: "cus_SummitWebStudio", dateCreated: iso(NOW - 40 * DAY) }
 ];
 // Sample data: last month's bill was sent and paid.
 const resellerInvoices = new Map<string, ResellerInvoice[]>([
@@ -789,255 +314,79 @@ const resellerInvoices = new Map<string, ResellerInvoice[]>([
     [
       {
         id: uuid(1, 14),
-        month: new Date(
-          Date.UTC(
-            new Date(NOW).getUTCFullYear(),
-            new Date(NOW).getUTCMonth() - 1,
-            1,
-          ),
-        )
-          .toISOString()
-          .slice(0, 7),
+        month: new Date(Date.UTC(new Date(NOW).getUTCFullYear(), new Date(NOW).getUTCMonth() - 1, 1)).toISOString().slice(0, 7),
         totalCents: 4320,
         status: "paid",
         hostedInvoiceUrl: "https://invoice.stripe.com/i/sample",
         chargeAutomatically: true,
         error: null,
-        dateUpdated: iso(NOW - 20 * DAY),
-      },
-    ],
-  ],
+        dateUpdated: iso(NOW - 20 * DAY)
+      }
+    ]
+  ]
 ]);
 const resellerOf = new Map<string, string>([
   [products[1].id, resellers[0].id],
-  [products[2].id, resellers[0].id],
+  [products[2].id, resellers[0].id]
 ]);
 
 type FixtureVersion = Version & { productId: string };
 
 const versions: FixtureVersion[] = [
-  {
-    id: uuid(1, 2),
-    name: "v1.4",
-    productId: products[0].id,
-    isProduction: true,
-  },
-  {
-    id: uuid(2, 2),
-    name: "v1.5-beta",
-    productId: products[0].id,
-    isProduction: false,
-  },
-  {
-    id: uuid(3, 2),
-    name: "v1.4",
-    productId: products[1].id,
-    isProduction: true,
-  },
-  {
-    id: uuid(4, 2),
-    name: "v1.3",
-    productId: products[0].id,
-    isProduction: false,
-  },
+  { id: uuid(1, 2), name: "v1.4", productId: products[0].id, isProduction: true },
+  { id: uuid(2, 2), name: "v1.5-beta", productId: products[0].id, isProduction: false },
+  { id: uuid(3, 2), name: "v1.4", productId: products[1].id, isProduction: true },
+  { id: uuid(4, 2), name: "v1.3", productId: products[0].id, isProduction: false }
 ].map((v, i) => ({
   ...v,
   statusCode: StatusCode.Done,
   domain: `${v.name.replace(/\./g, "-")}-${v.id.slice(-8)}.versions.waas.example`,
   dateCreated: iso(NOW - (90 - i * 20) * DAY),
-  dateChanged: iso(NOW - (60 - i * 15) * DAY),
+  dateChanged: iso(NOW - (60 - i * 15) * DAY)
 }));
 
 type FixtureTemplate = Template & { productId: string };
 
 const templates: FixtureTemplate[] = [
-  {
-    name: "Starter template",
-    comment: "WooCommerce, theme and the AnyPress Client plugin",
-    isTenantSnapshot: false,
-    groupName: null,
-    isDefault: true,
-    showAsBaseSnapshot: true,
-  },
+  { name: "Starter template", comment: "WooCommerce, theme and the AnyPress Client plugin", isTenantSnapshot: false, groupName: null, isDefault: true, showAsBaseSnapshot: true },
   // As the build scripts write it: a label, then waas-template.json, cut at 500 characters.
-  {
-    name: "AnyPress store",
-    comment:
-      'AnyPress store: WordPress, AnyPress Client, Fluent suite, Rank Math, WP Fusion Lite, AutomatorWP, FluentAuth, Ollie. {"builtAt":"2026-10-20T18:34:00Z","wordPress":"7.1.3","plugins":{"anypress-client":"2.3.2 (194505b)","fluent-cart":"1.9.0","fluent-crm":"3.2.6","fluentform":"6.2.15","fluent-booking":"2.5.0","fluent-support":"2.4.5","fluent-affiliate":"1.6.5","easy-code-manager":"10.56","seo-by-rank-math":"1.0.280","wp-fusion-lite":"3.48.0","automatorwp":"6.0.4","fluent-security":"3.0.5","fluent-community',
-    isTenantSnapshot: false,
-    groupName: null,
-    isDefault: false,
-    showAsBaseSnapshot: true,
-  },
-  {
-    name: "Catalog store",
-    comment: "Catalog-only store without checkout",
-    isTenantSnapshot: true,
-    groupName: "catalog",
-    isDefault: false,
-    showAsBaseSnapshot: false,
-  },
-  {
-    name: "Checkout store",
-    comment: "Store with checkout, shipping and tax set up",
-    isTenantSnapshot: true,
-    groupName: "store",
-    isDefault: false,
-    showAsBaseSnapshot: false,
-  },
+  { name: "AnyPress store", comment: "AnyPress store: WordPress, AnyPress Client, Fluent suite, Rank Math, WP Fusion Lite, AutomatorWP, FluentAuth, Ollie. {\"builtAt\":\"2026-10-20T18:34:00Z\",\"wordPress\":\"7.1.3\",\"plugins\":{\"anypress-client\":\"2.3.2 (194505b)\",\"fluent-cart\":\"1.9.0\",\"fluent-crm\":\"3.2.6\",\"fluentform\":\"6.2.15\",\"fluent-booking\":\"2.5.0\",\"fluent-support\":\"2.4.5\",\"fluent-affiliate\":\"1.6.5\",\"easy-code-manager\":\"10.56\",\"seo-by-rank-math\":\"1.0.280\",\"wp-fusion-lite\":\"3.48.0\",\"automatorwp\":\"6.0.4\",\"fluent-security\":\"3.0.5\",\"fluent-community", isTenantSnapshot: false, groupName: null, isDefault: false, showAsBaseSnapshot: true },
+  { name: "Catalog store", comment: "Catalog-only store without checkout", isTenantSnapshot: true, groupName: "catalog", isDefault: false, showAsBaseSnapshot: false },
+  { name: "Checkout store", comment: "Store with checkout, shipping and tax set up", isTenantSnapshot: true, groupName: "store", isDefault: false, showAsBaseSnapshot: false }
 ].flatMap((t, i) =>
-  products.map((p, j) => ({
-    ...t,
-    id: uuid(i * 10 + j + 1, 7),
-    productId: p.id,
-  })),
+  products.map((p, j) => ({ ...t, id: uuid(i * 10 + j + 1, 7), productId: p.id }))
 );
 
 /** wordpress.org plugins the sample search finds. */
 const directory: DirectoryPlugin[] = [
-  [
-    "contact-form-7",
-    "Contact Form 7",
-    "6.1.2",
-    "Takayuki Miyoshi",
-    "Just another contact form plugin. Simple but flexible.",
-    80,
-    10_000_000,
-  ],
-  [
-    "the-events-calendar",
-    "The Events Calendar",
-    "6.15.0",
-    "The Events Calendar",
-    "Create and manage events with ease.",
-    88,
-    700_000,
-  ],
-  [
-    "wordpress-seo",
-    "Yoast SEO",
-    "26.1",
-    "Team Yoast",
-    "Improve your WordPress SEO.",
-    96,
-    10_000_000,
-  ],
-  [
-    "elementor",
-    "Elementor Website Builder",
-    "3.33.0",
-    "Elementor.com",
-    "The Elementor Website Builder has it all.",
-    90,
-    10_000_000,
-  ],
-  [
-    "wp-super-cache",
-    "WP Super Cache",
-    "3.0.1",
-    "Automattic",
-    "A very fast caching engine for WordPress.",
-    84,
-    1_000_000,
-  ],
-  [
-    "wpforms-lite",
-    "WPForms Lite",
-    "1.9.8",
-    "WPForms",
-    "Drag and drop form builder for contact forms, surveys and more.",
-    98,
-    6_000_000,
-  ],
-  [
-    "ninja-forms",
-    "Ninja Forms",
-    "3.12.0",
-    "Saturday Drive",
-    "Drag and drop contact form builder.",
-    86,
-    600_000,
-  ],
-  [
-    "formidable",
-    "Formidable Forms",
-    "6.24",
-    "Strategy11",
-    "Form builder for quizzes, surveys, calculators and more.",
-    92,
-    300_000,
-  ],
-  [
-    "forminator",
-    "Forminator Forms",
-    "1.47.0",
-    "WPMU DEV",
-    "Contact forms, polls, quizzes and payment forms.",
-    94,
-    600_000,
-  ],
-  [
-    "everest-forms",
-    "Everest Forms",
-    "3.4.0",
-    "WPEverest",
-    "Drag and drop contact form builder.",
-    90,
-    100_000,
-  ],
-  [
-    "happyforms",
-    "Happyforms",
-    "1.26.5",
-    "Happyforms",
-    "Friendly drag and drop contact form builder.",
-    88,
-    80_000,
-  ],
-  [
-    "metform",
-    "MetForm",
-    "4.0.5",
-    "Wpmet",
-    "Contact form, survey and quiz builder for Elementor.",
-    86,
-    200_000,
-  ],
-  [
-    "contact-form-7-honeypot",
-    "Honeypot for Contact Form 7",
-    "2.1.7",
-    "Nocean",
-    "Add spam protection to Contact Form 7 forms.",
-    90,
-    300_000,
-  ],
-].map(
-  ([
-    slug,
-    name,
-    version,
-    author,
-    shortDescription,
-    rating,
-    activeInstalls,
-  ]) => ({
-    slug: slug as string,
-    name: name as string,
-    version: version as string,
-    icon: `https://ps.w.org/${slug}/assets/icon-128x128.png`,
-    author: author as string,
-    shortDescription: shortDescription as string,
-    rating: rating as number,
-    numRatings: 1200,
-    activeInstalls: activeInstalls as number,
-    lastUpdated: "2026-10-01T12:00:00.000Z",
-    testedUpTo: "7.1",
-    requiresPhp: "7.4",
-    blocked:
-      slug === "wp-super-cache" ? "Page caching is part of the hosting." : null,
-  }),
-);
+  ["contact-form-7", "Contact Form 7", "6.1.2", "Takayuki Miyoshi", "Just another contact form plugin. Simple but flexible.", 80, 10_000_000],
+  ["the-events-calendar", "The Events Calendar", "6.15.0", "The Events Calendar", "Create and manage events with ease.", 88, 700_000],
+  ["wordpress-seo", "Yoast SEO", "26.1", "Team Yoast", "Improve your WordPress SEO.", 96, 10_000_000],
+  ["elementor", "Elementor Website Builder", "3.33.0", "Elementor.com", "The Elementor Website Builder has it all.", 90, 10_000_000],
+  ["wp-super-cache", "WP Super Cache", "3.0.1", "Automattic", "A very fast caching engine for WordPress.", 84, 1_000_000],
+  ["wpforms-lite", "WPForms Lite", "1.9.8", "WPForms", "Drag and drop form builder for contact forms, surveys and more.", 98, 6_000_000],
+  ["ninja-forms", "Ninja Forms", "3.12.0", "Saturday Drive", "Drag and drop contact form builder.", 86, 600_000],
+  ["formidable", "Formidable Forms", "6.24", "Strategy11", "Form builder for quizzes, surveys, calculators and more.", 92, 300_000],
+  ["forminator", "Forminator Forms", "1.47.0", "WPMU DEV", "Contact forms, polls, quizzes and payment forms.", 94, 600_000],
+  ["everest-forms", "Everest Forms", "3.4.0", "WPEverest", "Drag and drop contact form builder.", 90, 100_000],
+  ["happyforms", "Happyforms", "1.26.5", "Happyforms", "Friendly drag and drop contact form builder.", 88, 80_000],
+  ["metform", "MetForm", "4.0.5", "Wpmet", "Contact form, survey and quiz builder for Elementor.", 86, 200_000],
+  ["contact-form-7-honeypot", "Honeypot for Contact Form 7", "2.1.7", "Nocean", "Add spam protection to Contact Form 7 forms.", 90, 300_000]
+].map(([slug, name, version, author, shortDescription, rating, activeInstalls]) => ({
+  slug: slug as string,
+  name: name as string,
+  version: version as string,
+  icon: `https://ps.w.org/${slug}/assets/icon-128x128.png`,
+  author: author as string,
+  shortDescription: shortDescription as string,
+  rating: rating as number,
+  numRatings: 1200,
+  activeInstalls: activeInstalls as number,
+  lastUpdated: "2026-10-01T12:00:00.000Z",
+  testedUpTo: "7.1",
+  requiresPhp: "7.4",
+  blocked: slug === "wp-super-cache" ? "Page caching is part of the hosting." : null
+}));
 
 /** Uploaded premium plugin zips by id. The sample "upload" is always a ready copy of the plugin its file is named after. */
 const pluginUploads = new Map<string, PluginUpload>();
@@ -1047,47 +396,11 @@ const pluginChoices = new Map<string, PluginChoice[]>([
   [
     products[0]!.id,
     [
-      {
-        slug: "contact-form-7",
-        name: "Contact Form 7",
-        icon: directory[0]!.icon,
-        action: "add",
-        version: "6.0.0",
-        source: "wporg",
-        licenceConstants: [],
-        siteTypes: [],
-        shared: false,
-        inProduction: true,
-        latestVersion: "6.1.2",
-      },
-      {
-        slug: "gravityforms",
-        name: "Gravity Forms",
-        icon: null,
-        action: "add",
-        version: "2.9.1",
-        source: "upload",
-        licenceConstants: ["GF_LICENSE_KEY"],
-        siteTypes: ["store", "everything"],
-        shared: false,
-        inProduction: true,
-        latestVersion: null,
-      },
-      {
-        slug: "wp-fusion-lite",
-        name: "WP Fusion Lite",
-        icon: null,
-        action: "off",
-        version: null,
-        source: "wporg",
-        licenceConstants: [],
-        siteTypes: ["website"],
-        shared: false,
-        inProduction: false,
-        latestVersion: null,
-      },
-    ],
-  ],
+      { slug: "contact-form-7", name: "Contact Form 7", icon: directory[0]!.icon, action: "add", version: "6.0.0", source: "wporg", licenceConstants: [], siteTypes: [], shared: false, inProduction: true, latestVersion: "6.1.2" },
+      { slug: "gravityforms", name: "Gravity Forms", icon: null, action: "add", version: "2.9.1", source: "upload", licenceConstants: ["GF_LICENSE_KEY"], siteTypes: ["store", "everything"], shared: false, inProduction: true, latestVersion: null },
+      { slug: "wp-fusion-lite", name: "WP Fusion Lite", icon: null, action: "off", version: null, source: "wporg", licenceConstants: [], siteTypes: ["website"], shared: false, inProduction: false, latestVersion: null }
+    ]
+  ]
 ]);
 
 type FixtureKey = ApiKey & { productId: string };
@@ -1095,16 +408,7 @@ type FixtureKey = ApiKey & { productId: string };
 /** Ready-made storefronts by product; none in the sample data. */
 // Summit Sites sells from a ready-made storefront; AnyPress sells from its own site.
 const storefronts = new Map<string, ReadyStorefront>([
-  [
-    uuid(2, 1),
-    {
-      id: uuid(1, 16),
-      name: "Summit Sites",
-      domain: "summit-sites.anypress.site",
-      statusCode: StatusCode.Done,
-      statusName: "Done",
-    },
-  ],
+  [uuid(2, 1), { id: uuid(1, 16), name: "Summit Sites", domain: "summit-sites.anypress.site", statusCode: StatusCode.Done, statusName: "Done" }]
 ]);
 
 /** Applications to sell, as the marketing site's form sends them. */
@@ -1115,8 +419,7 @@ const applications: SellerApplication[] = [
     email: "maya@brightsideweb.example",
     business: "Brightside Web Studio",
     website: "https://brightsideweb.example/",
-    clients:
-      "Restaurants, salons and small shops in Tucson. Most want online booking and a menu they can change themselves.",
+    clients: "Restaurants, salons and small shops in Tucson. Most want online booking and a menu they can change themselves.",
     expectedSites: "10-24",
     wantsStorefront: false,
     storefrontSubdomain: null,
@@ -1125,7 +428,7 @@ const applications: SellerApplication[] = [
     productId: null,
     resellerId: null,
     dateDecided: null,
-    dateCreated: new Date(Date.now() - 3 * 3600_000).toISOString(),
+    dateCreated: new Date(Date.now() - 3 * 3600_000).toISOString()
   },
   {
     id: "a1b2c3d4-0000-4000-8000-000000000002",
@@ -1133,8 +436,7 @@ const applications: SellerApplication[] = [
     email: "darnell@eastsidechamber.example",
     business: "Eastside Chamber of Commerce",
     website: null,
-    clients:
-      "Our member businesses. Many of them still have no website at all.",
+    clients: "Our member businesses. Many of them still have no website at all.",
     expectedSites: "25+",
     wantsStorefront: true,
     storefrontSubdomain: "eastside-chamber",
@@ -1143,7 +445,7 @@ const applications: SellerApplication[] = [
     productId: null,
     resellerId: null,
     dateDecided: null,
-    dateCreated: new Date(Date.now() - 26 * 3600_000).toISOString(),
+    dateCreated: new Date(Date.now() - 26 * 3600_000).toISOString()
   },
   {
     id: "a1b2c3d4-0000-4000-8000-000000000003",
@@ -1160,8 +462,8 @@ const applications: SellerApplication[] = [
     productId: null,
     resellerId: null,
     dateDecided: new Date(Date.now() - 50 * 3600_000).toISOString(),
-    dateCreated: new Date(Date.now() - 72 * 3600_000).toISOString(),
-  },
+    dateCreated: new Date(Date.now() - 72 * 3600_000).toISOString()
+  }
 ];
 
 const apiKeys: FixtureKey[] = [
@@ -1172,7 +474,7 @@ const apiKeys: FixtureKey[] = [
     state: "active",
     dateCreated: iso(NOW - 40 * DAY),
     lastUsedAt: iso(NOW - HOUR / 4),
-    revokedAt: null,
+    revokedAt: null
   },
   {
     id: uuid(2, 9),
@@ -1181,7 +483,7 @@ const apiKeys: FixtureKey[] = [
     state: "revoked",
     dateCreated: iso(NOW - 80 * DAY),
     lastUsedAt: iso(NOW - 41 * DAY),
-    revokedAt: iso(NOW - 12 * DAY),
+    revokedAt: iso(NOW - 12 * DAY)
   },
   {
     id: uuid(3, 9),
@@ -1190,21 +492,13 @@ const apiKeys: FixtureKey[] = [
     state: "active",
     dateCreated: iso(NOW - 20 * DAY),
     lastUsedAt: null,
-    revokedAt: null,
-  },
+    revokedAt: null
+  }
 ];
 
 /** A made-up secret: sample data only. */
 const sampleSecret = () =>
-  Array.from(
-    crypto.getRandomValues(new Uint8Array(32)),
-    (b) =>
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[
-        b % 64
-      ],
-  )
-    .join("")
-    .slice(0, 43);
+  Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[b % 64]).join("").slice(0, 43);
 
 class FixtureError extends AdminApiError {
   constructor(status: number, message: string) {
@@ -1216,10 +510,7 @@ const VERSION_NAME = /^[A-Za-z0-9.-]{1,30}$/;
 const TEMPLATE_NAME = /^[A-Za-z0-9 -]{5,50}$/;
 
 // Obviously fictional names and reserved .example domains: sample data must never look like a real business.
-const storeNames = Array.from(
-  { length: 20 },
-  (_, i) => `Example Store ${i + 1}`,
-);
+const storeNames = Array.from({ length: 20 }, (_, i) => `Example Store ${i + 1}`);
 
 type TenantSeed = {
   status: StatusCode;
@@ -1232,42 +523,26 @@ type TenantSeed = {
 };
 
 const seeds: TenantSeed[] = [
-  {
-    status: StatusCode.Done,
-    custom: "shop.store1.example",
-    extra: ["store1.example"],
-  },
+  { status: StatusCode.Done, custom: "shop.store1.example", extra: ["store1.example"] },
   { status: StatusCode.Done },
   { status: StatusCode.Done, custom: "store3.example", movedIn: "held" },
   { status: StatusCode.Pending, job: { type: "tenant.create", loop: true } },
   { status: StatusCode.Done, suspended: true },
-  {
-    status: StatusCode.Failed,
-    movedIn: "failed",
-    job: { type: "tenant.import", failedAt: 2 },
-  },
+  { status: StatusCode.Failed, movedIn: "failed", job: { type: "tenant.import", failedAt: 2 } },
   { status: StatusCode.Done, custom: "store7.example" },
   { status: StatusCode.Done },
   { status: StatusCode.Done, suspended: true, custom: "store9.example" },
   { status: StatusCode.Done },
   { status: StatusCode.Removing, job: { type: "tenant.delete", loop: true } },
-  {
-    status: StatusCode.Done,
-    custom: "store12.example",
-    extra: ["www.store12.example"],
-  },
+  { status: StatusCode.Done, custom: "store12.example", extra: ["www.store12.example"] },
   { status: StatusCode.Done },
   { status: StatusCode.Pending, job: { type: "tenant.move", loop: true } },
   { status: StatusCode.Done },
-  {
-    status: StatusCode.Pending,
-    custom: "store16.example",
-    job: { type: "tenant.domains", loop: true },
-  },
+  { status: StatusCode.Pending, custom: "store16.example", job: { type: "tenant.domains", loop: true } },
   { status: StatusCode.Done },
   { status: StatusCode.Done },
   { status: StatusCode.Done },
-  { status: StatusCode.Done, custom: "store20.example" },
+  { status: StatusCode.Done, custom: "store20.example" }
 ];
 
 /** When sample stores' owners were sent the "website is ready" email from the dashboard. */
@@ -1285,24 +560,18 @@ type FixtureTenant = Omit<Tenant, "progress"> & {
 
 /** The move of a sample site from another host, as the API reports it once it ran. */
 function sampleMoveIn(kind: "held" | "failed", startedAt: number): MoveIn {
-  const source = {
-    home: "https://www.old-host.example",
-    wordPressVersion: "6.9.4",
-    phpVersion: "8.1.29",
-    uploadedBytes: 1_288_490_189,
-  };
+  const source = { home: "https://www.old-host.example", wordPressVersion: "6.9.4", phpVersion: "8.1.29", uploadedBytes: 1_288_490_189 };
   if (kind === "failed")
     return {
       expiresAt: iso(startedAt + 6 * DAY),
       startedAt: iso(startedAt),
       source,
-      reason:
-        "The database holds two sets of WordPress tables whose names collide. Remove the old copy's tables from the old site's database, then export again.",
+      reason: "The database holds two sets of WordPress tables whose names collide. Remove the old copy's tables from the old site's database, then export again.",
       warnings: [],
       siteReport: null,
       migrationToken: SAMPLE_MIGRATION_TOKEN,
       reprintSite: null,
-      reprintCopies: 0,
+      reprintCopies: 0
     };
   return {
     expiresAt: iso(startedAt + 6 * DAY),
@@ -1311,12 +580,12 @@ function sampleMoveIn(kind: "held" | "failed", startedAt: number): MoveIn {
     reason: null,
     warnings: [
       "The old site ran PHP 8.1 and this store runs PHP 8.3. Check that its plugins and theme work.",
-      "After the move the home page answered 500 and the login page 200, and PHP stopped with: Uncaught Error: Call to undefined function create_function() in wp-content/plugins/old-slider/slider.php:42. Fix or switch off the plugin or theme at fault.",
+      "After the move the home page answered 500 and the login page 200, and PHP stopped with: Uncaught Error: Call to undefined function create_function() in wp-content/plugins/old-slider/slider.php:42. Fix or switch off the plugin or theme at fault."
     ],
     siteReport: sampleSiteReport,
     migrationToken: SAMPLE_MIGRATION_TOKEN,
     reprintSite: source.home,
-    reprintCopies: 1,
+    reprintCopies: 1
   };
 }
 
@@ -1334,11 +603,7 @@ const sampleSiteReport: SiteReport = {
       counts: [
         { name: "forms", count: 4, label: "4 forms" },
         { name: "entries", count: 1204, label: "1,204 entries" },
-        {
-          name: "pages with its forms",
-          count: 6,
-          label: "6 pages with its forms",
-        },
+        { name: "pages with its forms", count: 6, label: "6 pages with its forms" }
       ],
       fluentRoute: "native",
       fluentPlugin: "Fluent Forms",
@@ -1350,11 +615,9 @@ const sampleSiteReport: SiteReport = {
         "Hidden fields.",
         "The original date of each entry: entries come in dated the day they are brought in.",
         "Entries past the first 1,000 of each form: Fluent Forms brings in no more per form.",
-        "The form shortcodes and blocks on 6 pages stay as they are: swap each one for the Fluent Forms form, or visitors see the old shortcode once the old plugin is off.",
+        "The form shortcodes and blocks on 6 pages stay as they are: swap each one for the Fluent Forms form, or visitors see the old shortcode once the old plugin is off."
       ],
-      blockers: [
-        "2 forms use phone, file upload or range fields, which only Fluent Forms Pro brings in. Without it those fields are dropped.",
-      ],
+      blockers: ["2 forms use phone, file upload or range fields, which only Fluent Forms Pro brings in. Without it those fields are dropped."]
     },
     {
       area: "shop",
@@ -1364,7 +627,7 @@ const sampleSiteReport: SiteReport = {
       counts: [
         { name: "products", count: 86, label: "86 products" },
         { name: "orders", count: 2310, label: "2,310 orders" },
-        { name: "guest orders", count: 911, label: "911 guest orders" },
+        { name: "guest orders", count: 911, label: "911 guest orders" }
       ],
       fluentRoute: "addon",
       fluentPlugin: "FluentCart",
@@ -1374,12 +637,12 @@ const sampleSiteReport: SiteReport = {
       willLose: [
         "Shipping zones, product tags, gallery images and reviews.",
         "Payment gateway keys: connect each payment method again in FluentCart.",
-        "Store emails and shortcodes on pages.",
+        "Store emails and shortcodes on pages."
       ],
       blockers: [
         "WooCommerce keeps its orders the old way (HPOS is off). Turn on High-Performance Order Storage under WooCommerce → Settings → Advanced → Features and let it sync before moving orders.",
-        "Live payment keys came across for Stripe. Payments taken on this copy are real: put the gateways in test mode until it goes live.",
-      ],
+        "Live payment keys came across for Stripe. Payments taken on this copy are real: put the gateways in test mode until it goes live."
+      ]
     },
     {
       area: "crm",
@@ -1389,7 +652,7 @@ const sampleSiteReport: SiteReport = {
       counts: [
         { name: "subscribers", count: 4120, label: "4,120 subscribers" },
         { name: "lists", count: 3, label: "3 lists" },
-        { name: "emails", count: 57, label: "57 emails" },
+        { name: "emails", count: 57, label: "57 emails" }
       ],
       fluentRoute: "none",
       fluentPlugin: "FluentCRM",
@@ -1398,37 +661,27 @@ const sampleSiteReport: SiteReport = {
       route: "No Fluent route yet",
       willLose: [
         "FluentCRM has no MailPoet importer: export the subscribers from MailPoet as a CSV file and import that.",
-        "Emails, automations and their stats.",
+        "Emails, automations and their stats."
       ],
-      blockers: [],
-    },
+      blockers: []
+    }
   ],
   plugins: [
     { slug: "contact-form-7", name: "Contact Form 7", version: "6.1.2" },
     { slug: "flamingo", name: "Flamingo", version: "2.6" },
     { slug: "woocommerce", name: "WooCommerce", version: "10.2.1" },
-    {
-      slug: "woocommerce-gateway-stripe",
-      name: "WooCommerce Stripe Gateway",
-      version: "9.8.0",
-    },
+    { slug: "woocommerce-gateway-stripe", name: "WooCommerce Stripe Gateway", version: "9.8.0" },
     { slug: "mailpoet", name: "MailPoet", version: "5.14.1" },
     { slug: "wordpress-seo", name: "Yoast SEO", version: "26.2" },
     { slug: "akismet", name: "Akismet Anti-spam", version: "5.5" },
-    { slug: "old-slider", name: "Old Slider", version: "1.4" },
+    { slug: "old-slider", name: "Old Slider", version: "1.4" }
   ],
-  notes: [],
+  notes: []
 };
 
 /** The steps of each store job, in the API's words (src/progress.ts in waas-provisioning-api). */
 const SAMPLE_PLANS: Record<string, string[]> = {
-  "tenant.create": [
-    "Making room for the site",
-    "Starting the website",
-    "Copying the site in",
-    "Adding the theme and plugins",
-    "Putting in the site's settings",
-  ],
+  "tenant.create": ["Making room for the site", "Starting the website", "Copying the site in", "Adding the theme and plugins", "Putting in the site's settings"],
   "tenant.import": [
     "Making room for the site",
     "Starting the website",
@@ -1436,35 +689,17 @@ const SAMPLE_PLANS: Record<string, string[]> = {
     "Updating WordPress",
     "Adding the theme and plugins",
     "Putting in the site's settings",
-    "Checking the site works",
+    "Checking the site works"
   ],
-  "tenant.move": [
-    "Switching to the new version",
-    "Starting the website",
-    "Adding the theme and plugins",
-    "Updating WordPress",
-  ],
-  "tenant.domains": [
-    "Updating the web address",
-    "Starting the website",
-    "Putting in the site's settings",
-  ],
-  "tenant.delete": [
-    "Turning off its email",
-    "Removing the website and its files",
-    "Keeping its backups in case you want it back",
-  ],
+  "tenant.move": ["Switching to the new version", "Starting the website", "Adding the theme and plugins", "Updating WordPress"],
+  "tenant.domains": ["Updating the web address", "Starting the website", "Putting in the site's settings"],
+  "tenant.delete": ["Turning off its email", "Removing the website and its files", "Keeping its backups in case you want it back"]
 };
 /** How long each sample step takes. */
 const SAMPLE_STEP_MS = 5_000;
 
 /** `loop`: starts over when done, so the preview always has a store mid-job. `failedAt`: the step it stopped at. */
-type SampleJob = {
-  type: keyof typeof SAMPLE_PLANS;
-  startedAt: number;
-  loop?: boolean;
-  failedAt?: number;
-};
+type SampleJob = { type: keyof typeof SAMPLE_PLANS; startedAt: number; loop?: boolean; failedAt?: number };
 
 /** Where a sample store's job is now; a job that ran through its steps leaves the store Done. */
 function sampleProgress(t: FixtureTenant): JobProgress | null {
@@ -1474,9 +709,7 @@ function sampleProgress(t: FixtureTenant): JobProgress | null {
   const runMs = steps.length * SAMPLE_STEP_MS;
   let elapsed = Date.now() - job.startedAt;
   if (job.loop) elapsed %= runMs + SAMPLE_STEP_MS;
-  const at =
-    job.failedAt ??
-    Math.min(Math.floor(elapsed / SAMPLE_STEP_MS), steps.length);
+  const at = job.failedAt ?? Math.min(Math.floor(elapsed / SAMPLE_STEP_MS), steps.length);
   if (at >= steps.length) {
     if (job.loop) return null;
     delete t.job;
@@ -1492,20 +725,11 @@ function sampleProgress(t: FixtureTenant): JobProgress | null {
     steps,
     startedAt: iso(startedAt),
     stepStartedAt: iso(startedAt + at * SAMPLE_STEP_MS),
-    failedAt:
-      job.failedAt === undefined
-        ? null
-        : iso(startedAt + (at + 0.6) * SAMPLE_STEP_MS),
+    failedAt: job.failedAt === undefined ? null : iso(startedAt + (at + 0.6) * SAMPLE_STEP_MS)
   };
 }
 
-const SAMPLE_SITE_TYPES = [
-  "online-store",
-  "website",
-  "bookings",
-  "community",
-  "everything",
-];
+const SAMPLE_SITE_TYPES = ["online-store", "website", "bookings", "community", "everything"];
 
 const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   const version = versions[i % 5 === 4 ? 2 : i % 4 === 1 ? 1 : 0];
@@ -1514,14 +738,8 @@ const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   const base = `t-${id.slice(-8)}.stores.waas.example`;
   const domains = [
     { domainName: base, isMain: !seed.custom, isBase: true },
-    ...(seed.custom
-      ? [{ domainName: seed.custom, isMain: true, isBase: false }]
-      : []),
-    ...(seed.extra ?? []).map((domainName) => ({
-      domainName,
-      isMain: false,
-      isBase: false,
-    })),
+    ...(seed.custom ? [{ domainName: seed.custom, isMain: true, isBase: false }] : []),
+    ...(seed.extra ?? []).map((domainName) => ({ domainName, isMain: false, isBase: false }))
   ];
   const created = NOW - (60 - i * 2.5) * DAY;
   return {
@@ -1533,37 +751,24 @@ const tenants: FixtureTenant[] = seeds.map((seed, i) => {
     versionId: version.id,
     versionName: version.name,
     // Sample site types, round the plans; a store moved in from another host was never sold as one.
-    siteTypes: seed.movedIn
-      ? []
-      : [SAMPLE_SITE_TYPES[i % SAMPLE_SITE_TYPES.length]],
+    siteTypes: seed.movedIn ? [] : [SAMPLE_SITE_TYPES[i % SAMPLE_SITE_TYPES.length]],
     statusCode: seed.status,
     isSuspended: !!seed.suspended,
     dateSuspended: seed.suspended ? iso(NOW - (3 + i) * DAY) : null,
     onHold: seed.movedIn === "held",
     dateHeld: seed.movedIn === "held" ? iso(NOW - 2 * DAY) : null,
-    ...(seed.movedIn && {
-      moveIn: sampleMoveIn(seed.movedIn, NOW - 2 * DAY - 2 * HOUR),
-    }),
-    ...(seed.job && {
-      job: {
-        ...seed.job,
-        startedAt:
-          seed.job.failedAt === undefined
-            ? Date.now() - i * 1_700
-            : NOW - 2 * DAY,
-      },
-    }),
+    ...(seed.movedIn && { moveIn: sampleMoveIn(seed.movedIn, NOW - 2 * DAY - 2 * HOUR) }),
+    ...(seed.job && { job: { ...seed.job, startedAt: seed.job.failedAt === undefined ? Date.now() - i * 1_700 : NOW - 2 * DAY } }),
     mainDomain: domains.find((d) => d.isMain)!.domainName,
     domainCount: domains.length,
     domains,
     latestBackupAt: null,
     dateCreated: iso(created),
-    dateChanged: iso(created + (i % 3) * DAY + 5 * HOUR),
+    dateChanged: iso(created + (i % 3) * DAY + 5 * HOUR)
   };
 });
 
-// Languages per store, as the store's AnyPress Client answers: off until turned on. Example Store 1 is in English
-// and Spanish already.
+// Languages per store, as the store's AnyPress Client answers: off until turned on.
 const LANGUAGE_CHOICES = [
   { locale: "en_US", name: "English" },
   { locale: "es_ES", name: "Español" },
@@ -1576,62 +781,35 @@ const LANGUAGE_CHOICES = [
   { locale: "ja", name: "日本語" },
   { locale: "ko_KR", name: "한국어" },
   { locale: "ar", name: "العربية" },
-  { locale: "vi", name: "Tiếng Việt" },
+  { locale: "vi", name: "Tiếng Việt" }
 ];
 const siteLanguages = new Map<string, string[]>();
 function languagesOf(on: boolean, locales: string[]): SiteLanguages {
-  const all = ["en_US", ...locales.filter((l) => l !== "en_US")];
-  return {
-    on,
-    available: true,
-    ready: on,
-    languages: (on ? all : ["en_US"]).map((locale, i) => ({
-      locale,
-      code: locale.split("_")[0]!,
-      name: LANGUAGE_CHOICES.find((c) => c.locale === locale)?.name ?? locale,
-      default: i === 0,
-      ...(on ? { pages: i === 0 ? 6 : 2 } : {}),
-    })),
-    choices: LANGUAGE_CHOICES,
-  };
+  const all = on ? ["en_US", ...locales.filter((l) => l !== "en_US")] : ["en_US"];
+  const languages = all.map((locale, i) => ({
+    locale,
+    code: locale.split("_")[0]!,
+    name: LANGUAGE_CHOICES.find((c) => c.locale === locale)?.name ?? locale,
+    default: i === 0,
+    ...(on ? { pages: i === 0 ? 6 : 2 } : {})
+  }));
+  return { on, available: true, ready: on, languages, choices: LANGUAGE_CHOICES };
 }
 
 // Two HighLevel sites, each tied to a sub-account: Example Store 2 connected an hour's check ago, Example Store 8
 // tied but not connected yet ("Check now" connects it).
 const highLevelLinks = new Map<string, HighLevelLink>([
-  [
-    tenants[1]!.id,
-    {
-      locationId: "loc-summit-1",
-      locationName: "Summit Web Studio",
-      connected: true,
-      connectedAt: iso(NOW - 25 * 60_000),
-      lastCheckAt: iso(NOW - 25 * 60_000),
-    },
-  ],
-  [
-    tenants[7]!.id,
-    {
-      locationId: "loc-summit-2",
-      locationName: null,
-      connected: false,
-      connectedAt: null,
-      lastCheckAt: iso(NOW - 40 * 60_000),
-    },
-  ],
+  [tenants[1]!.id, { locationId: "loc-summit-1", locationName: "Summit Web Studio", connected: true, connectedAt: iso(NOW - 25 * 60_000), lastCheckAt: iso(NOW - 25 * 60_000) }],
+  [tenants[7]!.id, { locationId: "loc-summit-2", locationName: null, connected: false, connectedAt: null, lastCheckAt: iso(NOW - 40 * 60_000) }]
 ]);
-for (const id of highLevelLinks.keys())
-  tenants.find((t) => t.id === id)!.siteTypes = ["highlevel"];
+for (const id of highLevelLinks.keys()) tenants.find((t) => t.id === id)!.siteTypes = ["highlevel"];
 
 const backups: Backup[] = [];
 tenants.forEach((tenant, i) => {
   const count = tenant.isSuspended ? 2 : i % 3 === 0 ? 1 : 0;
   for (let b = 0; b < count; b++) {
     const reason = tenant.isSuspended && b === 0 ? "suspend" : "manual";
-    const at =
-      tenant.isSuspended && b === 0
-        ? Date.parse(tenant.dateSuspended!)
-        : NOW - (10 + i + b * 7) * DAY;
+    const at = tenant.isSuspended && b === 0 ? Date.parse(tenant.dateSuspended!) : NOW - (10 + i + b * 7) * DAY;
     backups.push({
       id: uuid(backups.length + 1, 4),
       productId: tenant.productId,
@@ -1644,14 +822,14 @@ tenants.forEach((tenant, i) => {
       statusCode: i === 6 && b === 0 ? StatusCode.Failed : StatusCode.Done,
       dateCreated: iso(at),
       tenantDeletedAt: null,
-      expiresAt: null,
+      expiresAt: null
     });
   }
 });
 // Two backups of stores that have since been deleted, kept for restore until they expire.
 for (const [n, name, deletedDaysAgo] of [
   [1, "Example Store 21", 12],
-  [2, "Example Store 22", 81],
+  [2, "Example Store 22", 81]
 ] as const) {
   const deletedAt = NOW - deletedDaysAgo * DAY;
   backups.push({
@@ -1666,7 +844,7 @@ for (const [n, name, deletedDaysAgo] of [
     statusCode: StatusCode.Done,
     dateCreated: iso(deletedAt - 14 * DAY),
     tenantDeletedAt: iso(deletedAt),
-    expiresAt: iso(deletedAt + RETENTION_DAYS * DAY),
+    expiresAt: iso(deletedAt + RETENTION_DAYS * DAY)
   });
 }
 for (const tenant of tenants) {
@@ -1684,7 +862,7 @@ function job(
   type: string,
   tenant: Pick<Tenant, "id" | "name" | "productId" | "productName">,
   minutesAgo: number,
-  extra: Partial<Job> = {},
+  extra: Partial<Job> = {}
 ): Job {
   const failed = state === "failed";
   return {
@@ -1697,12 +875,11 @@ function job(
     productName: tenant.productName,
     attempts: failed ? 4 : state === "running" ? 1 : 0,
     createdAt: failed ? null : iso(NOW - minutesAgo * 60_000),
-    startedAt:
-      state === "running" ? iso(NOW - (minutesAgo - 1) * 60_000) : null,
+    startedAt: state === "running" ? iso(NOW - (minutesAgo - 1) * 60_000) : null,
     failedAt: failed ? iso(NOW - minutesAgo * 60_000) : null,
     error: null,
     retriedAt: null,
-    ...extra,
+    ...extra
   };
 }
 
@@ -1712,131 +889,86 @@ const jobs: Job[] = [
   job(3, "queued", "tenant.domains", tenants[3], 1),
   job(4, "running", "tenant.delete", tenants[10], 4),
   job(5, "failed", "tenant.create", tenants[5], 170, {
-    error:
-      "Provisioner: store host did not answer within 600 s (create container)",
+    error: "Provisioner: store host did not answer within 600 s (create container)"
   }),
   job(6, "failed", "tenant.domains", tenants[15], 40, {
-    error:
-      "Provisioner: certificate request for store16.example rejected: DNS does not point at the store host",
+    error: "Provisioner: certificate request for store16.example rejected: DNS does not point at the store host"
   }),
   job(7, "failed", "tenant.backup", tenants[6], 2880, {
-    error:
-      "Provisioner: backup upload to object storage failed (403 AccessDenied)",
-  }),
+    error: "Provisioner: backup upload to object storage failed (403 AccessDenied)"
+  })
 ];
 
 /** Finished jobs, shown only on a store's page (the API's recentJobs). */
 const finishedJobs: Job[] = tenants.map((tenant, i) =>
-  job(50 + i, "done", "tenant.create", tenant, (60 - i * 2.5) * 24 * 60),
+  job(50 + i, "done", "tenant.create", tenant, (60 - i * 2.5) * 24 * 60)
 );
 
 // Sample request log: the storefront plugin's calls every few minutes, a few failures, and two
 // admin changes.
-const requestLog: ApiRequest[] = Array.from(
-  { length: 80 },
-  (_, i): ApiRequest => {
-    const tenant = tenants[i % tenants.length];
-    const product = products.find((p) => p.id === tenant.productId)!;
-    const kind = i % 10;
-    const base = {
-      id: String(5000 - i),
-      at: iso(NOW + 50 * 60_000 - i * 17 * 60_000),
-      source: "v1" as const,
-      query: null,
-      productId: product.id,
-      productName: product.name,
-      apiKeyId: uuid(product === products[0] ? 1 : 2, 9),
-      apiKeyLabel: "Storefront plugin",
-      userId: null,
-      tenantId: tenant.id,
-      tenantName: tenant.name,
-      externalId: null,
-      ip: "203.0.113.20",
-      userAgent: "WordPress/6.8; https://shop.example.com",
-      error: null,
-    };
-    if (kind === 3)
-      return {
-        ...base,
-        method: "POST",
-        path: "/v1/tenants",
-        status: 400,
-        durationMs: 12,
-        tenantId: null,
-        tenantName: null,
-        error: "name is required",
-      };
-    if (kind === 6)
-      return {
-        ...base,
-        method: "GET",
-        path: "/v1/tenants",
-        status: 403,
-        durationMs: 41,
-        productId: null,
-        productName: null,
-        tenantId: null,
-        tenantName: null,
-        ip: "198.51.100.7",
-        userAgent: "curl/8.7.1",
-        error: "Invalid API key or secret",
-      };
-    if (i === 44)
-      return {
-        ...base,
-        method: "POST",
-        path: `/v1/tenants/${tenant.id}/backups`,
-        status: 500,
-        durationMs: 230,
-        error: "Internal server error",
-      };
-    if (i === 9 || i === 51)
-      return {
-        ...base,
-        source: "admin",
-        method: "PUT",
-        path: `/admin/tenants/${tenant.id}/domains/main`,
-        status: 200,
-        durationMs: 85,
-        productId: null,
-        productName: null,
-        apiKeyId: null,
-        apiKeyLabel: null,
-        userAgent: "node",
-      };
-    if (kind % 2 === 0)
-      return {
-        ...base,
-        method: "GET",
-        path: "/v1/tenants",
-        query: `externalId=sub_${1000 + i}`,
-        externalId: `sub_${1000 + i}`,
-        status: 200,
-        durationMs: 9 + (i % 7),
-        tenantId: null,
-        tenantName: null,
-      };
+const requestLog: ApiRequest[] = Array.from({ length: 80 }, (_, i): ApiRequest => {
+  const tenant = tenants[i % tenants.length];
+  const product = products.find((p) => p.id === tenant.productId)!;
+  const kind = i % 10;
+  const base = {
+    id: String(5000 - i),
+    at: iso(NOW + 50 * 60_000 - i * 17 * 60_000),
+    source: "v1" as const,
+    query: null,
+    productId: product.id,
+    productName: product.name,
+    apiKeyId: uuid(product === products[0] ? 1 : 2, 9),
+    apiKeyLabel: "Storefront plugin",
+    userId: null,
+    tenantId: tenant.id,
+    tenantName: tenant.name,
+    externalId: null,
+    ip: "203.0.113.20",
+    userAgent: "WordPress/6.8; https://shop.example.com",
+    error: null
+  };
+  if (kind === 3)
+    return { ...base, method: "POST", path: "/v1/tenants", status: 400, durationMs: 12, tenantId: null, tenantName: null, error: "name is required" };
+  if (kind === 6)
     return {
       ...base,
       method: "GET",
-      path: "/v1/plugins/anypress-host/update",
-      query: "channel=stable&version=2.3.0",
-      status: 200,
-      durationMs: 18,
+      path: "/v1/tenants",
+      status: 403,
+      durationMs: 41,
+      productId: null,
+      productName: null,
       tenantId: null,
       tenantName: null,
+      ip: "198.51.100.7",
+      userAgent: "curl/8.7.1",
+      error: "Invalid API key or secret"
     };
-  },
-);
+  if (i === 44)
+    return { ...base, method: "POST", path: `/v1/tenants/${tenant.id}/backups`, status: 500, durationMs: 230, error: "Internal server error" };
+  if (i === 9 || i === 51)
+    return {
+      ...base,
+      source: "admin",
+      method: "PUT",
+      path: `/admin/tenants/${tenant.id}/domains/main`,
+      status: 200,
+      durationMs: 85,
+      productId: null,
+      productName: null,
+      apiKeyId: null,
+      apiKeyLabel: null,
+      userAgent: "node"
+    };
+  if (kind % 2 === 0)
+    return { ...base, method: "GET", path: "/v1/tenants", query: `externalId=sub_${1000 + i}`, externalId: `sub_${1000 + i}`, status: 200, durationMs: 9 + (i % 7), tenantId: null, tenantName: null };
+  return { ...base, method: "GET", path: "/v1/plugins/anypress-host/update", query: "channel=stable&version=2.3.0", status: 200, durationMs: 18, tenantId: null, tenantName: null };
+});
 
 // Sample webhooks: the test storefront's plugin gets every event, an alerts endpoint gets failures
 // and is answering 502 lately, and the staging storefront's endpoint is turned off.
 
-type FixtureWebhook = WebhookEndpointInfo & {
-  productId: string;
-  apiKeyId: string | null;
-  secret: string;
-};
+type FixtureWebhook = WebhookEndpointInfo & { productId: string; apiKeyId: string | null; secret: string };
 
 const newSecret = () => `whsec_${randomBytes(24).toString("base64")}`;
 
@@ -1847,7 +979,7 @@ const webhooks: FixtureWebhook[] = [
     eventTypes: [],
     enabled: true,
     productId: products[0].id,
-    apiKeyId: uuid(1, 9),
+    apiKeyId: uuid(1, 9)
   },
   {
     url: "https://alerts.example.net/hooks/waas",
@@ -1855,7 +987,7 @@ const webhooks: FixtureWebhook[] = [
     eventTypes: ["tenant.failed", "tenant.backup_failed", "version.failed"],
     enabled: true,
     productId: products[0].id,
-    apiKeyId: null,
+    apiKeyId: null
   },
   {
     url: "https://staging.example.com/wp-json/waas/v1/webhook",
@@ -1863,14 +995,14 @@ const webhooks: FixtureWebhook[] = [
     eventTypes: [],
     enabled: false,
     productId: products[1].id,
-    apiKeyId: uuid(2, 9),
-  },
+    apiKeyId: uuid(2, 9)
+  }
 ].map((w, i) => ({
   ...w,
   id: uuid(i + 1, 10),
   secret: newSecret(),
   dateCreated: iso(NOW - (40 - i * 10) * DAY),
-  dateChanged: iso(NOW - (20 - i * 5) * DAY),
+  dateChanged: iso(NOW - (20 - i * 5) * DAY)
 }));
 
 type DeliverySeed = {
@@ -1886,142 +1018,26 @@ type DeliverySeed = {
 };
 
 const deliverySeeds: DeliverySeed[] = [
-  {
-    endpoint: 0,
-    type: "tenant.ready",
-    tenant: 3,
-    minutesAgo: 3,
-    status: "pending",
-    attempts: 2,
-    responseStatus: null,
-    error: "The endpoint did not answer within 10 s",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.domains_changed",
-    tenant: 0,
-    minutesAgo: 25,
-    status: "delivered",
-  },
-  {
-    endpoint: 1,
-    type: "tenant.failed",
-    tenant: 5,
-    minutesAgo: 170,
-    status: "pending",
-    attempts: 6,
-    responseStatus: 502,
-    responseBody: "<html><body><h1>502 Bad Gateway</h1></body></html>",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.failed",
-    tenant: 5,
-    minutesAgo: 170,
-    status: "delivered",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.suspended",
-    tenant: 8,
-    minutesAgo: 240,
-    status: "delivered",
-  },
-  {
-    endpoint: 1,
-    type: "tenant.backup_failed",
-    tenant: 6,
-    minutesAgo: 640,
-    status: "failed",
-    attempts: 11,
-    responseStatus: 502,
-    responseBody: "<html><body><h1>502 Bad Gateway</h1></body></html>",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.backup_failed",
-    tenant: 6,
-    minutesAgo: 640,
-    status: "delivered",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.backup_completed",
-    tenant: 0,
-    minutesAgo: 600,
-    status: "delivered",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.updated",
-    tenant: 2,
-    minutesAgo: 780,
-    status: "failed",
-    attempts: 11,
-    responseStatus: 500,
-    responseBody: "Internal Server Error",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.ready",
-    tenant: 13,
-    minutesAgo: 900,
-    status: "delivered",
-  },
+  { endpoint: 0, type: "tenant.ready", tenant: 3, minutesAgo: 3, status: "pending", attempts: 2, responseStatus: null, error: "The endpoint did not answer within 10 s" },
+  { endpoint: 0, type: "tenant.domains_changed", tenant: 0, minutesAgo: 25, status: "delivered" },
+  { endpoint: 1, type: "tenant.failed", tenant: 5, minutesAgo: 170, status: "pending", attempts: 6, responseStatus: 502, responseBody: "<html><body><h1>502 Bad Gateway</h1></body></html>" },
+  { endpoint: 0, type: "tenant.failed", tenant: 5, minutesAgo: 170, status: "delivered" },
+  { endpoint: 0, type: "tenant.suspended", tenant: 8, minutesAgo: 240, status: "delivered" },
+  { endpoint: 1, type: "tenant.backup_failed", tenant: 6, minutesAgo: 640, status: "failed", attempts: 11, responseStatus: 502, responseBody: "<html><body><h1>502 Bad Gateway</h1></body></html>" },
+  { endpoint: 0, type: "tenant.backup_failed", tenant: 6, minutesAgo: 640, status: "delivered" },
+  { endpoint: 0, type: "tenant.backup_completed", tenant: 0, minutesAgo: 600, status: "delivered" },
+  { endpoint: 0, type: "tenant.updated", tenant: 2, minutesAgo: 780, status: "failed", attempts: 11, responseStatus: 500, responseBody: "Internal Server Error" },
+  { endpoint: 0, type: "tenant.ready", tenant: 13, minutesAgo: 900, status: "delivered" },
   { endpoint: 0, type: "version.ready", minutesAgo: 1300, status: "delivered" },
   { endpoint: 0, type: "webhook.test", minutesAgo: 1500, status: "delivered" },
   { endpoint: 1, type: "webhook.test", minutesAgo: 1510, status: "delivered" },
-  {
-    endpoint: 0,
-    type: "tenant.resumed",
-    tenant: 4,
-    minutesAgo: 2000,
-    status: "delivered",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.deleted",
-    tenant: 10,
-    minutesAgo: 2600,
-    status: "delivered",
-    attempts: 3,
-  },
-  {
-    endpoint: 1,
-    type: "version.failed",
-    minutesAgo: 3100,
-    status: "delivered",
-  },
-  {
-    endpoint: 0,
-    type: "version.failed",
-    minutesAgo: 3100,
-    status: "delivered",
-  },
-  {
-    endpoint: 2,
-    type: "tenant.ready",
-    tenant: 4,
-    minutesAgo: 7300,
-    status: "delivered",
-  },
-  {
-    endpoint: 2,
-    type: "tenant.updated",
-    tenant: 9,
-    minutesAgo: 8800,
-    status: "failed",
-    attempts: 11,
-    responseStatus: null,
-    error: "Could not connect: certificate has expired",
-  },
-  {
-    endpoint: 0,
-    type: "tenant.version_changed",
-    tenant: 1,
-    minutesAgo: 9900,
-    status: "delivered",
-  },
+  { endpoint: 0, type: "tenant.resumed", tenant: 4, minutesAgo: 2000, status: "delivered" },
+  { endpoint: 0, type: "tenant.deleted", tenant: 10, minutesAgo: 2600, status: "delivered", attempts: 3 },
+  { endpoint: 1, type: "version.failed", minutesAgo: 3100, status: "delivered" },
+  { endpoint: 0, type: "version.failed", minutesAgo: 3100, status: "delivered" },
+  { endpoint: 2, type: "tenant.ready", tenant: 4, minutesAgo: 7300, status: "delivered" },
+  { endpoint: 2, type: "tenant.updated", tenant: 9, minutesAgo: 8800, status: "failed", attempts: 11, responseStatus: null, error: "Could not connect: certificate has expired" },
+  { endpoint: 0, type: "tenant.version_changed", tenant: 1, minutesAgo: 9900, status: "delivered" }
 ];
 
 const webhookDeliveries: WebhookDelivery[] = deliverySeeds.map((seed, i) => {
@@ -2041,67 +1057,41 @@ const webhookDeliveries: WebhookDelivery[] = deliverySeeds.map((seed, i) => {
     productName: product.name,
     tenantId: tenant?.id ?? null,
     tenantName: tenant?.name ?? null,
-    versionId: seed.type.startsWith("version.")
-      ? versions.find((v) => v.productId === product.id)!.id
-      : null,
+    versionId: seed.type.startsWith("version.") ? versions.find((v) => v.productId === product.id)!.id : null,
     status: seed.status,
     attempts,
-    responseStatus:
-      seed.responseStatus === undefined
-        ? delivered
-          ? 200
-          : null
-        : seed.responseStatus,
+    responseStatus: seed.responseStatus === undefined ? (delivered ? 200 : null) : seed.responseStatus,
     responseBody: seed.responseBody ?? (delivered ? '{"received":true}' : null),
     error: seed.error ?? null,
-    durationMs: delivered
-      ? 80 + ((i * 53) % 400)
-      : seed.responseStatus
-        ? 1200
-        : null,
+    durationMs: delivered ? 80 + ((i * 53) % 400) : seed.responseStatus ? 1200 : null,
     dateCreated: iso(at),
     // A failed delivery's last try is about seven hours after the first; a pending one's is a
     // few minutes ago.
     lastAttemptAt:
       attempts === 0
         ? null
-        : iso(
-            seed.status === "failed"
-              ? at + 7 * HOUR
-              : seed.status === "pending"
-                ? Math.max(at + (attempts - 1) * 60_000, NOW + 45 * 60_000)
-                : at + (attempts - 1) * 60_000,
-          ),
+        : iso(seed.status === "failed" ? at + 7 * HOUR : seed.status === "pending" ? Math.max(at + (attempts - 1) * 60_000, NOW + 45 * 60_000) : at + (attempts - 1) * 60_000)
   };
 });
 
 function health(): Health {
-  return {
-    ok: true,
-    checks: { database: "up", queue: "up" },
-    checkedAt: new Date().toISOString(),
-  };
+  return { ok: true, checks: { database: "up", queue: "up" }, checkedAt: new Date().toISOString() };
 }
 
-const listing = <T>(items: T[]): Listing<T> => ({ items, total: items.length });
+const listing = <T,>(items: T[]): Listing<T> => ({ items, total: items.length });
 
-const byProduct = <T extends { productId: string | null }>(
-  items: T[],
-  productId?: string,
-) => (productId ? items.filter((item) => item.productId === productId) : items);
+const byProduct = <T extends { productId: string | null }>(items: T[], productId?: string) =>
+  productId ? items.filter((item) => item.productId === productId) : items;
 
 const counts = (items: { statusCode: StatusCode }[]) => ({
   pending: items.filter((i) => i.statusCode === StatusCode.Pending).length,
   done: items.filter((i) => i.statusCode === StatusCode.Done).length,
   failed: items.filter((i) => i.statusCode === StatusCode.Failed).length,
-  removing: items.filter((i) => i.statusCode === StatusCode.Removing).length,
+  removing: items.filter((i) => i.statusCode === StatusCode.Removing).length
 });
 
 /** A copy of `item` without the given keys (fixture records carry fields the list rows don't). */
-function without<T extends object, K extends keyof T>(
-  item: T,
-  ...keys: K[]
-): Omit<T, K> {
+function without<T extends object, K extends keyof T>(item: T, ...keys: K[]): Omit<T, K> {
   const copy = { ...item };
   for (const key of keys) delete copy[key];
   return copy;
@@ -2109,68 +1099,25 @@ function without<T extends object, K extends keyof T>(
 
 const toRow = (t: FixtureTenant): Tenant => {
   const progress = sampleProgress(t);
-  return {
-    ...without(
-      t,
-      "domains",
-      "dateSuspended",
-      "dateHeld",
-      "dateChanged",
-      "moveIn",
-      "job",
-    ),
-    progress,
-  };
+  return { ...without(t, "domains", "dateSuspended", "dateHeld", "dateChanged", "moveIn", "job"), progress };
 };
 
 /** key: the product id, or "reseller:<id>" for a reseller's team. */
 type FixtureTeam = Team & { key: string };
-const emptyBrand = (): Branding => ({
-  name: null,
-  color: null,
-  supportEmail: null,
-  shopUrl: null,
-  logoUrl: null,
-  iconUrl: null,
-});
+const emptyBrand = (): Branding => ({ name: null, color: null, supportEmail: null, shopUrl: null, logoUrl: null, iconUrl: null });
 const brands = new Map<string, Branding>();
-const dashboardDomains = new Map<
-  string,
-  DashboardDomainView["dashboardDomain"]
->();
+const dashboardDomains = new Map<string, DashboardDomainView["dashboardDomain"]>();
 
-const teamKey = (of: TeamOf) =>
-  typeof of === "string" ? of : `reseller:${of.resellerId}`;
+const teamKey = (of: TeamOf) => (typeof of === "string" ? of : `reseller:${of.resellerId}`);
 
 const teams: FixtureTeam[] = [
   {
     key: products[0].id,
     organization: { id: uuid(1, 12), name: products[0].name },
     members: [
-      {
-        id: uuid(1, 13),
-        userId: uuid(1, 14),
-        name: "Dana Rivers",
-        email: "dana@northwind.example",
-        role: "owner",
-        dateCreated: iso(NOW - 30 * DAY),
-      },
-      {
-        id: uuid(2, 13),
-        userId: uuid(2, 14),
-        name: "Sam Ortiz",
-        email: "sam@northwind.example",
-        role: "admin",
-        dateCreated: iso(NOW - 12 * DAY),
-      },
-      {
-        id: uuid(3, 13),
-        userId: uuid(3, 14),
-        name: "Lee Park",
-        email: "lee@northwind.example",
-        role: "member",
-        dateCreated: iso(NOW - 2 * DAY),
-      },
+      { id: uuid(1, 13), userId: uuid(1, 14), name: "Dana Rivers", email: "dana@northwind.example", role: "owner", dateCreated: iso(NOW - 30 * DAY) },
+      { id: uuid(2, 13), userId: uuid(2, 14), name: "Sam Ortiz", email: "sam@northwind.example", role: "admin", dateCreated: iso(NOW - 12 * DAY) },
+      { id: uuid(3, 13), userId: uuid(3, 14), name: "Lee Park", email: "lee@northwind.example", role: "member", dateCreated: iso(NOW - 2 * DAY) }
     ],
     invitations: [
       {
@@ -2179,56 +1126,28 @@ const teams: FixtureTeam[] = [
         role: "member",
         expiresAt: iso(NOW + 5 * DAY),
         dateCreated: iso(NOW - 2 * DAY),
-        acceptUrl: `https://app.example.com/invite/${uuid(1, 15)}`,
-      },
-    ],
-  },
+        acceptUrl: `https://app.example.com/invite/${uuid(1, 15)}`
+      }
+    ]
+  }
 ];
 
 /** A storefront's setup steps, as the API names them. */
 const SETUP_STEPS: [key: string, label: string, todo: string][] = [
   ["approved", "Application approved", ""],
-  [
-    "shop-connected",
-    "Shop connected",
-    "Install AnyPress Host on your shop and add your API key",
-  ],
-  [
-    "starting-site",
-    "Starting site picked",
-    "Pick a production version on Templates",
-  ],
-  [
-    "plans",
-    "Plans on sale",
-    "Checked from your shop once AnyPress Host reports it",
-  ],
-  [
-    "payments",
-    "Payments on",
-    "Checked from your shop once AnyPress Host reports it",
-  ],
+  ["shop-connected", "Shop connected", "Install AnyPress Host on your shop and add your API key"],
+  ["starting-site", "Starting site picked", "Pick a production version on Templates"],
+  ["plans", "Plans on sale", "Checked from your shop once AnyPress Host reports it"],
+  ["payments", "Payments on", "Checked from your shop once AnyPress Host reports it"],
   ["own-domain", "Own domain", "Your shop still runs on a test address"],
   ["brand", "Brand added", "Add your name, logo and colour on Branding"],
   ["team", "Team invited", "Invite someone on Team"],
-  [
-    "self-building",
-    "Stores build themselves",
-    "Place a test order on your shop: a store should build on its own",
-  ],
-  [
-    "first-store",
-    "First store sold",
-    "Ticks when your first customer's store is live",
-  ],
+  ["self-building", "Stores build themselves", "Place a test order on your shop: a store should build on its own"],
+  ["first-store", "First store sold", "Ticks when your first customer's store is live"]
 ];
 
 /** Sample progress per storefront: the days ago each done step was done; plans and payments are never reported yet. */
-const setupProgress: {
-  created: number;
-  done: Record<string, [daysAgo: number, detail: string]>;
-  site: string | null;
-}[] = [
+const setupProgress: { created: number; done: Record<string, [daysAgo: number, detail: string]>; site: string | null }[] = [
   {
     created: 60,
     site: "shop.anypress.io",
@@ -2240,8 +1159,8 @@ const setupProgress: {
       brand: [50, "Name and logo set"],
       team: [45, "Someone else has joined your team"],
       "self-building": [40, "Your shop made a store on its own"],
-      "first-store": [38, "First store live"],
-    },
+      "first-store": [38, "First store live"]
+    }
   },
   {
     created: 40,
@@ -2252,17 +1171,13 @@ const setupProgress: {
       "starting-site": [20, "New stores start as v1.4"],
       brand: [35, "Name and logo set"],
       team: [30, "Someone else has joined your team"],
-      "first-store": [4, "First store live"],
-    },
+      "first-store": [4, "First store live"]
+    }
   },
   {
     created: 30,
     site: null,
-    done: {
-      approved: [30, "Approved"],
-      brand: [28, "Name and logo set"],
-      team: [12, "Someone else has joined your team"],
-    },
+    done: { approved: [30, "Approved"], brand: [28, "Name and logo set"], team: [12, "Someone else has joined your team"] }
   },
   {
     created: 9,
@@ -2271,113 +1186,55 @@ const setupProgress: {
       approved: [9, "Approved"],
       "shop-connected": [2, "AnyPress Host last signed in 2 days ago"],
       "own-domain": [3, "Your shop runs on shop.harborfitness.example"],
-      brand: [5, "Name and logo set"],
-    },
+      brand: [5, "Name and logo set"]
+    }
   },
-  { created: 10, site: null, done: { approved: [10, "Approved"] } },
+  { created: 10, site: null, done: { approved: [10, "Approved"] } }
 ];
 
-function sampleChecklist(
-  steps: SetupStep[],
-  createdDaysAgo: number,
-): SetupChecklist {
+function sampleChecklist(steps: SetupStep[], createdDaysAgo: number): SetupChecklist {
   const done = steps.filter((s) => s.state === "done");
-  const last = Math.max(
-    NOW - createdDaysAgo * DAY,
-    ...done.map((s) => Date.parse(s.doneAt!)),
-  );
+  const last = Math.max(NOW - createdDaysAgo * DAY, ...done.map((s) => Date.parse(s.doneAt!)));
   return {
     steps,
     done: done.length,
     total: steps.length,
     lastProgressAt: iso(last),
     stuck: done.length < steps.length && NOW - last > 7 * DAY,
-    next:
-      (
-        steps.find((s) => s.state === "todo") ??
-        steps.find((s) => s.state !== "done")
-      )?.label ?? null,
+    next: (steps.find((s) => s.state === "todo") ?? steps.find((s) => s.state !== "done"))?.label ?? null
   };
 }
 
-function sampleStorefrontSetup(
-  product: Omit<Product, "tenantCount">,
-  i: number,
-): StorefrontSetup {
+function sampleStorefrontSetup(product: Omit<Product, "tenantCount">, i: number): StorefrontSetup {
   const progress = setupProgress[i] ?? { created: 1, site: null, done: {} };
   const steps = SETUP_STEPS.map(([key, label, todo]): SetupStep => {
     const done = progress.done[key];
-    if (done)
-      return {
-        key,
-        label,
-        state: "done",
-        doneAt: iso(NOW - done[0] * DAY),
-        detail: done[1],
-      };
+    if (done) return { key, label, state: "done", doneAt: iso(NOW - done[0] * DAY), detail: done[1] };
     const notReported = key === "plans" || key === "payments";
-    return {
-      key,
-      label,
-      state: notReported ? "not-reported" : "todo",
-      doneAt: null,
-      detail: todo,
-    };
+    return { key, label, state: notReported ? "not-reported" : "todo", doneAt: null, detail: todo };
   });
   return {
     productId: product.id,
     name: product.name,
     resellerId: resellerOf.get(product.id) ?? null,
     shopSite: progress.site && `https://${progress.site}`,
-    ...sampleChecklist(steps, progress.created),
+    ...sampleChecklist(steps, progress.created)
   };
 }
 
-function sampleResellerSetup(
-  reseller: FixtureReseller,
-  storefronts: StorefrontSetup[],
-): ResellerSetup {
+function sampleResellerSetup(reseller: FixtureReseller, storefronts: StorefrontSetup[]): ResellerSetup {
   const mine = storefronts.filter((s) => s.resellerId === reseller.id);
   const ready = mine.filter((s) => s.done === s.total).length;
   const created = Math.round((NOW - Date.parse(reseller.dateCreated)) / DAY);
   const counted = `${ready} of ${mine.length} storefronts ready`;
   const steps: SetupStep[] = [
     reseller.billingEmail
-      ? {
-          key: "billing",
-          label: "Billing details",
-          state: "done",
-          doneAt: reseller.dateCreated,
-          detail: `Invoices go to ${reseller.billingEmail}`,
-        }
-      : {
-          key: "billing",
-          label: "Billing details",
-          state: "todo",
-          doneAt: null,
-          detail: "Add the email your invoices go to",
-        },
-    {
-      key: "partner-key",
-      label: "Partner key made",
-      state: "todo",
-      doneAt: null,
-      detail: "Make a partner key for n8n, Zapier or your own code",
-    },
-    {
-      key: "storefronts-ready",
-      label: "Every storefront set up",
-      state: "todo",
-      doneAt: null,
-      detail: counted,
-    },
+      ? { key: "billing", label: "Billing details", state: "done", doneAt: reseller.dateCreated, detail: `Invoices go to ${reseller.billingEmail}` }
+      : { key: "billing", label: "Billing details", state: "todo", doneAt: null, detail: "Add the email your invoices go to" },
+    { key: "partner-key", label: "Partner key made", state: "todo", doneAt: null, detail: "Make a partner key for n8n, Zapier or your own code" },
+    { key: "storefronts-ready", label: "Every storefront set up", state: "todo", doneAt: null, detail: counted }
   ];
-  return {
-    resellerId: reseller.id,
-    name: reseller.name,
-    storefronts: { ready, total: mine.length },
-    ...sampleChecklist(steps, created),
-  };
+  return { resellerId: reseller.id, name: reseller.name, storefronts: { ready, total: mine.length }, ...sampleChecklist(steps, created) };
 }
 
 /** Sample-mode prospect finder: searches per storefront this month, and made-up local businesses on .example sites. */
@@ -2388,47 +1245,22 @@ const prospectUsageFor = (productId: string): ProspectUsage => {
     available: true,
     used: prospectSearches.get(productId) ?? 0,
     limit: 100,
-    resetsAt: new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-    ).toISOString(),
+    resetsAt: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString()
   };
 };
-function sampleProspects(
-  query: string,
-  location: string,
-  page: number,
-): Prospect[] {
+function sampleProspects(query: string, location: string, page: number): Prospect[] {
   const kind = query.replace(/^./, (c) => c.toUpperCase());
   const town = location.split(",")[0]!.trim() || "Springfield";
   const names = page
-    ? [
-        `Grace ${kind}`,
-        `Hillside ${kind}`,
-        `Westgate ${kind}`,
-        `Lakeview ${kind}`,
-      ]
-    : [
-        `${town} ${kind}`,
-        `First ${kind} of ${town}`,
-        `Riverside ${kind}`,
-        `Oak Street ${kind}`,
-        `New Hope ${kind}`,
-        `Northside ${kind}`,
-      ];
+    ? [`Grace ${kind}`, `Hillside ${kind}`, `Westgate ${kind}`, `Lakeview ${kind}`]
+    : [`${town} ${kind}`, `First ${kind} of ${town}`, `Riverside ${kind}`, `Oak Street ${kind}`, `New Hope ${kind}`, `Northside ${kind}`];
   return names.map((name, j) => {
     const i = j + page * 6;
     const site = name.toLowerCase().replace(/[^a-z0-9]+/g, "") + ".example";
     return {
       id: `sample-${i}`,
       type: kind,
-      hours:
-        i % 2
-          ? null
-          : [
-              "Monday: 9:00 AM – 5:00 PM",
-              "Tuesday: 9:00 AM – 5:00 PM",
-              "Sunday: Closed",
-            ],
+      hours: i % 2 ? null : ["Monday: 9:00 AM – 5:00 PM", "Tuesday: 9:00 AM – 5:00 PM", "Sunday: Closed"],
       name,
       address: `${100 + i * 37} Main St, ${location}`,
       phone: `(555) 010-${String(i).padStart(4, "0")}`,
@@ -2436,7 +1268,7 @@ function sampleProspects(
       rating: i % 4 === 3 ? null : Math.round((3.6 + (i % 5) * 0.3) * 10) / 10,
       reviews: i % 4 === 3 ? null : 12 + i * 23,
       mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(name)}`,
-      inCrm: [...(prospectCrmSent.get(`sample-${i}`) ?? [])],
+      inCrm: [...(prospectCrmSent.get(`sample-${i}`) ?? [])]
     };
   });
 }
@@ -2444,31 +1276,17 @@ function sampleProspects(
 /** Sample-mode CRMs: FluentCRM is there on every storefront; HighLevel once a webhook is pasted. */
 const prospectCrmSent = new Map<string, Set<CrmTarget>>();
 const prospectHighLevel = new Set<string>();
-const prospectCrmFor = (productId: string): ProspectCrm => ({
-  fluentcrm: { available: true, reason: null },
-  highlevel: { connected: prospectHighLevel.has(productId) },
-});
+const prospectCrmFor = (productId: string): ProspectCrm => ({ fluentcrm: { available: true, reason: null }, highlevel: { connected: prospectHighLevel.has(productId) } });
 
 /** Sample-mode mailboxes: "checking" for a couple of seconds, then connected (or failed for the password "wrong"). */
-const prospectMailboxes = new Map<
-  string,
-  { mailbox: ProspectMailboxInput; at: number }
->();
+const prospectMailboxes = new Map<string, { mailbox: ProspectMailboxInput; at: number }>();
 const prospectMailboxFor = (productId: string): ProspectMailbox => {
   const saved = prospectMailboxes.get(productId);
-  if (!saved)
-    return { state: "none", error: null, mailbox: null, unavailable: null };
+  if (!saved) return { state: "none", error: null, mailbox: null, unavailable: null };
   const { pass, ...mailbox } = saved.mailbox;
-  if (Date.now() - saved.at < 2500)
-    return { state: "checking", error: null, mailbox, unavailable: null };
+  if (Date.now() - saved.at < 2500) return { state: "checking", error: null, mailbox, unavailable: null };
   return pass === "wrong"
-    ? {
-        state: "failed",
-        error:
-          "535-5.7.8 Username and Password not accepted. For more information, go to https://support.google.com/mail/?p=BadCredentials",
-        mailbox,
-        unavailable: null,
-      }
+    ? { state: "failed", error: "535-5.7.8 Username and Password not accepted. For more information, go to https://support.google.com/mail/?p=BadCredentials", mailbox, unavailable: null }
     : { state: "connected", error: null, mailbox, unavailable: null };
 };
 
@@ -2476,9 +1294,7 @@ const prospectMailboxFor = (productId: string): ProspectMailbox => {
 const prospectAutomationsMade = new Map<string, Map<string, number>>();
 const prospectAutomationsFor = (productId: string): ProspectAutomations => ({
   unavailable: null,
-  automations: [
-    ...(prospectAutomationsMade.get(productId) ?? new Map<string, number>()),
-  ].map(([group, at], i) => {
+  automations: [...(prospectAutomationsMade.get(productId) ?? new Map<string, number>())].map(([group, at], i) => {
     const added = Date.now() - at >= 2500;
     return {
       group,
@@ -2486,31 +1302,20 @@ const prospectAutomationsFor = (productId: string): ProspectAutomations => ({
       state: added ? ("added" as const) : ("adding" as const),
       error: null,
       funnelId: added ? 20 + i : null,
-      editUrl: added
-        ? `https://summit-sites.anypress.site/wp-admin/admin.php?page=fluentcrm-admin#/funnels/${20 + i}/edit`
-        : null,
+      editUrl: added ? `https://summit-sites.anypress.site/wp-admin/admin.php?page=fluentcrm-admin#/funnels/${20 + i}/edit` : null
     };
-  }),
+  })
 });
 
 /** Sample bell entries, made from the sample stores so their links open. Read state is per process. */
 const notificationReads = new Map<string, number>();
 /** A valid-looking VAPID public key for sample data (not a real server's), so browsers accept the sign-up. */
-const SAMPLE_PUSH_KEY =
-  "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
+const SAMPLE_PUSH_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
 function sampleNotifications(): Notification[] {
   const now = Date.now();
-  const at = (minutes: number) =>
-    new Date(now - minutes * 60_000).toISOString();
+  const at = (minutes: number) => new Date(now - minutes * 60_000).toISOString();
   const store = (i: number) => tenants[i % tenants.length]!;
-  const entry = (
-    n: number,
-    type: string,
-    level: Notification["level"],
-    title: string,
-    minutes: number,
-    t?: FixtureTenant,
-  ): Omit<Notification, "unread"> => ({
+  const entry = (n: number, type: string, level: Notification["level"], title: string, minutes: number, t?: FixtureTenant): Omit<Notification, "unread"> => ({
     id: uuid(n, 9),
     type,
     level,
@@ -2520,59 +1325,15 @@ function sampleNotifications(): Notification[] {
     tenantId: t?.id ?? null,
     versionId: null,
     applicationId: null,
-    at: at(minutes),
+    at: at(minutes)
   });
   const rows = [
-    entry(
-      1,
-      "tenant.ready",
-      "success",
-      `${store(0).name} is ready`,
-      4,
-      store(0),
-    ),
-    entry(
-      2,
-      "tenant.failed",
-      "error",
-      `A job on ${store(3).name} failed`,
-      38,
-      store(3),
-    ),
-    entry(
-      3,
-      "tenant.live",
-      "success",
-      `${store(1).name} is live`,
-      95,
-      store(1),
-    ),
-    entry(
-      4,
-      "tenant.backup_failed",
-      "error",
-      `A backup of ${store(5).name} failed`,
-      60 * 7,
-      store(5),
-    ),
-    entry(
-      5,
-      "tenant.ready",
-      "success",
-      `${store(2).name} is ready`,
-      60 * 26,
-      store(2),
-    ),
-    {
-      ...entry(
-        6,
-        "application.received",
-        "info",
-        "New seller application from Summit Web Studio",
-        60 * 30,
-      ),
-      applicationId: applications[0]?.id ?? null,
-    },
+    entry(1, "tenant.ready", "success", `${store(0).name} is ready`, 4, store(0)),
+    entry(2, "tenant.failed", "error", `A job on ${store(3).name} failed`, 38, store(3)),
+    entry(3, "tenant.live", "success", `${store(1).name} is live`, 95, store(1)),
+    entry(4, "tenant.backup_failed", "error", `A backup of ${store(5).name} failed`, 60 * 7, store(5)),
+    entry(5, "tenant.ready", "success", `${store(2).name} is ready`, 60 * 26, store(2)),
+    { ...entry(6, "application.received", "info", "New seller application from Summit Web Studio", 60 * 30), applicationId: applications[0]?.id ?? null }
   ];
   return rows.map((r) => ({ ...r, unread: false }));
 }
@@ -2586,12 +1347,8 @@ export class FixtureAdminApi implements AdminApi {
   async overview(productId = this.scope): Promise<Overview> {
     const mine = byProduct(tenants, productId);
     const ids = new Set(mine.map((t) => t.id));
-    const myBackups = productId
-      ? backups.filter((b) => ids.has(b.tenantId))
-      : backups;
-    const myJobs = productId
-      ? jobs.filter((j) => j.tenantId && ids.has(j.tenantId))
-      : jobs;
+    const myBackups = productId ? backups.filter((b) => ids.has(b.tenantId)) : backups;
+    const myJobs = productId ? jobs.filter((j) => j.tenantId && ids.has(j.tenantId)) : jobs;
     return {
       health: health(),
       products: products
@@ -2601,39 +1358,24 @@ export class FixtureAdminApi implements AdminApi {
           return {
             ...p,
             tenantCount: tenants.filter((t) => t.productId === p.id).length,
-            markUrl:
-              brand?.iconUrl ?? brand?.logoUrl ?? sampleMarks[p.id] ?? null,
+            markUrl: brand?.iconUrl ?? brand?.logoUrl ?? sampleMarks[p.id] ?? null
           };
         }),
-      tenants: {
-        ...counts(mine),
-        total: mine.length,
-        suspended: mine.filter((t) => t.isSuspended).length,
-      },
+      tenants: { ...counts(mine), total: mine.length, suspended: mine.filter((t) => t.isSuspended).length },
       versions: { pending: 0, done: versions.length, failed: 0, removing: 0 },
       backups: { ...counts(myBackups), total: myBackups.length },
       jobs: {
         queued: myJobs.filter((j) => j.state === "queued").length,
         running: myJobs.filter((j) => j.state === "running").length,
-        failed: myJobs.filter((j) => j.state === "failed").length,
-      },
+        failed: myJobs.filter((j) => j.state === "failed").length
+      }
     };
   }
 
   async tenants(filter: TenantFilter = {}): Promise<Listing<Tenant>> {
-    const reseller =
-      filter.acrossReseller && this.scope
-        ? resellerOf.get(this.scope)
-        : undefined;
-    if (reseller)
-      return listing(
-        tenants
-          .filter((t) => resellerOf.get(t.productId) === reseller)
-          .map(toRow),
-      );
-    return listing(
-      byProduct(tenants, filter.productId ?? this.scope).map(toRow),
-    );
+    const reseller = filter.acrossReseller && this.scope ? resellerOf.get(this.scope) : undefined;
+    if (reseller) return listing(tenants.filter((t) => resellerOf.get(t.productId) === reseller).map(toRow));
+    return listing(byProduct(tenants, filter.productId ?? this.scope).map(toRow));
   }
 
   async tenant(id: string): Promise<TenantDetail | null> {
@@ -2642,9 +1384,7 @@ export class FixtureAdminApi implements AdminApi {
     // Every other sample store has had its owner emailed a day ago; the rest show "Not sent".
     const notified =
       ownerNotified.get(id) ??
-      (tenants.indexOf(tenant) % 2 === 0 && !tenant.moveIn
-        ? { at: iso(NOW - DAY), to: `owner@${tenant.mainDomain}` }
-        : null);
+      (tenants.indexOf(tenant) % 2 === 0 && !tenant.moveIn ? { at: iso(NOW - DAY), to: `owner@${tenant.mainDomain}` } : null);
     const progress = sampleProgress(tenant);
     return {
       ...without(tenant, "job"),
@@ -2655,42 +1395,23 @@ export class FixtureAdminApi implements AdminApi {
       highLevel: highLevelLinks.get(id) ?? null,
       snapshotName: "Starter template",
       wpOptionNames: ["blogname", "admin_email", "woocommerce_currency"],
-      phpConstantNames: [
-        "WP_MEMORY_LIMIT",
-        "DISALLOW_FILE_EDIT",
-        "WP_AUTO_UPDATE_CORE",
-      ],
+      phpConstantNames: ["WP_MEMORY_LIMIT", "DISALLOW_FILE_EDIT", "WP_AUTO_UPDATE_CORE"],
       backups: backups.filter((b) => b.tenantId === id),
       jobs: [...jobs, ...finishedJobs].filter((j) => j.tenantId === id),
-      ...(tenant.moveIn && {
-        snapshotName: "Moved in",
-        wpOptionNames: [],
-        phpConstantNames: [],
-      }),
+      ...(tenant.moveIn && { snapshotName: "Moved in", wpOptionNames: [], phpConstantNames: [] }),
       keepsOwnCode: !!tenant.moveIn,
-      moveIn: tenant.moveIn ?? null,
+      moveIn: tenant.moveIn ?? null
     };
   }
 
   async setup(): Promise<Setup> {
     const all = products.map(sampleStorefrontSetup);
-    if (!this.scope)
-      return {
-        storefronts: all,
-        resellers: resellers.map((r) => sampleResellerSetup(r, all)),
-      };
+    if (!this.scope) return { storefronts: all, resellers: resellers.map((r) => sampleResellerSetup(r, all)) };
     // A reseller's team sees the reseller and all its storefronts; a seller, their own storefront.
     const resellerId = resellerOf.get(this.scope);
     const reseller = resellers.find((r) => r.id === resellerId);
-    if (!reseller)
-      return {
-        storefronts: all.filter((s) => s.productId === this.scope),
-        resellers: [],
-      };
-    return {
-      storefronts: all.filter((s) => s.resellerId === reseller.id),
-      resellers: [sampleResellerSetup(reseller, all)],
-    };
+    if (!reseller) return { storefronts: all.filter((s) => s.productId === this.scope), resellers: [] };
+    return { storefronts: all.filter((s) => s.resellerId === reseller.id), resellers: [sampleResellerSetup(reseller, all)] };
   }
 
   async backups(filter: BackupFilter = {}): Promise<Listing<Backup>> {
@@ -2699,21 +1420,11 @@ export class FixtureAdminApi implements AdminApi {
 
   async requests(filter: RequestFilter = {}): Promise<RequestLog> {
     filter = { ...filter, productId: filter.productId ?? this.scope };
-    const ranges = {
-      ok: [0, 399],
-      "client-error": [400, 499],
-      "server-error": [500, 599],
-      error: [400, 599],
-    } as const;
+    const ranges = { ok: [0, 399], "client-error": [400, 499], "server-error": [500, 599], error: [400, 599] } as const;
     const items = requestLog.filter((r) => {
       // A storefront's log also has failed sign-ins with its keys, which carry no storefront.
-      const ownKey =
-        r.productId === null &&
-        requestLog.some(
-          (o) => o.productId === filter.productId && o.apiKeyId === r.apiKeyId,
-        );
-      if (filter.productId && r.productId !== filter.productId && !ownKey)
-        return false;
+      const ownKey = r.productId === null && requestLog.some((o) => o.productId === filter.productId && o.apiKeyId === r.apiKeyId);
+      if (filter.productId && r.productId !== filter.productId && !ownKey) return false;
       if (filter.from && r.at < filter.from) return false;
       if (filter.tenantId && r.tenantId !== filter.tenantId) return false;
       if (filter.outcome) {
@@ -2728,11 +1439,10 @@ export class FixtureAdminApi implements AdminApi {
       total: items.length,
       last24Hours: {
         total: day.length,
-        clientErrors: day.filter((r) => r.status >= 400 && r.status < 500)
-          .length,
-        serverErrors: day.filter((r) => r.status >= 500).length,
+        clientErrors: day.filter((r) => r.status >= 400 && r.status < 500).length,
+        serverErrors: day.filter((r) => r.status >= 500).length
       },
-      retentionDays: 30,
+      retentionDays: 30
     };
   }
 
@@ -2740,40 +1450,30 @@ export class FixtureAdminApi implements AdminApi {
     filter = { ...filter, productId: filter.productId ?? this.scope };
     const productName = products.find((p) => p.id === filter.productId)?.name;
     // Like the API: retried and dismissed failures leave the list (their new job is queued instead).
-    const listed = jobs.filter(
-      (j) =>
-        j.state === "queued" || j.state === "running" || j.state === "failed",
-    );
-    const items = filter.productId
-      ? listed.filter((j) => j.productName === productName)
-      : listed;
+    const listed = jobs.filter((j) => j.state === "queued" || j.state === "running" || j.state === "failed");
+    const items = filter.productId ? listed.filter((j) => j.productName === productName) : listed;
     return {
       items,
       counts: {
         queued: items.filter((j) => j.state === "queued").length,
         running: items.filter((j) => j.state === "running").length,
-        failed: items.filter((j) => j.state === "failed").length,
+        failed: items.filter((j) => j.state === "failed").length
       },
-      truncated: false,
+      truncated: false
     };
   }
 
   async products(): Promise<ProductDetail[]> {
-    return products
-      .filter((p) => !this.scope || p.id === this.scope)
-      .map((p) => ({
-        ...p,
-        tenantCount: tenants.filter((t) => t.productId === p.id).length,
-        maxTenants: limits.get(p.id) ?? null,
-        versionCount: versions.filter((v) => v.productId === p.id).length,
-        productionVersionId:
-          versions.find((v) => v.productId === p.id && v.isProduction)?.id ??
-          null,
-        resellerId: resellerOf.get(p.id) ?? null,
-        resellerName:
-          resellers.find((r) => r.id === resellerOf.get(p.id))?.name ?? null,
-        highlevelAgency: highlevelAgencies.has(p.id),
-      }));
+    return products.filter((p) => !this.scope || p.id === this.scope).map((p) => ({
+      ...p,
+      tenantCount: tenants.filter((t) => t.productId === p.id).length,
+      maxTenants: limits.get(p.id) ?? null,
+      versionCount: versions.filter((v) => v.productId === p.id).length,
+      productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null,
+      resellerId: resellerOf.get(p.id) ?? null,
+      resellerName: resellers.find((r) => r.id === resellerOf.get(p.id))?.name ?? null,
+      highlevelAgency: highlevelAgencies.has(p.id)
+    }));
   }
 
   private product(productId: string) {
@@ -2784,22 +1484,15 @@ export class FixtureAdminApi implements AdminApi {
 
   async versions(productId: string): Promise<Version[]> {
     this.product(productId);
-    return versions
-      .filter((v) => v.productId === productId)
-      .map((v) => without(v, "productId"));
+    return versions.filter((v) => v.productId === productId).map((v) => without(v, "productId"));
   }
 
   async templates(productId: string): Promise<Template[]> {
     this.product(productId);
-    return templates
-      .filter((t) => t.productId === productId)
-      .map((t) => without(t, "productId"));
+    return templates.filter((t) => t.productId === productId).map((t) => without(t, "productId"));
   }
 
-  async moveSiteIn(
-    productId: string,
-    input: { name: string; size: StoreSize },
-  ): Promise<ImportCode> {
+  async moveSiteIn(productId: string, input: { name: string; size: StoreSize }): Promise<ImportCode> {
     const id = this.addTenant(productId, input.name, {
       expiresAt: new Date(Date.now() + 7 * DAY).toISOString(),
       startedAt: null,
@@ -2809,38 +1502,17 @@ export class FixtureAdminApi implements AdminApi {
       siteReport: null,
       migrationToken: SAMPLE_MIGRATION_TOKEN,
       reprintSite: null,
-      reprintCopies: 0,
+      reprintCopies: 0
     });
     return this.importCode(id);
   }
 
-  async createStore(
-    productId: string,
-    input: {
-      name: string;
-      ownerEmail: string;
-      size: StoreSize;
-      siteType: string;
-      notifyOwner?: boolean;
-    },
-  ): Promise<{ tenantId: string }> {
-    return {
-      tenantId: this.addTenant(
-        productId,
-        input.name,
-        undefined,
-        input.siteType,
-      ),
-    };
+  async createStore(productId: string, input: { name: string; ownerEmail: string; size: StoreSize; siteType: string; notifyOwner?: boolean }): Promise<{ tenantId: string }> {
+    return { tenantId: this.addTenant(productId, input.name, undefined, input.siteType) };
   }
 
   /** A new store of the product, being built; `moveIn` when it waits for a site moved in. */
-  private addTenant(
-    productId: string,
-    rawName: string,
-    moveIn?: (typeof tenants)[number]["moveIn"],
-    siteType = "website",
-  ): string {
+  private addTenant(productId: string, rawName: string, moveIn?: (typeof tenants)[number]["moveIn"], siteType = "website"): string {
     const product = this.product(productId);
     const name = rawName.trim();
     if (!name) throw new FixtureError(400, "name is required");
@@ -2853,12 +1525,8 @@ export class FixtureAdminApi implements AdminApi {
       name,
       productId: product.id,
       productName: product.name,
-      versionId:
-        versions.find((v) => v.productId === product.id && v.isProduction)
-          ?.id ?? versions[0].id,
-      versionName:
-        versions.find((v) => v.productId === product.id && v.isProduction)
-          ?.name ?? versions[0].name,
+      versionId: versions.find((v) => v.productId === product.id && v.isProduction)?.id ?? versions[0].id,
+      versionName: versions.find((v) => v.productId === product.id && v.isProduction)?.name ?? versions[0].name,
       siteTypes: moveIn ? [] : [siteType],
       statusCode: StatusCode.Pending,
       isSuspended: false,
@@ -2872,9 +1540,7 @@ export class FixtureAdminApi implements AdminApi {
       dateCreated: now,
       dateChanged: now,
       // A site moved in waits for its upload first; a new store goes through its steps at once.
-      ...(moveIn
-        ? { moveIn }
-        : { job: { type: "tenant.create", startedAt: Date.now() } }),
+      ...(moveIn ? { moveIn } : { job: { type: "tenant.create", startedAt: Date.now() } })
     });
     return id;
   }
@@ -2882,11 +1548,7 @@ export class FixtureAdminApi implements AdminApi {
   async renewImportCode(tenantId: string): Promise<ImportCode> {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
-    if (!tenant.moveIn || tenant.moveIn.startedAt)
-      throw new FixtureError(
-        400,
-        "This store is not waiting for a site to be moved in",
-      );
+    if (!tenant.moveIn || tenant.moveIn.startedAt) throw new FixtureError(400, "This store is not waiting for a site to be moved in");
     tenant.moveIn.expiresAt = new Date(Date.now() + 7 * DAY).toISOString();
     return this.importCode(tenantId);
   }
@@ -2895,99 +1557,44 @@ export class FixtureAdminApi implements AdminApi {
   async copyWithReprint(tenantId: string, siteUrl: string): Promise<void> {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
-    if (!tenant.moveIn)
-      throw new FixtureError(
-        400,
-        "This store was not moved in from another host",
-      );
+    if (!tenant.moveIn) throw new FixtureError(400, "This store was not moved in from another host");
     const waiting = !tenant.moveIn.startedAt;
-    if (
-      !(
-        waiting ||
-        tenant.statusCode === StatusCode.Failed ||
-        (tenant.statusCode === StatusCode.Done && tenant.onHold)
-      )
-    ) {
-      throw new FixtureError(
-        409,
-        tenant.statusCode === StatusCode.Done
-          ? "This site is live: it can no longer be copied again."
-          : "This site is being moved in right now. Wait until it is done.",
-      );
+    if (!(waiting || tenant.statusCode === StatusCode.Failed || (tenant.statusCode === StatusCode.Done && tenant.onHold))) {
+      throw new FixtureError(409, tenant.statusCode === StatusCode.Done ? "This site is live: it can no longer be copied again." : "This site is being moved in right now. Wait until it is done.");
     }
     let url: URL;
     try {
       url = new URL(siteUrl.includes("://") ? siteUrl : `https://${siteUrl}`);
     } catch {
-      throw new FixtureError(
-        400,
-        "siteUrl must be the old site's address, such as https://example.com",
-      );
+      throw new FixtureError(400, "siteUrl must be the old site's address, such as https://example.com");
     }
-    if (url.protocol !== "https:")
-      throw new FixtureError(
-        400,
-        "siteUrl must start with https://: Reprint copies a site over HTTPS only",
-      );
+    if (url.protocol !== "https:") throw new FixtureError(400, "siteUrl must start with https://: Reprint copies a site over HTTPS only");
     const site = `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
     const now = new Date().toISOString();
-    Object.assign(tenant.moveIn, {
-      startedAt: now,
-      reason: null,
-      reprintSite: site,
-      reprintCopies: tenant.moveIn.reprintCopies + 1,
-      source: { ...tenant.moveIn.source, home: site },
-    });
+    Object.assign(tenant.moveIn, { startedAt: now, reason: null, reprintSite: site, reprintCopies: tenant.moveIn.reprintCopies + 1, source: { ...tenant.moveIn.source, home: site } });
     Object.assign(tenant, { statusCode: StatusCode.Pending, dateChanged: now });
     setTimeout(() => {
       if (tenant.statusCode !== StatusCode.Pending) return;
-      Object.assign(tenant, {
-        statusCode: StatusCode.Done,
-        onHold: true,
-        dateHeld: tenant.dateHeld ?? new Date().toISOString(),
-      });
+      Object.assign(tenant, { statusCode: StatusCode.Done, onHold: true, dateHeld: tenant.dateHeld ?? new Date().toISOString() });
     }, 5_000).unref?.();
   }
 
   private importCode(tenantId: string): ImportCode {
-    const code = Buffer.from(
-      JSON.stringify({
-        u: "https://api.example",
-        t: randomBytes(24).toString("base64url"),
-      }),
-    ).toString("base64url");
-    return {
-      tenantId,
-      externalId: tenantId,
-      importCode: `AP1.${code}`,
-      pluginUrl: "https://api.example/imports/plugin.zip",
-    };
+    const code = Buffer.from(JSON.stringify({ u: "https://api.example", t: randomBytes(24).toString("base64url") })).toString("base64url");
+    return { tenantId, externalId: tenantId, importCode: `AP1.${code}`, pluginUrl: "https://api.example/imports/plugin.zip" };
   }
 
-  async restoreBackup(
-    tenantId: string,
-    backupId: string,
-    takeBackup: boolean,
-  ): Promise<void> {
+  async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
-    const backup = backups.find(
-      (b) =>
-        b.id === backupId &&
-        b.tenantId === tenantId &&
-        b.statusCode === StatusCode.Done,
-    );
-    if (!backup)
-      throw new FixtureError(
-        400,
-        `Backup ${backupId} is not a Done backup of this store`,
-      );
+    const backup = backups.find((b) => b.id === backupId && b.tenantId === tenantId && b.statusCode === StatusCode.Done);
+    if (!backup) throw new FixtureError(400, `Backup ${backupId} is not a Done backup of this store`);
     if (takeBackup) {
       backups.unshift({
         ...backup,
         id: uuid(200 + backups.length, 4),
         reason: "before-restore",
-        dateCreated: new Date().toISOString(),
+        dateCreated: new Date().toISOString()
       });
     }
     tenant.dateChanged = new Date().toISOString();
@@ -3010,65 +1617,38 @@ export class FixtureAdminApi implements AdminApi {
         statusCode: StatusCode.Done,
         dateCreated: now,
         tenantDeletedAt: null,
-        expiresAt: null,
+        expiresAt: null
       });
     }
-    Object.assign(tenant, {
-      isSuspended: true,
-      dateSuspended: now,
-      dateChanged: now,
-    });
+    Object.assign(tenant, { isSuspended: true, dateSuspended: now, dateChanged: now });
   }
 
   async resumeStore(tenantId: string): Promise<void> {
     const tenant = this.changeableTenant(tenantId);
-    Object.assign(tenant, {
-      isSuspended: false,
-      dateSuspended: null,
-      dateChanged: new Date().toISOString(),
-    });
+    Object.assign(tenant, { isSuspended: false, dateSuspended: null, dateChanged: new Date().toISOString() });
   }
 
   /** Like the API: the hold ends at once, and the store is Pending until its job has run (a few seconds here). */
   async goLive(tenantId: string): Promise<void> {
     const tenant = this.changeableTenant(tenantId);
     if (!tenant.onHold) return;
-    Object.assign(tenant, {
-      onHold: false,
-      dateHeld: null,
-      statusCode: StatusCode.Pending,
-      dateChanged: new Date().toISOString(),
-    });
+    Object.assign(tenant, { onHold: false, dateHeld: null, statusCode: StatusCode.Pending, dateChanged: new Date().toISOString() });
     setTimeout(() => {
-      if (tenant.statusCode === StatusCode.Pending)
-        tenant.statusCode = StatusCode.Done;
+      if (tenant.statusCode === StatusCode.Pending) tenant.statusCode = StatusCode.Done;
     }, 5_000).unref?.();
   }
 
   /** Sample data has no real sites: the site "answers" as a current AnyPress Client would, connected. */
   async checkHighLevel(tenantId: string): Promise<HighLevelCheck> {
     const tenant = this.changeableTenant(tenantId);
-    if (!tenant.siteTypes.includes("highlevel"))
-      throw new FixtureError(409, "This is not a HighLevel site");
-    if (tenant.statusCode !== StatusCode.Done)
-      throw new FixtureError(
-        409,
-        "This site isn't ready yet; check once it is Done",
-      );
-    if (tenant.isSuspended)
-      throw new FixtureError(409, "This site is suspended; resume it to check");
+    if (!tenant.siteTypes.includes("highlevel")) throw new FixtureError(409, "This is not a HighLevel site");
+    if (tenant.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; check once it is Done");
+    if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it to check");
     await new Promise((resolve) => setTimeout(resolve, 700));
     const link = highLevelLinks.get(tenantId);
-    if (!link)
-      return { siteLinked: false, wpFusionConnected: false, highLevel: null };
+    if (!link) return { siteLinked: false, wpFusionConnected: false, highLevel: null };
     const now = new Date().toISOString();
-    const checked = {
-      ...link,
-      locationName: link.locationName ?? "Summit Web Studio (Denver)",
-      connected: true,
-      connectedAt: now,
-      lastCheckAt: now,
-    };
+    const checked = { ...link, locationName: link.locationName ?? "Summit Web Studio (Denver)", connected: true, connectedAt: now, lastCheckAt: now };
     highLevelLinks.set(tenantId, checked);
     return { siteLinked: true, wpFusionConnected: true, highLevel: checked };
   }
@@ -3076,59 +1656,32 @@ export class FixtureAdminApi implements AdminApi {
   /** Sample data has no real sites: the link goes to the sample address's wp-admin, as for a store with an older plugin. */
   async wordPressLogin(tenantId: string): Promise<WordPressLogin> {
     const tenant = this.changeableTenant(tenantId);
-    if (tenant.statusCode !== StatusCode.Done)
-      throw new FixtureError(
-        409,
-        "This site isn't ready yet; you can log in once it is Done",
-      );
-    if (tenant.isSuspended)
-      throw new FixtureError(
-        409,
-        "This site is suspended; resume it to log in",
-      );
+    if (tenant.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; you can log in once it is Done");
+    if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it to log in");
     return this.sampleLogin(tenant.mainDomain);
   }
 
   /** Sample data sends no email: it only checks what the API would. */
   async notifyOwner(tenantId: string, email: string): Promise<void> {
     const tenant = this.changeableTenant(tenantId);
-    if (tenant.statusCode !== StatusCode.Done)
-      throw new FixtureError(
-        409,
-        "This site isn't ready yet; the email can go once it is Done",
-      );
-    if (tenant.isSuspended)
-      throw new FixtureError(409, "This site is suspended; resume it first");
-    if (tenant.onHold)
-      throw new FixtureError(
-        409,
-        "This site was moved in and is not live yet; make it live first",
-      );
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
-      throw new FixtureError(400, "Enter the owner's email address");
+    if (tenant.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; the email can go once it is Done");
+    if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it first");
+    if (tenant.onHold) throw new FixtureError(409, "This site was moved in and is not live yet; make it live first");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new FixtureError(400, "Enter the owner's email address");
     ownerNotified.set(tenantId, { at: new Date().toISOString(), to: email });
   }
 
   async storefrontWordPressLogin(productId: string): Promise<WordPressLogin> {
     this.product(productId);
     const storefront = storefronts.get(productId);
-    if (!storefront)
-      throw new FixtureError(404, "This storefront has no ready-made site");
-    if (storefront.statusCode !== StatusCode.Done)
-      throw new FixtureError(
-        409,
-        "This site isn't ready yet; you can log in once it is Done",
-      );
+    if (!storefront) throw new FixtureError(404, "This storefront has no ready-made site");
+    if (storefront.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; you can log in once it is Done");
     return this.sampleLogin(storefront.domain);
   }
 
   private sampleLogin(domain: string | null): WordPressLogin {
     if (!domain) throw new FixtureError(409, "This site has no address yet");
-    return {
-      url: `https://${domain}/wp-admin/`,
-      oneClick: true,
-      expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
-    };
+    return { url: `https://${domain}/wp-admin/`, oneClick: true, expiresAt: new Date(Date.now() + 5 * 60_000).toISOString() };
   }
 
   async deleteStore(tenantId: string): Promise<void> {
@@ -3140,14 +1693,8 @@ export class FixtureAdminApi implements AdminApi {
   private changeableTenant(tenantId: string): FixtureTenant {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
-    if (
-      tenant.statusCode === StatusCode.Removing ||
-      tenant.statusCode === StatusCode.Failed
-    )
-      throw new FixtureError(
-        400,
-        `Tenant ${tenant.externalId} is ${tenant.statusCode === StatusCode.Failed ? "Failed" : "Removing"}`,
-      );
+    if (tenant.statusCode === StatusCode.Removing || tenant.statusCode === StatusCode.Failed)
+      throw new FixtureError(400, `Tenant ${tenant.externalId} is ${tenant.statusCode === StatusCode.Failed ? "Failed" : "Removing"}`);
     return tenant;
   }
 
@@ -3155,69 +1702,37 @@ export class FixtureAdminApi implements AdminApi {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
     const domain = domainName.trim().toLowerCase();
-    if (
-      tenants.some(
-        (t) => t !== tenant && t.domains.some((d) => d.domainName === domain),
-      )
-    )
+    if (tenants.some((t) => t !== tenant && t.domains.some((d) => d.domainName === domain)))
       throw new FixtureError(400, `Domain ${domain} is already in use`);
     for (const d of tenant.domains) d.isMain = false;
     const existing = tenant.domains.find((d) => d.domainName === domain);
     if (existing) existing.isMain = true;
-    else
-      tenant.domains.push({ domainName: domain, isMain: true, isBase: false });
+    else tenant.domains.push({ domainName: domain, isMain: true, isBase: false });
     tenant.mainDomain = domain;
     tenant.domainCount = tenant.domains.length;
   }
 
   async mailDomain(tenantId: string): Promise<MailDomain | null> {
-    if (!tenants.some((t) => t.id === tenantId))
-      throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
     return mailDomains.get(tenantId) ?? null;
   }
 
-  async setMailDomain(
-    tenantId: string,
-    domainName: string,
-  ): Promise<MailDomain> {
-    if (!tenants.some((t) => t.id === tenantId))
-      throw new FixtureError(404, `Tenant ${tenantId} not found`);
+  async setMailDomain(tenantId: string, domainName: string): Promise<MailDomain> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
     const domain = domainName.trim().toLowerCase();
     const existing = mailDomains.get(tenantId);
     if (existing && existing.domainName === domain) return existing;
-    if (existing)
-      throw new FixtureError(
-        400,
-        `This store already has the sending domain ${existing.domainName}; remove it first`,
-      );
+    if (existing) throw new FixtureError(400, `This store already has the sending domain ${existing.domainName}; remove it first`);
     const mailDomain: MailDomain = {
       domainName: domain,
       status: "pending",
       dateCreated: new Date().toISOString(),
       dateVerified: null,
       records: [
-        {
-          type: "TXT",
-          name: "tosend._domainkey",
-          host: `tosend._domainkey.${domain}`,
-          value: "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7sample",
-          priority: null,
-        },
-        {
-          type: "MX",
-          name: "send",
-          host: `send.${domain}`,
-          value: "feedback-smtp.us-east-1.amazonses.com",
-          priority: 10,
-        },
-        {
-          type: "TXT",
-          name: "send",
-          host: `send.${domain}`,
-          value: "v=spf1 include:amazonses.com ~all",
-          priority: null,
-        },
-      ],
+        { type: "TXT", name: "tosend._domainkey", host: `tosend._domainkey.${domain}`, value: "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7sample", priority: null },
+        { type: "MX", name: "send", host: `send.${domain}`, value: "feedback-smtp.us-east-1.amazonses.com", priority: 10 },
+        { type: "TXT", name: "send", host: `send.${domain}`, value: "v=spf1 include:amazonses.com ~all", priority: null }
+      ]
     };
     mailDomains.set(tenantId, mailDomain);
     return mailDomain;
@@ -3225,57 +1740,37 @@ export class FixtureAdminApi implements AdminApi {
 
   async removeMailDomain(tenantId: string): Promise<void> {
     const existing = mailDomains.get(tenantId);
-    if (!existing)
-      throw new FixtureError(404, "This store has no sending domain");
+    if (!existing) throw new FixtureError(404, "This store has no sending domain");
     existing.status = "removing";
   }
 
-  async domainConnect(
-    tenantId: string,
-    domainName: string,
-    service: "website" | "email",
-  ): Promise<DomainConnectLink> {
-    if (!tenants.some((t) => t.id === tenantId))
-      throw new FixtureError(404, `Tenant ${tenantId} not found`);
+  async domainConnect(tenantId: string, domainName: string, service: "website" | "email"): Promise<DomainConnectLink> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
     // A domain that already has another DKIM key: no link, the reason instead (as the API answers).
     if (service === "email" && domainName.startsWith("conflict.")) {
       return {
         dnsProvider: "Example DNS",
         supported: false,
         url: null,
-        conflict: `tosend._domainkey.${domainName} already has a different email signing (DKIM) key. Replace it with the one below by hand: one-click setup would add a second key next to it, and email would fail its checks.`,
+        conflict: `tosend._domainkey.${domainName} already has a different email signing (DKIM) key. Replace it with the one below by hand: one-click setup would add a second key next to it, and email would fail its checks.`
       };
     }
-    const query = new URLSearchParams({
-      domain: domainName,
-      ...(service === "email" ? { dkim: "p=sample" } : { ip: "203.0.113.7" }),
-    });
+    const query = new URLSearchParams({ domain: domainName, ...(service === "email" ? { dkim: "p=sample" } : { ip: "203.0.113.7" }) });
     return {
       dnsProvider: "Example DNS",
       supported: true,
-      url: `https://domainconnect.example.com/v2/domainTemplates/providers/anypress.io/services/${service}/apply?${query}`,
+      url: `https://domainconnect.example.com/v2/domainTemplates/providers/anypress.io/services/${service}/apply?${query}`
     };
   }
 
-  async domainSetup(
-    tenantId: string,
-    domainName: string,
-  ): Promise<DomainSetup> {
+  async domainSetup(tenantId: string, domainName: string): Promise<DomainSetup> {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
     const domain = domainName.trim().toLowerCase();
     if (tenant.domains.some((d) => d.domainName === domain && d.isBase)) {
-      throw new FixtureError(
-        400,
-        `${domain} is the store's own address on the platform and needs no DNS records`,
-      );
+      throw new FixtureError(400, `${domain} is the store's own address on the platform and needs no DNS records`);
     }
-    if (
-      tenants.some(
-        (t) =>
-          t.id !== tenantId && t.domains.some((d) => d.domainName === domain),
-      )
-    ) {
+    if (tenants.some((t) => t.id !== tenantId && t.domains.some((d) => d.domainName === domain))) {
       throw new FixtureError(400, `Domain ${domain} is already in use`);
     }
     // The sample stores' own domains point here already; a new one doesn't yet. Names under
@@ -3285,94 +1780,44 @@ export class FixtureAdminApi implements AdminApi {
     const name = domain === zone ? "@" : domain.slice(0, -zone.length - 1);
     const records: DomainSetup["records"] = [
       { type: "A", name, host: domain, value: "203.0.113.7" },
-      { type: "AAAA", name, host: domain, value: "2001:db8::7" },
+      { type: "AAAA", name, host: domain, value: "2001:db8::7" }
     ];
-    const query = new URLSearchParams({
-      domain: zone,
-      ...(name !== "@" ? { host: name } : {}),
-      ip: "203.0.113.7",
-      ipv6: "2001:db8::7",
-    });
+    const query = new URLSearchParams({ domain: zone, ...(name !== "@" ? { host: name } : {}), ip: "203.0.113.7", ipv6: "2001:db8::7" });
     return {
       domainName: domain,
       records,
-      currentAddresses: pointsHere
-        ? ["203.0.113.7", "2001:db8::7"]
-        : domain.startsWith("www.")
-          ? []
-          : ["198.51.100.20"],
+      currentAddresses: pointsHere ? ["203.0.113.7", "2001:db8::7"] : domain.startsWith("www.") ? [] : ["198.51.100.20"],
       pointsHere,
       dnsHost:
         zone === "other.example"
-          ? {
-              name: "GoDaddy",
-              nameservers: ["ns07.domaincontrol.com", "ns08.domaincontrol.com"],
-            }
-          : {
-              name: "Cloudflare",
-              nameservers: ["ada.ns.cloudflare.com", "dee.ns.cloudflare.com"],
-            },
-      connect:
-        zone === "other.example"
-          ? { dnsProvider: null, supported: false, url: null }
-          : {
-              dnsProvider: "Cloudflare",
-              supported: true,
-              url: `https://dash.cloudflare.example/domainconnect/v2/domainTemplates/providers/anypress.io/services/website/apply?${query}`,
-            },
+          ? { name: "GoDaddy", nameservers: ["ns07.domaincontrol.com", "ns08.domaincontrol.com"] }
+          : { name: "Cloudflare", nameservers: ["ada.ns.cloudflare.com", "dee.ns.cloudflare.com"] },
+      connect: zone === "other.example"
+        ? { dnsProvider: null, supported: false, url: null }
+        : { dnsProvider: "Cloudflare", supported: true, url: `https://dash.cloudflare.example/domainconnect/v2/domainTemplates/providers/anypress.io/services/website/apply?${query}` }
     };
   }
 
   async searchDomains(tenantId: string, query: string): Promise<DomainOffer[]> {
-    if (!tenants.some((t) => t.id === tenantId))
-      throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
     const q = query.trim().toLowerCase();
     if (!q) throw new FixtureError(400, "Send a name to search for (query)");
     // Sample prices: .com $15, .shop $8, .net $17 a first year (markup included); names with "taken" are taken.
-    const prices: Record<string, [number, number]> = {
-      com: [1500, 1700],
-      shop: [800, 4500],
-      net: [1700, 1900],
-    };
-    const names = q.includes(".")
-      ? [q]
-      : Object.keys(prices).map(
-          (tld) => `${q.replace(/[^a-z0-9-]/g, "")}.${tld}`,
-        );
-    const taken = boughtDomains
-      .filter((b) => b.status !== "cancelled" && b.status !== "failed")
-      .map((b) => b.domainName);
+    const prices: Record<string, [number, number]> = { com: [1500, 1700], shop: [800, 4500], net: [1700, 1900] };
+    const names = q.includes(".") ? [q] : Object.keys(prices).map((tld) => `${q.replace(/[^a-z0-9-]/g, "")}.${tld}`);
+    const taken = boughtDomains.filter((b) => b.status !== "cancelled" && b.status !== "failed").map((b) => b.domainName);
     return names.map((domainName) => {
       const tld = domainName.slice(domainName.indexOf(".") + 1);
       const price = prices[tld];
-      const reason = !price
-        ? `Domains ending in .${tld} are not sold here`
-        : domainName.includes("taken") || taken.includes(domainName)
-          ? "This domain is taken"
-          : null;
-      return {
-        domainName,
-        available: reason === null,
-        priceCents: reason ? null : price![0],
-        renewalPriceCents: reason ? null : price![1],
-        reason,
-      };
+      const reason = !price ? `Domains ending in .${tld} are not sold here` : domainName.includes("taken") || taken.includes(domainName) ? "This domain is taken" : null;
+      return { domainName, available: reason === null, priceCents: reason ? null : price![0], renewalPriceCents: reason ? null : price![1], reason };
     });
   }
 
-  async buyDomain(
-    tenantId: string,
-    domainName: string,
-    contact: DomainContact,
-  ): Promise<BoughtDomain> {
-    if (!tenants.some((t) => t.id === tenantId))
-      throw new FixtureError(404, `Tenant ${tenantId} not found`);
+  async buyDomain(tenantId: string, domainName: string, contact: DomainContact): Promise<BoughtDomain> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
     const [offer] = await this.searchDomains(tenantId, domainName);
-    if (!offer?.available)
-      throw new FixtureError(
-        409,
-        `${domainName} can't be bought: ${offer?.reason ?? "unknown"}`,
-      );
+    if (!offer?.available) throw new FixtureError(409, `${domainName} can't be bought: ${offer?.reason ?? "unknown"}`);
     const id = uuid(boughtDomains.length + 1, 9);
     const bought: BoughtDomain = {
       id,
@@ -3386,7 +1831,7 @@ export class FixtureAdminApi implements AdminApi {
       renewalPayUrl: null,
       expiresAt: null,
       error: null,
-      dateCreated: new Date().toISOString(),
+      dateCreated: new Date().toISOString()
     };
     boughtDomains.unshift(bought);
     return bought;
@@ -3401,163 +1846,73 @@ export class FixtureAdminApi implements AdminApi {
     if (!tenant) return null;
     const types = tenant.siteTypes.filter((key) => key in SAMPLE_SITE_PLUGINS);
     const plugins = new Map<string, SitePlugin>();
-    for (const key of types)
-      for (const p of SAMPLE_SITE_PLUGINS[key]!.plugins)
-        if (!plugins.has(p.file)) plugins.set(p.file, p);
+    for (const key of types) for (const p of SAMPLE_SITE_PLUGINS[key]!.plugins) if (!plugins.has(p.file)) plugins.set(p.file, p);
     return {
-      siteTypes: types.map((key) => ({
-        key,
-        title: SAMPLE_SITE_PLUGINS[key]!.title,
-      })),
+      siteTypes: types.map((key) => ({ key, title: SAMPLE_SITE_PLUGINS[key]!.title })),
       ownPlugins: types.some((key) => SAMPLE_SITE_PLUGINS[key]!.ownPlugins),
-      plugins: [...plugins.values()],
+      plugins: [...plugins.values()]
     };
   }
 
   async tenantLanguages(tenantId: string): Promise<SiteLanguages | null> {
     const tenant = tenants.find((t) => t.id === tenantId);
-    if (!tenant || tenant.statusCode !== StatusCode.Done || tenant.isSuspended)
-      return null;
-    if (!siteLanguages.has(tenantId) && tenant.name === "Example Store 1")
-      siteLanguages.set(tenantId, ["es_ES"]);
+    if (!tenant || tenant.statusCode !== StatusCode.Done || tenant.isSuspended) return null;
     const locales = siteLanguages.get(tenantId);
     return languagesOf(!!locales, locales ?? []);
   }
 
-  async setTenantLanguages(
-    tenantId: string,
-    on: boolean,
-    languages?: string[],
-  ): Promise<SiteLanguages> {
+  async setTenantLanguages(tenantId: string, on: boolean, languages?: string[]): Promise<SiteLanguages> {
     const tenant = this.changeableTenant(tenantId);
-    if (tenant.statusCode !== StatusCode.Done)
-      throw new FixtureError(
-        409,
-        "This site isn't ready yet; try once it is Done",
-      );
-    if (tenant.isSuspended)
-      throw new FixtureError(409, "This site is suspended; resume it first");
+    if (tenant.statusCode !== StatusCode.Done || tenant.isSuspended) throw new FixtureError(409, "This site isn't ready, or is suspended");
     await new Promise((resolve) => setTimeout(resolve, 700));
     if (!on) {
       siteLanguages.delete(tenantId);
-      return {
-        ...languagesOf(false, []),
-        note: "Languages is off: the language switcher left the menus, and translated pages stay as ordinary pages.",
-      };
+      return { ...languagesOf(false, []), note: "Languages is off." };
     }
     const locales = languages ?? siteLanguages.get(tenantId) ?? [];
-    if (!locales.length)
-      throw new FixtureError(
-        400,
-        "Pick at least one language besides the website's own.",
-      );
-    if (locales.some((l) => !LANGUAGE_CHOICES.some((c) => c.locale === l)))
-      throw new FixtureError(400, "That isn't a language WordPress knows.");
+    if (!locales.length || locales.some((l) => !LANGUAGE_CHOICES.some((c) => c.locale === l))) throw new FixtureError(400, "Pick languages WordPress knows.");
     siteLanguages.set(tenantId, locales);
-    return {
-      ...languagesOf(true, locales),
-      note: "Setting up takes a few seconds (translation files are downloaded).",
-    };
+    return { ...languagesOf(true, locales), note: "Setting up takes a few seconds." };
   }
 
-  async setDomainAutoRenew(
-    tenantId: string,
-    domainName: string,
-    autoRenew: boolean,
-  ): Promise<BoughtDomain> {
-    const bought = boughtDomains.find(
-      (b) =>
-        b.tenantId === tenantId &&
-        b.domainName === domainName &&
-        b.status === "active",
-    );
-    if (!bought)
-      throw new FixtureError(
-        400,
-        `${domainName} is not a domain bought for this store`,
-      );
+  async setDomainAutoRenew(tenantId: string, domainName: string, autoRenew: boolean): Promise<BoughtDomain> {
+    const bought = boughtDomains.find((b) => b.tenantId === tenantId && b.domainName === domainName && b.status === "active");
+    if (!bought) throw new FixtureError(400, `${domainName} is not a domain bought for this store`);
     bought.autoRenew = autoRenew;
     return bought;
   }
 
-  async domainTransferCode(
-    tenantId: string,
-    domainName: string,
-  ): Promise<string> {
-    const bought = boughtDomains.find(
-      (b) =>
-        b.tenantId === tenantId &&
-        b.domainName === domainName &&
-        b.status === "active",
-    );
-    if (!bought)
-      throw new FixtureError(
-        400,
-        `${domainName} is not a domain bought for this store`,
-      );
+  async domainTransferCode(tenantId: string, domainName: string): Promise<string> {
+    const bought = boughtDomains.find((b) => b.tenantId === tenantId && b.domainName === domainName && b.status === "active");
+    if (!bought) throw new FixtureError(400, `${domainName} is not a domain bought for this store`);
     return "Sample-EPP-7f3K9q";
   }
 
   async retryFailure(failureId: string): Promise<void> {
-    const job = jobs.find(
-      (j) =>
-        j.id === failureId &&
-        (j.state === "failed" ||
-          j.state === "retried" ||
-          j.state === "dismissed"),
-    );
+    const job = jobs.find((j) => j.id === failureId && (j.state === "failed" || j.state === "retried" || j.state === "dismissed"));
     if (!job) throw new FixtureError(404, `Failure ${failureId} not found`);
     if (job.state === "retried") return;
-    if (job.state === "dismissed")
-      throw new FixtureError(400, "This failure was dismissed");
+    if (job.state === "dismissed") throw new FixtureError(400, "This failure was dismissed");
     job.state = "retried";
     job.retriedAt = new Date().toISOString();
-    jobs.push({
-      ...job,
-      id: uuid(jobs.length + 100, 5),
-      state: "queued",
-      createdAt: job.retriedAt,
-      failedAt: null,
-      error: null,
-      retriedAt: null,
-      attempts: 0,
-    });
+    jobs.push({ ...job, id: uuid(jobs.length + 100, 5), state: "queued", createdAt: job.retriedAt, failedAt: null, error: null, retriedAt: null, attempts: 0 });
   }
 
   async dismissFailure(failureId: string): Promise<void> {
-    const job = jobs.find(
-      (j) =>
-        j.id === failureId &&
-        (j.state === "failed" ||
-          j.state === "retried" ||
-          j.state === "dismissed"),
-    );
+    const job = jobs.find((j) => j.id === failureId && (j.state === "failed" || j.state === "retried" || j.state === "dismissed"));
     if (!job) throw new FixtureError(404, `Failure ${failureId} not found`);
     if (job.state === "dismissed") return;
-    if (job.state === "retried")
-      throw new FixtureError(400, "This failure was already retried");
+    if (job.state === "retried") throw new FixtureError(400, "This failure was already retried");
     job.state = "dismissed";
   }
 
-  async createVersion(
-    productId: string,
-    input: CreateVersionInput,
-  ): Promise<Created> {
+  async createVersion(productId: string, input: CreateVersionInput): Promise<Created> {
     this.product(productId);
     if (!VERSION_NAME.test(input.name))
-      throw new FixtureError(
-        400,
-        "The version name can be at most 30 characters: letters, digits, dashes and dots",
-      );
-    if (
-      versions.some((v) => v.productId === productId && v.name === input.name)
-    )
-      throw new FixtureError(
-        400,
-        `A version named ${input.name} already exists`,
-      );
-    if (!input.useCustomUpload && !input.snapshotId)
-      throw new FixtureError(400, "Choose a template or upload an archive");
+      throw new FixtureError(400, "The version name can be at most 30 characters: letters, digits, dashes and dots");
+    if (versions.some((v) => v.productId === productId && v.name === input.name))
+      throw new FixtureError(400, `A version named ${input.name} already exists`);
+    if (!input.useCustomUpload && !input.snapshotId) throw new FixtureError(400, "Choose a template or upload an archive");
     const id = uuid(versions.length + 50, 2);
     versions.push({
       id,
@@ -3567,58 +1922,35 @@ export class FixtureAdminApi implements AdminApi {
       statusCode: input.useCustomUpload ? StatusCode.Pending : StatusCode.Done,
       domain: `${input.name.replace(/\./g, "-")}-${id.slice(-8)}.versions.waas.example`,
       dateCreated: new Date().toISOString(),
-      dateChanged: new Date().toISOString(),
+      dateChanged: new Date().toISOString()
     });
     return { id, uploadUrl: input.useCustomUpload ? FIXTURE_UPLOAD_URL : null };
   }
 
-  async setProductionVersion(
-    productId: string,
-    versionId: string,
-  ): Promise<void> {
+  async setProductionVersion(productId: string, versionId: string): Promise<void> {
     this.product(productId);
-    const version = versions.find(
-      (v) => v.productId === productId && v.id === versionId,
-    );
+    const version = versions.find((v) => v.productId === productId && v.id === versionId);
     if (!version) throw new FixtureError(404, `Version ${versionId} not found`);
     if (version.statusCode !== StatusCode.Done)
-      throw new FixtureError(
-        400,
-        `Version ${versionId} is ${version.statusCode === StatusCode.Pending ? "Pending" : "not Done"}, not Done`,
-      );
-    for (const v of versions)
-      if (v.productId === productId) v.isProduction = v.id === versionId;
+      throw new FixtureError(400, `Version ${versionId} is ${version.statusCode === StatusCode.Pending ? "Pending" : "not Done"}, not Done`);
+    for (const v of versions) if (v.productId === productId) v.isProduction = v.id === versionId;
   }
 
   async deleteVersion(productId: string, versionId: string): Promise<void> {
     this.product(productId);
-    const index = versions.findIndex(
-      (v) => v.productId === productId && v.id === versionId,
-    );
-    if (index < 0)
-      throw new FixtureError(404, `Version ${versionId} not found`);
-    if (versions[index].isProduction)
-      throw new FixtureError(400, "The production version cannot be removed");
+    const index = versions.findIndex((v) => v.productId === productId && v.id === versionId);
+    if (index < 0) throw new FixtureError(404, `Version ${versionId} not found`);
+    if (versions[index].isProduction) throw new FixtureError(400, "The production version cannot be removed");
     if (tenants.some((t) => t.versionId === versionId))
-      throw new FixtureError(
-        400,
-        "Stores still run on this version; move them first",
-      );
+      throw new FixtureError(400, "Stores still run on this version; move them first");
     versions.splice(index, 1);
   }
 
-  async createTemplate(
-    productId: string,
-    input: CreateTemplateInput,
-  ): Promise<Created> {
+  async createTemplate(productId: string, input: CreateTemplateInput): Promise<Created> {
     this.product(productId);
     if (!TEMPLATE_NAME.test(input.name))
-      throw new FixtureError(
-        400,
-        "The template name must be 5 to 50 characters: letters, digits, spaces and dashes",
-      );
-    if (!input.isTenantSnapshot && input.groupName)
-      throw new FixtureError(400, "Only a group template has a group name");
+      throw new FixtureError(400, "The template name must be 5 to 50 characters: letters, digits, spaces and dashes");
+    if (!input.isTenantSnapshot && input.groupName) throw new FixtureError(400, "Only a group template has a group name");
     const id = uuid(templates.length + 50, 7);
     templates.push({
       id,
@@ -3628,16 +1960,14 @@ export class FixtureAdminApi implements AdminApi {
       isTenantSnapshot: input.isTenantSnapshot,
       groupName: input.isTenantSnapshot ? (input.groupName ?? null) : null,
       isDefault: false,
-      showAsBaseSnapshot: input.showInConsole,
+      showAsBaseSnapshot: input.showInConsole
     });
     return { id, uploadUrl: FIXTURE_UPLOAD_URL };
   }
 
   async pluginChoices(productId: string): Promise<PluginChoice[]> {
     this.product(productId);
-    return [...(pluginChoices.get(productId) ?? [])].sort((a, b) =>
-      a.slug.localeCompare(b.slug),
-    );
+    return [...(pluginChoices.get(productId) ?? [])].sort((a, b) => a.slug.localeCompare(b.slug));
   }
 
   async prospectUsage(productId: string): Promise<ProspectUsage> {
@@ -3645,26 +1975,13 @@ export class FixtureAdminApi implements AdminApi {
     return prospectUsageFor(productId);
   }
 
-  async searchProspects(
-    productId: string,
-    query: string,
-    location: string,
-    pageToken?: string,
-  ): Promise<ProspectSearch> {
+  async searchProspects(productId: string, query: string, location: string, pageToken?: string): Promise<ProspectSearch> {
     this.product(productId);
     const usage = prospectUsageFor(productId);
-    if (usage.used >= usage.limit)
-      throw new FixtureError(
-        429,
-        `You've used this month's ${usage.limit} searches. They start again on the 1st.`,
-      );
+    if (usage.used >= usage.limit) throw new FixtureError(429, `You've used this month's ${usage.limit} searches. They start again on the 1st.`);
     prospectSearches.set(productId, usage.used + 1);
     const page = pageToken === "sample-page-2" ? 1 : 0;
-    return {
-      prospects: sampleProspects(query.trim(), location.trim(), page),
-      nextPageToken: page ? null : "sample-page-2",
-      usage: prospectUsageFor(productId),
-    };
+    return { prospects: sampleProspects(query.trim(), location.trim(), page), nextPageToken: page ? null : "sample-page-2", usage: prospectUsageFor(productId) };
   }
 
   async prospectCrm(productId: string): Promise<ProspectCrm> {
@@ -3672,21 +1989,10 @@ export class FixtureAdminApi implements AdminApi {
     return prospectCrmFor(productId);
   }
 
-  async setProspectHighLevel(
-    productId: string,
-    webhook: string | null,
-  ): Promise<ProspectCrm> {
+  async setProspectHighLevel(productId: string, webhook: string | null): Promise<ProspectCrm> {
     this.product(productId);
-    if (
-      webhook &&
-      !/^https:\/\/(services|backend)\.leadconnectorhq\.com\/hooks\//.test(
-        webhook.trim(),
-      )
-    ) {
-      throw new FixtureError(
-        400,
-        'That isn\'t a HighLevel webhook address. Copy it from the "Inbound Webhook" trigger in your HighLevel workflow.',
-      );
+    if (webhook && !/^https:\/\/(services|backend)\.leadconnectorhq\.com\/hooks\//.test(webhook.trim())) {
+      throw new FixtureError(400, 'That isn\'t a HighLevel webhook address. Copy it from the "Inbound Webhook" trigger in your HighLevel workflow.');
     }
     if (webhook) prospectHighLevel.add(productId);
     else prospectHighLevel.delete(productId);
@@ -3698,29 +2004,15 @@ export class FixtureAdminApi implements AdminApi {
     return prospectMailboxFor(productId);
   }
 
-  async setProspectMailbox(
-    productId: string,
-    mailbox: ProspectMailboxInput | null,
-  ): Promise<ProspectMailbox> {
+  async setProspectMailbox(productId: string, mailbox: ProspectMailboxInput | null): Promise<ProspectMailbox> {
     this.product(productId);
     if (!mailbox) {
       prospectMailboxes.delete(productId);
       return prospectMailboxFor(productId);
     }
-    if (/(^|\.)tosend\.com$/i.test(mailbox.host))
-      throw new FixtureError(
-        400,
-        "Prospect emails can't go through AnyPress's own email service. Use your own mailbox.",
-      );
-    if (!mailbox.host || !mailbox.user || !mailbox.pass)
-      throw new FixtureError(
-        400,
-        "Enter your mail server, username and app password.",
-      );
-    prospectMailboxes.set(productId, {
-      mailbox: { ...mailbox, from: mailbox.from || mailbox.user.toLowerCase() },
-      at: Date.now(),
-    });
+    if (/(^|\.)tosend\.com$/i.test(mailbox.host)) throw new FixtureError(400, "Prospect emails can't go through AnyPress's own email service. Use your own mailbox.");
+    if (!mailbox.host || !mailbox.user || !mailbox.pass) throw new FixtureError(400, "Enter your mail server, username and app password.");
+    prospectMailboxes.set(productId, { mailbox: { ...mailbox, from: mailbox.from || mailbox.user.toLowerCase() }, at: Date.now() });
     return prospectMailboxFor(productId);
   }
 
@@ -3729,35 +2021,19 @@ export class FixtureAdminApi implements AdminApi {
     return prospectAutomationsFor(productId);
   }
 
-  async addProspectAutomation(
-    productId: string,
-    input: ProspectAutomationInput,
-  ): Promise<ProspectAutomations> {
+  async addProspectAutomation(productId: string, input: ProspectAutomationInput): Promise<ProspectAutomations> {
     this.product(productId);
-    const made =
-      prospectAutomationsMade.get(productId) ?? new Map<string, number>();
+    const made = prospectAutomationsMade.get(productId) ?? new Map<string, number>();
     if (!made.has(input.group)) made.set(input.group, Date.now());
     prospectAutomationsMade.set(productId, made);
     return prospectAutomationsFor(productId);
   }
 
-  async addProspectsToCrm(
-    productId: string,
-    prospects: CrmProspect[],
-    _group: string | null,
-    targets: CrmTarget[],
-  ): Promise<ProspectCrmResult> {
+  async addProspectsToCrm(productId: string, prospects: CrmProspect[], _group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult> {
     this.product(productId);
     const result: ProspectCrmResult = {
       fluentcrm: { queued: 0, already: 0, noEmail: 0, unavailable: null },
-      highlevel: {
-        sent: 0,
-        already: 0,
-        failed: 0,
-        unavailable: prospectHighLevel.has(productId)
-          ? null
-          : "Add your HighLevel webhook first.",
-      },
+      highlevel: { sent: 0, already: 0, failed: 0, unavailable: prospectHighLevel.has(productId) ? null : "Add your HighLevel webhook first." }
     };
     for (const p of prospects) {
       const sent = prospectCrmSent.get(p.id) ?? new Set<CrmTarget>();
@@ -3781,84 +2057,39 @@ export class FixtureAdminApi implements AdminApi {
     return result;
   }
 
-  async searchPlugins(
-    productId: string,
-    query: string,
-    page: number,
-  ): Promise<PluginSearch> {
+  async searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch> {
     this.product(productId);
     // Like wordpress.org: a word matches the name, slug or description, and "forms" finds "form" too.
-    const words = query
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((w) => w.replace(/s$/, ""));
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean).map((w) => w.replace(/s$/, ""));
     const plugins = directory.filter((p) =>
-      words.some(
-        (w) =>
-          p.slug.includes(w) ||
-          p.name.toLowerCase().includes(w) ||
-          p.shortDescription.toLowerCase().includes(w),
-      ),
+      words.some((w) => p.slug.includes(w) || p.name.toLowerCase().includes(w) || p.shortDescription.toLowerCase().includes(w))
     );
     return { page, pages: 1, results: plugins.length, plugins };
   }
 
-  async setPluginChoice(
-    productId: string,
-    slug: string,
-    input: PluginChoiceInput,
-  ): Promise<void> {
+  async setPluginChoice(productId: string, slug: string, input: PluginChoiceInput): Promise<void> {
     this.product(productId);
     const before = pluginChoices.get(productId)?.find((c) => c.slug === slug);
-    const uploadId =
-      input.uploadId ??
-      (input.action === "add" && !input.version && before?.source === "upload"
-        ? "kept"
-        : undefined);
-    const upload =
-      uploadId === "kept"
-        ? { name: before!.name, version: before!.version }
-        : uploadId
-          ? pluginUploads.get(uploadId)
-          : undefined;
-    if (uploadId && !upload)
-      throw new FixtureError(
-        400,
-        `Plugin upload ${uploadId} not found or not checked`,
-      );
+    const uploadId = input.uploadId ?? (input.action === "add" && !input.version && before?.source === "upload" ? "kept" : undefined);
+    const upload = uploadId === "kept" ? { name: before!.name, version: before!.version } : uploadId ? pluginUploads.get(uploadId) : undefined;
+    if (uploadId && !upload) throw new FixtureError(400, `Plugin upload ${uploadId} not found or not checked`);
     const found = directory.find((p) => p.slug === slug);
-    if (input.action === "add" && !upload && !found)
-      throw new FixtureError(400, `wordpress.org has no plugin ${slug}`);
-    if (input.action === "add" && found?.blocked)
-      throw new FixtureError(
-        400,
-        `${found.name} can't be added: ${found.blocked}`,
-      );
-    const list = (pluginChoices.get(productId) ?? []).filter(
-      (c) => c.slug !== slug,
-    );
-    const licence =
-      input.licence === undefined
-        ? (before?.licenceConstants ?? [])
-        : Object.keys(input.licence ?? {});
+    if (input.action === "add" && !upload && !found) throw new FixtureError(400, `wordpress.org has no plugin ${slug}`);
+    if (input.action === "add" && found?.blocked) throw new FixtureError(400, `${found.name} can't be added: ${found.blocked}`);
+    const list = (pluginChoices.get(productId) ?? []).filter((c) => c.slug !== slug);
+    const licence = input.licence === undefined ? (before?.licenceConstants ?? []) : Object.keys(input.licence ?? {});
     list.push({
       slug,
       name: upload?.name ?? found?.name ?? slug,
       icon: upload ? null : (found?.icon ?? null),
       action: input.action,
-      version:
-        input.action !== "add"
-          ? null
-          : upload
-            ? upload.version
-            : (input.version ?? found!.version),
+      version: input.action !== "add" ? null : upload ? upload.version : (input.version ?? found!.version),
       source: upload ? "upload" : "wporg",
       licenceConstants: input.action === "add" ? licence : [],
       siteTypes: input.siteTypes,
       shared: false,
       inProduction: false,
-      latestVersion: input.action === "add" && !upload ? found!.version : null,
+      latestVersion: input.action === "add" && !upload ? found!.version : null
     });
     pluginChoices.set(productId, list);
   }
@@ -3866,33 +2097,16 @@ export class FixtureAdminApi implements AdminApi {
   async createPluginUpload(productId: string): Promise<Created> {
     this.product(productId);
     const id = crypto.randomUUID();
-    pluginUploads.set(id, {
-      id,
-      status: "pending",
-      reason: null,
-      slug: null,
-      name: null,
-      version: null,
-    });
+    pluginUploads.set(id, { id, status: "pending", reason: null, slug: null, name: null, version: null });
     return { id, uploadUrl: FIXTURE_UPLOAD_URL };
   }
 
-  async checkPluginUpload(
-    productId: string,
-    uploadId: string,
-  ): Promise<PluginUpload> {
+  async checkPluginUpload(productId: string, uploadId: string): Promise<PluginUpload> {
     this.product(productId);
     const upload = pluginUploads.get(uploadId);
-    if (!upload)
-      throw new FixtureError(400, `Plugin upload ${uploadId} not found`);
+    if (!upload) throw new FixtureError(400, `Plugin upload ${uploadId} not found`);
     // Nothing is really sent with sample data: every check passes as a sample premium plugin.
-    const ready: PluginUpload = {
-      ...upload,
-      status: "ready",
-      slug: "gravityforms",
-      name: "Gravity Forms",
-      version: "2.9.2",
-    };
+    const ready: PluginUpload = { ...upload, status: "ready", slug: "gravityforms", name: "Gravity Forms", version: "2.9.2" };
     pluginUploads.set(uploadId, ready);
     return ready;
   }
@@ -3900,21 +2114,14 @@ export class FixtureAdminApi implements AdminApi {
   async removePluginChoice(productId: string, slug: string): Promise<void> {
     this.product(productId);
     const list = pluginChoices.get(productId) ?? [];
-    if (!list.some((c) => c.slug === slug))
-      throw new FixtureError(400, `No plugin choice ${slug}`);
-    pluginChoices.set(
-      productId,
-      list.filter((c) => c.slug !== slug),
-    );
+    if (!list.some((c) => c.slug === slug)) throw new FixtureError(400, `No plugin choice ${slug}`);
+    pluginChoices.set(productId, list.filter((c) => c.slug !== slug));
   }
 
   async deleteTemplate(productId: string, templateId: string): Promise<void> {
     this.product(productId);
-    const index = templates.findIndex(
-      (t) => t.productId === productId && t.id === templateId,
-    );
-    if (index < 0)
-      throw new FixtureError(404, `Template ${templateId} not found`);
+    const index = templates.findIndex((t) => t.productId === productId && t.id === templateId);
+    if (index < 0) throw new FixtureError(404, `Template ${templateId} not found`);
     templates.splice(index, 1);
   }
 
@@ -3933,29 +2140,20 @@ export class FixtureAdminApi implements AdminApi {
         return {
           ...without(w, "secret"),
           productName: products.find((p) => p.id === w.productId)!.name,
-          last24Hours: {
-            sent: recent.length,
-            failed: recent.filter((d) => d.status === "failed").length,
-          },
+          last24Hours: { sent: recent.length, failed: recent.filter((d) => d.status === "failed").length },
           pending: sent.filter((d) => d.status === "pending").length,
           lastAttemptAt:
             sent
               .map((d) => d.lastAttemptAt)
               .filter((at): at is string => !!at)
               .sort()
-              .at(-1) ?? null,
+              .at(-1) ?? null
         };
       })
-      .sort(
-        (a, b) =>
-          a.productName.localeCompare(b.productName) ||
-          a.dateCreated.localeCompare(b.dateCreated),
-      );
+      .sort((a, b) => a.productName.localeCompare(b.productName) || a.dateCreated.localeCompare(b.dateCreated));
   }
 
-  async webhookDeliveries(
-    filter: WebhookFilter = {},
-  ): Promise<Listing<WebhookDelivery>> {
+  async webhookDeliveries(filter: WebhookFilter = {}): Promise<Listing<WebhookDelivery>> {
     filter = { ...filter, productId: filter.productId ?? this.scope };
     const items = webhookDeliveries
       .filter(
@@ -3963,7 +2161,7 @@ export class FixtureAdminApi implements AdminApi {
           (!filter.productId || d.productId === filter.productId) &&
           (!filter.endpointId || d.endpointId === filter.endpointId) &&
           (!filter.status || d.status === filter.status) &&
-          (!filter.tenantId || d.tenantId === filter.tenantId),
+          (!filter.tenantId || d.tenantId === filter.tenantId)
       )
       .sort((a, b) => b.dateCreated.localeCompare(a.dateCreated));
     return listing(items);
@@ -3976,22 +2174,15 @@ export class FixtureAdminApi implements AdminApi {
     } catch {
       throw new FixtureError(400, "url is not a valid URL");
     }
-    if (url.protocol !== "https:")
-      throw new FixtureError(400, "url must start with https://");
+    if (url.protocol !== "https:") throw new FixtureError(400, "url must start with https://");
     return url.href;
   }
 
-  async createWebhook(
-    productId: string,
-    input: WebhookEndpointInput,
-  ): Promise<WebhookSecret> {
+  async createWebhook(productId: string, input: WebhookEndpointInput): Promise<WebhookSecret> {
     this.product(productId);
     const url = this.checkWebhookUrl(input.url);
     if (webhooks.filter((w) => w.productId === productId).length >= 10)
-      throw new FixtureError(
-        400,
-        "A storefront can have at most 10 webhook endpoints",
-      );
+      throw new FixtureError(400, "A storefront can have at most 10 webhook endpoints");
     const now = new Date().toISOString();
     const webhook: FixtureWebhook = {
       id: uuid(webhooks.length + 50, 10),
@@ -4003,32 +2194,24 @@ export class FixtureAdminApi implements AdminApi {
       apiKeyId: null,
       secret: newSecret(),
       dateCreated: now,
-      dateChanged: now,
+      dateChanged: now
     };
     webhooks.push(webhook);
     return without(webhook, "productId", "apiKeyId");
   }
 
-  async updateWebhook(
-    id: string,
-    change: WebhookEndpointChange,
-  ): Promise<void> {
+  async updateWebhook(id: string, change: WebhookEndpointChange): Promise<void> {
     const webhook = this.webhook(id);
-    if (change.url !== undefined)
-      webhook.url = this.checkWebhookUrl(change.url);
-    if (change.description !== undefined)
-      webhook.description = change.description;
-    if (change.eventTypes !== undefined)
-      webhook.eventTypes = [...new Set(change.eventTypes)];
+    if (change.url !== undefined) webhook.url = this.checkWebhookUrl(change.url);
+    if (change.description !== undefined) webhook.description = change.description;
+    if (change.eventTypes !== undefined) webhook.eventTypes = [...new Set(change.eventTypes)];
     if (change.enabled !== undefined) webhook.enabled = change.enabled;
     webhook.dateChanged = new Date().toISOString();
   }
 
   async deleteWebhook(id: string): Promise<void> {
     webhooks.splice(webhooks.indexOf(this.webhook(id)), 1);
-    for (let i = webhookDeliveries.length - 1; i >= 0; i--)
-      if (webhookDeliveries[i].endpointId === id)
-        webhookDeliveries.splice(i, 1);
+    for (let i = webhookDeliveries.length - 1; i >= 0; i--) if (webhookDeliveries[i].endpointId === id) webhookDeliveries.splice(i, 1);
   }
 
   async rotateWebhookSecret(id: string): Promise<string> {
@@ -4061,15 +2244,14 @@ export class FixtureAdminApi implements AdminApi {
       error: null,
       durationMs: 140,
       dateCreated: now,
-      lastAttemptAt: now,
+      lastAttemptAt: now
     });
   }
 
   async retryWebhookDelivery(id: string): Promise<void> {
     const delivery = webhookDeliveries.find((d) => d.id === id);
     if (!delivery) throw new FixtureError(404, "Delivery not found");
-    if (delivery.status === "pending")
-      throw new FixtureError(400, "This delivery is still being sent");
+    if (delivery.status === "pending") throw new FixtureError(400, "This delivery is still being sent");
     delivery.status = "pending";
     delivery.attempts = 0;
   }
@@ -4086,21 +2268,14 @@ export class FixtureAdminApi implements AdminApi {
     if (input.startFrom) this.product(input.startFrom);
     const id = uuid(products.length + 1, 1);
     products.push({ id, name: input.name });
-    return {
-      productId: id,
-      name: input.name,
-      key: await this.createApiKey(id, "Storefront"),
-    };
+    return { productId: id, name: input.name, key: await this.createApiKey(id, "Storefront") };
   }
 
   async renameStorefront(productId: string, name: string): Promise<void> {
     this.product(productId).name = name;
   }
 
-  async setStoreLimit(
-    productId: string,
-    maxTenants: number | null,
-  ): Promise<void> {
+  async setStoreLimit(productId: string, maxTenants: number | null): Promise<void> {
     limits.set(this.product(productId).id, maxTenants);
   }
 
@@ -4112,14 +2287,9 @@ export class FixtureAdminApi implements AdminApi {
 
   async deleteStorefront(productId: string): Promise<void> {
     this.product(productId);
-    if (tenants.some((t) => t.productId === productId))
-      throw new FixtureError(409, "Delete its stores first");
-    if (storefronts.has(productId))
-      throw new FixtureError(409, "Delete its ready-made storefront first");
-    products.splice(
-      products.findIndex((p) => p.id === productId),
-      1,
-    );
+    if (tenants.some((t) => t.productId === productId)) throw new FixtureError(409, "Delete its stores first");
+    if (storefronts.has(productId)) throw new FixtureError(409, "Delete its ready-made storefront first");
+    products.splice(products.findIndex((p) => p.id === productId), 1);
   }
 
   async storefront(productId: string): Promise<ReadyStorefront | null> {
@@ -4127,31 +2297,22 @@ export class FixtureAdminApi implements AdminApi {
     return storefronts.get(productId) ?? null;
   }
 
-  async createStorefront(
-    productId: string,
-    input: NewStorefrontInput,
-  ): Promise<ReadyStorefront> {
+  async createStorefront(productId: string, input: NewStorefrontInput): Promise<ReadyStorefront> {
     this.product(productId);
-    if (storefronts.has(productId))
-      throw new Error("This product already has a ready-made storefront");
+    if (storefronts.has(productId)) throw new Error("This product already has a ready-made storefront");
     await this.createApiKey(productId, "Ready-made storefront");
     const storefront: ReadyStorefront = {
       id: uuid(storefronts.size + 1, 8),
       name: input.name,
-      domain: input.subdomain
-        ? `${input.subdomain}.anypress.site`
-        : `t-${productId.slice(0, 8)}.stores.anypress.site`,
+      domain: input.subdomain ? `${input.subdomain}.anypress.site` : `t-${productId.slice(0, 8)}.stores.anypress.site`,
       statusCode: 0,
-      statusName: "Pending",
+      statusName: "Pending"
     };
     storefronts.set(productId, storefront);
     return storefront;
   }
 
-  async createApiKey(
-    productId: string,
-    label: string | null,
-  ): Promise<NewApiKey> {
+  async createApiKey(productId: string, label: string | null): Promise<NewApiKey> {
     this.product(productId);
     const key: FixtureKey = {
       id: uuid(apiKeys.length + 1, 9),
@@ -4160,32 +2321,23 @@ export class FixtureAdminApi implements AdminApi {
       state: "active",
       dateCreated: new Date().toISOString(),
       lastUsedAt: null,
-      revokedAt: null,
+      revokedAt: null
     };
     apiKeys.push(key);
     return { ...without(key, "productId"), secret: sampleSecret() };
   }
 
-  async rotateApiKey(
-    productId: string,
-    keyId: string,
-    graceHours: number,
-  ): Promise<NewApiKey> {
-    const old = apiKeys.find(
-      (k) => k.productId === productId && k.id === keyId,
-    );
+  async rotateApiKey(productId: string, keyId: string, graceHours: number): Promise<NewApiKey> {
+    const old = apiKeys.find((k) => k.productId === productId && k.id === keyId);
     if (!old) throw new FixtureError(404, `API key ${keyId} not found`);
-    if (old.state !== "active")
-      throw new FixtureError(409, "Only an active key can be rotated");
+    if (old.state !== "active") throw new FixtureError(409, "Only an active key can be rotated");
     old.state = graceHours > 0 ? "expiring" : "revoked";
     old.revokedAt = new Date(Date.now() + graceHours * HOUR).toISOString();
     return this.createApiKey(productId, old.label);
   }
 
   async revokeApiKey(productId: string, keyId: string): Promise<void> {
-    const key = apiKeys.find(
-      (k) => k.productId === productId && k.id === keyId,
-    );
+    const key = apiKeys.find((k) => k.productId === productId && k.id === keyId);
     if (!key) throw new FixtureError(404, `API key ${keyId} not found`);
     if (key.state === "revoked") return;
     key.state = "revoked";
@@ -4193,15 +2345,9 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async removeApiKey(productId: string, keyId: string): Promise<void> {
-    const index = apiKeys.findIndex(
-      (k) => k.productId === productId && k.id === keyId,
-    );
+    const index = apiKeys.findIndex((k) => k.productId === productId && k.id === keyId);
     if (index < 0) throw new FixtureError(404, `API key ${keyId} not found`);
-    if (apiKeys[index].state !== "revoked")
-      throw new FixtureError(
-        409,
-        "Delete the key first: only a key that has stopped working can be removed from the list",
-      );
+    if (apiKeys[index].state !== "revoked") throw new FixtureError(409, "Delete the key first: only a key that has stopped working can be removed from the list");
     apiKeys.splice(index, 1);
   }
 
@@ -4221,14 +2367,11 @@ export class FixtureAdminApi implements AdminApi {
     const readUntil = notificationReads.get(userId) ?? null;
     const items = sampleNotifications()
       .filter((n) => (this.scope ? n.productId === this.scope : true))
-      .map((n) => ({
-        ...n,
-        unread: readUntil === null || Date.parse(n.at) > readUntil,
-      }));
+      .map((n) => ({ ...n, unread: readUntil === null || Date.parse(n.at) > readUntil }));
     return {
       unread: items.filter((n) => n.unread).length,
       readUntil: readUntil === null ? null : new Date(readUntil).toISOString(),
-      items: items.slice(0, limit),
+      items: items.slice(0, limit)
     };
   }
 
@@ -4241,41 +2384,27 @@ export class FixtureAdminApi implements AdminApi {
     return { enabled: true, publicKey: SAMPLE_PUSH_KEY };
   }
 
-  async savePushSubscription(
-    userId: string,
-    subscription: PushSubscriptionInput,
-  ): Promise<void> {
+  async savePushSubscription(userId: string, subscription: PushSubscriptionInput): Promise<void> {
     void userId;
     void subscription;
   }
 
-  async removePushSubscription(
-    userId: string,
-    endpoint: string,
-  ): Promise<void> {
+  async removePushSubscription(userId: string, endpoint: string): Promise<void> {
     void userId;
     void endpoint;
   }
 
   async applications(status?: ApplicationStatus): Promise<SellerApplication[]> {
-    return applications
-      .filter((a) => !status || a.status === status)
-      .sort((a, b) => b.dateCreated.localeCompare(a.dateCreated));
+    return applications.filter((a) => !status || a.status === status).sort((a, b) => b.dateCreated.localeCompare(a.dateCreated));
   }
 
   async application(id: string): Promise<SellerApplication | null> {
     return applications.find((a) => a.id === id) ?? null;
   }
 
-  async approveApplication(
-    id: string,
-    input: ApproveApplicationInput,
-  ): Promise<ApprovedApplication> {
+  async approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication> {
     const application = this.pendingApplication(id);
-    const seller = await this.createSeller({
-      name: application.business,
-      maxTenants: input.reseller ? null : input.maxTenants,
-    });
+    const seller = await this.createSeller({ name: application.business, maxTenants: input.reseller ? null : input.maxTenants });
     const reseller = input.reseller
       ? await this.createReseller({
           name: application.business,
@@ -4286,73 +2415,45 @@ export class FixtureAdminApi implements AdminApi {
           brandName: null,
           brandUrl: null,
           listPriceCents: { small: 1200, medium: 2400, large: 4800 },
-          productIds: [seller.productId],
+          productIds: [seller.productId]
         })
       : null;
     const resellerId = reseller?.id ?? null;
-    Object.assign(application, {
-      status: "approved",
-      productId: seller.productId,
-      resellerId,
-      dateDecided: new Date().toISOString(),
-    });
+    Object.assign(application, { status: "approved", productId: seller.productId, resellerId, dateDecided: new Date().toISOString() });
     const storefront = input.storefront
       ? await this.createStorefront(seller.productId, {
           name: application.business,
           email: application.email,
-          subdomain: application.storefrontSubdomain ?? undefined,
+          subdomain: application.storefrontSubdomain ?? undefined
         })
       : undefined;
     return {
       productId: seller.productId,
       ...(resellerId ? { resellerId } : {}),
-      invitation: {
-        acceptUrl: `https://app.anypress.io/invite/${id}`,
-        emailed: true,
-      },
-      storefront,
+      invitation: { acceptUrl: `https://app.anypress.io/invite/${id}`, emailed: true },
+      storefront
     };
   }
 
   async declineApplication(id: string): Promise<void> {
-    Object.assign(this.pendingApplication(id), {
-      status: "declined",
-      dateDecided: new Date().toISOString(),
-    });
+    Object.assign(this.pendingApplication(id), { status: "declined", dateDecided: new Date().toISOString() });
   }
 
   private pendingApplication(id: string): SellerApplication {
     const application = applications.find((a) => a.id === id);
-    if (!application)
-      throw new AdminApiError(
-        404,
-        `/admin/applications/${id}`,
-        `Application ${id} not found`,
-      );
-    if (application.status !== "pending")
-      throw new AdminApiError(
-        409,
-        `/admin/applications/${id}`,
-        "This application was already decided",
-      );
+    if (!application) throw new AdminApiError(404, `/admin/applications/${id}`, `Application ${id} not found`);
+    if (application.status !== "pending") throw new AdminApiError(409, `/admin/applications/${id}`, "This application was already decided");
     return application;
   }
 
   private toReseller(r: FixtureReseller): Reseller {
     const mine = products.filter((p) => resellerOf.get(p.id) === r.id);
-    const stores = tenants.filter((t) =>
-      mine.some((p) => p.id === t.productId),
-    );
+    const stores = tenants.filter((t) => mine.some((p) => p.id === t.productId));
     return {
       ...r,
-      products: mine.map((p) => ({
-        ...p,
-        tenantCount: stores.filter((t) => t.productId === p.id).length,
-      })),
+      products: mine.map((p) => ({ ...p, tenantCount: stores.filter((t) => t.productId === p.id).length })),
       tenantCount: stores.length,
-      liveTenantCount: stores.filter(
-        (t) => !t.isSuspended && t.statusCode !== StatusCode.Removing,
-      ).length,
+      liveTenantCount: stores.filter((t) => !t.isSuspended && t.statusCode !== StatusCode.Removing).length
     };
   }
 
@@ -4363,9 +2464,7 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   async resellers(): Promise<Reseller[]> {
-    return [...resellers]
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((r) => this.toReseller(r));
+    return [...resellers].sort((a, b) => a.name.localeCompare(b.name)).map((r) => this.toReseller(r));
   }
 
   async reseller(id: string): Promise<Reseller | null> {
@@ -4374,11 +2473,7 @@ export class FixtureAdminApi implements AdminApi {
   }
 
   // Sample data has no size history: every store counts as small from when it was made, unless suspended.
-  async resellerUsage(
-    id: string,
-    from: string,
-    to: string,
-  ): Promise<ResellerUsage> {
+  async resellerUsage(id: string, from: string, to: string): Promise<ResellerUsage> {
     const reseller = this.toReseller(this.findReseller(id));
     const start = Date.parse(from);
     const end = Math.min(Date.parse(to), Date.now());
@@ -4386,9 +2481,7 @@ export class FixtureAdminApi implements AdminApi {
     const storeDays = zero();
     const perProduct = reseller.products.map((p) => {
       const days = zero();
-      for (const t of tenants.filter(
-        (t) => t.productId === p.id && !t.isSuspended,
-      )) {
+      for (const t of tenants.filter((t) => t.productId === p.id && !t.isSuspended)) {
         const live = end - Math.max(start, Date.parse(t.dateCreated));
         if (live > 0) days.small += live / DAY;
       }
@@ -4397,30 +2490,17 @@ export class FixtureAdminApi implements AdminApi {
       return { productId: p.id, name: p.name, storeDays: days };
     });
     storeDays.small = Math.round(storeDays.small * 100) / 100;
-    return {
-      from: new Date(start).toISOString(),
-      to: new Date(Date.parse(to)).toISOString(),
-      storeDays,
-      products: perProduct.filter((p) => p.storeDays.small > 0),
-    };
+    return { from: new Date(start).toISOString(), to: new Date(Date.parse(to)).toISOString(), storeDays, products: perProduct.filter((p) => p.storeDays.small > 0) };
   }
 
   async resellerBill(id: string, month: string): Promise<ResellerBill> {
     const reseller = this.findReseller(id);
     const from = new Date(`${month}-01T00:00:00Z`);
-    const to = new Date(
-      Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 1, 1),
-    );
+    const to = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 1, 1));
     const monthDays = (to.getTime() - from.getTime()) / DAY;
-    const usage = await this.resellerUsage(
-      id,
-      from.toISOString(),
-      to.toISOString(),
-    );
+    const usage = await this.resellerUsage(id, from.toISOString(), to.toISOString());
     const listPriceCents = reseller.listPriceCents.small;
-    const wholesalePriceCents = Math.round(
-      (listPriceCents * (100 - reseller.wholesalePercent)) / 100,
-    );
+    const wholesalePriceCents = Math.round((listPriceCents * (100 - reseller.wholesalePercent)) / 100);
     const lines = usage.products.map((p) => ({
       productId: p.productId,
       name: p.name,
@@ -4429,9 +2509,7 @@ export class FixtureAdminApi implements AdminApi {
       stores: Math.round((p.storeDays.small / monthDays) * 100) / 100,
       listPriceCents,
       wholesalePriceCents,
-      amountCents: Math.round(
-        (p.storeDays.small / monthDays) * wholesalePriceCents,
-      ),
+      amountCents: Math.round((p.storeDays.small / monthDays) * wholesalePriceCents)
     }));
     return {
       month,
@@ -4439,69 +2517,40 @@ export class FixtureAdminApi implements AdminApi {
       wholesalePercent: reseller.wholesalePercent,
       billingEmail: reseller.billingEmail,
       lines,
-      totalCents: lines.reduce((sum, l) => sum + l.amountCents, 0),
+      totalCents: lines.reduce((sum, l) => sum + l.amountCents, 0)
     };
   }
 
   async resellerInvoices(id: string): Promise<ResellerInvoices> {
     this.findReseller(id);
-    return {
-      enabled: true,
-      invoices: [...(resellerInvoices.get(id) ?? [])].sort((a, b) =>
-        b.month.localeCompare(a.month),
-      ),
-    };
+    return { enabled: true, invoices: [...(resellerInvoices.get(id) ?? [])].sort((a, b) => b.month.localeCompare(a.month)) };
   }
 
-  async sendResellerInvoice(
-    id: string,
-    month: string,
-  ): Promise<ResellerInvoice> {
+  async sendResellerInvoice(id: string, month: string): Promise<ResellerInvoice> {
     const reseller = this.findReseller(id);
     const list = resellerInvoices.get(id) ?? [];
     const existing = list.find((i) => i.month === month);
     if (existing && existing.status !== "failed") return existing;
     const bill = await this.resellerBill(id, month);
-    if (!bill.complete)
-      throw new FixtureError(400, "That month is not over yet");
+    if (!bill.complete) throw new FixtureError(400, "That month is not over yet");
     const invoice: ResellerInvoice = {
       id: existing?.id ?? uuid(list.length + 2, 14),
       month,
       totalCents: bill.totalCents,
-      status: bill.totalCents
-        ? reseller.billingEmail || reseller.stripeCustomerId
-          ? "open"
-          : "failed"
-        : "nothing_due",
-      hostedInvoiceUrl: bill.totalCents
-        ? "https://invoice.stripe.com/i/sample"
-        : null,
-      chargeAutomatically: bill.totalCents
-        ? Boolean(reseller.stripeCustomerId)
-        : null,
-      error:
-        bill.totalCents && !reseller.billingEmail && !reseller.stripeCustomerId
-          ? "No billing email or Stripe customer: add a billing email to send invoices"
-          : null,
-      dateUpdated: new Date().toISOString(),
+      status: bill.totalCents ? (reseller.billingEmail || reseller.stripeCustomerId ? "open" : "failed") : "nothing_due",
+      hostedInvoiceUrl: bill.totalCents ? "https://invoice.stripe.com/i/sample" : null,
+      chargeAutomatically: bill.totalCents ? Boolean(reseller.stripeCustomerId) : null,
+      error: bill.totalCents && !reseller.billingEmail && !reseller.stripeCustomerId ? "No billing email or Stripe customer: add a billing email to send invoices" : null,
+      dateUpdated: new Date().toISOString()
     };
-    resellerInvoices.set(id, [
-      ...list.filter((i) => i.month !== month),
-      invoice,
-    ]);
+    resellerInvoices.set(id, [...list.filter((i) => i.month !== month), invoice]);
     return invoice;
   }
 
-  async createReseller(
-    input: ResellerSettings & { productIds: string[] },
-  ): Promise<Reseller> {
+  async createReseller(input: ResellerSettings & { productIds: string[] }): Promise<Reseller> {
     for (const productId of input.productIds) {
       this.product(productId);
-      if (resellerOf.has(productId))
-        throw new FixtureError(
-          409,
-          "This storefront belongs to another reseller; remove it from that one first",
-        );
+      if (resellerOf.has(productId)) throw new FixtureError(409, "This storefront belongs to another reseller; remove it from that one first");
     }
     const { productIds, ...settings } = input;
     const reseller: FixtureReseller = {
@@ -4509,17 +2558,14 @@ export class FixtureAdminApi implements AdminApi {
       stripeCustomerId: null,
       ...settings,
       id: uuid(resellers.length + 1, 13),
-      dateCreated: new Date().toISOString(),
+      dateCreated: new Date().toISOString()
     };
     resellers.push(reseller);
     for (const productId of productIds) resellerOf.set(productId, reseller.id);
     return this.toReseller(reseller);
   }
 
-  async updateReseller(
-    id: string,
-    settings: Partial<ResellerSettings>,
-  ): Promise<Reseller> {
+  async updateReseller(id: string, settings: Partial<ResellerSettings>): Promise<Reseller> {
     const reseller = this.findReseller(id);
     Object.assign(reseller, settings);
     return this.toReseller(reseller);
@@ -4527,8 +2573,7 @@ export class FixtureAdminApi implements AdminApi {
 
   async deleteReseller(id: string): Promise<void> {
     const reseller = this.findReseller(id);
-    if ([...resellerOf.values()].includes(id))
-      throw new FixtureError(409, "Move its storefronts out first");
+    if ([...resellerOf.values()].includes(id)) throw new FixtureError(409, "Move its storefronts out first");
     resellers.splice(resellers.indexOf(reseller), 1);
   }
 
@@ -4537,61 +2582,32 @@ export class FixtureAdminApi implements AdminApi {
     this.product(productId);
     const current = resellerOf.get(productId);
     if (current === id) return;
-    if (current)
-      throw new FixtureError(
-        409,
-        "This storefront belongs to another reseller; remove it from that one first",
-      );
+    if (current) throw new FixtureError(409, "This storefront belongs to another reseller; remove it from that one first");
     const count = [...resellerOf.values()].filter((r) => r === id).length;
     if (reseller.maxProducts !== null && count >= reseller.maxProducts) {
-      throw new FixtureError(
-        400,
-        `This reseller has reached its limit of ${reseller.maxProducts} storefronts`,
-      );
+      throw new FixtureError(400, `This reseller has reached its limit of ${reseller.maxProducts} storefronts`);
     }
     resellerOf.set(productId, id);
   }
 
-  async createResellerProduct(
-    id: string,
-    input: AddStorefrontInput,
-  ): Promise<AddedStorefront> {
+  async createResellerProduct(id: string, input: AddStorefrontInput): Promise<AddedStorefront> {
     const reseller = this.findReseller(id);
     const count = [...resellerOf.values()].filter((r) => r === id).length;
     if (reseller.maxProducts !== null && count >= reseller.maxProducts) {
-      throw new FixtureError(
-        400,
-        `This account has reached its limit of ${reseller.maxProducts} storefront${reseller.maxProducts === 1 ? "" : "s"}`,
-      );
+      throw new FixtureError(400, `This account has reached its limit of ${reseller.maxProducts} storefront${reseller.maxProducts === 1 ? "" : "s"}`);
     }
-    const source = versions.find(
-      (v) => v.productId === this.product(input.startFrom).id && v.isProduction,
-    );
-    if (!source)
-      throw new FixtureError(
-        400,
-        "That storefront has no ready production version with a template to start from",
-      );
+    const source = versions.find((v) => v.productId === this.product(input.startFrom).id && v.isProduction);
+    if (!source) throw new FixtureError(400, "That storefront has no ready production version with a template to start from");
     const product = { id: uuid(products.length + 1, 1), name: input.name };
     products.push(product);
     resellerOf.set(product.id, id);
-    versions.push({
-      ...source,
-      id: uuid(versions.length + 1, 2),
-      productId: product.id,
-      statusCode: StatusCode.Pending,
-      dateCreated: new Date().toISOString(),
-    });
+    versions.push({ ...source, id: uuid(versions.length + 1, 2), productId: product.id, statusCode: StatusCode.Pending, dateCreated: new Date().toISOString() });
     return product;
   }
 
   async removeResellerProduct(id: string, productId: string): Promise<void> {
     this.findReseller(id);
-    if (resellerOf.get(productId) !== id)
-      throw new FixtureError(
-        404,
-        `Product ${productId} is not one of this reseller's storefronts`,
-      );
+    if (resellerOf.get(productId) !== id) throw new FixtureError(404, `Product ${productId} is not one of this reseller's storefronts`);
     resellerOf.delete(productId);
   }
 
@@ -4613,21 +2629,16 @@ export class FixtureAdminApi implements AdminApi {
       state: "active",
       dateCreated: new Date().toISOString(),
       lastUsedAt: null,
-      revokedAt: null,
+      revokedAt: null
     };
     apiKeys.push(key);
     return { ...without(key, "productId"), secret: sampleSecret() };
   }
 
-  async rotatePartnerKey(
-    id: string,
-    keyId: string,
-    graceHours: number,
-  ): Promise<NewApiKey> {
+  async rotatePartnerKey(id: string, keyId: string, graceHours: number): Promise<NewApiKey> {
     const old = apiKeys.find((k) => k.productId === id && k.id === keyId);
     if (!old) throw new FixtureError(404, `API key ${keyId} not found`);
-    if (old.state !== "active")
-      throw new FixtureError(409, "Only an active key can be rotated");
+    if (old.state !== "active") throw new FixtureError(409, "Only an active key can be rotated");
     old.state = graceHours > 0 ? "expiring" : "revoked";
     old.revokedAt = new Date(Date.now() + graceHours * HOUR).toISOString();
     return this.createPartnerKey(id, old.label);
@@ -4643,27 +2654,18 @@ export class FixtureAdminApi implements AdminApi {
 
   /** The team's default name; throws when the storefront or reseller isn't there. */
   private teamName(of: TeamOf): string {
-    return typeof of === "string"
-      ? this.product(of).name
-      : this.findReseller(of.resellerId).name;
+    return typeof of === "string" ? this.product(of).name : this.findReseller(of.resellerId).name;
   }
 
   async team(of: TeamOf): Promise<Team> {
     this.teamName(of);
     const team = teams.find((t) => t.key === teamKey(of));
-    return team
-      ? structuredClone(without(team, "key"))
-      : { organization: null, members: [], invitations: [] };
+    return team ? structuredClone(without(team, "key")) : { organization: null, members: [], invitations: [] };
   }
 
-  async invite(
-    of: TeamOf,
-    email: string,
-    role: TeamRole,
-  ): Promise<NewInvitation> {
+  async invite(of: TeamOf, email: string, role: TeamRole): Promise<NewInvitation> {
     const team = this.teamOf(of);
-    if (team.members.some((m) => m.email === email))
-      throw new FixtureError(409, `${email} is already a member`);
+    if (team.members.some((m) => m.email === email)) throw new FixtureError(409, `${email} is already a member`);
     team.invitations = team.invitations.filter((i) => i.email !== email);
     const id = uuid(100 + team.invitations.length, 15);
     const invitation = {
@@ -4672,7 +2674,7 @@ export class FixtureAdminApi implements AdminApi {
       role,
       expiresAt: new Date(Date.now() + 7 * DAY).toISOString(),
       dateCreated: new Date().toISOString(),
-      acceptUrl: `https://app.example.com/invite/${id}`,
+      acceptUrl: `https://app.example.com/invite/${id}`
     };
     team.invitations.unshift(invitation);
     return { ...invitation, emailed: true };
@@ -4680,51 +2682,32 @@ export class FixtureAdminApi implements AdminApi {
 
   async cancelInvitation(of: TeamOf, invitationId: string): Promise<void> {
     const team = this.teamOf(of);
-    if (!team.invitations.some((i) => i.id === invitationId))
-      throw new FixtureError(
-        404,
-        `Pending invitation ${invitationId} not found`,
-      );
+    if (!team.invitations.some((i) => i.id === invitationId)) throw new FixtureError(404, `Pending invitation ${invitationId} not found`);
     team.invitations = team.invitations.filter((i) => i.id !== invitationId);
   }
 
-  async setMemberRole(
-    of: TeamOf,
-    memberId: string,
-    role: TeamRole,
-  ): Promise<void> {
+  async setMemberRole(of: TeamOf, memberId: string, role: TeamRole): Promise<void> {
     const team = this.teamOf(of);
     const member = team.members.find((m) => m.id === memberId);
     if (!member) throw new FixtureError(404, `Member ${memberId} not found`);
-    if (
-      member.role === "owner" &&
-      role !== "owner" &&
-      team.members.filter((m) => m.role === "owner").length === 1
-    )
+    if (member.role === "owner" && role !== "owner" && team.members.filter((m) => m.role === "owner").length === 1)
       throw new FixtureError(409, "A team needs at least one owner.");
     member.role = role;
   }
 
   async removeMember(of: TeamOf, memberId: string): Promise<void> {
     const team = this.teamOf(of);
-    if (!team.members.some((m) => m.id === memberId))
-      throw new FixtureError(404, `Member ${memberId} not found`);
+    if (!team.members.some((m) => m.id === memberId)) throw new FixtureError(404, `Member ${memberId} not found`);
     team.members = team.members.filter((m) => m.id !== memberId);
   }
   /** A storefront's branding with its reseller's filling the gaps, as the API answers. */
   private brandView(of: TeamOf): BrandingView {
     this.teamName(of);
     const own = brands.get(teamKey(of)) ?? emptyBrand();
-    const resellerId =
-      typeof of === "string" ? (resellerOf.get(of) ?? null) : null;
-    const parent = resellerId
-      ? (brands.get(teamKey({ resellerId })) ?? emptyBrand())
-      : emptyBrand();
+    const resellerId = typeof of === "string" ? (resellerOf.get(of) ?? null) : null;
+    const parent = resellerId ? (brands.get(teamKey({ resellerId })) ?? emptyBrand()) : emptyBrand();
     const shown = Object.fromEntries(
-      (Object.keys(own) as (keyof Branding)[]).map((k) => [
-        k,
-        own[k] ?? parent[k],
-      ]),
+      (Object.keys(own) as (keyof Branding)[]).map((k) => [k, own[k] ?? parent[k]])
     ) as Branding;
     return { ...structuredClone(own), shown };
   }
@@ -4733,88 +2716,55 @@ export class FixtureAdminApi implements AdminApi {
     return this.brandView(of);
   }
 
-  async updateBranding(
-    of: TeamOf,
-    fields: BrandingFields,
-  ): Promise<BrandingView> {
+  async updateBranding(of: TeamOf, fields: BrandingFields): Promise<BrandingView> {
     this.teamName(of);
-    brands.set(teamKey(of), {
-      ...(brands.get(teamKey(of)) ?? emptyBrand()),
-      ...fields,
-    });
+    brands.set(teamKey(of), { ...(brands.get(teamKey(of)) ?? emptyBrand()), ...fields });
     return this.brandView(of);
   }
 
-  async uploadBrandImage(
-    of: TeamOf,
-    kind: BrandImage,
-    image: Uint8Array,
-  ): Promise<BrandingView> {
+  async uploadBrandImage(of: TeamOf, kind: BrandImage, image: Uint8Array): Promise<BrandingView> {
     this.teamName(of);
     // Sample data keeps the image as a data: address; the live API serves it from /branding.
     const url = `data:image/png;base64,${Buffer.from(image).toString("base64")}`;
-    brands.set(teamKey(of), {
-      ...(brands.get(teamKey(of)) ?? emptyBrand()),
-      [kind === "logo" ? "logoUrl" : "iconUrl"]: url,
-    });
+    brands.set(teamKey(of), { ...(brands.get(teamKey(of)) ?? emptyBrand()), [kind === "logo" ? "logoUrl" : "iconUrl"]: url });
     return this.brandView(of);
   }
 
   async removeBrandImage(of: TeamOf, kind: BrandImage): Promise<BrandingView> {
     this.teamName(of);
-    brands.set(teamKey(of), {
-      ...(brands.get(teamKey(of)) ?? emptyBrand()),
-      [kind === "logo" ? "logoUrl" : "iconUrl"]: null,
-    });
+    brands.set(teamKey(of), { ...(brands.get(teamKey(of)) ?? emptyBrand()), [kind === "logo" ? "logoUrl" : "iconUrl"]: null });
     return this.brandView(of);
   }
   async dashboardDomain(productId: string): Promise<DashboardDomainView> {
     this.product(productId);
-    return {
-      enabled: true,
-      dashboardDomain: structuredClone(dashboardDomains.get(productId) ?? null),
-    };
+    return { enabled: true, dashboardDomain: structuredClone(dashboardDomains.get(productId) ?? null) };
   }
 
-  async setDashboardDomain(
-    productId: string,
-    domain: string,
-  ): Promise<DashboardDomainView> {
+  async setDashboardDomain(productId: string, domain: string): Promise<DashboardDomainView> {
     this.product(productId);
-    const name = domain
-      .trim()
-      .toLowerCase()
-      .replace(/^https?:\/\//, "")
-      .replace(/\/.*$/, "");
-    if (name.split(".").length < 3)
-      throw new FixtureError(
-        400,
-        "Use an address under your domain, like dashboard.yourbusiness.com",
-      );
+    const name = domain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    if (name.split(".").length < 3) throw new FixtureError(400, "Use an address under your domain, like dashboard.yourbusiness.com");
     dashboardDomains.set(productId, {
       domain: name,
       status: "pending",
       records: [{ type: "CNAME", name, value: "cname.vercel-dns.com" }],
       error: null,
-      checkedAt: new Date().toISOString(),
+      checkedAt: new Date().toISOString()
     });
     return this.dashboardDomain(productId);
   }
 
   async checkDashboardDomain(productId: string): Promise<DashboardDomainView> {
     const current = dashboardDomains.get(productId);
-    if (!current)
-      throw new FixtureError(404, "This storefront has no dashboard address");
+    if (!current) throw new FixtureError(404, "This storefront has no dashboard address");
     // Sample data: the DNS is "right" on the second look.
-    if (current.checkedAt && current.status === "pending")
-      Object.assign(current, { status: "active", records: [] });
+    if (current.checkedAt && current.status === "pending") Object.assign(current, { status: "active", records: [] });
     current.checkedAt = new Date().toISOString();
     return this.dashboardDomain(productId);
   }
 
   async removeDashboardDomain(productId: string): Promise<DashboardDomainView> {
-    if (!dashboardDomains.get(productId))
-      throw new FixtureError(404, "This storefront has no dashboard address");
+    if (!dashboardDomains.get(productId)) throw new FixtureError(404, "This storefront has no dashboard address");
     dashboardDomains.delete(productId);
     return this.dashboardDomain(productId);
   }
@@ -4827,16 +2777,11 @@ const sampleResellerBrand = (r: FixtureReseller): Branding => ({
   supportEmail: "hello@summitweb.example",
   shopUrl: r.brandUrl,
   logoUrl: sampleMarks[uuid(2, 1)] ?? null,
-  iconUrl: null,
+  iconUrl: null
 });
 
 const mergeBrand = (own: Branding, parent: Branding): Branding =>
-  Object.fromEntries(
-    (Object.keys(own) as (keyof Branding)[]).map((k) => [
-      k,
-      own[k] ?? parent[k],
-    ]),
-  ) as Branding;
+  Object.fromEntries((Object.keys(own) as (keyof Branding)[]).map((k) => [k, own[k] ?? parent[k]])) as Branding;
 const anyField = (b: Branding) => Object.values(b).some((v) => v !== null);
 
 /** GET /branding/demo/{id} on sample data: a storefront's or reseller's demo page look. */
@@ -4844,24 +2789,12 @@ export function sampleDemoBrand(id: string): DemoBrand | null {
   const product = products.find((p) => p.id === id);
   if (product) {
     const reseller = resellers.find((r) => r.id === resellerOf.get(id));
-    const parent = reseller
-      ? (brands.get(teamKey({ resellerId: reseller.id })) ??
-        sampleResellerBrand(reseller))
-      : emptyBrand();
+    const parent = reseller ? (brands.get(teamKey({ resellerId: reseller.id })) ?? sampleResellerBrand(reseller)) : emptyBrand();
     const brand = mergeBrand(brands.get(teamKey(id)) ?? emptyBrand(), parent);
-    return {
-      name: brand.name ?? product.name,
-      brand: anyField(brand) ? brand : null,
-      shopUrl: brand.shopUrl ?? reseller?.brandUrl ?? null,
-    };
+    return { name: brand.name ?? product.name, brand: anyField(brand) ? brand : null, shopUrl: brand.shopUrl ?? reseller?.brandUrl ?? null };
   }
   const reseller = resellers.find((r) => r.id === id);
   if (!reseller) return null;
-  const brand =
-    brands.get(teamKey({ resellerId: id })) ?? sampleResellerBrand(reseller);
-  return {
-    name: brand.name ?? reseller.brandName ?? reseller.name,
-    brand: anyField(brand) ? brand : null,
-    shopUrl: brand.shopUrl ?? reseller.brandUrl,
-  };
+  const brand = brands.get(teamKey({ resellerId: id })) ?? sampleResellerBrand(reseller);
+  return { name: brand.name ?? reseller.brandName ?? reseller.name, brand: anyField(brand) ? brand : null, shopUrl: brand.shopUrl ?? reseller.brandUrl };
 }
