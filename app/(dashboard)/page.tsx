@@ -6,7 +6,6 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  CircleAlertIcon,
   CircleCheckIcon,
   HistoryIcon,
   HourglassIcon,
@@ -23,6 +22,8 @@ import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { StatusCode, type Job, type Overview, type ResellerSetup, type Setup, type SetupStep, type StorefrontSetup } from "@/lib/api/types";
 import { WordPressLoginButton } from "./wordpress-login";
+import { PageTabs } from "@/components/admin/page-tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { formatAgo, formatDateTime, jobTypeLabel, plainError } from "@/lib/format";
 import { EmptyState } from "@/components/admin/empty-state";
@@ -71,8 +72,8 @@ function inProgress(o: Overview): string | null {
   return parts.length ? parts.join(" · ") : null;
 }
 
-export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
-  const { product } = await searchParams;
+export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ product?: string; tab?: string }> }) {
+  const { product, tab } = await searchParams;
   const api = getAdminApi();
   const viewer = await getViewer().catch(() => null);
   const isAdmin = viewer?.isAdmin ?? false;
@@ -100,6 +101,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const resellerSetup = !isAdmin && viewer?.active?.resellerId ? setup?.resellers.find((r) => r.resellerId === viewer.active?.resellerId) : undefined;
   const showChecklist = !!storefrontSetup && storefrontSetup.done < storefrontSetup.total;
   const stuck = isAdmin && !product && setup ? [...setup.resellers, ...setup.storefronts].filter((s) => s.stuck) : [];
+  const hasSetup = showChecklist || (!!resellerSetup && resellerSetup.done < resellerSetup.total) || (isAdmin && !product && !!setup);
   const failedJobs = jobs.items.filter((job) => job.state === "failed");
   // Retrying is a change, so only for someone who may change things.
   const canRetry = !!viewer && canChange(viewer);
@@ -246,13 +248,14 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <StatTiles stats={tiles} label="Your stores at a glance" />
 
       <div className="grid grid-cols-1 items-start gap-5 lg:gap-7 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-        <div className="min-w-0 space-y-5 lg:space-y-7">
+        <div className="min-w-0">
+          {/* What needs you, and how setup is going, each in a tab, so the page fits on one screen. */}
+          <PageTabs label="Overview" initial={tab} tabs={[{ value: "needs-you", label: "Needs you", count: todos.length }, ...(hasSetup ? [{ value: "setup", label: "Setup" }] : [])]}>
+          <TabsContent value="needs-you" forceMount className="data-[state=inactive]:hidden">
           <Card data-tour-step-id={isAdmin || showChecklist ? "needs-you" : "needs-you start-here"}>
+            {/* The tab names it; the title stays for screen readers. */}
             <CardHeader>
-              <CardIcon>
-                <CircleAlertIcon />
-              </CardIcon>
-              <CardTitle className="text-lg">{todos.length ? "Needs you" : "Nothing needs you"}</CardTitle>
+              <CardTitle className="sr-only">{todos.length ? "Needs you" : "Nothing needs you"}</CardTitle>
               <CardDescription>
                 {todos.length
                   ? "Broken things first. Each button goes to the page that fixes it."
@@ -311,7 +314,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
               )}
             </CardContent>
           </Card>
-
+          </TabsContent>
+          {hasSetup && (
+          <TabsContent value="setup" forceMount className="space-y-5 data-[state=inactive]:hidden lg:space-y-7">
           {showChecklist && (
             <StorefrontChecklist setup={storefrontSetup!} productId={isAdmin ? storefrontSetup!.productId : undefined} />
           )}
@@ -319,6 +324,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             <ResellerChecklist setup={resellerSetup} storefronts={setup!.storefronts.filter((s) => s.resellerId === resellerSetup.resellerId)} />
           )}
           {isAdmin && !product && setup && <StuckCard stuck={stuck} setup={setup} />}
+          </TabsContent>
+          )}
+          </PageTabs>
         </div>
 
         <RecentActivity jobs={recent} href={withProduct("/jobs", product)} />

@@ -15,6 +15,8 @@ import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PluginIcon } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageTabs } from "@/components/admin/page-tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -40,7 +42,7 @@ type Editing = {
   licenceConstants: string[];
 } | null;
 
-export function PluginChoicesManager({ productId, choices }: { productId: string; choices: PluginChoice[] }) {
+export function PluginChoicesManager({ productId, choices, tab }: { productId: string; choices: PluginChoice[]; tab?: string }) {
   const router = useRouter();
   const canChange = useCanChange();
   const [editing, setEditing] = React.useState<Editing>(null);
@@ -74,6 +76,16 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
         </div>
       )}
 
+      {/* One tab per job, so each fits on one screen. */}
+      <PageTabs
+        label="Plugins"
+        initial={tab}
+        tabs={[
+          { value: "yours", label: "Your plugins", count: choices.length },
+          ...(canChange ? [{ value: "add", label: "Add a plugin" }] : []),
+          { value: "template", label: "Template plugins", count: TEMPLATE_PLUGINS.length }
+        ]}>
+        <TabsContent value="yours">
       <Card>
         <CardHeader>
           <CardIcon>
@@ -145,16 +157,38 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
           )}
         </CardContent>
       </Card>
+        </TabsContent>
 
       {canChange && (
+        <TabsContent value="add" className="grid items-start gap-4 lg:grid-cols-2 lg:gap-6">
         <DirectorySearch
           productId={productId}
           chosen={bySlug}
           full={added.filter((c) => !c.shared).length >= 25}
           onAdd={(plugin) => setEditing({ slug: plugin.slug, name: plugin.name, icon: plugin.icon, action: "add", siteTypes: [], licenceConstants: [] })}
         />
+        <PremiumUpload
+          productId={productId}
+          full={added.filter((c) => !c.shared).length >= 25}
+          onReady={(upload) => {
+            // A new release of a plugin already added keeps its site types and licence keys.
+            const before = bySlug.get(upload.slug!);
+            setEditing({
+              slug: upload.slug!,
+              name: upload.name ?? upload.slug!,
+              icon: null,
+              action: "add",
+              siteTypes: before?.action === "add" ? before.siteTypes : [],
+              version: upload.version ?? undefined,
+              uploadId: upload.id,
+              licenceConstants: before?.action === "add" ? before.licenceConstants : []
+            });
+          }}
+        />
+        </TabsContent>
       )}
 
+        <TabsContent value="template">
       <Card>
         <CardHeader>
           <CardIcon>
@@ -164,7 +198,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
           <CardDescription>What the AnyPress template comes with. Switch off the ones your stores don&apos;t need.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {TEMPLATE_PLUGINS.map((plugin) => {
               const off = bySlug.get(plugin.slug)?.action === "off";
               return (
@@ -204,27 +238,9 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
           </ul>
         </CardContent>
       </Card>
+        </TabsContent>
+      </PageTabs>
 
-      {canChange && (
-        <PremiumUpload
-          productId={productId}
-          full={added.filter((c) => !c.shared).length >= 25}
-          onReady={(upload) => {
-            // A new release of a plugin already added keeps its site types and licence keys.
-            const before = bySlug.get(upload.slug!);
-            setEditing({
-              slug: upload.slug!,
-              name: upload.name ?? upload.slug!,
-              icon: null,
-              action: "add",
-              siteTypes: before?.action === "add" ? before.siteTypes : [],
-              version: upload.version ?? undefined,
-              uploadId: upload.id,
-              licenceConstants: before?.action === "add" ? before.licenceConstants : []
-            });
-          }}
-        />
-      )}
 
       <SiteTypesDialog
         editing={editing}

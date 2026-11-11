@@ -27,24 +27,27 @@ export type Stat = {
 function StatTile({ stat }: { stat: Stat }) {
   const body = (
     <>
-      {stat.icon && (
-        <span className="flex items-center justify-between">
-          <span data-slot="tile-icon" className={cn("flex size-10 items-center justify-center rounded-full", TONES[stat.tone ?? "neutral"])}>
-            <stat.icon className="size-4.5" aria-hidden />
-          </span>
-          {stat.href && (
-            <ChevronRight className="text-muted-foreground size-4 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
-          )}
-        </span>
-      )}
-      <span>
+      <span className="flex items-center gap-3">
         <span className="block text-3xl font-extrabold tracking-[-0.03em] tabular-nums">{stat.value}</span>
-        <span className="block text-sm font-semibold">{stat.label}</span>
-        {stat.note && <span className="text-muted-foreground block text-xs">{stat.note}</span>}
+        <span className="flex-1" />
+        {stat.icon && (
+          <span data-slot="tile-icon" className={cn("flex size-9 items-center justify-center rounded-full", TONES[stat.tone ?? "neutral"])}>
+            <stat.icon className="size-4" aria-hidden />
+          </span>
+        )}
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">{stat.label}</span>
+          {stat.note && <span className="text-muted-foreground block text-xs">{stat.note}</span>}
+        </span>
+        {stat.href && (
+          <ChevronRight className="text-muted-foreground size-4 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
+        )}
       </span>
     </>
   );
-  const shape = "bg-muted flex h-full flex-col gap-3 rounded-[1.125rem] p-4 sm:p-5";
+  const shape = "bg-muted flex h-full flex-col gap-1 rounded-[1.125rem] p-4";
   if (!stat.href) return <div data-slot="tile" className={shape}>{body}</div>;
   return (
     <Link

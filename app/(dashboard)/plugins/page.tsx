@@ -11,8 +11,8 @@ import { PluginChoicesManager } from "./plugin-choices-manager";
 
 export const metadata: Metadata = { title: "Plugins" };
 
-export default async function PluginsPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
-  const { product: productId } = await searchParams;
+export default async function PluginsPage({ searchParams }: { searchParams: Promise<{ product?: string; tab?: string }> }) {
+  const { product: productId, tab } = await searchParams;
   const api = getAdminApi();
   const products = await api.products();
   // A customer has one storefront, so their pages open on it.
@@ -22,7 +22,7 @@ export default async function PluginsPage({ searchParams }: { searchParams: Prom
   // These pages are about one storefront. With none picked, open the first rather than showing only a picker;
   // the switcher at the top moves between them.
   if (!product) {
-    if (products[0]) redirect(`/plugins?product=${products[0].id}`);
+    if (products[0]) redirect(`/plugins?product=${products[0].id}${tab ? `&tab=${encodeURIComponent(tab)}` : ""}`);
     return (
       <div className="space-y-4 lg:space-y-6">
         <PageHeader title="Plugins" />
@@ -43,7 +43,7 @@ export default async function PluginsPage({ searchParams }: { searchParams: Prom
         title="Plugins"
         description={`What every store on ${product.name} gets besides the template.`}
       />
-      <PluginChoicesManager productId={product.id} choices={choices} />
+      <PluginChoicesManager productId={product.id} choices={choices} tab={tab} />
     </div>
   );
 }

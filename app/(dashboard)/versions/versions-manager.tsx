@@ -14,6 +14,8 @@ import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PluginList } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageTabs } from "@/components/admin/page-tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -49,11 +51,13 @@ async function report(action: Promise<{ ok: true } | { ok: false; error: string 
 export function VersionsManager({
   productId,
   versions,
-  templates
+  templates,
+  tab
 }: {
   productId: string;
   versions: Version[];
   templates: Template[];
+  tab?: string;
 }) {
   const canChange = useCanChange();
   const [pending, setPending] = React.useState<Pending>(null);
@@ -69,7 +73,16 @@ export function VersionsManager({
     <>
       <HowItWorks templates={baseTemplates.length} versions={versions.length} production={production} />
 
-      <div className="space-y-4 lg:space-y-6">
+      {/* One tab per list, so each fits on one screen; the steps above say how they connect. */}
+      <PageTabs
+        label="Templates"
+        initial={tab}
+        tabs={[
+          { value: "versions", label: "Versions", count: versions.length },
+          { value: "templates", label: "Templates", count: baseTemplates.length },
+          { value: "plans", label: "Plan starting points", count: groupTemplates.length }
+        ]}>
+        <TabsContent value="versions">
           <Card>
             <CardHeader>
               <CardIcon>
@@ -160,8 +173,8 @@ export function VersionsManager({
               </Table>
             </CardContent>
           </Card>
-
-        <div className="space-y-4 lg:space-y-6">
+        </TabsContent>
+        <TabsContent value="templates">
           <TemplatesCard
             title="Templates"
             icon={LayersIcon}
@@ -170,6 +183,8 @@ export function VersionsManager({
             onAdd={canChange ? () => setCreatingTemplate("base") : undefined}
             onDelete={canChange ? (template) => setPending({ kind: "delete-template", template }) : undefined}
           />
+        </TabsContent>
+        <TabsContent value="plans">
           <TemplatesCard
             title="Plan starting points"
             icon={CopyIcon}
@@ -178,8 +193,8 @@ export function VersionsManager({
             onAdd={canChange ? () => setCreatingTemplate("group") : undefined}
             onDelete={canChange ? (template) => setPending({ kind: "delete-template", template }) : undefined}
           />
-        </div>
-      </div>
+        </TabsContent>
+      </PageTabs>
 
       <CreateVersionDialog
         open={creatingVersion}
