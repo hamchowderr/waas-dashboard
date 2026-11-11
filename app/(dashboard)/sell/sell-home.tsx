@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRightIcon, DownloadIcon } from "lucide-react";
 
 import { useSellPrices } from "@/hooks/use-sell-prices";
-import { LIST_COST, PLANS, PLAN_NAMES, fill, keep, type GroupId, type Guide, type KitContext, type Plan } from "@/lib/sales-kit";
+import { PLANS, PLAN_NAMES, cost, dollars, fill, keep, type GroupId, type Guide, type KitContext, type Plan } from "@/lib/sales-kit";
 import { KitMarkdown } from "@/components/admin/kit-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,12 +22,15 @@ export function SellHome({
   productId,
   groups,
   guides,
-  context
+  context,
+  wholesalePercent
 }: {
   productId: string;
   groups: GroupSummary[];
   guides: Guide[];
   context: Omit<KitContext, "prices" | "plan">;
+  /** The reseller's wholesale discount, or null on a seller's storefront. */
+  wholesalePercent: number | null;
 }) {
   const [prices, setPrice] = useSellPrices(productId);
   const [tab, setTab] = React.useState("groups");
@@ -66,7 +69,7 @@ export function SellHome({
                 <div>
                   <p className="text-muted-foreground text-xs">{PLAN_NAMES[g.plan]}</p>
                   <p className="text-sm font-medium tabular-nums">
-                    ${prices[g.plan]}/mo <span className="text-muted-foreground font-normal">· you keep ${keep(g.plan, prices[g.plan])}</span>
+                    ${prices[g.plan]}/mo <span className="text-muted-foreground font-normal">· you keep ${dollars(keep(g.plan, prices[g.plan], wholesalePercent))}</span>
                   </p>
                 </div>
                 <ArrowRightIcon className="text-muted-foreground group-hover/card:text-foreground size-4 shrink-0 transition-transform group-hover/card:translate-x-0.5" aria-hidden />
@@ -85,7 +88,7 @@ export function SellHome({
       </TabsContent>
 
       <TabsContent value="prices">
-        <Prices prices={prices} setPrice={setPrice} />
+        <Prices prices={prices} setPrice={setPrice} wholesalePercent={wholesalePercent} />
       </TabsContent>
 
       <TabsContent value="guides">
@@ -95,7 +98,7 @@ export function SellHome({
   );
 }
 
-function Prices({ prices, setPrice }: { prices: Record<Plan, number>; setPrice: (plan: Plan, value: number) => void }) {
+function Prices({ prices, setPrice, wholesalePercent }: { prices: Record<Plan, number>; setPrice: (plan: Plan, value: number) => void; wholesalePercent: number | null }) {
   return (
     <Card className="max-w-3xl">
       <CardHeader>
@@ -118,7 +121,7 @@ function Prices({ prices, setPrice }: { prices: Record<Plan, number>; setPrice: 
             {PLANS.map((plan) => (
               <tr key={plan} className="border-b last:border-0">
                 <td className="py-2.5 pr-3 font-medium whitespace-nowrap">{PLAN_NAMES[plan]}</td>
-                <td className="text-muted-foreground py-2.5 pr-3 tabular-nums">${LIST_COST[plan]}</td>
+                <td className="text-muted-foreground py-2.5 pr-3 tabular-nums">${dollars(cost(plan, wholesalePercent))}</td>
                 <td className="py-2.5 pr-3">
                   <div className="relative w-24">
                     <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2">$</span>
@@ -133,12 +136,16 @@ function Prices({ prices, setPrice }: { prices: Record<Plan, number>; setPrice: 
                     />
                   </div>
                 </td>
-                <td className="py-2.5 text-right font-medium tabular-nums">${keep(plan, prices[plan])}/mo</td>
+                <td className="py-2.5 text-right font-medium tabular-nums">${dollars(keep(plan, prices[plan], wholesalePercent))}/mo</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="text-muted-foreground mt-3 text-xs">Costs are for a Small site billed monthly. Your cost drops 10%, 20% and 30% at 3, 10 and 25 sites.</p>
+        <p className="text-muted-foreground mt-3 text-xs">
+          {wholesalePercent !== null
+            ? `Costs are for a Small site a month: our list price less your ${wholesalePercent}% wholesale discount, as your monthly bill charges it. Medium costs 2× and Large 4×.`
+            : "Costs are for a Small site billed monthly, at our list price. Your cost drops 10%, 20% and 30% at 3, 10 and 25 live sites. Medium costs 2× and Large 4×."}
+        </p>
       </CardContent>
     </Card>
   );

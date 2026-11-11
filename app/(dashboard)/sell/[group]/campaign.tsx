@@ -4,7 +4,7 @@ import * as React from "react";
 import { CheckIcon, ChevronDownIcon, DownloadIcon, ExternalLinkIcon, FileTextIcon, MailIcon, MapPinIcon, MegaphoneIcon, MessageSquareIcon, PhoneIcon, PresentationIcon, Share2Icon, type LucideIcon } from "lucide-react";
 
 import { useSellPrices } from "@/hooks/use-sell-prices";
-import { PLAN_NAMES, fill, keep, playbookMarkdown, type Demo, type KitContext, type Pitch, type Playbook, type Step } from "@/lib/sales-kit";
+import { PLAN_NAMES, dollars, fill, keep, playbookMarkdown, type Demo, type KitContext, type Pitch, type Playbook, type Step } from "@/lib/sales-kit";
 import { Inline, KitMarkdown } from "@/components/admin/kit-markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,8 @@ export function Campaign({
   demo,
   demos,
   callScript,
-  context
+  context,
+  wholesalePercent
 }: {
   productId: string;
   playbook: Playbook;
@@ -48,6 +49,8 @@ export function Campaign({
   demos: Demo[];
   callScript: string;
   context: Omit<KitContext, "prices" | "plan">;
+  /** The reseller's wholesale discount, or null on a seller's storefront. */
+  wholesalePercent: number | null;
 }) {
   const [prices] = useSellPrices(productId);
   const ctx: KitContext = { ...context, prices, plan: playbook.plan };
@@ -65,7 +68,7 @@ export function Campaign({
               <p className="mt-0.5 text-lg font-semibold">
                 {PLAN_NAMES[playbook.plan]} at ${price} a month
               </p>
-              <p className="text-muted-foreground text-sm">You keep ${keep(playbook.plan, price)} a month on every site. Change prices on the Sales Kit page.</p>
+              <p className="text-muted-foreground text-sm">You keep ${dollars(keep(playbook.plan, price, wholesalePercent))} a month on every site. Change prices on the Sales Kit page.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" asChild>
