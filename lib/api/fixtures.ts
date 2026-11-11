@@ -154,142 +154,66 @@ const sampleMarks: Record<string, string> = {
 };
 
 /** Storefronts marked as a HighLevel agency's. */
+/** Every plugin the site types below turn on, with what it is for. */
+const SITE_PLUGIN_INFO = {
+  fluentSecurity: { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+  fluentSmtp: { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
+  fluentCrm: { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
+  fluentform: { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
+  fluentPlayer: { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+  easyCodeManager: { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+  seoByRankMath: { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+  automatorwp: { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+  wpFusionLite: { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
+  fluentToolkit: { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
+  anypressBlocks: { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." },
+  fluentBooking: { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
+  fluentCart: { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
+  fluentSupport: { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
+  fluentAffiliate: { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
+  fluentCommunity: { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
+  wpFusionLiteHighLevel: { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Sends new users and sign-ups to your HighLevel sub-account as contacts. Connected for you." },
+  leadconnector: { file: "leadconnector/leadconnector.php", name: "LeadConnector", about: "HighLevel's own plugin: your HighLevel forms, chat widget and calendars on this site." }
+} satisfies Record<string, SitePlugin>;
+
+const sitePlugins = (...keys: (keyof typeof SITE_PLUGIN_INFO)[]): SitePlugin[] => keys.map((k) => SITE_PLUGIN_INFO[k]);
+
 /** The store template's site types (its roles.json): what each turns on and what each plugin is for. */
 const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; plugins: SitePlugin[] }> = {
   website: {
     title: "Website",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentPlayer", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   bookings: {
     title: "Bookings",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentBooking", "fluentCart", "fluentPlayer", "fluentSupport", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   "online-store": {
     title: "Online store",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
-      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentCart", "fluentPlayer", "fluentAffiliate", "fluentSupport", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   community: {
     title: "Community & courses",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentCart", "fluentCommunity", "fluentPlayer", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   everything: {
     title: "Everything",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
-      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentBooking", "fluentCart", "fluentCommunity", "fluentPlayer", "fluentAffiliate", "fluentSupport", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   store: {
     title: "Everything (stores bought before site types)",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
-      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentBooking", "fluentCart", "fluentCommunity", "fluentPlayer", "fluentAffiliate", "fluentSupport", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   highlevel: {
     title: "HighLevel site",
     ownPlugins: true,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Sends new users and sign-ups to your HighLevel sub-account as contacts. Connected for you." },
-      { file: "leadconnector/leadconnector.php", name: "LeadConnector", about: "HighLevel's own plugin: your HighLevel forms, chat widget and calendars on this site." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentPlayer", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLiteHighLevel", "leadconnector", "fluentToolkit", "anypressBlocks")
   }
 };
 

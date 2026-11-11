@@ -100,20 +100,7 @@ export function NewResellerButton({
     goTo(target);
   };
 
-  // Whether this step's answer can be sent on.
-  const ok: Record<StepId, boolean> = {
-    name: Boolean(form.name.trim()),
-    storefronts: !problems.maxProducts,
-    stores: !problems.maxTenants,
-    discount: !problems.wholesalePercent,
-    billing: true,
-    email: !problems.billingEmail && !problems.stripeCustomerId,
-    prices:
-      !problems.priceSmall && !problems.priceMedium && !problems.priceLarge,
-    brand: !problems.brandName && !problems.brandUrl,
-    move: true,
-    review: resellerFormReady(form),
-  };
+  const ok = stepReady(form, problems);
 
   const submit = () =>
     startTransition(async () => {
@@ -150,19 +137,7 @@ export function NewResellerButton({
         }}
       >
         <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-y-auto p-0 sm:max-w-lg">
-          <div className="space-y-2 px-6 pt-6">
-            <p className="text-muted-foreground text-xs tabular-nums">
-              New reseller ·{" "}
-              {id === "review"
-                ? "Check and create"
-                : `Question ${step + 1} of ${steps.length - 1}`}
-            </p>
-            <Progress
-              value={((step + 1) / steps.length) * 100}
-              aria-label="Progress"
-              className="h-1"
-            />
-          </div>
+          <WizardProgress step={step} total={steps.length} review={id === "review"} />
           <form
             key={id}
             className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 flex flex-1 flex-col gap-5 px-6 pt-6 pb-6 duration-200"
@@ -185,38 +160,81 @@ export function NewResellerButton({
               small,
               discount,
             })}
-            <div className="mt-auto flex items-center gap-2 pt-2">
-              {step > 0 && !fromReview && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={pending}
-                  onClick={back}
-                >
-                  <ArrowLeftIcon /> Back
-                </Button>
-              )}
-              <div className="flex-1" />
-              {id === "review" ? (
-                <Button type="submit" disabled={!ok.review || pending}>
-                  {pending ? <Spinner /> : <CheckIcon />}
-                  Create reseller
-                </Button>
-              ) : (
-                <Button type="submit" disabled={!ok[id]}>
-                  {fromReview
-                    ? "Save"
-                    : optionalEmpty(id, form, chosen)
-                      ? "Skip"
-                      : "Continue"}
-                </Button>
-              )}
-            </div>
+            <WizardButtons
+              review={id === "review"}
+              ready={ok[id]}
+              pending={pending}
+              onBack={step > 0 && !fromReview ? back : undefined}
+              label={fromReview ? "Save" : optionalEmpty(id, form, chosen) ? "Skip" : "Continue"}
+            />
           </form>
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/** Whether each step's answer can be sent on. */
+function stepReady(form: ResellerForm, problems: ReturnType<typeof resellerErrors>): Record<StepId, boolean> {
+  return {
+    name: Boolean(form.name.trim()),
+    storefronts: !problems.maxProducts,
+    stores: !problems.maxTenants,
+    discount: !problems.wholesalePercent,
+    billing: true,
+    email: !problems.billingEmail && !problems.stripeCustomerId,
+    prices: !problems.priceSmall && !problems.priceMedium && !problems.priceLarge,
+    brand: !problems.brandName && !problems.brandUrl,
+    move: true,
+    review: resellerFormReady(form)
+  };
+}
+
+/** "Question 3 of 9" and a thin bar; the last step is the summary. */
+function WizardProgress({ step, total, review }: { step: number; total: number; review: boolean }) {
+  return (
+    <div className="space-y-2 px-6 pt-6">
+      <p className="text-muted-foreground text-xs tabular-nums">
+        New reseller · {review ? "Check and create" : `Question ${step + 1} of ${total - 1}`}
+      </p>
+      <Progress value={((step + 1) / total) * 100} aria-label="Progress" className="h-1" />
+    </div>
+  );
+}
+
+/** Back on the left (left out on the first question and when changing one answer), the next step on the right. */
+function WizardButtons({
+  review,
+  ready,
+  pending,
+  onBack,
+  label
+}: {
+  review: boolean;
+  ready: boolean;
+  pending: boolean;
+  onBack?: () => void;
+  label: string;
+}) {
+  return (
+    <div className="mt-auto flex items-center gap-2 pt-2">
+      {onBack && (
+        <Button type="button" variant="ghost" size="sm" disabled={pending} onClick={onBack}>
+          <ArrowLeftIcon /> Back
+        </Button>
+      )}
+      <div className="flex-1" />
+      {review ? (
+        <Button type="submit" disabled={!ready || pending}>
+          {pending ? <Spinner /> : <CheckIcon />}
+          Create reseller
+        </Button>
+      ) : (
+        <Button type="submit" disabled={!ready}>
+          {label}
+        </Button>
+      )}
+    </div>
   );
 }
 
