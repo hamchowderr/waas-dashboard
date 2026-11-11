@@ -2,12 +2,12 @@ import "server-only";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import type { Product } from "@/lib/api/types";
+import type { ProductDetail } from "@/lib/api/types";
 import { customerFacingShop, type KitContext } from "@/lib/sales-kit";
 import { loadSalesKit } from "@/lib/sales-kit-files";
 
 /** The storefront the Sales Kit pages are about: the one picked in the header, else the viewer's own. */
-export async function pickProduct(productId: string | undefined): Promise<{ product: Product | undefined; first: Product | undefined }> {
+export async function pickProduct(productId: string | undefined): Promise<{ product: ProductDetail | undefined; first: ProductDetail | undefined }> {
   const api = getAdminApi();
   const viewer = await getViewer();
   const products = await api.products();
@@ -17,7 +17,7 @@ export async function pickProduct(productId: string | undefined): Promise<{ prod
 }
 
 /** The kit and what fills it in for one storefront: its brand, shop address, support email and the viewer's name. */
-export async function loadKitFor(product: Product) {
+export async function loadKitFor(product: ProductDetail) {
   const api = getAdminApi();
   const [viewer, kit, branding, storefront] = await Promise.all([
     getViewer(),
@@ -25,6 +25,8 @@ export async function loadKitFor(product: Product) {
     api.branding(product.id).catch(() => null),
     api.storefront(product.id).catch(() => null)
   ]);
+  // A reseller's storefront: its sites cost the list price less the reseller's wholesale discount.
+  const reseller = product.resellerId ? await api.reseller(product.resellerId).catch(() => null) : null;
   const context: Omit<KitContext, "prices" | "plan"> = {
     brand: branding?.shown.name ?? product.name,
     shop: customerFacingShop(storefront?.domain),
@@ -33,5 +35,5 @@ export async function loadKitFor(product: Product) {
     // Demo links stay a blank in messages: Playground links name the theme's repository, so a seller pastes their own.
     demo: null
   };
-  return { ...kit, context };
+  return { ...kit, context, wholesalePercent: reseller?.wholesalePercent ?? null };
 }

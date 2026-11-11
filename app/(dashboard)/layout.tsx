@@ -24,8 +24,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const brand = (await getViewer().catch(() => null))?.brand;
   if (!brand) return {};
   return {
-    ...(brand.name ? { title: { default: brand.name, template: `%s · ${brand.name}` } } : {}),
-    ...(brand.iconUrl ? { icons: { icon: brand.iconUrl } } : {})
+    ...(brand.name
+      ? { title: { default: brand.name, template: `%s · ${brand.name}` }, appleWebApp: { capable: true, title: brand.name, statusBarStyle: "default" } }
+      : {}),
+    ...(brand.iconUrl ? { icons: { icon: brand.iconUrl, apple: brand.iconUrl } } : {})
   };
 }
 

@@ -27,6 +27,7 @@ import { RestoreBackup } from "./restore-backup";
 import { BackUpNow } from "./back-up-now";
 import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
+import { DownloadSite } from "./download-site";
 import { WordPressLoginButton } from "../../wordpress-login";
 import { HighLevelLinkPanel } from "./highlevel-link";
 import { SitePluginsCard } from "./site-plugins";
@@ -146,6 +147,8 @@ export default async function StorePage({ params, searchParams }: Params) {
             )}
           </>
         )}
+        {/* A copy of the whole site to take anywhere: for anyone who may change the store. */}
+        {!!viewer && canChange(viewer) && canRestore && !waitingForSite && <DownloadSite tenantId={tenant.id} storeName={tenant.name} />}
         <StoreActions
           tenantId={tenant.id}
           storeName={tenant.name}

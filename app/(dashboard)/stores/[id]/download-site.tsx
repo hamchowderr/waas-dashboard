@@ -1,0 +1,142 @@
+"use client";
+
+import * as React from "react";
+import { DownloadIcon } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusCode, type SiteDownload } from "@/lib/api/types";
+import { formatAgo, formatBytes, formatDate } from "@/lib/format";
+import { siteDownloadStatus, startSiteDownload } from "../../actions";
+
+/** How often the dialog asks again while a copy is being made. */
+const POLL_MS = 5000;
+
+/**
+ * "Download site": a copy of the whole site (WordPress, every file and the database, with a README on restoring it)
+ * as one zip that restores on any WordPress host. Opens on the newest copy of the last week; a new one takes a few
+ * minutes and the dialog waits for it. Each link works for an hour, so it is fetched fresh when the dialog opens.
+ */
+export function DownloadSite({ tenantId, storeName }: { tenantId: string; storeName: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [download, setDownload] = React.useState<SiteDownload | null | undefined>(undefined);
+  const [starting, setStarting] = React.useState(false);
+
+  const refresh = React.useCallback(async () => {
+    const result = await siteDownloadStatus(tenantId);
+    if (result.ok) setDownload(result.data);
+    else toast.error(result.error);
+  }, [tenantId]);
+
+  const show = () => {
+    setDownload(undefined);
+    setOpen(true);
+    void refresh();
+  };
+
+  const pending = download?.statusCode === StatusCode.Pending;
+  React.useEffect(() => {
+    if (!open || !pending) return;
+    const timer = setInterval(() => void refresh(), POLL_MS);
+    return () => clearInterval(timer);
+  }, [open, pending, refresh]);
+
+  const start = async () => {
+    setStarting(true);
+    try {
+      const result = await startSiteDownload(tenantId);
+      if (result.ok) setDownload(result.data);
+      else toast.error(result.error);
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={show}>
+        <DownloadIcon />
+        Download site
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Download {storeName}</DialogTitle>
+            <DialogDescription>
+              The whole site in one zip: WordPress, its themes, plugins and uploads, and the database, with a README on
+              putting it up at any WordPress host. The site keeps running while the copy is made.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-muted/50 rounded-lg border p-4 text-sm" aria-live="polite">
+            <CopyState download={download} />
+          </div>
+
+          <DialogFooter>
+            <CopyButtons download={download} starting={starting} onStart={start} />
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/** What the dialog says about the newest copy: being checked, being made, ready, failed or none yet. */
+function CopyState({ download }: { download: SiteDownload | null | undefined }) {
+  if (download === undefined) {
+    return (
+      <p className="text-muted-foreground flex items-center gap-2">
+        <Spinner /> Checking for a recent copy…
+      </p>
+    );
+  }
+  if (download?.statusCode === StatusCode.Pending) {
+    return (
+      <div className="space-y-1">
+        <p className="flex items-center gap-2 font-medium">
+          <Spinner /> Making the copy…
+        </p>
+        <p className="text-muted-foreground">Usually a few minutes; sites with large media libraries take longer. You can close this and come back.</p>
+      </div>
+    );
+  }
+  if (download?.url) {
+    return (
+      <div className="space-y-1">
+        <p className="font-medium break-all">{download.fileName}</p>
+        <p className="text-muted-foreground">
+          {formatBytes(download.sizeBytes)} · made {formatAgo(download.dateDone ?? download.dateCreated)} · kept until {formatDate(download.expiresAt)}
+        </p>
+      </div>
+    );
+  }
+  if (download?.statusCode === StatusCode.Failed) {
+    return <p className="text-destructive">The last copy could not be made. The site itself is fine. Try again.</p>;
+  }
+  return <p className="text-muted-foreground">No copy from the last week. Make one now.</p>;
+}
+
+/** Make a (new) copy, and Download zip once one is ready. Nothing while one is being made. */
+function CopyButtons({ download, starting, onStart }: { download: SiteDownload | null | undefined; starting: boolean; onStart: () => void }) {
+  if (download === undefined || download?.statusCode === StatusCode.Pending) return null;
+  const url = download?.url ?? null;
+  const label = url ? "Make a new copy" : download?.statusCode === StatusCode.Failed ? "Try again" : "Make a copy";
+  return (
+    <>
+      <Button variant={url ? "outline" : "default"} disabled={starting} onClick={onStart}>
+        {starting && <Spinner />}
+        {label}
+      </Button>
+      {url && (
+        <Button asChild>
+          <a href={url} download={download!.fileName}>
+            <DownloadIcon />
+            Download zip
+          </a>
+        </Button>
+      )}
+    </>
+  );
+}

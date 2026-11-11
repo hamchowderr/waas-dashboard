@@ -45,6 +45,7 @@ export default async function SellPage({ searchParams }: { searchParams: Promise
         groups={kit.playbooks.map((p) => ({ id: p.id, title: p.title, plan: p.plan, finder: p.finder, who: firstSentence(p.sections.find((s) => s.title === "Who")?.body ?? "") }))}
         guides={kit.guides}
         context={kit.context}
+        wholesalePercent={kit.wholesalePercent}
       />
     </div>
   );

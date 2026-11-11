@@ -29,9 +29,9 @@ import { moveSiteIn } from "../actions";
 import { ImportCodeSteps } from "./import-code";
 
 const SIZES = [
-  { value: "small", label: "Small (5 GB)" },
-  { value: "medium", label: "Medium (10 GB)" },
-  { value: "large", label: "Large (25 GB)" },
+  { value: "small", label: "Small (10 GB)" },
+  { value: "medium", label: "Medium (20 GB)" },
+  { value: "large", label: "Large (30 GB)" },
 ];
 
 /**

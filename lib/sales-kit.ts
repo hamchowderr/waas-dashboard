@@ -22,7 +22,7 @@ export const PLAN_NAMES: Record<Plan, string> = {
 export const SUGGESTED_PRICES: Record<Plan, number> = { website: 49, bookings: 79, store: 99, community: 129, everything: 249 };
 
 /** The seller's cost per site, Small, monthly, at list price, in whole dollars. */
-export const LIST_COST: Record<Plan, number> = { website: 12, bookings: 19, store: 29, community: 39, everything: 79 };
+const LIST_COST: Record<Plan, number> = { website: 12, bookings: 19, store: 29, community: 49, everything: 79 };
 
 /** The groups in the order the Sell page shows them; ids match the CRM's customer group field. */
 export const GROUP_IDS = ["shops", "regulated", "courses", "chambers", "churches", "franchises", "agencies", "developers"] as const;
@@ -269,8 +269,18 @@ export function campaign(playbook: Playbook): Step[] {
   return steps.sort((a, b) => a.day - b.day || order[a.channel] - order[b.channel]);
 }
 
-/** What the seller keeps a month on one site at a given price, at list cost. */
-export const keep = (plan: Plan, price: number) => Math.max(0, price - LIST_COST[plan]);
+/**
+ * What one Small site costs a month: the list price for a seller (before volume savings), or the list price less the
+ * reseller's wholesale discount, as its monthly bill charges it. Rounded to cents.
+ */
+export const cost = (plan: Plan, wholesalePercent: number | null) =>
+  Math.round(LIST_COST[plan] * (100 - (wholesalePercent ?? 0))) / 100;
+
+/** What the seller or reseller keeps a month on one site at a given price. */
+export const keep = (plan: Plan, price: number, wholesalePercent: number | null) => Math.max(0, Math.round((price - cost(plan, wholesalePercent)) * 100) / 100);
+
+/** Dollars without cents when they're whole: 7.2 is "7.20", 12 is "12". */
+export const dollars = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
 
 /** FluentCRM fills these per contact: a prospect's first name is the business's name. */
 const SMARTCODES: Record<string, string> = { prospect: "there", business: "{{contact.first_name}}" };

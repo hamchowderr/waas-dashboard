@@ -81,7 +81,8 @@ import type {
   WebhookEndpointInput,
   WebhookFilter,
   WebhookSecret,
-  WordPressLogin
+  WordPressLogin,
+  SiteDownload
 } from "./types";
 import { FixtureAdminApi } from "./fixtures";
 import { fixtureScope, getViewer, sessionHeaders } from "@/auth";
@@ -156,6 +157,10 @@ export interface AdminApi {
   checkHighLevel(tenantId: string): Promise<HighLevelCheck>;
   /** A one-time link that opens the store's wp-admin signed in. Owners and admins only. */
   wordPressLogin(tenantId: string): Promise<WordPressLogin>;
+  /** The store's newest copy to download from the last 7 days, or null. */
+  siteDownload(tenantId: string): Promise<SiteDownload | null>;
+  /** Starts a copy of the whole store to download, or gives the one being made or just made. */
+  startSiteDownload(tenantId: string): Promise<SiteDownload>;
   /** The same for the product's ready-made storefront. */
   storefrontWordPressLogin(productId: string): Promise<WordPressLogin>;
   /**
