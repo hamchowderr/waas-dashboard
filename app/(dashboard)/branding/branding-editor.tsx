@@ -1,25 +1,75 @@
 "use client";
 
 import * as React from "react";
-import { ImageIcon, ServerCogIcon, Trash2Icon, UploadIcon, EyeIcon, PaletteIcon } from "lucide-react";
+import {
+  ImageIcon,
+  ServerCogIcon,
+  Trash2Icon,
+  UploadIcon,
+  EyeIcon,
+  PaletteIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
-import type { BrandImage, Branding, BrandingView, TeamOf } from "@/lib/api/types";
-import { BRAND_IMAGE_LIMITS, BRAND_IMAGE_TYPES, brandColorVars } from "@/lib/branding";
+import type {
+  BrandImage,
+  Branding,
+  BrandingView,
+  TeamOf,
+} from "@/lib/api/types";
+import {
+  BRAND_IMAGE_LIMITS,
+  BRAND_IMAGE_TYPES,
+  brandColorVars,
+} from "@/lib/branding";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardIcon,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { removeBrandImage, saveBranding, uploadBrandImage } from "../actions";
 
-type Form = { name: string; color: string; supportEmail: string; shopUrl: string };
+type Form = {
+  name: string;
+  color: string;
+  supportEmail: string;
+  shopUrl: string;
+};
 
-const toForm = (b: Branding): Form => ({ name: b.name ?? "", color: b.color ?? "", supportEmail: b.supportEmail ?? "", shopUrl: b.shopUrl ?? "" });
+const toForm = (b: Branding): Form => ({
+  name: b.name ?? "",
+  color: b.color ?? "",
+  supportEmail: b.supportEmail ?? "",
+  shopUrl: b.shopUrl ?? "",
+});
 
-const IMAGES: { kind: BrandImage; title: string; about: string; key: "logoUrl" | "iconUrl" }[] = [
-  { kind: "logo", key: "logoUrl", title: "Logo", about: "Shown at the top of the sidebar and on the sign-in page. PNG, JPEG or WebP, up to 256 KB. A square or wide logo on a clear background works best." },
-  { kind: "icon", key: "iconUrl", title: "Icon", about: "The small picture on the browser tab. A square PNG or .ico, up to 64 KB." }
+const IMAGES: {
+  kind: BrandImage;
+  title: string;
+  about: string;
+  key: "logoUrl" | "iconUrl";
+}[] = [
+  {
+    kind: "logo",
+    key: "logoUrl",
+    title: "Logo",
+    about:
+      "Top of the sidebar and the sign-in page. PNG, JPEG or WebP, up to 256 KB.",
+  },
+  {
+    kind: "icon",
+    key: "iconUrl",
+    title: "Icon",
+    about:
+      "The small picture on the browser tab. A square PNG or .ico, up to 64 KB.",
+  },
 ];
 
 /**
@@ -31,7 +81,7 @@ export function BrandingEditor({
   initial,
   canEdit,
   inherits,
-  brandName
+  brandName,
 }: {
   of: TeamOf;
   initial: BrandingView;
@@ -46,7 +96,8 @@ export function BrandingEditor({
   const [busyImage, setBusyImage] = React.useState<BrandImage | null>(null);
   const changed = JSON.stringify(toForm(view)) !== JSON.stringify(form);
   const colorValid = !form.color || /^#[0-9a-f]{6}$/i.test(form.color);
-  const shopValid = !form.shopUrl.trim() || /^https?:\/\/\S+\.\S+$/i.test(form.shopUrl.trim());
+  const shopValid =
+    !form.shopUrl.trim() || /^https?:\/\/\S+\.\S+$/i.test(form.shopUrl.trim());
 
   const applied = (next: BrandingView) => {
     setView(next);
@@ -59,7 +110,7 @@ export function BrandingEditor({
         name: form.name.trim() || null,
         color: form.color.trim() || null,
         supportEmail: form.supportEmail.trim() || null,
-        shopUrl: form.shopUrl.trim() || null
+        shopUrl: form.shopUrl.trim() || null,
       });
       if (!result.ok) return void toast.error(result.error);
       applied(result.data);
@@ -67,8 +118,15 @@ export function BrandingEditor({
     });
 
   const upload = async (kind: BrandImage, file: File) => {
-    if (file.type && !BRAND_IMAGE_TYPES[kind].includes(file.type)) return void toast.error("Choose a PNG, JPEG or WebP image" + (kind === "icon" ? ", or an .ico file" : ""));
-    if (file.size > BRAND_IMAGE_LIMITS[kind]) return void toast.error(`The ${kind} must be at most ${BRAND_IMAGE_LIMITS[kind] / 1024} KB`);
+    if (file.type && !BRAND_IMAGE_TYPES[kind].includes(file.type))
+      return void toast.error(
+        "Choose a PNG, JPEG or WebP image" +
+          (kind === "icon" ? ", or an .ico file" : ""),
+      );
+    if (file.size > BRAND_IMAGE_LIMITS[kind])
+      return void toast.error(
+        `The ${kind} must be at most ${BRAND_IMAGE_LIMITS[kind] / 1024} KB`,
+      );
     setBusyImage(kind);
     const data = new FormData();
     data.set("kind", kind);
@@ -88,7 +146,8 @@ export function BrandingEditor({
     setView(result.data);
   };
 
-  const fromParent = (own: string | null, shown: string | null) => (inherits && !own && shown ? `From ${inherits}: ${shown}` : undefined);
+  const fromParent = (own: string | null, shown: string | null) =>
+    inherits && !own && shown ? `From ${inherits}: ${shown}` : undefined;
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -100,7 +159,8 @@ export function BrandingEditor({
             </CardIcon>
             <CardTitle>Name, color and help</CardTitle>
             <CardDescription>
-              What your team sees in place of AnyPress. Leave a field empty to keep {inherits ? `${inherits}'s` : "the standard"} look.
+              What your team sees in place of AnyPress. Leave a field empty to
+              keep {inherits ? `${inherits}'s` : "the standard"} look.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -108,21 +168,26 @@ export function BrandingEditor({
               <div className="space-y-1 text-sm">
                 <div className="font-medium">Name</div>
                 <p className="text-muted-foreground">
-                  {brandName ? `${brandName}, the brand name in Settings.` : "AnyPress until a brand name is set in Settings."}
+                  {brandName
+                    ? `${brandName}, the brand name in Settings.`
+                    : "AnyPress until a brand name is set in Settings."}
                 </p>
               </div>
             ) : (
-            <div className="space-y-2">
-              <Label htmlFor="brand-name">Name</Label>
-              <Input
-                id="brand-name"
-                maxLength={60}
-                value={form.name}
-                disabled={!canEdit}
-                placeholder={fromParent(view.name, view.shown.name) ?? "Your business name"}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="brand-name">Name</Label>
+                <Input
+                  id="brand-name"
+                  maxLength={60}
+                  value={form.name}
+                  disabled={!canEdit}
+                  placeholder={
+                    fromParent(view.name, view.shown.name) ??
+                    "Your business name"
+                  }
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
             )}
             <div className="space-y-2">
               <Label htmlFor="brand-color">Main color</Label>
@@ -131,7 +196,11 @@ export function BrandingEditor({
                   type="color"
                   aria-label="Pick the main color"
                   className="h-9 w-12 shrink-0 cursor-pointer rounded-md border bg-transparent p-1 disabled:cursor-not-allowed"
-                  value={colorValid && form.color ? form.color : (view.shown.color ?? "#c8264d")}
+                  value={
+                    colorValid && form.color
+                      ? form.color
+                      : (view.shown.color ?? "#c8264d")
+                  }
                   disabled={!canEdit}
                   onChange={(e) => setForm({ ...form, color: e.target.value })}
                 />
@@ -141,17 +210,27 @@ export function BrandingEditor({
                   maxLength={7}
                   value={form.color}
                   disabled={!canEdit}
-                  placeholder={view.shown.color && !view.color ? view.shown.color : "#c8264d"}
+                  placeholder={
+                    view.shown.color && !view.color
+                      ? view.shown.color
+                      : "#c8264d"
+                  }
                   aria-invalid={!colorValid}
                   onChange={(e) => setForm({ ...form, color: e.target.value })}
                 />
                 {form.color && canEdit && (
-                  <Button variant="ghost" size="sm" onClick={() => setForm({ ...form, color: "" })}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setForm({ ...form, color: "" })}
+                  >
                     Clear
                   </Button>
                 )}
               </div>
-              <p className="text-muted-foreground text-xs">Buttons, links and the selected page in the sidebar.</p>
+              <p className="text-muted-foreground text-xs">
+                Buttons, links and the selected page in the sidebar.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="brand-support">Support email</Label>
@@ -161,10 +240,18 @@ export function BrandingEditor({
                 maxLength={254}
                 value={form.supportEmail}
                 disabled={!canEdit}
-                placeholder={fromParent(view.supportEmail, view.shown.supportEmail) ?? "help@yourbusiness.com"}
-                onChange={(e) => setForm({ ...form, supportEmail: e.target.value })}
+                placeholder={
+                  fromParent(view.supportEmail, view.shown.supportEmail) ??
+                  "help@yourbusiness.com"
+                }
+                onChange={(e) =>
+                  setForm({ ...form, supportEmail: e.target.value })
+                }
               />
-              <p className="text-muted-foreground text-xs">Shown at the bottom of the sidebar, so your team knows who to ask.</p>
+              <p className="text-muted-foreground text-xs">
+                Shown at the bottom of the sidebar, so your team knows who to
+                ask.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="brand-shop">Shop link</Label>
@@ -174,116 +261,175 @@ export function BrandingEditor({
                 maxLength={500}
                 value={form.shopUrl}
                 disabled={!canEdit}
-                placeholder={fromParent(view.shopUrl, view.shown.shopUrl) ?? "https://shop.yourbusiness.com"}
+                placeholder={
+                  fromParent(view.shopUrl, view.shown.shopUrl) ??
+                  "https://shop.yourbusiness.com"
+                }
                 aria-invalid={!shopValid}
                 onChange={(e) => setForm({ ...form, shopUrl: e.target.value })}
               />
               <p className="text-muted-foreground text-xs">
-                Where customers buy a website from you. The &ldquo;Start your website&rdquo; button on your demo page goes here.
+                Where customers buy a website from you. The &ldquo;Start your
+                website&rdquo; button on your demo page goes here.
               </p>
             </div>
             {canEdit && (
-              <Button size="sm" disabled={!changed || !colorValid || !shopValid || pending} onClick={save}>
+              <Button
+                size="sm"
+                disabled={!changed || !colorValid || !shopValid || pending}
+                onClick={save}
+              >
                 {pending && <Spinner />}
                 Save
               </Button>
             )}
           </CardContent>
         </Card>
+      </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {IMAGES.map((image) => {
-            const own = view[image.key];
-            const shown = view.shown[image.key];
-            return (
-              <Card key={image.kind}>
-                <CardHeader>
-                  <CardIcon>
-                    <ImageIcon />
-                  </CardIcon>
-                  <CardTitle>{image.title}</CardTitle>
-                  <CardDescription>{image.about}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="bg-muted/40 flex h-24 items-center justify-center rounded-md border">
+      {/* The preview with the logo and icon beside the form, so the whole brand fits on one screen. */}
+      <div className="space-y-4">
+        <Card className="h-fit">
+          <CardHeader>
+            <CardIcon>
+              <EyeIcon />
+            </CardIcon>
+            <CardTitle>How your team sees it</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BrandPreview brand={view.shown} />
+          </CardContent>
+        </Card>
+        {/* Logo and icon in one card, a row each, so the preview and both pictures fit beside the form. */}
+        <Card>
+          <CardHeader>
+            <CardIcon>
+              <ImageIcon />
+            </CardIcon>
+            <CardTitle>Logo and icon</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {IMAGES.map((image) => {
+              const own = view[image.key];
+              const shown = view.shown[image.key];
+              return (
+                <div key={image.kind} className="flex items-start gap-3">
+                  <div className="bg-muted/40 flex h-14 w-20 shrink-0 items-center justify-center rounded-md border">
                     {shown ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={shown} alt={`${image.title} preview`} className="max-h-16 max-w-[80%] object-contain" />
+                      <img
+                        src={shown}
+                        alt={`${image.title} preview`}
+                        className="max-h-12 max-w-[85%] object-contain"
+                      />
                     ) : (
                       <ImageIcon className="text-muted-foreground size-6" />
                     )}
                   </div>
-                  {!own && shown && inherits && <p className="text-muted-foreground text-xs">Using {inherits}&apos;s {image.kind}.</p>}
-                  {canEdit && (
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" asChild disabled={busyImage !== null}>
-                        <label className="cursor-pointer">
-                          {busyImage === image.kind ? <Spinner /> : <UploadIcon />}
-                          {own ? "Replace" : "Upload"}
-                          <input
-                            type="file"
-                            className="sr-only"
-                            accept={BRAND_IMAGE_TYPES[image.kind].join(",") + (image.kind === "icon" ? ",.ico" : "")}
-                            disabled={busyImage !== null}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              e.target.value = "";
-                              if (file) void upload(image.kind, file);
-                            }}
-                          />
-                        </label>
-                      </Button>
-                      {own && (
-                        <Button variant="ghost" size="sm" disabled={busyImage !== null} onClick={() => void remove(image.kind)}>
-                          <Trash2Icon />
-                          Remove
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <p className="text-sm">
+                      <span className="font-medium">{image.title}. </span>
+                      <span className="text-muted-foreground">
+                        {image.about}
+                      </span>
+                    </p>
+                    {!own && shown && inherits && (
+                      <p className="text-muted-foreground text-xs">
+                        Using {inherits}&apos;s {image.kind}.
+                      </p>
+                    )}
+                    {canEdit && (
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          disabled={busyImage !== null}
+                        >
+                          <label className="cursor-pointer">
+                            {busyImage === image.kind ? (
+                              <Spinner />
+                            ) : (
+                              <UploadIcon />
+                            )}
+                            {own ? "Replace" : "Upload"}
+                            <input
+                              type="file"
+                              className="sr-only"
+                              accept={
+                                BRAND_IMAGE_TYPES[image.kind].join(",") +
+                                (image.kind === "icon" ? ",.ico" : "")
+                              }
+                              disabled={busyImage !== null}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = "";
+                                if (file) void upload(image.kind, file);
+                              }}
+                            />
+                          </label>
                         </Button>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                        {own && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={busyImage !== null}
+                            onClick={() => void remove(image.kind)}
+                          >
+                            <Trash2Icon />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
       </div>
-
-      <Card className="h-fit">
-        <CardHeader>
-          <CardIcon>
-            <EyeIcon />
-          </CardIcon>
-          <CardTitle>Preview</CardTitle>
-          <CardDescription>How the top of the sidebar looks to your team.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <BrandPreview brand={view.shown} />
-        </CardContent>
-      </Card>
     </div>
   );
 }
 
 function BrandPreview({ brand }: { brand: Branding }) {
   return (
-    <div className="bg-sidebar space-y-3 rounded-2xl p-3" style={(brand.color ? brandColorVars(brand.color) : {}) as React.CSSProperties}>
+    <div
+      className="bg-sidebar space-y-3 rounded-2xl p-3"
+      style={
+        (brand.color ? brandColorVars(brand.color) : {}) as React.CSSProperties
+      }
+    >
       <div className="flex items-center gap-2">
         {brand.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={brand.logoUrl} alt="" className="h-8 max-w-28 object-contain" />
+          <img
+            src={brand.logoUrl}
+            alt=""
+            className="h-8 max-w-28 object-contain"
+          />
         ) : (
           <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-[5px]">
             <ServerCogIcon className="size-4" />
           </span>
         )}
-        <span className="truncate font-semibold">{brand.name ?? "AnyPress"}</span>
+        <span className="truncate font-semibold">
+          {brand.name ?? "AnyPress"}
+        </span>
       </div>
-      <div className="bg-sidebar-accent text-sidebar-accent-foreground rounded-md px-2 py-1.5 text-sm">Overview</div>
+      <div className="bg-sidebar-accent text-sidebar-accent-foreground rounded-md px-2 py-1.5 text-sm">
+        Overview
+      </div>
       <div className="px-2 text-sm">Stores</div>
       <Button size="sm" className="w-full">
         A button
       </Button>
-      {brand.name && <p className="text-muted-foreground text-center text-xs">Powered by AnyPress</p>}
+      {brand.name && (
+        <p className="text-muted-foreground text-center text-xs">
+          Powered by AnyPress
+        </p>
+      )}
     </div>
   );
 }

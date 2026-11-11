@@ -294,7 +294,9 @@ body {
 @media (min-width: 64rem) and (min-height: 36rem) {
   [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child,
   [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child > div,
-  [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child > div > div:has([data-fit="table"]) {
+  [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child > div > div:has([data-fit="table"]),
+  [data-slot="sidebar-inset"] [data-slot="tabs"]:has([data-fit="table"]),
+  [data-slot="sidebar-inset"] [data-slot="tabs-content"]:has([data-fit="table"]) {
     display: flex;
     flex: 1 1 0%;
     flex-direction: column;
@@ -305,7 +307,9 @@ body {
     min-height: 26rem;
   }
   /* Everything else on the page keeps its own height; only the table gives way. */
-  [data-slot="sidebar-inset"] > div:last-child > div > div:has([data-fit="table"]) > :not([data-fit="table"]) {
+  [data-slot="sidebar-inset"] > div:last-child > div > div:has([data-fit="table"]) > :not([data-fit="table"], :has([data-fit="table"])),
+  [data-slot="tabs"]:has([data-fit="table"]) > :not([data-slot="tabs-content"]),
+  [data-slot="tabs-content"]:has([data-fit="table"]) > :not([data-fit="table"]) {
     flex-shrink: 0;
   }
   [data-fit="table"] > [data-slot="card-content"] {
