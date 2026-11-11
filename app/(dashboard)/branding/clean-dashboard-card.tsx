@@ -31,7 +31,7 @@ export function CleanDashboardCard({ productId, initial, canEdit }: { productId:
   return (
     <Card>
       <CardHeader>
-        <CardIcon tone="teal">
+        <CardIcon>
           <LayoutDashboardIcon />
         </CardIcon>
         <CardTitle>

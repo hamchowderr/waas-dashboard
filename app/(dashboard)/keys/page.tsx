@@ -49,7 +49,7 @@ export default async function KeysPage({
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="API Keys"
-        description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}>
+        description={`The keys ${product.name}'s storefront and integrations sign in to the API with.`}>
         {/* Renaming, the store limit and new sellers are on the Storefronts page. */}
         {isAdmin && (
           <Button asChild variant="outline" size="sm">

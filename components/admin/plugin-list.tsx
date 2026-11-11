@@ -6,7 +6,31 @@ import { formatDate } from "@/lib/format";
 import { offDirectory, type TemplateContents } from "@/lib/template-contents";
 
 /** wordpress.org keeps each plugin's icon under one of these names; tried in order. */
-const iconFiles = ["icon-128x128.png", "icon-128x128.gif", "icon.svg", "icon-128x128.jpg"];
+const iconFiles = ["icon.svg", "icon-128x128.png", "icon-128x128.gif", "icon-128x128.jpg"];
+
+/**
+ * The template's own plugins carry their logo with the dashboard (public/plugins), so they never wait on
+ * wordpress.org or show a broken picture; other plugins load theirs from wordpress.org.
+ */
+const localIcons: Record<string, string> = {
+  "fluent-security": "svg",
+  "fluent-smtp": "svg",
+  "fluent-crm": "svg",
+  fluentform: "png",
+  "fluent-booking": "svg",
+  "fluent-cart": "svg",
+  "fluent-community": "svg",
+  "fluent-player": "svg",
+  "fluent-affiliate": "svg",
+  "fluent-support": "svg",
+  "easy-code-manager": "svg",
+  "seo-by-rank-math": "svg",
+  automatorwp: "png",
+  "wp-fusion-lite": "png",
+  leadconnector: "png",
+  woocommerce: "svg",
+  "contact-form-7": "svg"
+};
 
 /** Our own plugins, which aren't on wordpress.org, show the dashboard's own mark. */
 const ownPlugin = (slug: string) => slug.startsWith("anypress-") || slug.startsWith("waas-");
@@ -33,16 +57,24 @@ export function PluginIcon({ slug, name, icon, className = "size-6" }: { slug: s
         ? ownMark
           ? [ownMark]
           : []
-        : offDirectory.has(slug)
-          ? []
-          : [...(icon ? [icon] : []), ...iconFiles.map((file) => `https://ps.w.org/${slug}/assets/${file}`)],
+        : localIcons[slug]
+          ? [`/plugins/${slug}.${localIcons[slug]}`]
+          : offDirectory.has(slug)
+            ? []
+            : [...(icon ? [icon] : []), ...iconFiles.map((file) => `https://ps.w.org/${slug}/assets/${file}`)],
     [slug, icon, ownMark]
   );
   const [attempt, setAttempt] = React.useState(0);
+  // A picture that failed before the page came alive never fired onError: check once it is on screen.
+  const img = React.useRef<HTMLImageElement>(null);
+  React.useEffect(() => {
+    const el = img.current;
+    if (el && el.complete && el.naturalWidth === 0) setAttempt((a) => a + 1);
+  }, [attempt]);
   if (attempt >= sources.length) {
     return (
       <span
-        className={`bg-card text-muted-foreground ring-border flex shrink-0 items-center justify-center rounded text-xs font-semibold ring-1 ${className}`}
+        className={`bg-muted text-foreground/70 ring-border flex shrink-0 items-center justify-center rounded-lg text-[0.8125rem] font-semibold ring-1 ring-inset ${className}`}
         aria-hidden={true}>
         {name.charAt(0)}
       </span>
@@ -51,6 +83,8 @@ export function PluginIcon({ slug, name, icon, className = "size-6" }: { slug: s
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
+      ref={img}
+      key={sources[attempt]}
       src={sources[attempt]}
       alt=""
       loading="lazy"

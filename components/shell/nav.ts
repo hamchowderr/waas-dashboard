@@ -1,5 +1,4 @@
 import {
-  ActivityIcon,
   BellIcon,
   ArchiveIcon,
   GaugeIcon,
@@ -12,7 +11,8 @@ import {
   BlocksIcon,
   PaletteIcon,
   PlugIcon,
-  ShoppingBagIcon,
+  PanelsTopLeftIcon,
+  ScrollTextIcon,
   StoreIcon,
   UsersIcon,
   WebhookIcon,
@@ -50,7 +50,7 @@ export const NAV: NavSection[] = [
     title: "Websites",
     icon: StoreIcon,
     links: [
-      { title: "Stores", href: "/stores", icon: StoreIcon, description: "Every customer website, its status and address" },
+      { title: "Stores", href: "/stores", icon: PanelsTopLeftIcon, description: "Every customer website, its status and address" },
       { title: "Backups", href: "/backups", icon: ArchiveIcon, description: "Saved copies of each store, to restore" },
       { title: "Activity Log", href: "/jobs", icon: ListChecksIcon, description: "Every task run on a store, and any that failed" }
     ]
@@ -72,9 +72,9 @@ export const NAV: NavSection[] = [
   },
   {
     title: "Accounts",
-    icon: ShoppingBagIcon,
+    icon: StoreIcon,
     links: [
-      { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true, description: "Every seller and reseller shop" },
+      { title: "Storefronts", href: "/storefronts", icon: StoreIcon, adminOnly: true, global: true, description: "Every seller and reseller shop" },
       { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true, description: "People asking to sell, waiting for an answer" },
       { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true, description: "Partners with several storefronts and one bill" },
       { title: "Reseller Account", href: "/reseller", icon: HandshakeIcon, resellerOnly: true, global: true, description: "Your bill, storefronts, invoices and partner keys" }
@@ -96,7 +96,7 @@ export const NAV: NavSection[] = [
       { title: "Integrations", href: "/integrations", icon: BlocksIcon, description: "n8n, Zapier, Make, HighLevel, AI apps and the API, with how-to guides" },
       { title: "API Keys", href: "/keys", icon: KeyRoundIcon, description: "Keys that let your shop or an automation make stores" },
       { title: "Webhooks", href: "/webhooks", icon: WebhookIcon, description: "Tell other apps when something happens to a store" },
-      { title: "API Log", href: "/requests", icon: ActivityIcon, description: "Every call made to the API, kept 30 days" }
+      { title: "API Log", href: "/requests", icon: ScrollTextIcon, description: "Every call made to the API, kept 30 days" }
     ]
   }
 ];

@@ -2,30 +2,35 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   AlertTriangle,
-  BellIcon,
   ArchiveIcon,
   Check,
   ChevronDown,
   ChevronRight,
-  GlobeIcon,
-  HammerIcon,
+  CircleAlertIcon,
+  CircleCheckIcon,
+  HistoryIcon,
   HourglassIcon,
   InboxIcon,
   ListChecksIcon,
   Loader2Icon,
+  LoaderCircleIcon,
   ServerIcon,
   StoreIcon,
   type LucideIcon
 } from "lucide-react";
 
-import { getViewer } from "@/auth";
+import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import type { Overview, ResellerSetup, Setup, SetupStep, StorefrontSetup } from "@/lib/api/types";
+import type { Job, Overview, ResellerSetup, Setup, SetupStep, StorefrontSetup } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { formatAgo, formatDateTime, jobTypeLabel } from "@/lib/format";
+import { EmptyState } from "@/components/admin/empty-state";
+import { JobStateBadge } from "@/components/admin/job-state-badge";
 import { PageHeader } from "@/components/admin/page-header";
+import { StatTiles, type Stat } from "@/components/admin/stat-tile";
 import { SetupProgress, SetupSteps } from "@/components/admin/setup-checklist";
 import { TakeTourButton } from "@/components/shell/dashboard-tour";
+import { NewSite } from "./stores/new-site";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -67,14 +72,17 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const api = getAdminApi();
   const viewer = await getViewer().catch(() => null);
   const isAdmin = viewer?.isAdmin ?? false;
-  const [overview, jobs, pending, setup] = await Promise.all([
+  const [overview, jobs, pending, setup, products] = await Promise.all([
     api.overview(product),
     api.jobs({ productId: product }),
     // An API without applications yet answers 404: none waiting.
     isAdmin && !product ? api.applications("pending").catch(() => []) : Promise.resolve([]),
     // An API without setup checklists yet: the cards are left out.
-    api.setup().catch((): Setup | null => null)
+    api.setup().catch((): Setup | null => null),
+    viewer && canChange(viewer) ? api.products().catch(() => []) : Promise.resolve([])
   ]);
+  // A new site goes to the storefront in view, or any of the person's storefronts.
+  const newSiteChoices = (product ? products.filter((p) => p.id === product) : products).map((p) => ({ id: p.id, name: p.name, highlevelAgency: p.highlevelAgency }));
   // A customer sees their own storefront only, so the overview is about it.
   const storefront = product
     ? overview.products.find((p) => p.id === product)
@@ -89,12 +97,6 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const failedJobs = jobs.items.filter((job) => job.state === "failed");
   const { health } = overview;
   const t = overview.tenants;
-  const breakdown = [
-    { label: "Ready", value: readyCount(overview), bar: "bg-green-600 dark:bg-green-400", stroke: "stroke-green-600 dark:stroke-green-400", state: "ready" },
-    { label: "Suspended", value: t.suspended, bar: "bg-stone-400 dark:bg-stone-500", stroke: "stroke-stone-400 dark:stroke-stone-500", state: "suspended" },
-    { label: "In progress", value: t.pending + t.removing, bar: "bg-amber-500 dark:bg-amber-400", stroke: "stroke-amber-500 dark:stroke-amber-400", state: "pending" },
-    { label: "Failed", value: t.failed, bar: "bg-rose-600 dark:bg-rose-400", stroke: "stroke-rose-600 dark:stroke-rose-400", state: "failed" }
-  ];
 
   // Most urgent first: the platform itself, then broken stores and tasks, then people waiting on an answer.
   const todos: Todo[] = [];
@@ -116,7 +118,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       tone: "critical",
       icon: AlertTriangle,
       title: `${jobTypeLabel(job.type)} failed${job.targetName ? ` · ${job.targetName}` : ""}`,
-      detail: job.error,
+      // The API prefixes errors with the part that failed; the person needs the cause, not our internals.
+      detail: job.error?.replace(/^Provisioner:\s*/, "") ?? null,
       action: job.tenantId ? "Open store" : "See task",
       href: job.tenantId ? `/stores/${job.tenantId}` : "/jobs?state=failed"
     });
@@ -149,7 +152,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       tone: "critical",
       icon: ArchiveIcon,
       title: `${plural(overview.backups.failed, "backup")} failed`,
-      detail: "Take a new backup from the store's page.",
+      detail: "Open Backups to see which store and why.",
       action: "See backups",
       href: "/backups"
     });
@@ -170,40 +173,44 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   }
   const busy = inProgress(overview);
 
-  const tiles: StatTile[] = [
+  // The same count as the "Needs you" list: failed tasks, or failed stores when no task says why, and failed backups.
+  const storeProblems = failedJobs.length > 0 ? failedJobs.length : t.failed;
+  const problems = storeProblems + overview.backups.failed;
+  const building = t.pending + t.removing;
+  const tiles: Stat[] = [
     {
-      label: "Live",
+      label: "Ready",
       value: readyCount(overview),
-      note: t.suspended > 0 ? `${t.suspended} switched off` : "Running and online",
-      icon: GlobeIcon,
-      tone: "green",
+      note: t.suspended > 0 ? `${t.suspended} suspended` : "Running and online",
+      icon: CircleCheckIcon,
+      tone: "success",
       href: withProduct("/stores?state=ready", product)
     },
     {
-      label: "Being built",
-      value: t.pending + t.removing,
-      note: t.pending + t.removing > 0 ? "Updates on its own" : "Nothing in progress",
-      icon: HammerIcon,
-      tone: "amber",
+      label: "In progress",
+      value: building,
+      note: building > 0 ? "Finishes on its own" : "Nothing building",
+      icon: LoaderCircleIcon,
+      tone: building > 0 ? "warning" : "neutral",
       href: withProduct("/stores?state=pending", product)
     },
     {
-      label: "Need a look",
-      value: t.failed + overview.backups.failed,
-      note: t.failed + overview.backups.failed > 0 ? "Open to fix" : "Nothing broken",
+      label: "Failed",
+      value: problems,
+      note: problems > 0 ? "Listed under Needs you" : "Nothing broken",
       icon: AlertTriangle,
-      tone: "rose",
-      href: withProduct(t.failed > 0 ? "/stores?state=failed" : "/backups", product)
+      tone: problems > 0 ? "danger" : "neutral",
+      href: withProduct(failedJobs.length > 0 ? "/jobs?state=failed" : t.failed > 0 ? "/stores?state=failed" : "/backups", product)
     },
     {
       label: "Backups",
       value: overview.backups.total,
-      note: overview.backups.pending > 0 ? `${overview.backups.pending} saving now` : "Kept safe off the server",
+      note: overview.backups.pending > 0 ? `${overview.backups.pending} saving now` : "Kept off the server",
       icon: ArchiveIcon,
-      tone: "violet",
       href: withProduct("/backups", product)
     }
   ];
+  const recent = [...jobs.items].sort((a, b) => jobTime(b).localeCompare(jobTime(a))).slice(0, 6);
 
   return (
     <div className="space-y-5 lg:space-y-7">
@@ -211,29 +218,27 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         <div className="flex flex-wrap items-center gap-2">
           <HealthBadge ok={health.ok} />
           <TakeTourButton />
-          <Button asChild size="sm">
-            <Link href={withProduct("/stores", product)}>
-              <StoreIcon aria-hidden />
-              Stores
-            </Link>
-          </Button>
+          {newSiteChoices.length > 0 ? (
+            <NewSite products={newSiteChoices} />
+          ) : (
+            <Button asChild size="sm" variant="outline">
+              <Link href={withProduct("/stores", product)}>
+                <StoreIcon aria-hidden />
+                Stores
+              </Link>
+            </Button>
+          )}
         </div>
       </PageHeader>
 
-      <ul className="grid grid-cols-2 gap-3 lg:gap-5 xl:grid-cols-4" aria-label="Your stores at a glance">
-        {tiles.map((tile) => (
-          <li key={tile.label}>
-            <StatTileCard tile={tile} />
-          </li>
-        ))}
-      </ul>
+      <StatTiles stats={tiles} label="Your stores at a glance" />
 
-      <div className="grid grid-cols-1 items-start gap-5 lg:gap-7 xl:grid-cols-3">
-        <div className="min-w-0 space-y-5 lg:space-y-7 xl:col-span-2">
+      <div className="grid grid-cols-1 items-start gap-5 lg:gap-7 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="min-w-0 space-y-5 lg:space-y-7">
           <Card data-tour-step-id={isAdmin || showChecklist ? "needs-you" : "needs-you start-here"}>
             <CardHeader>
-              <CardIcon tone="ribbon">
-                <BellIcon />
+              <CardIcon>
+                <CircleAlertIcon />
               </CardIcon>
               <CardTitle className="text-lg">{todos.length ? "Needs you" : "Nothing needs you"}</CardTitle>
               <CardDescription>
@@ -268,13 +273,15 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                       <span
                         className={cn(
                           "flex size-10 shrink-0 items-center justify-center rounded-full",
-                          todo.tone === "critical" ? TONES.rose : TONES.amber
+                          todo.tone === "critical"
+                            ? "bg-rose-600/12 text-rose-700 dark:bg-rose-400/15 dark:text-rose-300"
+                            : "bg-amber-500/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300"
                         )}>
                         <todo.icon className="size-4.5" aria-hidden />
                       </span>
                       <div className="min-w-0 flex-1 max-sm:basis-[calc(100%-3.25rem)]">
                         <p className="text-sm font-semibold">{todo.title}</p>
-                        {todo.detail && <p className="text-muted-foreground truncate text-sm">{todo.detail}</p>}
+                        {todo.detail && <p className="text-muted-foreground line-clamp-2 text-sm">{todo.detail}</p>}
                       </div>
                       <Button asChild size="sm" variant="outline" className="shrink-0 max-sm:ms-13">
                         <Link href={todo.href.startsWith("/stores/") || todo.href === "/applications" ? todo.href : withProduct(todo.href, product)}>
@@ -298,113 +305,56 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           {isAdmin && !product && setup && <StuckCard stuck={stuck} setup={setup} />}
         </div>
 
-        <Card className="xl:sticky xl:top-20">
-          <CardHeader>
-            <CardIcon tone="sky">
-              <StoreIcon />
-            </CardIcon>
-            <CardTitle>Stores</CardTitle>
-            <CardDescription>{plural(t.total, "store")}</CardDescription>
-            <CardAction inline>
-              <Link
-                href={withProduct("/stores", product)}
-                className="text-primary inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline pointer-coarse:min-h-11">
-                All
-                <ChevronRight className="size-4" aria-hidden />
-              </Link>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <StoresDonut breakdown={breakdown} total={t.total} />
-            <ul className="space-y-1">
-              {breakdown.map((b) => (
-                <li key={b.label}>
-                  <Link
-                    href={withProduct(`/stores?state=${b.state}`, product)}
-                    className="hover:bg-muted -mx-2 flex items-center justify-between rounded-xl px-2.5 py-1.5 text-sm pointer-coarse:min-h-11">
-                    <span className="flex items-center gap-2.5">
-                      <span className={cn("size-2.5 rounded-full", b.bar)} />
-                      <span className="text-muted-foreground">{b.label}</span>
-                    </span>
-                    <span className="font-semibold tabular-nums">{b.value}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <RecentActivity jobs={recent} href={withProduct("/jobs", product)} />
       </div>
     </div>
   );
 }
 
-/** Soft tinted chips for icons: the colour says what kind of thing it is. */
-const TONES = {
-  green: "bg-green-600/12 text-green-700 dark:bg-green-400/15 dark:text-green-300",
-  amber: "bg-amber-500/15 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
-  rose: "bg-rose-600/12 text-rose-700 dark:bg-rose-400/15 dark:text-rose-300",
-  violet: "bg-fuchsia-600/10 text-fuchsia-700 dark:bg-fuchsia-400/15 dark:text-fuchsia-300"
-} as const;
+/** When a task last moved: when it failed, started or was queued. */
+const jobTime = (job: Job) => job.failedAt ?? job.startedAt ?? job.createdAt ?? "";
 
-type StatTile = { label: string; value: number; note: string; icon: LucideIcon; tone: keyof typeof TONES; href: string };
-
-function StatTileCard({ tile }: { tile: StatTile }) {
+/** The last few tasks, newest first, so the page says what just happened without opening the log. */
+function RecentActivity({ jobs, href }: { jobs: Job[]; href: string }) {
   return (
-    <Link
-      href={tile.href}
-      className="bg-muted hover:bg-accent group flex h-full flex-col gap-3 rounded-[1.125rem] p-4 transition-[transform,background-color] hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none sm:p-5">
-      <span className="flex items-center justify-between">
-        <span className={cn("flex size-10 items-center justify-center rounded-full", TONES[tile.tone])}>
-          <tile.icon className="size-4.5" aria-hidden />
-        </span>
-        <ChevronRight className="text-muted-foreground size-4 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
-      </span>
-      <span>
-        <span className="block text-3xl font-extrabold tracking-[-0.03em] tabular-nums">{tile.value}</span>
-        <span className="block text-sm font-semibold">{tile.label}</span>
-        <span className="text-muted-foreground block text-xs">{tile.note}</span>
-      </span>
-    </Link>
-  );
-}
-
-/** A ring split by store state, with the total in the middle. */
-function StoresDonut({ breakdown, total }: { breakdown: { label: string; value: number; stroke: string }[]; total: number }) {
-  const r = 52;
-  const c = 2 * Math.PI * r;
-  let offset = 0;
-  return (
-    <div className="relative mx-auto size-40">
-      <svg viewBox="0 0 120 120" className="size-full -rotate-90" role="img" aria-label={breakdown.map((b) => `${b.label} ${b.value}`).join(", ")}>
-        <circle cx="60" cy="60" r={r} fill="none" strokeWidth="12" className="stroke-muted" />
-        {total > 0 &&
-          breakdown
-            .filter((b) => b.value > 0)
-            .map((b) => {
-              const len = (b.value / total) * c;
-              const seg = (
-                <circle
-                  key={b.label}
-                  cx="60"
-                  cy="60"
-                  r={r}
-                  fill="none"
-                  strokeWidth="12"
-                  strokeLinecap="butt"
-                  className={b.stroke}
-                  strokeDasharray={`${Math.max(len - 2, 0)} ${c}`}
-                  strokeDashoffset={-offset}
-                />
-              );
-              offset += len;
-              return seg;
-            })}
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold tracking-[-0.03em] tabular-nums">{total}</span>
-        <span className="text-muted-foreground text-xs font-medium">{total === 1 ? "store" : "stores"}</span>
-      </div>
-    </div>
+    <Card className="xl:sticky xl:top-20">
+      <CardHeader>
+        <CardIcon>
+          <HistoryIcon />
+        </CardIcon>
+        <CardTitle>Recent activity</CardTitle>
+        <CardDescription>The latest tasks</CardDescription>
+        <CardAction inline>
+          <Link
+            href={href}
+            className="text-primary inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline pointer-coarse:min-h-11">
+            All
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        {jobs.length === 0 ? (
+          <EmptyState icon={HistoryIcon} title="Nothing yet">
+            Builds, backups and changes show here as they run.
+          </EmptyState>
+        ) : (
+          <ul className="divide-y">
+            {jobs.map((job) => (
+              <li key={job.id} className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium">{jobTypeLabel(job.type)}</span>
+                  <span className="text-muted-foreground block text-xs">
+                    {[job.targetName, formatAgo(jobTime(job))].filter(Boolean).join(" · ")}
+                  </span>
+                </span>
+                <JobStateBadge state={job.state} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -437,7 +387,7 @@ function StorefrontChecklist({ setup, productId }: { setup: StorefrontSetup; pro
   return (
     <Card data-tour-step-id="start-here">
       <CardHeader>
-        <CardIcon tone="violet">
+        <CardIcon>
           <ListChecksIcon />
         </CardIcon>
         <CardTitle className="text-lg">Set up {setup.name}</CardTitle>
@@ -460,7 +410,7 @@ function ResellerChecklist({ setup, storefronts }: { setup: ResellerSetup; store
   return (
     <Card>
       <CardHeader>
-        <CardIcon tone="violet">
+        <CardIcon>
           <ListChecksIcon />
         </CardIcon>
         <CardTitle className="text-lg">Set up {setup.name}</CardTitle>
@@ -509,7 +459,7 @@ function StuckCard({ stuck, setup }: { stuck: (StorefrontSetup | ResellerSetup)[
   return (
     <Card>
       <CardHeader>
-        <CardIcon tone="orange">
+        <CardIcon>
           <HourglassIcon />
         </CardIcon>
         <CardTitle className="text-lg">Stuck in setup</CardTitle>
@@ -575,6 +525,7 @@ function SetupTable({
                   )}
                   {showQuiet && <span className="text-muted-foreground block text-xs">{isReseller ? "Reseller" : "Storefront"}</span>}
                   <span className="text-muted-foreground block text-xs sm:hidden">Next: {row.next ?? "done"}</span>
+                  {showQuiet && <span className="text-muted-foreground block text-xs md:hidden">Last step {formatAgo(row.lastProgressAt)}</span>}
                 </TableCell>
                 <TableCell>
                   <SetupProgress setup={row} hideStuck={forCustomer} />

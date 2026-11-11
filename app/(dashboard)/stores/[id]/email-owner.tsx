@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { MailIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -30,8 +29,13 @@ export function EmailOwner({
   storeName,
   lastSentAt,
   lastSentTo,
-  ownerEmail
+  ownerEmail,
+  open,
+  onOpenChange: setOpen
 }: {
+  /** Opened from the store's actions menu. */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   tenantId: string;
   storeName: string;
   lastSentAt: string | null;
@@ -39,7 +43,6 @@ export function EmailOwner({
   ownerEmail: string | null;
 }) {
   const router = useRouter();
-  const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState(ownerEmail ?? lastSentTo ?? "");
   const [pending, startTransition] = React.useTransition();
 
@@ -58,57 +61,51 @@ export function EmailOwner({
   };
 
   return (
-    <>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <MailIcon />
-        Email the owner
-      </Button>
-      <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
-        <DialogContent className="sm:max-w-md">
-          <form onSubmit={submit} className="grid gap-4">
-            <DialogHeader>
-              <DialogTitle>Email the owner their sign-in link</DialogTitle>
-              <DialogDescription>
-                They get an email saying {storeName} is ready, with a link to set their password. The link works once,
-                within a day.
-              </DialogDescription>
-            </DialogHeader>
-            {lastSentAt && (
-              <p className="bg-muted rounded-md px-3 py-2 text-sm">
-                Already sent {formatDateTime(lastSentAt)} to {lastSentTo}. Sending again gives them a new link; the old
-                one stops working.
-              </p>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email-owner-address">Owner&apos;s email</Label>
-              <Input
-                id="email-owner-address"
-                type="email"
-                value={email}
-                required
-                disabled={pending}
-                autoComplete="off"
-                aria-describedby="email-owner-help"
-                onChange={(event) => setEmail(event.target.value)}
-              />
-              <p id="email-owner-help" className="text-muted-foreground text-sm">
-                {ownerEmail
-                  ? "The email the site was made with, filled in for you. It must be someone who can sign in to the site."
-                  : "The email of someone who can sign in to the site."}
-              </p>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={pending || !email.trim()}>
-                {pending && <Spinner />}
-                {lastSentAt ? "Send again" : "Send email"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={submit} className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>Email the owner their sign-in link</DialogTitle>
+            <DialogDescription>
+              They get an email saying {storeName} is ready, with a link to set their password. The link works once,
+              within a day.
+            </DialogDescription>
+          </DialogHeader>
+          {lastSentAt && (
+            <p className="bg-muted rounded-md px-3 py-2 text-sm">
+              Already sent {formatDateTime(lastSentAt)} to {lastSentTo}. Sending again gives them a new link; the old
+              one stops working.
+            </p>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="email-owner-address">Owner&apos;s email</Label>
+            <Input
+              id="email-owner-address"
+              type="email"
+              value={email}
+              required
+              disabled={pending}
+              autoComplete="off"
+              aria-describedby="email-owner-help"
+              onChange={(event) => setEmail(event.target.value)}
+            />
+            <p id="email-owner-help" className="text-muted-foreground text-sm">
+              {ownerEmail
+                ? "The email the site was made with, filled in for you. It must be someone who can sign in to the site."
+                : "The email of someone who can sign in to the site."}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={pending} onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={pending || !email.trim()}>
+              {pending && <Spinner />}
+              {lastSentAt ? "Send again" : "Send email"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

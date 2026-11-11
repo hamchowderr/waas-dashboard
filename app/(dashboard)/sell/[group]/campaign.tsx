@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { CheckIcon, ChevronDownIcon, DownloadIcon, ExternalLinkIcon, FileTextIcon, MailIcon, MapPinIcon, MegaphoneIcon, MessageSquareIcon, PhoneIcon, PresentationIcon, Share2Icon, type LucideIcon } from "lucide-react";
+import { CalendarDaysIcon, CheckIcon, ChevronDownIcon, DownloadIcon, ExternalLinkIcon, FileTextIcon, MailIcon, MapPinIcon, MegaphoneIcon, MessageSquareIcon, MessageSquareQuoteIcon, MessagesSquareIcon, MonitorPlayIcon, PhoneIcon, PresentationIcon, Share2Icon, UsersRoundIcon, type LucideIcon } from "lucide-react";
 
 import { useSellPrices } from "@/hooks/use-sell-prices";
 import { PLAN_NAMES, fill, keep, playbookMarkdown, type KitDemo, type KitContext, type Pitch, type Playbook, type Step } from "@/lib/sales-kit";
 import { Inline, KitMarkdown } from "@/components/admin/kit-markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "cn";
 import { CopyButton, download, slug } from "../kit-ui";
@@ -90,6 +90,9 @@ export function Campaign({
 
         <Card>
           <CardHeader>
+            <CardIcon>
+              <CalendarDaysIcon />
+            </CardIcon>
             <CardTitle>Your plan, day by day</CardTitle>
             <CardDescription>Send each message on its day, and stop when they reply. Dashed boxes are yours to fill in for each prospect.</CardDescription>
           </CardHeader>
@@ -121,6 +124,9 @@ export function Campaign({
       <aside className="space-y-4 lg:sticky lg:top-20">
         <Card>
           <CardHeader>
+            <CardIcon>
+              <MessageSquareQuoteIcon />
+            </CardIcon>
             <CardTitle>The pitch</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
@@ -145,6 +151,9 @@ export function Campaign({
 
         <Card>
           <CardHeader>
+            <CardIcon>
+              <MapPinIcon />
+            </CardIcon>
             <CardTitle>Where to find them</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -167,6 +176,9 @@ export function Campaign({
 
         <Card>
           <CardHeader>
+            <CardIcon>
+              <MessagesSquareIcon />
+            </CardIcon>
             <CardTitle>When they push back</CardTitle>
           </CardHeader>
           <CardContent className="divide-y">
@@ -186,6 +198,9 @@ export function Campaign({
 
         <Card>
           <CardHeader>
+            <CardIcon>
+              <UsersRoundIcon />
+            </CardIcon>
             <CardTitle>Who they are</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -195,6 +210,9 @@ export function Campaign({
 
         <Card>
           <CardHeader>
+            <CardIcon>
+              <MonitorPlayIcon />
+            </CardIcon>
             <CardTitle>Live demo</CardTitle>
             <CardDescription>
               <Inline text={demo} ctx={ctx} />

@@ -95,7 +95,7 @@ export function BrandingEditor({
       <div className="space-y-4 lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardIcon tone="ribbon">
+            <CardIcon>
               <PaletteIcon />
             </CardIcon>
             <CardTitle>Name, color and help</CardTitle>
@@ -198,6 +198,9 @@ export function BrandingEditor({
             return (
               <Card key={image.kind}>
                 <CardHeader>
+                  <CardIcon>
+                    <ImageIcon />
+                  </CardIcon>
                   <CardTitle>{image.title}</CardTitle>
                   <CardDescription>{image.about}</CardDescription>
                 </CardHeader>
@@ -247,7 +250,7 @@ export function BrandingEditor({
 
       <Card className="h-fit">
         <CardHeader>
-          <CardIcon tone="sky">
+          <CardIcon>
             <EyeIcon />
           </CardIcon>
           <CardTitle>Preview</CardTitle>
@@ -280,7 +283,7 @@ function BrandPreview({ brand }: { brand: Branding }) {
       <Button size="sm" className="w-full">
         A button
       </Button>
-      {brand.name && <p className="text-muted-foreground text-center text-[11px]">Powered by AnyPress</p>}
+      {brand.name && <p className="text-muted-foreground text-center text-xs">Powered by AnyPress</p>}
     </div>
   );
 }

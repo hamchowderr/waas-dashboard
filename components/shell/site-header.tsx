@@ -52,7 +52,7 @@ export function SiteHeader({
           {isFixture && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="warning">Sample data</Badge>
+                <Badge variant="outline">Sample data</Badge>
               </TooltipTrigger>
               <TooltipContent>WAAS_API_FIXTURES=1: these pages show built-in sample data, not the live API.</TooltipContent>
             </Tooltip>

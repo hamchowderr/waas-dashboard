@@ -26,10 +26,10 @@ export default async function NotificationsPage() {
       <PageHeader title="Notifications" description="What happened to your stores and versions in the last 30 days, and alerts on this device." />
       <Card>
         <CardHeader>
-          <CardIcon tone="ribbon">
+          <CardIcon>
             <BellIcon />
           </CardIcon>
-          <CardTitle>Phone and Computer Alerts</CardTitle>
+          <CardTitle>Phone and computer alerts</CardTitle>
           <CardDescription>Turn this on in each browser or phone you want alerts on. Opening the bell marks notifications read.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -38,7 +38,7 @@ export default async function NotificationsPage() {
       </Card>
       <Card className="gap-0 overflow-hidden py-0">
         {list.items.length === 0 ? (
-          <EmptyState icon={BellIcon} title="Nothing yet">
+          <EmptyState icon={BellIcon} title="No notifications in the last 30 days">
             When a store is ready, goes live or a job fails, it shows up here.
           </EmptyState>
         ) : (

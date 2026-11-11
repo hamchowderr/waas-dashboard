@@ -2,13 +2,15 @@ import { SiteTypeIcon, siteTypeOf } from "@/components/admin/site-type";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArchiveIcon, ChevronLeft, ExternalLinkIcon, GlobeIcon, HistoryIcon, InfoIcon, LanguagesIcon, LinkIcon, MailIcon, TruckIcon } from "lucide-react";
+import { ArchiveIcon, ChevronDownIcon, ChevronLeft, CirclePauseIcon, ExternalLinkIcon, GlobeIcon, HistoryIcon, IdCardIcon, ImportIcon, LanguagesIcon, MailIcon } from "lucide-react";
 
 import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel, settingLabel } from "@/lib/format";
 import { StatusCode } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 import { OnHoldBadge, StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
+import { EmptyState } from "@/components/admin/empty-state";
 import { JobStateBadge } from "@/components/admin/job-state-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +26,6 @@ import { RestoreBackup } from "./restore-backup";
 import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
 import { WordPressLoginButton } from "../../wordpress-login";
-import { EmailOwner } from "./email-owner";
 import { HighLevelLinkPanel } from "./highlevel-link";
 import { SitePluginsCard } from "./site-plugins";
 import { SiteLanguagesPanel } from "./site-languages";
@@ -107,10 +108,10 @@ export default async function StorePage({ params, searchParams }: Params) {
             <span className="sr-only">Back to stores</span>
           </Link>
         </Button>
-        <SiteTypeIcon siteTypes={tenant.siteTypes} className="size-14 rounded-2xl max-sm:hidden [&_svg]:size-6" />
+        <SiteTypeIcon siteTypes={tenant.siteTypes} className="size-14 max-sm:hidden [&_svg]:size-6" />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-2xl font-extrabold tracking-[-0.03em] lg:text-[1.75rem]">{tenant.name}</h1>
+            <h1 className="truncate text-2xl font-extrabold tracking-[-0.03em] lg:text-[2rem]">{tenant.name}</h1>
             <StatusBadge statusCode={tenant.statusCode} />
             {tenant.isSuspended && <SuspendedBadge />}
             {tenant.onHold && <OnHoldBadge />}
@@ -129,7 +130,6 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <ExternalLinkIcon />
               </a>
             </Button>
-            {canLogIn && !tenant.onHold && <EmailOwner tenantId={tenant.id} storeName={tenant.name} lastSentAt={tenant.ownerNotifiedAt} lastSentTo={tenant.ownerNotifiedTo} ownerEmail={tenant.ownerEmail} />}
             {canLogIn ? (
               <WordPressLoginButton tenantId={tenant.id} />
             ) : (
@@ -142,18 +142,18 @@ export default async function StorePage({ params, searchParams }: Params) {
             )}
           </>
         )}
-        <Button asChild variant="outline" size="sm">
-          <Link href={viewer?.isAdmin ? `/requests?product=${tenant.productId}&store=${tenant.id}` : `/requests?store=${tenant.id}`}>API log</Link>
-        </Button>
-        {canManage && (
-          <StoreActions
-            tenantId={tenant.id}
-            storeName={tenant.name}
-            storesHref={storesHref}
-            isSuspended={tenant.isSuspended}
-            canSuspend={tenant.statusCode !== StatusCode.Failed}
-          />
-        )}
+        <StoreActions
+          tenantId={tenant.id}
+          storeName={tenant.name}
+          storesHref={storesHref}
+          apiLogHref={viewer?.isAdmin ? `/requests?product=${tenant.productId}&store=${tenant.id}` : `/requests?store=${tenant.id}`}
+          owner={
+            siteUrl && canLogIn && !tenant.onHold
+              ? { lastSentAt: tenant.ownerNotifiedAt, lastSentTo: tenant.ownerNotifiedTo, ownerEmail: tenant.ownerEmail }
+              : null
+          }
+          manage={canManage ? { isSuspended: tenant.isSuspended, canSuspend: tenant.statusCode !== StatusCode.Failed } : null}
+        />
       </div>
       </header>
 
@@ -168,6 +168,9 @@ export default async function StorePage({ params, searchParams }: Params) {
       {tenant.onHold && (
         <Card data-testid="on-hold">
           <CardHeader>
+            <CardIcon>
+              <CirclePauseIcon />
+            </CardIcon>
             <CardTitle>This site is on hold</CardTitle>
             <CardDescription>
               It was moved in{tenant.dateHeld ? ` on ${formatDateTime(tenant.dateHeld)}` : ""} and doesn&apos;t act as the live site yet,
@@ -196,118 +199,18 @@ export default async function StorePage({ params, searchParams }: Params) {
         </Card>
       )}
 
-      {/* Two columns from lg: the store's details and settings in a side column on the right, its domains, plugins,
-          backups and activity in the main one. Each column stacks on its own, so neither leaves a gap. */}
+      {/* Two columns from lg: its domains, plugins, backups and activity in the main one, the store's details and
+          settings in a side column on the right. Each column stacks on its own, so neither leaves a gap. Below lg
+          the main column comes first: what you came to change before the details. */}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
-        <div className="grid min-w-0 gap-5 lg:order-last lg:gap-6">
-        <Card>
-          <CardHeader>
-            <CardIcon tone="stone">
-              <InfoIcon />
-            </CardIcon>
-            <CardTitle>Store</CardTitle>
-            <CardDescription>Created {formatDate(tenant.dateCreated)}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Row label="Storefront">{tenant.productName}</Row>
-            <Row label="Version">{tenant.versionName}</Row>
-            <Row label="Template">{tenant.snapshotName ?? "—"}</Row>
-            {tenant.keepsOwnCode && <Row label="Plugins and themes">Its own (moved in)</Row>}
-            <Row label="Last changed">{formatDateTime(tenant.dateChanged)}</Row>
-            {tenant.isSuspended && <Row label="Suspended">{formatDateTime(tenant.dateSuspended)}</Row>}
-            {tenant.ownerEmail && <Row label="Owner">{tenant.ownerEmail}</Row>}
-            {!tenant.onHold && (
-              <Row label="Owner emailed">
-                {tenant.ownerNotifiedAt ? `${formatDateTime(tenant.ownerNotifiedAt)} to ${tenant.ownerNotifiedTo}` : "Not sent"}
-              </Row>
-            )}
-            {settings.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-2 text-sm">
-                  <span className="text-muted-foreground">Set up with</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {settings.map((label) => (
-                      <Badge key={label} variant="secondary">
-                        {label}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-            <Separator />
-            <details className="group text-sm">
-              <summary className="text-muted-foreground hover:text-foreground cursor-pointer list-none select-none">
-                <span className="group-open:hidden">Show details</span>
-                <span className="hidden group-open:inline">Hide details</span>
-              </summary>
-              <div className="mt-3 space-y-3">
-                <Row label="Subscription">
-                  <span className="font-mono text-xs">{tenant.externalId}</span>
-                </Row>
-                <Row label="Store id">
-                  <span className="font-mono text-xs">{tenant.id}</span>
-                </Row>
-              </div>
-            </details>
-          </CardContent>
-        </Card>
-
-          {(tenant.highLevel || tenant.siteTypes.includes("highlevel")) && (
-            <Card>
-              <CardHeader>
-                <CardIcon tone="teal">
-                  <LinkIcon />
-                </CardIcon>
-                <CardTitle>HighLevel</CardTitle>
-                <CardDescription>Where this site&apos;s WP Fusion sends new users as contacts.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <HighLevelLinkPanel
-                  tenantId={tenant.id}
-                  link={tenant.highLevel}
-                  canCheck={canLogIn && tenant.statusCode === StatusCode.Done}
-                />
-              </CardContent>
-            </Card>
-          )}
-          {languages && (
-            <Card>
-              <CardHeader>
-                <CardIcon tone="violet">
-                  <LanguagesIcon />
-                </CardIcon>
-                <CardTitle>Languages</CardTitle>
-                <CardDescription>The site in more than one language, with a language switcher in its menu.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <SiteLanguagesPanel tenantId={tenant.id} languages={languages} canChange={canLogIn} />
-              </CardContent>
-            </Card>
-          )}
-          <Card>
-            <CardHeader>
-              <CardIcon tone="ribbon">
-                <MailIcon />
-              </CardIcon>
-              <CardTitle>Email sender</CardTitle>
-              <CardDescription>Where the store&apos;s receipts and password resets come from.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MailSender tenantId={tenant.id} mailDomain={mailDomain} connect={connect} />
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="grid min-w-0 gap-5 lg:gap-6">
           {tenant.moveIn && (
             <Card>
               <CardHeader>
-                <CardIcon tone="orange">
-                <TruckIcon />
-              </CardIcon>
-              <CardTitle>Moving the site in</CardTitle>
+                <CardIcon>
+                  <ImportIcon />
+                </CardIcon>
+                <CardTitle>Moving the site in</CardTitle>
                 <CardDescription>This store is built from a WordPress site copied with Reprint or sent with the AnyPress Export plugin.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -318,7 +221,7 @@ export default async function StorePage({ params, searchParams }: Params) {
 
           <Card>
             <CardHeader>
-              <CardIcon tone="sky">
+              <CardIcon>
                 <GlobeIcon />
               </CardIcon>
               <CardTitle>Domains</CardTitle>
@@ -333,20 +236,15 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Domain</TableHead>
-                    <TableHead className="w-44 text-end">Role</TableHead>
+                    <TableHead className="text-end sm:w-44">Role</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tenant.domains.map((domain) => (
                     <TableRow key={domain.domainName}>
-                      <TableCell className="font-medium break-all whitespace-normal">
-                        <span className="flex items-center gap-2.5">
-                          <GlobeIcon className="text-muted-foreground size-4 shrink-0" aria-hidden />
-                          {domain.domainName}
-                        </span>
-                      </TableCell>
+                      <TableCell className={cn("whitespace-normal break-all", domain.isBase ? "text-muted-foreground font-mono text-xs" : "font-medium")}>{domain.domainName}</TableCell>
                       <TableCell className="text-end">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex flex-wrap items-center justify-end gap-1 sm:flex-nowrap">
                           {setups.has(domain.domainName) && (
                             <DomainDnsButton
                               key={`${domain.domainName}-${setups.get(domain.domainName)!.pointsHere}`}
@@ -355,7 +253,7 @@ export default async function StorePage({ params, searchParams }: Params) {
                             />
                           )}
                           {domain.isMain && <Badge variant="success">Main</Badge>}
-                          {domain.isBase && <Badge variant="outline">Base</Badge>}
+                          {domain.isBase && <Badge variant="outline">Built-in address</Badge>}
                           {!domain.isMain && !domain.isBase && (
                             <span className="text-muted-foreground text-sm">Redirect</span>
                           )}
@@ -381,7 +279,7 @@ export default async function StorePage({ params, searchParams }: Params) {
 
           <Card>
             <CardHeader>
-              <CardIcon tone="violet">
+              <CardIcon>
                 <ArchiveIcon />
               </CardIcon>
               <CardTitle>Backups</CardTitle>
@@ -402,9 +300,11 @@ export default async function StorePage({ params, searchParams }: Params) {
                 </TableHeader>
                 <TableBody>
                   {tenant.backups.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-muted-foreground h-16 text-center">
-                        No backups yet.
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={5}>
+                        <EmptyState icon={ArchiveIcon} title="No backups yet">
+                          Each backup of this store shows here, ready to restore.
+                        </EmptyState>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -439,7 +339,7 @@ export default async function StorePage({ params, searchParams }: Params) {
 
           <Card>
             <CardHeader>
-              <CardIcon tone="stone">
+              <CardIcon>
                 <HistoryIcon />
               </CardIcon>
               <CardTitle>Activity</CardTitle>
@@ -449,7 +349,7 @@ export default async function StorePage({ params, searchParams }: Params) {
               <Table className={tableClass}>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Job</TableHead>
+                    <TableHead>Task</TableHead>
                     <TableHead className="max-sm:hidden">When</TableHead>
                     <TableHead className="max-sm:hidden">Error</TableHead>
                     <TableHead className="text-end">State</TableHead>
@@ -457,9 +357,11 @@ export default async function StorePage({ params, searchParams }: Params) {
                 </TableHeader>
                 <TableBody>
                   {tenant.jobs.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-muted-foreground h-16 text-center">
-                        No recent jobs.
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={4}>
+                        <EmptyState icon={HistoryIcon} title="Nothing in the last 7 days">
+                          Builds, backups and changes to this store show here.
+                        </EmptyState>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -488,6 +390,109 @@ export default async function StorePage({ params, searchParams }: Params) {
             </CardContent>
           </Card>
         </div>
+        <div className="grid min-w-0 gap-5 lg:gap-6">
+        <Card>
+          <CardHeader>
+            <CardIcon>
+              <IdCardIcon />
+            </CardIcon>
+            <CardTitle>Store</CardTitle>
+            <CardDescription>Created {formatDate(tenant.dateCreated)}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Row label="Storefront">{tenant.productName}</Row>
+            <Row label="Version">{tenant.versionName}</Row>
+            <Row label="Template">{tenant.snapshotName ?? "—"}</Row>
+            {tenant.keepsOwnCode && <Row label="Plugins and themes">Its own (moved in)</Row>}
+            <Row label="Last changed">{formatDateTime(tenant.dateChanged)}</Row>
+            {tenant.isSuspended && <Row label="Suspended">{formatDateTime(tenant.dateSuspended)}</Row>}
+            {tenant.ownerEmail && <Row label="Owner">{tenant.ownerEmail}</Row>}
+            {!tenant.onHold && (
+              <Row label="Owner emailed">
+                {tenant.ownerNotifiedAt ? `${formatDateTime(tenant.ownerNotifiedAt)} to ${tenant.ownerNotifiedTo}` : "Not sent"}
+              </Row>
+            )}
+            {settings.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-2 text-sm">
+                  <span className="text-muted-foreground mb-2 block">Set up with</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {settings.map((label) => (
+                      <Badge key={label} variant="secondary">
+                        {label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+            <Separator />
+            <details className="group text-sm">
+              <summary className="text-primary inline-flex cursor-pointer list-none items-center gap-1 font-semibold select-none hover:underline pointer-coarse:min-h-11">
+                <span className="group-open:hidden">Show details</span>
+                <span className="hidden group-open:inline">Hide details</span>
+                <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <div className="mt-3 space-y-3">
+                <Row label="Subscription">
+                  <span className="font-mono text-xs">{tenant.externalId}</span>
+                </Row>
+                <Row label="Store id">
+                  <span className="font-mono text-xs">{tenant.id}</span>
+                </Row>
+              </div>
+            </details>
+          </CardContent>
+        </Card>
+
+          {(tenant.highLevel || tenant.siteTypes.includes("highlevel")) && (
+            <Card>
+              <CardHeader>
+                <CardIcon className="bg-white ring-border ring-1 ring-inset">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- a small local logo */}
+                  <img src="/integrations/highlevel.svg" alt="" className="size-5" />
+                </CardIcon>
+                <CardTitle>HighLevel</CardTitle>
+                <CardDescription>Where this site&apos;s WP Fusion sends new users as contacts.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HighLevelLinkPanel
+                  tenantId={tenant.id}
+                  link={tenant.highLevel}
+                  canCheck={canLogIn && tenant.statusCode === StatusCode.Done}
+                />
+              </CardContent>
+            </Card>
+          )}
+          {languages && (
+            <Card>
+              <CardHeader>
+                <CardIcon>
+                  <LanguagesIcon />
+                </CardIcon>
+                <CardTitle>Languages</CardTitle>
+                <CardDescription>The site in more than one language, with a language switcher in its menu.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SiteLanguagesPanel tenantId={tenant.id} languages={languages} canChange={canLogIn} />
+              </CardContent>
+            </Card>
+          )}
+          <Card>
+            <CardHeader>
+              <CardIcon>
+                <MailIcon />
+              </CardIcon>
+              <CardTitle>Email sender</CardTitle>
+              <CardDescription>Where the store&apos;s receipts and password resets come from.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MailSender tenantId={tenant.id} mailDomain={mailDomain} connect={connect} />
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
     </div>
   );

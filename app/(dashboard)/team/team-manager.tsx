@@ -137,7 +137,7 @@ export function TeamManager({
     <>
       <Card>
         <CardHeader>
-          <CardIcon tone="sky">
+          <CardIcon>
             <UsersIcon />
           </CardIcon>
           <CardTitle>{reseller ? "Team" : "People"}</CardTitle>
@@ -251,7 +251,7 @@ export function TeamManager({
       {team.invitations.length > 0 && (
         <Card>
           <CardHeader>
-            <CardIcon tone="violet">
+            <CardIcon>
               <MailIcon />
             </CardIcon>
             <CardTitle>Invitations</CardTitle>

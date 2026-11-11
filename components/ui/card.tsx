@@ -11,7 +11,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-[1.375rem] bg-card py-(--card-spacing) text-sm text-card-foreground shadow-card dark:ring-1 dark:ring-white/6 [--card-spacing:--spacing(5.5)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-[1.375rem] *:[img:last-child]:rounded-b-[1.375rem]",
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-[1.125rem] bg-card py-(--card-spacing) text-sm text-card-foreground shadow-card dark:ring-1 dark:ring-white/6 [--card-spacing:--spacing(5.5)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-[1.125rem] *:[img:last-child]:rounded-b-[1.125rem]",
         className
       )}
       {...props}
@@ -49,7 +49,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("row-start-2 text-sm text-muted-foreground group-has-data-[slot=card-icon]/card-header:col-start-2", className)}
+      className={cn("row-start-2 max-w-prose text-sm text-pretty text-muted-foreground group-has-data-[slot=card-icon]/card-header:col-start-2", className)}
       {...props}
     />
   )
@@ -72,29 +72,17 @@ function CardAction({ className, inline = false, ...props }: React.ComponentProp
   )
 }
 
-/** Soft tinted chips for card icons: the colour says what kind of section it is (DESIGN.md, Tinted chips). */
-const ICON_TONES = {
-  ribbon: "bg-primary/10 text-primary",
-  violet: "bg-fuchsia-600/10 text-fuchsia-700 dark:bg-fuchsia-400/15 dark:text-fuchsia-300",
-  sky: "bg-sky-600/10 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300",
-  teal: "bg-teal-600/10 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300",
-  orange: "bg-orange-500/12 text-orange-700 dark:bg-orange-400/15 dark:text-orange-300",
-  stone: "bg-stone-500/12 text-stone-700 dark:bg-stone-400/15 dark:text-stone-300"
-} as const
-
-/** A round icon chip at the start of a card's header; the title and description sit beside it. */
-function CardIcon({
-  className,
-  tone = "ribbon",
-  ...props
-}: React.ComponentProps<"span"> & { tone?: keyof typeof ICON_TONES }) {
+/**
+ * A round, neutral icon chip at the start of a card's header; the title and description sit beside it.
+ * Colour is kept for status and the main action (DESIGN.md, Icon chips), so the chip itself stays quiet.
+ */
+function CardIcon({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="card-icon"
       aria-hidden
       className={cn(
-        "col-start-1 row-span-2 row-start-1 flex size-10 shrink-0 items-center justify-center rounded-full [&_svg]:size-[1.125rem]",
-        ICON_TONES[tone],
+        "col-start-1 row-span-2 row-start-1 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-foreground/70 [&_svg]:size-[1.125rem]",
         className
       )}
       {...props}
@@ -117,7 +105,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center rounded-b-[1.375rem] border-t bg-muted/60 p-(--card-spacing)",
+        "flex items-center rounded-b-[1.125rem] border-t bg-muted/60 p-(--card-spacing)",
         className
       )}
       {...props}

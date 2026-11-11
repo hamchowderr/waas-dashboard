@@ -1,10 +1,11 @@
+import { TriangleAlertIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { DeliveriesTable } from "./deliveries-table";
 import { WebhookEndpoints } from "./webhook-endpoints";
 
@@ -61,6 +62,9 @@ export default async function WebhooksPage({
       ) : (
         <Card>
           <CardHeader>
+            <CardIcon>
+              <TriangleAlertIcon />
+            </CardIcon>
             <CardTitle>Deliveries didn&apos;t load</CardTitle>
             <CardDescription>
               The API took too long to answer. The endpoints above still work. Reload the page to try again.

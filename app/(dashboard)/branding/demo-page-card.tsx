@@ -16,7 +16,7 @@ export async function DemoPageCard({ id, whose }: { id: string; whose: string })
   return (
     <Card>
       <CardHeader>
-        <CardIcon tone="sky">
+        <CardIcon>
           <MonitorPlayIcon />
         </CardIcon>
         <CardTitle>

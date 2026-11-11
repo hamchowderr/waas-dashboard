@@ -3,11 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpCircleIcon, KeyRoundIcon, LayersIcon, PencilIcon, PlusIcon, PowerOffIcon, SearchIcon, StarIcon, Trash2Icon, UploadIcon, XIcon, PlugIcon } from "lucide-react";
+import { ArrowUpCircleIcon, KeyRoundIcon, LayersIcon, PencilIcon, PlusIcon, SearchIcon, StarIcon, Trash2Icon, TriangleAlertIcon, UploadIcon, XIcon, PlugIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { DirectoryPlugin, PluginChoice, PluginChoiceInput, PluginUpload } from "@/lib/api/types";
 import { formatBytes } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { installsLabel, MAX_PLUGIN_ZIP, SITE_TYPES, siteTypesLabel, TEMPLATE_PLUGINS } from "@/lib/plugin-choices";
 import { uploadArchive } from "@/lib/upload-archive";
 import { ConfirmAction } from "@/components/admin/confirm-action";
@@ -61,8 +62,8 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
   return (
     <>
       {waiting > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-orange-400 bg-orange-50 px-4 py-3 text-sm text-orange-900 dark:bg-orange-900/40 dark:text-white/85">
-          <LayersIcon className="size-4 shrink-0" />
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
+          <TriangleAlertIcon className="size-4 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden />
           <p className="min-w-0 flex-1">
             {waiting === 1 ? "1 change isn't" : `${waiting} changes aren't`} in your stores yet. Build a new version and make it
             production, and your stores get them when they move to it.
@@ -75,7 +76,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
 
       <Card>
         <CardHeader>
-          <CardIcon tone="ribbon">
+          <CardIcon>
             <PlugIcon />
           </CardIcon>
           <CardTitle>Your plugins</CardTitle>
@@ -156,28 +157,47 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
 
       <Card>
         <CardHeader>
-          <CardIcon tone="violet">
+          <CardIcon>
             <LayersIcon />
           </CardIcon>
           <CardTitle>Template plugins</CardTitle>
           <CardDescription>What the AnyPress template comes with. Switch off the ones your stores don&apos;t need.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">
             {TEMPLATE_PLUGINS.map((plugin) => {
               const off = bySlug.get(plugin.slug)?.action === "off";
               return (
-                <li key={plugin.slug}>
-                  <button
-                    type="button"
-                    className="hover:bg-muted/60 flex items-center gap-2 rounded-md border py-1 ps-1 pe-2.5 text-sm transition-colors disabled:cursor-default"
-                    disabled={!canChange || bySlug.has(plugin.slug)}
-                    title={off ? "Switched off" : `Switch off ${plugin.name}`}
-                    onClick={() => setEditing({ slug: plugin.slug, name: plugin.name, icon: null, action: "off", siteTypes: [], licenceConstants: [] })}>
-                    <PluginIcon slug={plugin.slug} name={plugin.name} />
-                    <span className={off ? "text-muted-foreground line-through" : undefined}>{plugin.name}</span>
-                    {!bySlug.has(plugin.slug) && <PowerOffIcon className="text-muted-foreground size-3.5" aria-hidden={true} />}
-                  </button>
+                <li key={plugin.slug} className="bg-muted flex min-h-14 items-center gap-3 rounded-2xl py-2 ps-2 pe-3 text-sm">
+                  <PluginIcon slug={plugin.slug} name={plugin.name} className="size-9 rounded-xl" />
+                  <span className={cn("min-w-0 flex-1 font-medium", off && "text-muted-foreground")}>{plugin.name}</span>
+                  {off ? (
+                    <>
+                      <Badge variant="outline">Off</Badge>
+                      {canChange && (
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          className="pointer-coarse:h-11"
+                          aria-label={`Switch on ${plugin.name}`}
+                          onClick={() => setRemoving(bySlug.get(plugin.slug)!)}>
+                          Switch on
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    canChange &&
+                    !bySlug.has(plugin.slug) && (
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        className="pointer-coarse:h-11"
+                        aria-label={`Switch off ${plugin.name}`}
+                        onClick={() => setEditing({ slug: plugin.slug, name: plugin.name, icon: null, action: "off", siteTypes: [], licenceConstants: [] })}>
+                        Switch off
+                      </Button>
+                    )
+                  )}
                 </li>
               );
             })}
@@ -226,18 +246,18 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
       <ConfirmAction
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Remove ${removing?.name ?? "plugin"}?`}
+        title={removing?.action === "off" ? `Switch ${removing.name} back on?` : `Remove ${removing?.name ?? "plugin"}?`}
         description={
           removing?.action === "off"
             ? "Your next version has it as the template does."
             : "Your next version leaves it out. Stores keep it until they move to that version."
         }
-        confirmLabel="Remove"
-        destructive
+        confirmLabel={removing?.action === "off" ? "Switch on" : "Remove"}
+        destructive={removing?.action !== "off"}
         onConfirm={async () => {
           const result = await removePluginChoice(productId, removing!.slug);
           if (result.ok) {
-            toast.success(`${removing!.name} removed`);
+            toast.success(removing!.action === "off" ? `${removing!.name} will be back on in your next version` : `${removing!.name} removed`);
             router.refresh();
           } else toast.error(result.error);
           return result.ok;
@@ -307,7 +327,7 @@ function DirectorySearch({
   return (
     <Card>
       <CardHeader>
-        <CardIcon tone="sky">
+        <CardIcon>
           <SearchIcon />
         </CardIcon>
         <CardTitle>Add from wordpress.org</CardTitle>
@@ -638,7 +658,7 @@ function PremiumUpload({
   return (
     <Card>
       <CardHeader>
-        <CardIcon tone="orange">
+        <CardIcon>
           <UploadIcon />
         </CardIcon>
         <CardTitle>Upload a premium plugin</CardTitle>

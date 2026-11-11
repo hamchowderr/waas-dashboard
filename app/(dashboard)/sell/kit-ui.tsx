@@ -2,16 +2,16 @@
 
 import * as React from "react";
 import {
-  Building2Icon,
+  BriefcaseIcon,
   CheckIcon,
   ChurchIcon,
   CodeXmlIcon,
   CopyIcon,
   GraduationCapIcon,
   LandmarkIcon,
-  MegaphoneIcon,
+  MapPinIcon,
   ShieldCheckIcon,
-  ShoppingBagIcon,
+  TagIcon,
   type LucideIcon
 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,21 +20,21 @@ import type { GroupId } from "@/lib/sales-kit";
 import { Button } from "@/components/ui/button";
 
 const GROUP_ICONS: Record<GroupId, LucideIcon> = {
-  shops: ShoppingBagIcon,
+  shops: TagIcon,
   regulated: ShieldCheckIcon,
   courses: GraduationCapIcon,
   chambers: LandmarkIcon,
   churches: ChurchIcon,
-  franchises: Building2Icon,
-  agencies: MegaphoneIcon,
+  franchises: MapPinIcon,
+  agencies: BriefcaseIcon,
   developers: CodeXmlIcon
 };
 
-/** The group's icon on a soft tile, as on the store type icons. */
+/** The group's icon in a neutral round chip, as on card headers and the store type icons. */
 export function GroupIcon({ id, className = "size-10" }: { id: GroupId; className?: string }) {
   const Icon = GROUP_ICONS[id];
   return (
-    <span className={`bg-muted text-foreground/80 flex shrink-0 items-center justify-center rounded-lg ${className}`}>
+    <span className={`bg-muted text-foreground/70 flex shrink-0 items-center justify-center rounded-full ${className}`}>
       <Icon className="size-1/2" aria-hidden />
     </span>
   );

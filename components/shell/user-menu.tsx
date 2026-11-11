@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,19 +21,15 @@ import { signOut } from "@/lib/auth-client";
 import { useStartTour } from "@/components/shell/dashboard-tour";
 import { AppearancePanel } from "@/components/shell/appearance-panel";
 import {
-  BellIcon,
   BookTextIcon,
   ChevronsUpDownIcon,
   CircleHelpIcon,
   CompassIcon,
-  LogoutIcon,
+  LogOutIcon,
   MoonIcon,
-  PaletteIcon,
   SlidersHorizontalIcon,
-  UsersIcon,
-  type AnimatedIcon
-} from "@/components/animated-icons";
-import { useIconHover } from "@/components/animated-icons/use-icon-hover";
+  type LucideIcon
+} from "lucide-react";
 
 /** `detail`: the GitHub login or email, and for a customer their storefront and role. */
 export type SignedInUser = { name: string; detail: string; image: string | null };
@@ -43,13 +39,12 @@ const SUPPORT_EMAIL = "support@anypress.io";
 const DOCS_URL = "https://shop.anypress.io/docs/";
 
 /**
- * The signed-in person at the bottom of the sidebar, and the menu it opens: settings (Notifications, Team, Branding, Appearance),
+ * The signed-in person at the bottom of the sidebar, and the menu it opens: Appearance,
  * dark mode, the tour, help and sign out.
  */
 export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEmail?: string | null }) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
-  const product = useSearchParams().get("product");
   const startTour = useStartTour();
   const { isMobile } = useSidebar();
   const [appearanceOpen, setAppearanceOpen] = React.useState(false);
@@ -58,7 +53,6 @@ export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEm
     () => true,
     () => false
   );
-  const keep = (href: string) => (product ? `${href}?product=${encodeURIComponent(product)}` : href);
   const help = supportEmail ?? SUPPORT_EMAIL;
 
   async function leave() {
@@ -95,7 +89,7 @@ export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEm
                   <span className="text-foreground truncate font-medium">{user.name}</span>
                   <span className="text-muted-foreground truncate text-xs">{user.detail}</span>
                 </div>
-                <ChevronsUpDownIcon size={16} className="ms-auto" aria-hidden />
+                <ChevronsUpDownIcon className="ms-auto size-4" aria-hidden />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-60" side={isMobile ? "top" : "right"} align="end" sideOffset={isMobile ? 8 : 28}>
@@ -111,15 +105,6 @@ export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEm
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">Settings</DropdownMenuLabel>
               <DropdownMenuGroup>
-                <MenuItem icon={BellIcon} href="/notifications">
-                  Notifications
-                </MenuItem>
-                <MenuItem icon={UsersIcon} href={keep("/team")}>
-                  Team
-                </MenuItem>
-                <MenuItem icon={PaletteIcon} href={keep("/branding")}>
-                  Branding
-                </MenuItem>
                 <MenuItem icon={SlidersHorizontalIcon} onSelect={() => setAppearanceOpen(true)}>
                   Appearance
                 </MenuItem>
@@ -150,7 +135,7 @@ export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEm
                 </MenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <MenuItem icon={LogoutIcon} onSelect={() => void leave()}>
+              <MenuItem icon={LogOutIcon} onSelect={() => void leave()}>
                 Sign Out
               </MenuItem>
             </DropdownMenuContent>
@@ -162,7 +147,7 @@ export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEm
   );
 }
 
-/** A menu row whose animated icon moves while the row is hovered or picked with the keyboard. */
+/** A menu row: its icon, then its label. */
 function MenuItem({
   icon: Icon,
   href,
@@ -170,25 +155,24 @@ function MenuItem({
   onSelect,
   children
 }: {
-  icon: AnimatedIcon;
+  icon: LucideIcon;
   href?: string;
   /** A link out of the dashboard (docs, email): a plain link, opened in a new tab when it is a web page. */
   external?: boolean;
   onSelect?: (event: Event) => void;
   children: React.ReactNode;
 }) {
-  const { ref, row } = useIconHover();
-  const icon = <Icon ref={ref} size={16} className="text-muted-foreground flex shrink-0 items-center" aria-hidden />;
+  const icon = <Icon className="text-muted-foreground size-4 shrink-0" aria-hidden />;
   if (!href) {
     return (
-      <DropdownMenuItem onSelect={onSelect} {...row}>
+      <DropdownMenuItem onSelect={onSelect}>
         {icon}
         {children}
       </DropdownMenuItem>
     );
   }
   return (
-    <DropdownMenuItem asChild {...row}>
+    <DropdownMenuItem asChild>
       {external ? (
         <a href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})}>
           {icon}

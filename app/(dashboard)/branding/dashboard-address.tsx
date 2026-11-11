@@ -52,7 +52,7 @@ export function DashboardAddress({ productId, initial, canEdit }: { productId: s
   return (
     <Card>
       <CardHeader>
-        <CardIcon tone="teal">
+        <CardIcon>
           <GlobeIcon />
         </CardIcon>
         <CardTitle>Your own dashboard address</CardTitle>

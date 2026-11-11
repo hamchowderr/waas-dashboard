@@ -62,7 +62,7 @@ export default async function ResellerAccountPage({ searchParams }: { searchPara
           />
           <Card>
             <CardHeader>
-              <CardIcon tone="sky">
+              <CardIcon>
                 <StoreIcon />
               </CardIcon>
               <CardTitle>Storefronts</CardTitle>

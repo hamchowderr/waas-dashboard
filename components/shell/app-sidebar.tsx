@@ -23,11 +23,8 @@ import {
 } from "@/components/ui/sidebar";
 import { BrandMark, PlainMark } from "@/components/shell/brand-mark";
 import { CommandSearch } from "@/components/shell/command-search";
-import { MotionConfig } from "motion/react";
 
 import { isCurrent, linkHref, navFor, type NavLink } from "@/components/shell/nav";
-import * as Animated from "@/components/animated-icons";
-import { useIconHover } from "@/components/animated-icons/use-icon-hover";
 import { sectionSlug } from "@/components/shell/tours";
 import { UserMenu, type SignedInUser } from "@/components/shell/user-menu";
 
@@ -74,97 +71,71 @@ export function AppSidebar({
   }, [isTablet]);
 
   return (
-    // Icons stay still for anyone who asked their device for less motion.
-    <MotionConfig reducedMotion="user">
-      <Sidebar collapsible={appearance.sidebarCollapse} variant={appearance.sidebarStyle}>
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild className="hover:text-foreground h-10 group-data-[collapsible=icon]:px-0!">
-                <Link href="/">
-                  {brand?.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={brand.logoUrl}
-                      alt=""
-                      className="me-1 h-8 max-w-28 shrink-0 object-contain group-data-[collapsible=icon]:size-8"
-                    />
-                  ) : brand?.name ? (
-                    <PlainMark />
-                  ) : (
-                    <BrandMark />
-                  )}
-                  <span className="text-foreground truncate font-semibold">{brand?.name ?? "AnyPress"}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-          <CommandSearch isAdmin={isAdmin} isReseller={isReseller} product={product} />
-        </SidebarHeader>
-        <SidebarContent>
-          <ScrollArea className="h-full [&>[data-slot=scroll-area-scrollbar]]:hidden [&>[data-slot=scroll-area-viewport]]:scroll-fade">
-            {/* Every page is a link, in small groups with a heading (Overview stands alone at the top). */}
-            <nav aria-label="Main" data-tour-step-id="sidebar-nav">
-              {navFor(isAdmin, isReseller).map((section) => {
-                const single = section.links.length === 1 && section.links[0].title === section.title;
-                return (
-                  <SidebarGroup key={section.title} data-tour-step-id={`group-${sectionSlug(section.title)}`} className="py-1">
-                    {!single && <SidebarGroupLabel>{section.title}</SidebarGroupLabel>}
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {section.links.map((link) => (
-                          <NavItem
-                            key={link.href}
-                            link={link}
-                            href={linkHref(link, product)}
-                            active={isCurrent(pathname, link.href)}
-                            badge={link.href === "/applications" && pendingApplications > 0 ? pendingApplications : 0}
-                          />
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                );
-              })}
-            </nav>
-          </ScrollArea>
-        </SidebarContent>
-        <SidebarFooter className="border-t">
-          {brand && (
-            <p className="text-muted-foreground px-2 text-xs group-data-[collapsible=icon]:hidden">Powered by AnyPress</p>
-          )}
-          <UserMenu user={user} supportEmail={brand?.supportEmail} />
-        </SidebarFooter>
-      </Sidebar>
-    </MotionConfig>
+    <Sidebar collapsible={appearance.sidebarCollapse} variant={appearance.sidebarStyle} role="complementary" aria-label="Sidebar">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild className="hover:text-foreground h-10 group-data-[collapsible=icon]:px-0!">
+              <Link href="/">
+                {brand?.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={brand.logoUrl}
+                    alt=""
+                    className="me-1 h-8 max-w-28 shrink-0 object-contain group-data-[collapsible=icon]:size-8"
+                  />
+                ) : brand?.name ? (
+                  <PlainMark name={brand.name} />
+                ) : (
+                  <BrandMark />
+                )}
+                <span className="text-foreground truncate font-semibold">{brand?.name ?? "AnyPress"}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <CommandSearch isAdmin={isAdmin} isReseller={isReseller} product={product} />
+      </SidebarHeader>
+      <SidebarContent>
+        <ScrollArea className="h-full [&>[data-slot=scroll-area-scrollbar]]:hidden [&>[data-slot=scroll-area-viewport]]:scroll-fade">
+          {/* Every page is a link, in small groups with a heading (Overview stands alone at the top). */}
+          <nav aria-label="Main" data-tour-step-id="sidebar-nav">
+            {navFor(isAdmin, isReseller).map((section) => {
+              const single = section.links.length === 1 && section.links[0].title === section.title;
+              return (
+                <SidebarGroup key={section.title} data-tour-step-id={`group-${sectionSlug(section.title)}`} className="py-1">
+                  {!single && <SidebarGroupLabel>{section.title}</SidebarGroupLabel>}
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {section.links.map((link) => (
+                        <NavItem
+                          key={link.href}
+                          link={link}
+                          href={linkHref(link, product)}
+                          active={isCurrent(pathname, link.href)}
+                          badge={link.href === "/applications" && pendingApplications > 0 ? pendingApplications : 0}
+                        />
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              );
+            })}
+          </nav>
+        </ScrollArea>
+      </SidebarContent>
+      <SidebarFooter className="border-t">
+        {brand && (
+          <p className="text-muted-foreground px-2 text-xs group-data-[collapsible=icon]:hidden">Powered by AnyPress</p>
+        )}
+        <UserMenu user={user} supportEmail={brand?.supportEmail} />
+      </SidebarFooter>
+    </Sidebar>
   );
 }
 
-/** Each page's animated icon in the sidebar (the same drawing as its plain icon elsewhere). */
-const NAV_ICONS: Record<string, Animated.AnimatedIcon> = {
-  "/": Animated.GaugeIcon,
-  "/stores": Animated.HomeIcon,
-  "/backups": Animated.CloudBackupIcon,
-  "/jobs": Animated.HistoryIcon,
-  "/versions": Animated.LayersIcon,
-  "/plugins": Animated.PlugZapIcon,
-  "/storefronts": Animated.CartIcon,
-  "/applications": Animated.MailboxIcon,
-  "/resellers": Animated.HeartHandshakeIcon,
-  "/reseller": Animated.HeartHandshakeIcon,
-  "/notifications": Animated.BellIcon,
-  "/team": Animated.UsersIcon,
-  "/branding": Animated.PaletteIcon,
-  "/integrations": Animated.BlocksIcon,
-  "/keys": Animated.KeyIcon,
-  "/webhooks": Animated.WebhookIcon,
-  "/requests": Animated.ActivityIcon
-};
-
-/** One sidebar link: its icon moves while the row is hovered; the line on what the page is for shows on hover. */
+/** One sidebar link, with the same icon the page has everywhere else; the line on what the page is for shows on hover. */
 function NavItem({ link, href, active, badge }: { link: NavLink; href: string; active: boolean; badge: number }) {
-  const { ref, row } = useIconHover();
-  const Icon = NAV_ICONS[link.href];
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -172,14 +143,17 @@ function NavItem({ link, href, active, badge }: { link: NavLink; href: string; a
         asChild
         tooltip={link.title}
         title={link.description}
-        isActive={active}
-        {...row}>
+        isActive={active}>
         <Link href={href}>
-          {Icon ? <Icon ref={ref} size={16} className="flex shrink-0 items-center" aria-hidden /> : <link.icon />}
+          <link.icon aria-hidden />
           <span>{link.title}</span>
         </Link>
       </SidebarMenuButton>
-      {badge > 0 && <SidebarMenuBadge title="Applications waiting">{badge}</SidebarMenuBadge>}
+      {badge > 0 && (
+        <SidebarMenuBadge title="Applications waiting" className="bg-primary-strong text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-active/menu-button:text-primary-foreground rounded-full">
+          {badge}
+        </SidebarMenuBadge>
+      )}
     </SidebarMenuItem>
   );
 }

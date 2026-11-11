@@ -191,7 +191,7 @@ export function BuyDomain({ tenantId, ownerEmail }: { tenantId: string; ownerEma
               </form>
               {offers && offers.length === 0 && <p className="text-muted-foreground text-sm">Nothing found. Try another name.</p>}
               {offers && offers.length > 0 && (
-                <ul className="divide-y rounded-md border" data-testid="domain-offers">
+                <ul className="divide-y rounded-xl border" data-testid="domain-offers">
                   {offers.map((o) => (
                     <li key={o.domainName} className="flex items-center justify-between gap-3 p-3 text-sm">
                       <div className="min-w-0">

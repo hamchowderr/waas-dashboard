@@ -77,7 +77,7 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
         <Button variant="ghost" size="icon" className="relative" aria-label={label} data-tour-step-id="notifications">
           <BellIcon />
           {unread > 0 && (
-            <span className="bg-foreground text-background absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-medium tabular-nums">
+            <span className="bg-primary-strong text-primary-foreground ring-card absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[0.6875rem] leading-none font-semibold tabular-nums ring-2">
               {unread > 9 ? "9+" : unread}
             </span>
           )}
@@ -95,7 +95,7 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
             <p className="text-muted-foreground px-4 py-6 text-sm">Loading…</p>
           ) : list.items.length === 0 ? (
             <p className="text-muted-foreground px-4 py-6 text-sm">
-              Nothing yet. When a store is ready, goes live or a job fails, it shows up here.
+              Nothing yet. When a store is ready, goes live or a task fails, it shows up here.
             </p>
           ) : (
             <ul className="divide-y">
@@ -130,7 +130,7 @@ export function NotificationRow({ n, showStorefront, onPick }: { n: Notification
           {showStorefront && n.productName ? ` · ${n.productName}` : ""}
         </p>
       </div>
-      {n.unread && <span className="bg-foreground mt-1.5 size-2 shrink-0 rounded-full" aria-label="New" />}
+      {n.unread && <span className="bg-primary mt-1.5 size-2 shrink-0 rounded-full" aria-label="New" />}
     </div>
   );
   return (

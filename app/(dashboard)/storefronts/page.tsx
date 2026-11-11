@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ShoppingBagIcon } from "lucide-react";
+import { HandshakeIcon, PanelsTopLeftIcon, StoreIcon } from "lucide-react";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { EmptyState } from "@/components/admin/empty-state";
 import { PageHeader } from "@/components/admin/page-header";
+import { StatTiles } from "@/components/admin/stat-tile";
 import { Card } from "@/components/ui/card";
 import { NewSellerButton } from "./new-seller-dialog";
 import { StorefrontsTable, type StorefrontRow } from "./storefronts-table";
@@ -41,29 +42,23 @@ export default async function StorefrontsPage() {
       </PageHeader>
       {products.length === 0 ? (
         <Card>
-          <EmptyState icon={ShoppingBagIcon} title="No storefronts yet" action={<NewSellerButton storefronts={products} />}>
+          <EmptyState icon={StoreIcon} title="No storefronts yet" action={<NewSellerButton storefronts={products} />}>
             A storefront is set up when you approve an application or make a seller here.
           </EmptyState>
         </Card>
       ) : (
         <>
-          <dl className="grid grid-cols-3 gap-3 lg:gap-4">
-            <Stat label="Storefronts" value={products.length} />
-            <Stat label="Resellers" value={resellers} />
-            <Stat label="Stores" value={stores} />
-          </dl>
+          <StatTiles
+            label="Storefronts at a glance"
+            stats={[
+              { label: "Storefronts", value: products.length, icon: StoreIcon },
+              { label: "Resellers", value: resellers, icon: HandshakeIcon, href: "/resellers" },
+              { label: "Stores", value: stores, icon: PanelsTopLeftIcon, href: "/stores" }
+            ]}
+          />
           <StorefrontsTable rows={rows} />
         </>
       )}
     </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <Card className="gap-1 px-(--card-spacing) py-4">
-      <dt className="text-muted-foreground text-xs font-medium sm:text-sm">{label}</dt>
-      <dd className="text-2xl font-bold tabular-nums">{value}</dd>
-    </Card>
   );
 }

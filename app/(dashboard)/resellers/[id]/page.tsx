@@ -85,7 +85,7 @@ export default async function ResellerPage({
         />
         <Card>
           <CardHeader>
-            <CardIcon tone="sky">
+            <CardIcon>
               <StoreIcon />
             </CardIcon>
             <CardTitle>Storefronts</CardTitle>

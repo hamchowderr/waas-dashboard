@@ -1,4 +1,4 @@
-import { CalendarCheckIcon, GlobeIcon, GraduationCapIcon, LayersIcon, ShoppingBagIcon, WorkflowIcon, type LucideIcon } from "lucide-react";
+import { CalendarCheckIcon, CircleDashedIcon, GlobeIcon, LayoutGridIcon, ShoppingBagIcon, UsersRoundIcon, WorkflowIcon, type LucideIcon } from "lucide-react";
 
 import { cn } from "cn";
 
@@ -9,10 +9,10 @@ import { cn } from "cn";
 const SITE_TYPES: Record<string, { label: string; icon: LucideIcon }> = {
   website: { label: "Website", icon: GlobeIcon },
   bookings: { label: "Bookings", icon: CalendarCheckIcon },
-  "online-store": { label: "Store", icon: ShoppingBagIcon },
-  store: { label: "Store", icon: ShoppingBagIcon },
-  community: { label: "Community & courses", icon: GraduationCapIcon },
-  everything: { label: "Everything", icon: LayersIcon },
+  "online-store": { label: "Online store", icon: ShoppingBagIcon },
+  store: { label: "Online store", icon: ShoppingBagIcon },
+  community: { label: "Community & courses", icon: UsersRoundIcon },
+  everything: { label: "Everything", icon: LayoutGridIcon },
   highlevel: { label: "HighLevel site", icon: WorkflowIcon }
 };
 
@@ -31,7 +31,7 @@ export const NEW_SITE_TYPE_HELP: Record<(typeof NEW_SITE_TYPES)[number], string>
   highlevel: "Pages and SEO, with HighLevel's own plugin for forms, chat and calendars. No Fluent CRM, forms or shop."
 };
 
-const OTHER = { label: "Other site", icon: GlobeIcon };
+const OTHER = { label: "Other site", icon: CircleDashedIcon };
 
 /** The store's main site type: the first one the dashboard knows. */
 export function siteTypeOf(siteTypes: string[]): { label: string; icon: LucideIcon; known: boolean } {
@@ -42,14 +42,14 @@ export function siteTypeOf(siteTypes: string[]): { label: string; icon: LucideIc
   return { ...OTHER, known: false };
 }
 
-/** The type's icon in a small square, as on the store rows. */
+/** The type's icon in a small neutral circle, as on the store rows. */
 export function SiteTypeIcon({ siteTypes, className }: { siteTypes: string[]; className?: string }) {
   const type = siteTypeOf(siteTypes);
   return (
     <span
       title={type.label}
       className={cn(
-        "bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-xl",
+        "bg-muted text-foreground/70 flex size-8 shrink-0 items-center justify-center rounded-full",
         !type.known && "text-muted-foreground",
         className
       )}>

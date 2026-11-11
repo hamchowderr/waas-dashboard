@@ -216,12 +216,13 @@ export function AdminDataTable<T extends RowData>({
           {tabs && (
             <Tabs value={tab} onValueChange={changeTab} className="hidden lg:block">
               <TabsList>
-                <TabsTrigger value="all" className="gap-2">
+                {/* These tabs filter the one table below, so they have no panels of their own to point at. */}
+                <TabsTrigger value="all" className="gap-2" aria-controls={undefined}>
                   All
                   {tabCounts && <TabCount count={filtered.length} />}
                 </TabsTrigger>
                 {tabs.map((t) => (
-                  <TabsTrigger key={t.value} value={t.value} className="gap-2">
+                  <TabsTrigger key={t.value} value={t.value} className="gap-2" aria-controls={undefined}>
                     {t.label}
                     {tabCounts && <TabCount count={filtered.filter(t.match).length} />}
                   </TabsTrigger>

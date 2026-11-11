@@ -104,7 +104,7 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
             Sellers <Count n={sellers} />
           </ToggleGroupItem>
           <ToggleGroupItem value="resellers" className="px-3">
-            Resellers <Count n={rows.length - sellers} />
+            Reseller storefronts <Count n={rows.length - sellers} />
           </ToggleGroupItem>
           {stuck > 0 && (
             <ToggleGroupItem value="stuck" className="px-3">
@@ -172,11 +172,11 @@ function Row({ row }: { row: StorefrontRow }) {
         <div className="flex items-center gap-3">
           <span
             aria-hidden
-            className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold">
+            className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
             {row.name.slice(0, 1).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <Link href={`/stores${q}`} className="block truncate font-medium hover:underline">
+            <Link href={`/stores${q}`} className="block truncate py-0.5 font-medium hover:underline">
               {row.name}
             </Link>
             {row.domain ? (
@@ -198,7 +198,7 @@ function Row({ row }: { row: StorefrontRow }) {
             {row.setup && (
               <p className="text-muted-foreground mt-0.5 text-xs lg:hidden">
                 Setup {row.setup.done} of {row.setup.total}
-                {row.setup.stuck && <span className="font-medium text-orange-700 dark:text-orange-400"> · Stuck</span>}
+                {row.setup.stuck && <span className="font-medium text-rose-700 dark:text-rose-400"> · Stuck</span>}
               </p>
             )}
           </div>
@@ -343,7 +343,7 @@ function StoreMeter({ row }: { row: StorefrontRow }) {
         {over && <span className="text-destructive text-xs font-medium">Over limit</span>}
       </div>
       <div className="bg-muted h-1.5 overflow-hidden rounded-full">
-        <div className={cn("h-full rounded-full", over ? "bg-destructive" : "bg-primary")} style={{ width: `${share}%` }} />
+        <div className={cn("h-full rounded-full", over ? "bg-destructive" : "bg-foreground/50")} style={{ width: `${share}%` }} />
       </div>
     </div>
   );

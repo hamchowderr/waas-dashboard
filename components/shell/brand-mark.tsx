@@ -1,5 +1,3 @@
-import { ServerCogIcon } from "lucide-react";
-
 /** The AnyPress ribbon "A", the platform's own mark in the sidebar and on the sign-in page. */
 export function BrandMark({ className = "size-8" }: { className?: string }) {
   return (
@@ -13,11 +11,13 @@ export function BrandMark({ className = "size-8" }: { className?: string }) {
   );
 }
 
-/** A seller's or reseller's brand with a name but no logo: a plain tile in their accent colour, never our mark. */
-export function PlainMark() {
+/** A seller's or reseller's brand with a name but no logo: its first letter on a tile in their accent colour, never our mark. */
+export function PlainMark({ name }: { name: string }) {
   return (
-    <span className="bg-primary text-primary-foreground me-1 flex size-8 shrink-0 items-center justify-center rounded-[5px] transition-all group-data-collapsible:size-6 group-data-[collapsible=icon]:size-8">
-      <ServerCogIcon className="size-4" />
+    <span
+      aria-hidden
+      className="bg-primary text-primary-foreground me-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition-all group-data-collapsible:size-6 group-data-[collapsible=icon]:size-8">
+      {name.trim().charAt(0).toUpperCase() || "A"}
     </span>
   );
 }

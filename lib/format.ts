@@ -9,7 +9,7 @@ export const statusMeta: Record<
   [StatusCode.Pending]: { label: "In progress", badge: "warning" },
   [StatusCode.Done]: { label: "Ready", badge: "success" },
   [StatusCode.Failed]: { label: "Failed", badge: "destructive" },
-  [StatusCode.Removing]: { label: "Removing", badge: "info" }
+  [StatusCode.Removing]: { label: "Removing", badge: "warning" }
 };
 
 export const jobTypeLabels: Record<JobType, string> = {

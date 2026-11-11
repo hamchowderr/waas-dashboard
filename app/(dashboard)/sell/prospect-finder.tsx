@@ -7,7 +7,7 @@ import type { CrmProspect, CrmTarget, Prospect, ProspectContacts, ProspectCrm, P
 import type { GroupId } from "@/lib/sales-kit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
@@ -207,6 +207,9 @@ export function ProspectFinder({
     <div className="space-y-4 lg:space-y-6">
       <Card>
         <CardHeader>
+          <CardIcon>
+            <MapPinIcon />
+          </CardIcon>
           <CardTitle>Find prospects near you</CardTitle>
           <CardDescription>
             Pick who you sell to and where, and get local businesses 20 at a time (up to 60) with their phone, email, website, social pages, hours and rating. Businesses with no website come first: they need you most.

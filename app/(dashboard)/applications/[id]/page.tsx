@@ -62,7 +62,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardIcon tone="sky">
+            <CardIcon>
               <MessageSquareTextIcon />
             </CardIcon>
             <CardTitle>What they told us</CardTitle>
@@ -80,7 +80,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
         </Card>
         <Card>
           <CardHeader>
-            <CardIcon tone="ribbon">
+            <CardIcon>
               <GavelIcon />
             </CardIcon>
             <CardTitle>Decision</CardTitle>

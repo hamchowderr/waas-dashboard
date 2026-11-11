@@ -173,7 +173,7 @@ export function KeysManager({
     <>
       <Card>
         <CardHeader>
-          <CardIcon tone="orange">
+          <CardIcon>
             <KeyRoundIcon />
           </CardIcon>
           <CardTitle>{partner ? "Partner keys" : "Keys"}</CardTitle>

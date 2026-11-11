@@ -95,7 +95,7 @@ export function WebhookEndpoints({
     <>
       <Card>
         <CardHeader>
-          <CardIcon tone="teal">
+          <CardIcon>
             <WebhookIcon />
           </CardIcon>
           <CardTitle>Endpoints</CardTitle>

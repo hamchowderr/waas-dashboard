@@ -142,7 +142,7 @@ export function InvoicesCard({
     <Card className="lg:col-span-2">
       <CardHeader className="flex flex-row items-start justify-between gap-2">
         <div className="space-y-1.5">
-          <CardIcon tone="violet">
+          <CardIcon>
             <ReceiptTextIcon />
           </CardIcon>
           <CardTitle>Invoices</CardTitle>

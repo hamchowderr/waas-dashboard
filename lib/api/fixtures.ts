@@ -169,7 +169,7 @@ const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; 
       { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
       { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
       { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
       { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
     ]
   },
@@ -189,7 +189,7 @@ const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; 
       { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
       { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
       { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
       { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
     ]
   },
@@ -209,7 +209,7 @@ const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; 
       { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
       { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
       { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
       { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
     ]
   },
@@ -228,7 +228,7 @@ const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; 
       { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
       { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
       { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
       { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
     ]
   },
@@ -250,7 +250,7 @@ const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; 
       { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
       { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
       { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
       { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
     ]
   },
@@ -272,7 +272,7 @@ const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; 
       { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
       { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
       { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
       { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
     ]
   },
@@ -287,7 +287,7 @@ const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; 
       { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
       { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Sends new users and sign-ups to your HighLevel sub-account as contacts. Connected for you." },
       { file: "leadconnector/leadconnector.php", name: "LeadConnector", about: "HighLevel's own plugin: your HighLevel forms, chat widget and calendars on this site." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
+      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
       { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
     ]
   }

@@ -76,7 +76,7 @@ export function SetupProgress({ setup, className, hideStuck = false }: { setup: 
           {setup.done} of {setup.total}
         </span>
         {stuck && (
-          <Badge variant="warning" className="gap-1 px-1.5 py-0 text-[11px]">
+          <Badge variant="destructive" className="gap-1 px-1.5 py-0 text-xs">
             <HourglassIcon className="size-3" aria-hidden />
             Stuck
           </Badge>
@@ -85,7 +85,7 @@ export function SetupProgress({ setup, className, hideStuck = false }: { setup: 
       </div>
       <div className="bg-muted h-1.5 overflow-hidden rounded-full">
         <div
-          className={cn("h-full rounded-full", finished ? "bg-green-600 dark:bg-green-400" : stuck ? "bg-orange-500" : "bg-primary bg-(image:--primary-gradient)")}
+          className={cn("h-full rounded-full", finished ? "bg-green-600 dark:bg-green-400" : stuck ? "bg-rose-500 dark:bg-rose-400" : "bg-amber-500 dark:bg-amber-400")}
           style={{ width: `${share}%` }}
         />
       </div>
