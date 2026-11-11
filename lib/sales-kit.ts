@@ -21,7 +21,7 @@ export const PLAN_NAMES: Record<Plan, string> = {
 export const SUGGESTED_PRICES: Record<Plan, number> = { website: 49, bookings: 79, store: 99, community: 129, everything: 249 };
 
 /** The seller's cost per site, Small, monthly, at list price, in whole dollars. */
-export const LIST_COST: Record<Plan, number> = { website: 12, bookings: 19, store: 29, community: 39, everything: 79 };
+export const LIST_COST: Record<Plan, number> = { website: 12, bookings: 19, store: 29, community: 49, everything: 79 };
 
 /** The groups in the order the Sell page shows them; ids match the CRM's customer group field. */
 export const GROUP_IDS = ["shops", "regulated", "courses", "chambers", "churches", "franchises", "agencies", "developers"] as const;
