@@ -96,7 +96,8 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
           size="sm"
           value={filter}
           onValueChange={(value) => value && setFilter(value as Filter)}
-          aria-label="Show">
+          aria-label="Show"
+          className="max-w-full justify-start overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <ToggleGroupItem value="all" className="px-3">
             All <Count n={rows.length} />
           </ToggleGroupItem>

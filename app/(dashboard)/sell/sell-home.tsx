@@ -61,8 +61,8 @@ export function SellHome({
                 <GroupIcon id={g.id} />
                 <h2 className="text-sm leading-snug font-semibold">{g.title}</h2>
               </div>
-              <p className="text-muted-foreground mt-3 text-sm text-pretty">{g.who}</p>
-              <div className="mt-auto flex items-end justify-between gap-2 border-t pt-3 [margin-top:max(1.25rem,auto)]">
+              <p className="text-muted-foreground mt-3 pb-4 text-sm text-pretty">{g.who}</p>
+              <div className="mt-auto flex items-end justify-between gap-2 border-t pt-3 ">
                 <div>
                   <p className="text-muted-foreground text-xs">{PLAN_NAMES[g.plan]}</p>
                   <p className="text-sm font-medium tabular-nums">

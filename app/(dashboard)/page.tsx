@@ -31,6 +31,7 @@ import { StatTiles, type Stat } from "@/components/admin/stat-tile";
 import { SetupProgress, SetupSteps } from "@/components/admin/setup-checklist";
 import { TakeTourButton } from "@/components/shell/dashboard-tour";
 import { NewSite } from "./stores/new-site";
+import { RetryTask } from "./retry-task";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -40,12 +41,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export const metadata: Metadata = { title: "Overview" };
 
 /** One thing that needs the person, with the button that deals with it. critical: broken; waiting: someone is waiting on them. */
-type Todo = { key: string; tone: "critical" | "waiting"; icon: LucideIcon; title: string; detail: string | null; action: string; href: string };
+type Todo = { key: string; tone: "critical" | "waiting"; icon: LucideIcon; title: string; detail: string | null; action: string; href: string; retry?: string };
 
 /** Links keep the chosen storefront, so the next page shows the same one. */
 function withProduct(href: string, product?: string): string {
   if (!product) return href;
   return `${href}${href.includes("?") ? "&" : "?"}product=${encodeURIComponent(product)}`;
+}
+
+/** The API prefixes errors with the part that failed; the person needs the cause, starting with a capital. */
+function plainError(error: string | null): string | null {
+  const text = error?.replace(/^Provisioner:\s*/, "").trim();
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : null;
 }
 
 function plural(n: number, one: string, many = `${one}s`) {
@@ -95,6 +102,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const showChecklist = !!storefrontSetup && storefrontSetup.done < storefrontSetup.total;
   const stuck = isAdmin && !product && setup ? [...setup.resellers, ...setup.storefronts].filter((s) => s.stuck) : [];
   const failedJobs = jobs.items.filter((job) => job.state === "failed");
+  // Retrying is a change, so only for someone who may change things.
+  const canRetry = !!viewer && canChange(viewer);
   const { health } = overview;
   const t = overview.tenants;
 
@@ -119,7 +128,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       icon: AlertTriangle,
       title: `${jobTypeLabel(job.type)} failed${job.targetName ? ` · ${job.targetName}` : ""}`,
       // The API prefixes errors with the part that failed; the person needs the cause, not our internals.
-      detail: job.error?.replace(/^Provisioner:\s*/, "") ?? null,
+      detail: plainError(job.error),
+      retry: canRetry ? job.id : undefined,
       action: job.tenantId ? "Open store" : "See task",
       href: job.tenantId ? `/stores/${job.tenantId}` : "/jobs?state=failed"
     });
@@ -233,7 +243,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
       <StatTiles stats={tiles} label="Your stores at a glance" />
 
-      <div className="grid grid-cols-1 items-start gap-5 lg:gap-7 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:gap-7 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
         <div className="min-w-0 space-y-5 lg:space-y-7">
           <Card data-tour-step-id={isAdmin || showChecklist ? "needs-you" : "needs-you start-here"}>
             <CardHeader>
@@ -283,12 +293,15 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                         <p className="text-sm font-semibold">{todo.title}</p>
                         {todo.detail && <p className="text-muted-foreground line-clamp-2 text-sm">{todo.detail}</p>}
                       </div>
-                      <Button asChild size="sm" variant="outline" className="shrink-0 max-sm:ms-13">
+                      <div className="flex shrink-0 gap-2 max-sm:ms-13">
+                      {todo.retry && <RetryTask failureId={todo.retry} label={todo.title.split(" failed")[0]} />}
+                      <Button asChild size="sm" variant="outline">
                         <Link href={todo.href.startsWith("/stores/") || todo.href === "/applications" ? todo.href : withProduct(todo.href, product)}>
                           {todo.action}
                           <ChevronRight aria-hidden />
                         </Link>
                       </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -515,7 +528,7 @@ function SetupTable({
             const href = isReseller ? `/resellers/${row.resellerId}` : `/?product=${encodeURIComponent((row as StorefrontSetup).productId)}`;
             return (
               <TableRow key={isReseller ? `r-${row.resellerId}` : (row as StorefrontSetup).productId}>
-                <TableCell className="pl-3 whitespace-normal">
+                <TableCell className="min-w-36 pl-3 whitespace-normal">
                   {forCustomer ? (
                     <span className="font-medium">{row.name}</span>
                   ) : (

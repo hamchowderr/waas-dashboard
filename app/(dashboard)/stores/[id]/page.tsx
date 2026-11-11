@@ -1,5 +1,6 @@
 import { SiteTypeIcon, siteTypeOf } from "@/components/admin/site-type";
 import type { Metadata } from "next";
+import * as React from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArchiveIcon, ChevronDownIcon, ChevronLeft, CirclePauseIcon, ExternalLinkIcon, GlobeIcon, HistoryIcon, IdCardIcon, ImportIcon, LanguagesIcon, MailIcon } from "lucide-react";
@@ -242,7 +243,16 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <TableBody>
                   {tenant.domains.map((domain) => (
                     <TableRow key={domain.domainName}>
-                      <TableCell className={cn("whitespace-normal break-all", domain.isBase ? "text-muted-foreground font-mono text-xs" : "font-medium")}>{domain.domainName}</TableCell>
+                      <TableCell className={cn("whitespace-normal", domain.isBase ? "text-foreground/80" : "font-medium")}>
+                        {/* Long hosts break at their dots, never mid-word. */}
+                        {domain.domainName.split(".").map((part, i) => (
+                          <React.Fragment key={i}>
+                            {i > 0 && "."}
+                            {i > 0 && <wbr />}
+                            {part}
+                          </React.Fragment>
+                        ))}
+                      </TableCell>
                       <TableCell className="text-end">
                         <div className="flex flex-wrap items-center justify-end gap-1 sm:flex-nowrap">
                           {setups.has(domain.domainName) && (
