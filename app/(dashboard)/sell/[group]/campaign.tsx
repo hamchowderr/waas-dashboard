@@ -61,9 +61,8 @@ export function Campaign({
         <Card>
           <CardContent className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
             <div className="min-w-0">
-              <p className="text-muted-foreground text-xs font-medium">What you sell them</p>
-              <p className="mt-0.5 text-lg font-semibold">
-                {PLAN_NAMES[playbook.plan]} at ${price} a month
+              <p className="text-lg font-semibold">
+                Sell them {PLAN_NAMES[playbook.plan]} at ${price} a month
               </p>
               <p className="text-muted-foreground text-sm">You keep ${keep(playbook.plan, price)} a month on every site. Change prices on the Sales Kit page.</p>
             </div>

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { BellIcon } from "lucide-react";
+import { BellIcon, InboxIcon } from "lucide-react";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { AlertsToggle } from "@/components/shell/alerts-toggle";
 import { NotificationRow } from "@/components/shell/notification-bell";
 import { MarkAllRead } from "./mark-all-read";
@@ -44,10 +44,18 @@ export default async function NotificationsPage() {
           </EmptyState>
         ) : (
           <>
-            <div className="flex min-h-14 items-center justify-between gap-3 border-b px-4 py-2">
-              <p className="text-sm font-medium">{list.unread > 0 ? `${list.unread} new` : "All read"}</p>
-              {list.unread > 0 && <MarkAllRead />}
-            </div>
+            <CardHeader className="border-b py-(--card-spacing)">
+              <CardIcon>
+                <InboxIcon />
+              </CardIcon>
+              <CardTitle>Recent</CardTitle>
+              <CardDescription>{list.unread > 0 ? `${list.unread} new` : "All read"}</CardDescription>
+              {list.unread > 0 && (
+                <CardAction>
+                  <MarkAllRead />
+                </CardAction>
+              )}
+            </CardHeader>
             <ul className="divide-y">
             {list.items.map((n) => (
               <NotificationRow key={n.id} n={n} showStorefront={!!viewer.isAdmin} />

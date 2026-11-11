@@ -41,7 +41,7 @@ export const webhookEventLabels: Record<WebhookEventType, string> = {
   "tenant.rolled_back": "Store restored from backup",
   "tenant.backup_completed": "Backup finished",
   "tenant.backup_failed": "Backup failed",
-  "tenant.failed": "Store job failed",
+  "tenant.failed": "Store task failed",
   "version.ready": "Version ready",
   "version.deleted": "Version deleted",
   "version.failed": "Version failed",
@@ -92,4 +92,14 @@ export function formatBytes(bytes: number | null | undefined): string {
     unit++;
   }
   return `${value.toFixed(value < 10 && unit > 0 ? 1 : 0)} ${units[unit]}`;
+}
+
+/** A task error as people read it: without the part of the API that raised it, or provider codes such as "(403 AccessDenied)". */
+export function plainError(error: string | null): string | null {
+  // Provider codes in brackets ("(403 AccessDenied)") stay in the task's details, not here.
+  const text = error
+    ?.replace(/^Provisioner:\s*/, "")
+    .replace(/\s*\(\d{3} [A-Za-z]+\)/g, "")
+    .trim();
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : null;
 }

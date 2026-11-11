@@ -25,11 +25,11 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
 
   const rows: [string, React.ReactNode][] = [
     ["Name", a.name],
-    ["Email", <a key="email" href={`mailto:${a.email}`} className="hover:underline">{a.email}</a>],
+    ["Email", <a key="email" href={`mailto:${a.email}`} className="text-primary underline-offset-4 hover:underline">{a.email}</a>],
     [
       "Website",
       a.website ? (
-        <a key="site" href={a.website} target="_blank" rel="noreferrer" className="break-all hover:underline">
+        <a key="site" href={a.website} target="_blank" rel="noreferrer" className="text-primary break-all underline-offset-4 hover:underline">
           {a.website}
         </a>
       ) : (

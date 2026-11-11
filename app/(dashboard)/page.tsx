@@ -23,7 +23,7 @@ import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import type { Job, Overview, ResellerSetup, Setup, SetupStep, StorefrontSetup } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
-import { formatAgo, formatDateTime, jobTypeLabel } from "@/lib/format";
+import { formatAgo, formatDateTime, jobTypeLabel, plainError } from "@/lib/format";
 import { EmptyState } from "@/components/admin/empty-state";
 import { JobStateBadge } from "@/components/admin/job-state-badge";
 import { PageHeader } from "@/components/admin/page-header";
@@ -50,14 +50,6 @@ function withProduct(href: string, product?: string): string {
 }
 
 /** The API prefixes errors with the part that failed; the person needs the cause, starting with a capital. */
-function plainError(error: string | null): string | null {
-  // Provider codes in brackets ("(403 AccessDenied)") stay in the task's details, not here.
-  const text = error
-    ?.replace(/^Provisioner:\s*/, "")
-    .replace(/\s*\(\d{3} [A-Za-z]+\)/g, "")
-    .trim();
-  return text ? text.charAt(0).toUpperCase() + text.slice(1) : null;
-}
 
 function plural(n: number, one: string, many = `${one}s`) {
   return `${n} ${n === 1 ? one : many}`;
@@ -211,7 +203,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       href: withProduct("/stores?state=pending", product)
     },
     {
-      label: "Failed",
+      label: "Failed tasks",
       value: problems,
       note: problems > 0 ? "Listed under Needs you" : "Nothing broken",
       icon: AlertTriangle,

@@ -141,7 +141,7 @@ export function BrandingEditor({
                   maxLength={7}
                   value={form.color}
                   disabled={!canEdit}
-                  placeholder={view.shown.color && !view.color ? view.shown.color : "#1d4ed8"}
+                  placeholder={view.shown.color && !view.color ? view.shown.color : "#c8264d"}
                   aria-invalid={!colorValid}
                   onChange={(e) => setForm({ ...form, color: e.target.value })}
                 />

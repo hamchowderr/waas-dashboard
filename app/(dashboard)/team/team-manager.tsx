@@ -194,11 +194,14 @@ export function TeamManager({
                         {m.userId === me.userId && <span className="text-muted-foreground font-normal"> (you)</span>}
                       </div>
                       {m.name && m.name !== m.email && (
-                        <div className="text-muted-foreground text-xs break-all">{m.email}</div>
+                        <div className="text-muted-foreground text-xs">
+                          <Breakable text={m.email} />
+                        </div>
                       )}
+                      <div className="text-muted-foreground text-xs sm:hidden">Joined {formatDate(m.dateCreated)}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={theirs === "member" ? "secondary" : "outline"}>{roleLabel(theirs)}</Badge>
+                      <Badge variant="outline">{roleLabel(theirs)}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground whitespace-nowrap max-sm:hidden">
                       {formatDate(m.dateCreated)}
@@ -274,12 +277,13 @@ export function TeamManager({
               <TableBody>
                 {team.invitations.map((i) => (
                   <TableRow key={i.id}>
-                    <TableCell className="whitespace-normal break-all">
+                    <TableCell className="whitespace-normal">
                       <MailIcon className="text-muted-foreground me-1.5 inline size-4" />
-                      {i.email}
+                      <Breakable text={i.email} />
+                      <div className="text-muted-foreground text-xs sm:hidden">Expires {formatDate(i.expiresAt)}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{roleLabel(i.role)}</Badge>
+                      <Badge variant="outline">{roleLabel(i.role)}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground whitespace-nowrap max-sm:hidden">
                       {formatDate(i.expiresAt)}
@@ -411,6 +415,20 @@ export function TeamManager({
           return result.ok;
         }}
       />
+    </>
+  );
+}
+
+/** An email or address that wraps only after its @ and dots, never mid-word. */
+function Breakable({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(?<=[@.])/).map((part, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <wbr />}
+          {part}
+        </React.Fragment>
+      ))}
     </>
   );
 }

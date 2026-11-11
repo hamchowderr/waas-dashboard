@@ -12,11 +12,11 @@ export default function NotFound() {
           <SearchXIcon />
         </CardIcon>
         <CardTitle>Not found</CardTitle>
-        <CardDescription>This store does not exist, or it has been deleted.</CardDescription>
+        <CardDescription>This page doesn&apos;t exist, or what it showed has been deleted.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button asChild variant="outline">
-          <Link href="/stores">Back to stores</Link>
+          <Link href="/">Back to Overview</Link>
         </Button>
       </CardContent>
     </Card>

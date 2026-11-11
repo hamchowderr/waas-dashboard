@@ -1331,7 +1331,7 @@ function sampleNotifications(): Notification[] {
   });
   const rows = [
     entry(1, "tenant.ready", "success", `${store(0).name} is ready`, 4, store(0)),
-    entry(2, "tenant.failed", "error", `A job on ${store(3).name} failed`, 38, store(3)),
+    entry(2, "tenant.failed", "error", `A task on ${store(3).name} failed`, 38, store(3)),
     entry(3, "tenant.live", "success", `${store(1).name} is live`, 95, store(1)),
     entry(4, "tenant.backup_failed", "error", `A backup of ${store(5).name} failed`, 60 * 7, store(5)),
     entry(5, "tenant.ready", "success", `${store(2).name} is ready`, 60 * 26, store(2)),

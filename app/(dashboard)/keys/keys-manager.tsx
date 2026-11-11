@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { KeyRoundIcon, MoreHorizontalIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import { ChevronDownIcon, KeyRoundIcon, MoreHorizontalIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 import type { ApiKey, ApiKeyState } from "@/lib/api/types";
@@ -301,11 +302,14 @@ export function KeysManager({
           </Table>
           {deletedCount > 0 && (
             <div className="border-t px-(--card-spacing) py-2">
-              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setShowDeleted((was) => !was)}>
-                {showDeleted
-                  ? "Hide deleted keys"
-                  : `Show ${deletedCount} deleted ${deletedCount === 1 ? "key" : "keys"}`}
-              </Button>
+              <button
+                type="button"
+                className="text-primary inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline pointer-coarse:min-h-11"
+                aria-expanded={showDeleted}
+                onClick={() => setShowDeleted((was) => !was)}>
+                {showDeleted ? "Hide deleted keys" : `Show ${deletedCount} deleted ${deletedCount === 1 ? "key" : "keys"}`}
+                <ChevronDownIcon className={cn("size-4 transition-transform", showDeleted && "rotate-180")} aria-hidden />
+              </button>
             </div>
           )}
         </CardContent>

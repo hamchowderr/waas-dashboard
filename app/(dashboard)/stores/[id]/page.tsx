@@ -7,7 +7,7 @@ import { ArchiveIcon, ChevronDownIcon, ChevronLeft, CirclePauseIcon, ExternalLin
 
 import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel } from "@/lib/format";
+import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel, plainError } from "@/lib/format";
 import { StatusCode } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { OnHoldBadge, StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
@@ -389,13 +389,13 @@ export default async function StorePage({ params, searchParams }: Params) {
                           {/* Below sm, When and Error move under the job's name. */}
                           <div className="text-muted-foreground space-y-0.5 text-xs sm:hidden">
                             <div>{formatDateTime(job.failedAt ?? job.createdAt)}</div>
-                            {job.error && <div className="line-clamp-2 break-words">{job.error}</div>}
+                            {job.error && <div className="line-clamp-2 break-words">{plainError(job.error)}</div>}
                           </div>
                         </TableCell>
                         <TableCell className="whitespace-nowrap max-sm:hidden">
                           {formatDateTime(job.failedAt ?? job.createdAt)}
                         </TableCell>
-                        <TableCell className="text-muted-foreground max-w-md truncate max-sm:hidden">{job.error ?? "—"}</TableCell>
+                        <TableCell className="text-muted-foreground max-w-md truncate max-sm:hidden">{plainError(job.error) ?? "—"}</TableCell>
                         <TableCell className="text-end">
                           <JobStateBadge state={job.state} />
                         </TableCell>

@@ -22,7 +22,7 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import type { Job } from "@/lib/api/types";
-import { formatAgo, formatDateTime, jobTypeLabel, jobTypeLabels } from "@/lib/format";
+import { formatAgo, formatDateTime, jobTypeLabel, jobTypeLabels, plainError } from "@/lib/format";
 import { useCanChange } from "@/components/auth/can-change";
 
 const columnLabels: Record<string, string> = {
@@ -97,7 +97,7 @@ const columns: ColumnDef<Job>[] = [
     cell: ({ row }) => (
       // Two lines here; a click on the row opens the whole error.
       <span className="text-muted-foreground line-clamp-2 block max-w-80 whitespace-normal break-words">
-        {row.original.error ?? "—"}
+        {plainError(row.original.error) ?? "—"}
       </span>
     )
   },

@@ -942,7 +942,7 @@ function optional(value: unknown, what: string, max: number): string | null {
 export async function saveBranding(of: TeamOf, fields: BrandingFields): Promise<ActionResult<BrandingView>> {
   return brandChange(of, (checked) => {
     const color = optional(fields?.color, "Color", 7);
-    if (color && !HEX_COLOR.test(color)) throw new InputError("Choose a color like #1d4ed8");
+    if (color && !HEX_COLOR.test(color)) throw new InputError("Choose a color like #c8264d");
     const supportEmail = optional(fields?.supportEmail, "Support email", 254);
     if (supportEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(supportEmail)) throw new InputError("Enter a support email address");
     const shopUrl = optional(fields?.shopUrl, "Shop link", 500);
