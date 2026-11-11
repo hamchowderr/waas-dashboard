@@ -44,7 +44,7 @@ export const HEADING_FONTS = [
   { value: "hedvig-letters-serif", label: "Hedvig Letters Serif" }
 ] as const;
 
-export const RADII = { none: "0rem", sm: "0.3rem", md: "0.5rem", lg: "1rem", xl: "1.5rem" } as const;
+const RADII = { none: "0rem", sm: "0.3rem", md: "0.5rem", lg: "1rem", xl: "1.5rem" } as const;
 
 /** Type and spacing steps for the "smaller" and "larger" scales. */
 const SCALES = {
@@ -53,7 +53,7 @@ const SCALES = {
 } as const;
 
 export const SIDEBAR_STYLES = ["inset", "sidebar", "floating"] as const;
-export const SIDEBAR_COLLAPSE = ["icon", "offcanvas"] as const;
+const SIDEBAR_COLLAPSE = ["icon", "offcanvas"] as const;
 
 export type Hue = (typeof PALETTE)[number];
 export type Appearance = {

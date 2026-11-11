@@ -26,7 +26,6 @@ export { MailboxIcon } from "./mailbox";
 export { MoonIcon } from "./moon";
 export { PaletteIcon } from "./palette";
 export { PlugZapIcon } from "./plug-zap";
-export { SearchIcon } from "./search";
 export { SlidersHorizontalIcon } from "./sliders-horizontal";
 export { UsersIcon } from "./users";
 export { WebhookIcon } from "./webhook";

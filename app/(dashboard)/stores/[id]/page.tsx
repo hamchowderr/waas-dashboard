@@ -26,6 +26,8 @@ import { StoreActions } from "./store-actions";
 import { WordPressLoginButton } from "../../wordpress-login";
 import { EmailOwner } from "./email-owner";
 import { HighLevelLinkPanel } from "./highlevel-link";
+import { SitePluginsCard } from "./site-plugins";
+import { SiteLanguagesPanel } from "./site-languages";
 import { AutoRefresh, JobProgressCard } from "@/components/admin/job-progress";
 
 type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ product?: string }> };
@@ -50,12 +52,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default async function StorePage({ params, searchParams }: Params) {
   const { id } = await params;
   const { product } = await searchParams;
-  const [tenant, mailDomain, viewer, bought] = await Promise.all([
+  const [tenant, mailDomain, viewer, bought, plugins] = await Promise.all([
     getAdminApi().tenant(id),
     getAdminApi().mailDomain(id).catch(() => null),
     getViewer(),
     // Domains bought for the store; none when buying isn't set up on the API.
-    getAdminApi().boughtDomains(id).catch(() => [])
+    getAdminApi().boughtDomains(id).catch(() => []),
+    // What comes installed; nothing shows when the API can't say.
+    getAdminApi().tenantPlugins(id).catch(() => null)
   ]);
   if (!tenant) notFound();
   // The admin works one storefront at a time (?product=); a store page opens in its own storefront, so the
@@ -87,6 +91,9 @@ export default async function StorePage({ params, searchParams }: Params) {
   const canLogIn = !!viewer && canChange(viewer) && !tenant.isSuspended;
   // A job is running: a store being made or changed, or a backup (which leaves the store Ready meanwhile).
   const waitingForSite = !!tenant.moveIn && !tenant.moveIn.startedAt;
+  // The store's languages, asked of the store itself once it is up; nothing shows when it can't say.
+  const languages =
+    tenant.statusCode === StatusCode.Done && !tenant.isSuspended ? await getAdminApi().tenantLanguages(id).catch(() => null) : null;
   const working = (tenant.statusCode === StatusCode.Pending && !waitingForSite) || (!!tenant.progress && !tenant.progress.failedAt);
 
   return (
@@ -326,6 +333,17 @@ export default async function StorePage({ params, searchParams }: Params) {
               </CardContent>
             </Card>
           )}
+          {languages && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Languages</CardTitle>
+                <CardDescription>The site in more than one language, with a language switcher in its menu.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SiteLanguagesPanel tenantId={tenant.id} languages={languages} canChange={canLogIn} />
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Email sender</CardTitle>
@@ -337,6 +355,8 @@ export default async function StorePage({ params, searchParams }: Params) {
           </Card>
         </div>
       </div>
+
+      {plugins && <SitePluginsCard plugins={plugins} highLevel={tenant.highLevel} />}
 
       <Card>
         <CardHeader>

@@ -5,6 +5,7 @@
  */
 
 import type { ProspectAutomationInput } from "@/lib/api/types";
+import { DEMOS as SITE_DEMOS, playgroundUrl } from "./demos";
 
 export const PLANS = ["website", "bookings", "store", "community", "everything"] as const;
 export type Plan = (typeof PLANS)[number];
@@ -28,15 +29,19 @@ export const GROUP_IDS = ["shops", "regulated", "courses", "chambers", "churches
 export type GroupId = (typeof GROUP_IDS)[number];
 
 /** A live demo website: a sample business built on the theme, opened on WordPress Playground in the prospect's browser. */
-export type Demo = { kit: string; business: string; kind: string; url: string };
+export type KitDemo = { kit: string; business: string; kind: string; url: string };
 
-const playground = (kit: string, tag: string) =>
-  `https://playground.wordpress.net/?blueprint-url=${encodeURIComponent(`https://raw.githubusercontent.com/hamchowderr/anypress-theme/${tag}/demo/${kit}/blueprint.json`)}`;
+/** A kit's demo on our own Playground, built from the theme release the demo page uses (lib/demos.ts), never an old one. */
+const playground = (kit: string) => {
+  const demo = SITE_DEMOS.find((d) => d.id === kit);
+  if (!demo) throw new Error(`No demo for the ${kit} kit in lib/demos.ts`);
+  return playgroundUrl(demo);
+};
 
 /** Every finished demo. A kit gets one here once its demo passes the theme's kit checklist. */
-export const DEMOS: Demo[] = [
-  { kit: "ridge", business: "Clearwater Plumbing & Heating", kind: "Plumber", url: playground("ridge", "v0.7.0") },
-  { kit: "circuit", business: "Brightline Electric", kind: "Electrician", url: playground("circuit", "v0.7.0") }
+const DEMOS: KitDemo[] = [
+  { kit: "ridge", business: "Clearwater Plumbing & Heating", kind: "Plumber", url: playground("ridge") },
+  { kit: "circuit", business: "Brightline Electric", kind: "Electrician", url: playground("circuit") }
 ];
 
 /** Which demos to show each group, best fit first. Groups without their own demo yet show none. */
@@ -51,7 +56,7 @@ const GROUP_DEMOS: Record<GroupId, string[]> = {
   developers: ["ridge", "circuit"]
 };
 
-export const demosFor = (group: GroupId): Demo[] => GROUP_DEMOS[group].map((kit) => DEMOS.find((d) => d.kit === kit)!).filter(Boolean);
+export const demosFor = (group: GroupId): KitDemo[] => GROUP_DEMOS[group].map((kit) => DEMOS.find((d) => d.kit === kit)!).filter(Boolean);
 
 /** Every playbook has these parts, in this order. */
 export const PARTS = ["Who", "Where to find them", "What to lead with", "Offer", "Outreach", "Objections", "Demo"] as const;
@@ -70,7 +75,7 @@ export type Playbook = {
 export type Guide = { id: string; title: string; body: string };
 
 /** Splits `---` front matter (key: value, key: [a, b]) from the body. */
-export function frontMatter(source: string): { data: Record<string, string | string[]>; body: string } {
+function frontMatter(source: string): { data: Record<string, string | string[]>; body: string } {
   const match = /^---\n([\s\S]*?)\n---\n?/.exec(source);
   if (!match) return { data: {}, body: source };
   const data: Record<string, string | string[]> = {};
@@ -85,7 +90,7 @@ export function frontMatter(source: string): { data: Record<string, string | str
 }
 
 /** The body's `## ` sections, in order. */
-export function sections(body: string): Section[] {
+function sections(body: string): Section[] {
   const out: Section[] = [];
   for (const chunk of body.split(/^## /m).slice(1)) {
     const newline = chunk.indexOf("\n");
@@ -153,7 +158,7 @@ export type KitContext = {
 const PLACEHOLDER = /\{\{\s*([a-z.]+)\s*\}\}/g;
 
 /** The value for one placeholder, or null when the seller fills it in per message. */
-export function valueFor(name: string, ctx: KitContext): string | null {
+function valueFor(name: string, ctx: KitContext): string | null {
   if (name.startsWith("price.")) {
     const plan = name.slice(6) as Plan;
     return plan in ctx.prices ? `$${ctx.prices[plan]}` : null;
@@ -179,7 +184,7 @@ export function valueFor(name: string, ctx: KitContext): string | null {
 }
 
 /** A label for a placeholder the seller fills in, such as [prospect]. */
-export const blank = (name: string) => `[${name}]`;
+const blank = (name: string) => `[${name}]`;
 
 /** The text with every known placeholder filled and the rest left as [name] for the seller. */
 export function fill(text: string, ctx: KitContext): string {

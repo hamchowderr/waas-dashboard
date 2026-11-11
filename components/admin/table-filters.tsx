@@ -32,10 +32,6 @@ export type TableFilterState = { search: string; facets: Record<string, string[]
 
 export const EMPTY_FILTERS: TableFilterState = { search: "", facets: {} };
 
-export function isFiltered(state: TableFilterState) {
-  return state.search.trim() !== "" || Object.values(state.facets).some((values) => values.length > 0);
-}
-
 /**
  * Whether a row passes the search and every facet. The search matches
  * `readField(row, "search")`, so each page decides which properties it covers.

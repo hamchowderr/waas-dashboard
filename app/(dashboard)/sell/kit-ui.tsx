@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import type { GroupId } from "@/lib/sales-kit";
 import { Button } from "@/components/ui/button";
 
-export const GROUP_ICONS: Record<GroupId, LucideIcon> = {
+const GROUP_ICONS: Record<GroupId, LucideIcon> = {
   shops: ShoppingBagIcon,
   regulated: ShieldCheckIcon,
   courses: GraduationCapIcon,

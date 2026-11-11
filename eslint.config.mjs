@@ -24,6 +24,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent skills copied from elsewhere (see .claude/skills).
+    ".claude/**",
   ]),
 ]);
 

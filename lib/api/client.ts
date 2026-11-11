@@ -58,6 +58,8 @@ import type {
   Listing,
   DomainConnectLink,
   BoughtDomain,
+  SiteLanguages,
+  TenantPlugins,
   DomainContact,
   DomainOffer,
   DomainSetup,
@@ -188,6 +190,11 @@ export interface AdminApi {
   buyDomain(tenantId: string, domainName: string, contact: DomainContact): Promise<BoughtDomain>;
   /** Domains bought for the store, newest first. */
   boughtDomains(tenantId: string): Promise<BoughtDomain[]>;
+  /** What comes installed on the store and what each plugin is for; null when the store does not exist. */
+  tenantPlugins(tenantId: string): Promise<TenantPlugins | null>;
+  /** The store's languages, asked of the store itself; null when it can't say (not Done, older AnyPress Client). */
+  tenantLanguages(tenantId: string): Promise<SiteLanguages | null>;
+  setTenantLanguages(tenantId: string, on: boolean, languages?: string[]): Promise<SiteLanguages>;
   /** Turns a bought domain's yearly renewal on or off. */
   setDomainAutoRenew(tenantId: string, domainName: string, autoRenew: boolean): Promise<BoughtDomain>;
   /** The code that moves a bought domain to another registrar. */

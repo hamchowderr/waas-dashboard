@@ -85,6 +85,23 @@ export type HighLevelLink = {
 /** What "Check now" found: what the site said, and its link as recorded after the check. */
 export type HighLevelCheck = { siteLinked: boolean; wpFusionConnected: boolean; highLevel: HighLevelLink | null };
 
+/** A plugin that comes installed on a store, and one line on what it is for. */
+export type SitePlugin = { file: string; name: string; about: string | null };
+
+/** What comes installed on a store: its site types' plugins, and whether the owner may add plugins of their own. */
+/** A store's languages (AnyPress Client 2.25.0, Polylang): the site's own first; choices are what it can add. */
+export type SiteLanguage = { locale: string; name: string; default: boolean; code?: string; pages?: number };
+export type SiteLanguages = {
+  on: boolean;
+  available: boolean;
+  ready: boolean;
+  languages: SiteLanguage[];
+  choices?: { locale: string; name: string }[];
+  note?: string;
+};
+
+export type TenantPlugins = { siteTypes: { key: string; title: string }[]; ownPlugins: boolean; plugins: SitePlugin[] };
+
 /** One store's page. Option and constant names only, never their values. */
 export type TenantDetail = {
   id: string;

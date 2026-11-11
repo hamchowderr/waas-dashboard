@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"$DOLT_CREDS_JWK\" ] && command -v dolt >/dev/null && printf '%s' \"$DOLT_CREDS_JWK\" | dolt creds import >/dev/null && dolt creds use \"$DOLT_CREDS_KEY_ID\"; exit 0"
+            "command": "[ -n \"$DOLT_CREDS_JWK\" ] && command -v dolt >/dev/null && printf '%s' \"$DOLT_CREDS_JWK\" | dolt creds import >/dev/null && dolt creds use \"$DOLT_CREDS_KEY_ID\" ; command -v bd >/dev/null && [ -f .beads/metadata.json ] && [ ! -d .beads/embeddeddolt ] && bd bootstrap --yes >/dev/null 2>&1; git config beads.role >/dev/null || git config beads.role maintainer; exit 0"
           }
         ]
       }

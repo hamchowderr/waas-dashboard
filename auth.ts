@@ -21,7 +21,7 @@ import { STOREFRONT_COOKIE } from "@/lib/storefront-cookie";
  */
 
 /** GitHub logins of the platform admins, from ALLOWED_GITHUB_LOGINS (comma or space separated). */
-export function allowedLogins(): Set<string> {
+function allowedLogins(): Set<string> {
   return new Set(
     (process.env.ALLOWED_GITHUB_LOGINS ?? "")
       .split(/[\s,]+/)
@@ -30,12 +30,12 @@ export function allowedLogins(): Set<string> {
   );
 }
 
-export function isAllowed(login: unknown): boolean {
+function isAllowed(login: unknown): boolean {
   return typeof login === "string" && allowedLogins().has(login.toLowerCase());
 }
 
 /** Email addresses of the platform admins, from ALLOWED_ADMIN_EMAILS (comma or space separated). */
-export function allowedAdminEmails(): Set<string> {
+function allowedAdminEmails(): Set<string> {
   return new Set(
     (process.env.ALLOWED_ADMIN_EMAILS ?? "")
       .split(/[\s,]+/)
@@ -45,7 +45,7 @@ export function allowedAdminEmails(): Set<string> {
 }
 
 /** A platform admin: by GitHub login, or by an email address the API has verified. */
-export function isPlatformAdmin(user: { githubLogin: string | null; email: string; emailVerified?: boolean }): boolean {
+function isPlatformAdmin(user: { githubLogin: string | null; email: string; emailVerified?: boolean }): boolean {
   if (isAllowed(user.githubLogin)) return true;
   return user.emailVerified === true && allowedAdminEmails().has(user.email.toLowerCase());
 }
@@ -122,7 +122,7 @@ export function fixtureScope(): string | undefined {
 }
 
 /** Better Auth's cookies from this request, as a Cookie header; empty when there are none. */
-export async function authCookieHeader(): Promise<string> {
+async function authCookieHeader(): Promise<string> {
   const store = await cookies();
   return store
     .getAll()

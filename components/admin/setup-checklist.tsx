@@ -15,7 +15,7 @@ const STEP_LINKS: Record<string, { href: string; label: string }> = {
 };
 
 /** The link for a step, opened on one storefront when given. */
-export function stepLink(step: SetupStep, productId?: string): { href: string; label: string } | null {
+function stepLink(step: SetupStep, productId?: string): { href: string; label: string } | null {
   const link = STEP_LINKS[step.key];
   if (!link || step.state === "done") return null;
   if (!productId || link.href.startsWith("/reseller")) return link;
