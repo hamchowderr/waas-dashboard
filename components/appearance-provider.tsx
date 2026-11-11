@@ -6,7 +6,6 @@ import {
   type Appearance,
   appearanceLetterSpacing,
   appearanceVars,
-  DEFAULT_APPEARANCE,
   saveAppearance
 } from "@/lib/appearance";
 
@@ -45,4 +44,3 @@ export function useAppearance() {
   return context;
 }
 
-export { DEFAULT_APPEARANCE };

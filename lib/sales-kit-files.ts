@@ -8,7 +8,7 @@ import { GROUP_IDS, parseGuide, parsePlaybook, type Guide, type Playbook } from 
 /** next.config.ts traces this folder into the Sell page's server bundle. */
 const ROOT = path.join(process.cwd(), "content", "sales-kit");
 
-export const GUIDE_IDS = ["pricing", "call-script", "objections", "onboarding"] as const;
+const GUIDE_IDS = ["pricing", "call-script", "objections", "onboarding"] as const;
 
 export async function loadSalesKit(): Promise<{ playbooks: Playbook[]; guides: Guide[] }> {
   const [playbooks, guides] = await Promise.all([

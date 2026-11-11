@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "minimumVersion": "3.41.0",
+  // Run by hand (node scripts/...), and the alerts service worker the browser loads from /public.
+  "supportEntry": ["scripts/**/*.mjs"],
+  "dynamicallyLoaded": ["public/sw.js"],
+  // Fonts are read as files (lib/fonts.ts), the Tailwind loader is named in next.config.ts, and shadcn's CSS is
+  // imported by app/globals.css at build time.
+  "ignoreDependencies": ["@fontsource/*", "@fontsource-variable/*", "@tailwindcss/turbopack", "shadcn"],
+  // shadcn/ui components are copied in whole; pages use only some of each.
+  "ignoreFindings": ["components/ui/**"],
+  "duplicates": { "minOccurrences": 3 }
+}

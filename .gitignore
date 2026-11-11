@@ -42,3 +42,7 @@ next-env.d.ts
 
 # Committed template of the environment variables (no values)
 !.env.example
+
+# Beads lock files
+*.gate.lock*
+.fallow/

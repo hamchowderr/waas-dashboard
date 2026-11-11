@@ -3,6 +3,8 @@ import "server-only";
 import type { AdminApi } from "./client";
 import type {
   HighLevelCheck,
+  SiteLanguages,
+  TenantPlugins,
   PluginChoice,
   PluginChoiceInput,
   PluginUpload,
@@ -288,7 +290,8 @@ export class HttpAdminApi implements AdminApi {
       productionVersionId: p.productionVersionId,
       resellerId: p.resellerId ?? null,
       resellerName: p.resellerName ?? null,
-      highlevelAgency: p.highlevelAgency ?? false
+      highlevelAgency: p.highlevelAgency ?? false,
+      cleanDashboard: p.cleanDashboard ?? true
     }));
   }
 
@@ -418,6 +421,18 @@ export class HttpAdminApi implements AdminApi {
 
   async buyDomain(tenantId: string, domainName: string, contact: DomainContact): Promise<BoughtDomain> {
     return (await this.send<BoughtDomain>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/domains/buy`, { domainName, contact }))!;
+  }
+
+  async tenantPlugins(tenantId: string): Promise<TenantPlugins | null> {
+    return this.get<TenantPlugins>(`/admin/tenants/${encodeURIComponent(tenantId)}/plugins`, { allow404: true });
+  }
+
+  async tenantLanguages(tenantId: string): Promise<SiteLanguages | null> {
+    return this.get<SiteLanguages>(`/admin/tenants/${encodeURIComponent(tenantId)}/languages`, { allow404: true });
+  }
+
+  async setTenantLanguages(tenantId: string, on: boolean, languages?: string[]): Promise<SiteLanguages> {
+    return (await this.send<SiteLanguages>("PUT", `/admin/tenants/${encodeURIComponent(tenantId)}/languages`, { on, ...(languages ? { languages } : {}) }))!;
   }
 
   async boughtDomains(tenantId: string): Promise<BoughtDomain[]> {
@@ -625,6 +640,10 @@ export class HttpAdminApi implements AdminApi {
 
   async setHighLevelAgency(productId: string, on: boolean): Promise<void> {
     await this.send("PUT", this.productPath(productId, ""), { highlevelAgency: on });
+  }
+
+  async setCleanDashboard(productId: string, on: boolean): Promise<void> {
+    await this.send("PUT", this.productPath(productId, "/clean-dashboard"), { on });
   }
 
   async deleteStorefront(productId: string): Promise<void> {

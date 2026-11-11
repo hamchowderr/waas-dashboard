@@ -20,7 +20,7 @@ import { getDomainSetup } from "../../actions";
 import { CopyButton } from "./mail-sender";
 
 /** Whether a custom domain reaches the store yet. */
-export function PointsBadge({ pointsHere }: { pointsHere: boolean }) {
+function PointsBadge({ pointsHere }: { pointsHere: boolean }) {
   return pointsHere ? <Badge variant="success">Connected</Badge> : <Badge variant="warning">DNS needed</Badge>;
 }
 

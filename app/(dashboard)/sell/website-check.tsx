@@ -18,7 +18,7 @@ export const STATUS_ICON: Record<CheckStatus, { icon: typeof CircleCheckIcon; cl
   fail: { icon: CircleXIcon, className: "text-rose-600", label: "Needs fixing" }
 };
 
-export const scoreTone = (score: number) => (score >= 80 ? "pass" : score >= 50 ? "warn" : "fail") as CheckStatus;
+const scoreTone = (score: number) => (score >= 80 ? "pass" : score >= 50 ? "warn" : "fail") as CheckStatus;
 
 /** The score as a ring, coloured by how it did. */
 export function ScoreRing({ score, size = 96 }: { score: number; size?: number }) {
