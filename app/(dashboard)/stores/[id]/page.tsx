@@ -7,7 +7,7 @@ import { ArchiveIcon, ChevronDownIcon, ChevronLeft, CirclePauseIcon, ExternalLin
 
 import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel, settingLabel } from "@/lib/format";
+import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel } from "@/lib/format";
 import { StatusCode } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { OnHoldBadge, StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
@@ -24,6 +24,7 @@ import { DomainDnsButton } from "./domain-setup";
 import { GoLive } from "./go-live";
 import { MailSender } from "./mail-sender";
 import { RestoreBackup } from "./restore-backup";
+import { BackUpNow } from "./back-up-now";
 import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
 import { WordPressLoginButton } from "../../wordpress-login";
@@ -81,13 +82,13 @@ export default async function StorePage({ params, searchParams }: Params) {
   );
   // A store being removed or that failed can't be rolled back until it's fixed.
   const canRestore = tenant.statusCode !== StatusCode.Removing && tenant.statusCode !== StatusCode.Failed;
+  // A backup can be taken by anyone who may change the store, once it is live.
+  const canBackUp = canRestore && !!viewer && canChange(viewer);
   // Suspend and delete are the platform admin's; a seller's stores follow their shop's subscriptions.
   const canManage = viewer?.isAdmin === true && tenant.statusCode !== StatusCode.Removing;
   // Going live is the site owner's own step: anyone who can change the storefront may take it.
   const canGoLive = tenant.onHold && !!viewer && canChange(viewer) && canRestore;
   // Links to the site only once it is up.
-  // What the store was made with, in plain words; the values themselves stay private.
-  const settings = [...new Set([...tenant.wpOptionNames, ...tenant.phpConstantNames].map(settingLabel))];
   const siteUrl = tenant.mainDomain && tenant.statusCode === StatusCode.Done ? `https://${tenant.mainDomain}/` : null;
   // One-click sign-in to wp-admin for anyone who may change the store; members get the plain login page.
   const canLogIn = !!viewer && canChange(viewer) && !tenant.isSuspended;
@@ -220,7 +221,7 @@ export default async function StorePage({ params, searchParams }: Params) {
             </Card>
           )}
 
-          <Card>
+          <Card id="domains" className="scroll-mt-20">
             <CardHeader>
               <CardIcon>
                 <GlobeIcon />
@@ -237,13 +238,14 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Domain</TableHead>
-                    <TableHead className="text-end sm:w-44">Role</TableHead>
+                    <TableHead className="text-end max-sm:hidden sm:w-44">Role</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tenant.domains.map((domain) => (
-                    <TableRow key={domain.domainName}>
-                      <TableCell className={cn("whitespace-normal", domain.isBase ? "text-foreground/80" : "font-medium")}>
+                    // On a phone the role sits under the domain, so a long host never squeezes it into a stack.
+                    <TableRow key={domain.domainName} className="max-sm:flex max-sm:flex-col">
+                      <TableCell className={cn("whitespace-normal max-sm:pb-1", domain.isBase ? "text-foreground/80" : "font-medium")}>
                         {/* Long hosts break at their dots, never mid-word. */}
                         {domain.domainName.split(".").map((part, i) => (
                           <React.Fragment key={i}>
@@ -253,8 +255,8 @@ export default async function StorePage({ params, searchParams }: Params) {
                           </React.Fragment>
                         ))}
                       </TableCell>
-                      <TableCell className="text-end">
-                        <div className="flex flex-wrap items-center justify-end gap-1 sm:flex-nowrap">
+                      <TableCell className="text-end max-sm:ps-(--card-spacing) max-sm:pt-0 max-sm:text-start">
+                        <div className="flex flex-wrap items-center justify-end gap-1 max-sm:justify-start sm:flex-nowrap">
                           {setups.has(domain.domainName) && (
                             <DomainDnsButton
                               key={`${domain.domainName}-${setups.get(domain.domainName)!.pointsHere}`}
@@ -293,7 +295,12 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <ArchiveIcon />
               </CardIcon>
               <CardTitle>Backups</CardTitle>
-              <CardDescription>Restore puts the store back to how it was when the backup was taken.</CardDescription>
+              <CardDescription>Taken every night. Restore puts the store back to how it was when the backup was taken.</CardDescription>
+              {canBackUp && (
+                <CardAction>
+                  <BackUpNow tenantId={tenant.id} storeName={tenant.name} />
+                </CardAction>
+              )}
             </CardHeader>
             <CardContent className="p-0">
               <Table className={tableClass}>
@@ -313,7 +320,7 @@ export default async function StorePage({ params, searchParams }: Params) {
                     <TableRow className="hover:bg-transparent">
                       <TableCell colSpan={5}>
                         <EmptyState icon={ArchiveIcon} title="No backups yet">
-                          Each backup of this store shows here, ready to restore.
+                          A backup is taken every night, and you can take one now. Each shows here, ready to restore.
                         </EmptyState>
                       </TableCell>
                     </TableRow>
@@ -421,21 +428,6 @@ export default async function StorePage({ params, searchParams }: Params) {
               <Row label="Owner emailed">
                 {tenant.ownerNotifiedAt ? `${formatDateTime(tenant.ownerNotifiedAt)} to ${tenant.ownerNotifiedTo}` : "Not sent"}
               </Row>
-            )}
-            {settings.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-2 text-sm">
-                  <span className="text-muted-foreground mb-2 block">Set up with</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {settings.map((label) => (
-                      <Badge key={label} variant="secondary">
-                        {label}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </>
             )}
             <Separator />
             <details className="group text-sm">

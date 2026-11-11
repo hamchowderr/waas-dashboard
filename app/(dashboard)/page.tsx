@@ -122,6 +122,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     });
   }
   for (const job of failedJobs.slice(0, 5)) {
+    // A domain whose DNS doesn't point at us fails again on retry; the fix is the DNS records.
+    const dns = job.type === "tenant.domains" && !!job.tenantId && /\bDNS\b/.test(job.error ?? "");
     todos.push({
       key: job.id,
       tone: "critical",
@@ -129,9 +131,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       title: `${jobTypeLabel(job.type)} failed${job.targetName ? ` · ${job.targetName}` : ""}`,
       // The API prefixes errors with the part that failed; the person needs the cause, not our internals.
       detail: plainError(job.error),
-      retry: canRetry ? job.id : undefined,
-      action: job.tenantId ? "Open store" : "See task",
-      href: job.tenantId ? `/stores/${job.tenantId}` : "/jobs?state=failed"
+      retry: canRetry && !dns ? job.id : undefined,
+      action: dns ? "Check DNS" : job.tenantId ? "Open store" : "See task",
+      href: dns ? `/stores/${job.tenantId}#domains` : job.tenantId ? `/stores/${job.tenantId}` : "/jobs?state=failed"
     });
   }
   if (failedJobs.length > 5) {
@@ -536,9 +538,13 @@ function SetupTable({
                       {row.name}
                     </Link>
                   )}
-                  {showQuiet && <span className="text-muted-foreground block text-xs">{isReseller ? "Reseller" : "Storefront"}</span>}
+                  {showQuiet && (
+                    <span className="text-muted-foreground block text-xs">
+                      {isReseller ? "Reseller" : "Storefront"}
+                      <span className="md:hidden"> · last step {formatAgo(row.lastProgressAt)}</span>
+                    </span>
+                  )}
                   <span className="text-muted-foreground block text-xs sm:hidden">Next: {row.next ?? "done"}</span>
-                  {showQuiet && <span className="text-muted-foreground block text-xs md:hidden">Last step {formatAgo(row.lastProgressAt)}</span>}
                 </TableCell>
                 <TableCell>
                   <SetupProgress setup={row} hideStuck={forCustomer} />

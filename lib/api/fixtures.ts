@@ -1587,6 +1587,28 @@ export class FixtureAdminApi implements AdminApi {
     return { tenantId, externalId: tenantId, importCode: `AP1.${code}`, pluginUrl: "https://api.example/imports/plugin.zip" };
   }
 
+  async createBackup(tenantId: string): Promise<void> {
+    this.addBackup(this.changeableTenant(tenantId), "manual", new Date().toISOString());
+  }
+
+  /** A finished backup of a store, newest first like the API lists them. */
+  private addBackup(tenant: FixtureTenant, reason: Backup["reason"], dateCreated: string): void {
+    backups.unshift({
+      id: uuid(200 + backups.length, 4),
+      productId: tenant.productId,
+      productName: tenant.productName,
+      tenantId: tenant.id,
+      externalId: tenant.externalId,
+      tenantName: tenant.name,
+      reason,
+      sizeBytes: 200 * 1_048_576,
+      statusCode: StatusCode.Done,
+      dateCreated,
+      tenantDeletedAt: null,
+      expiresAt: null
+    });
+  }
+
   async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
@@ -1607,22 +1629,7 @@ export class FixtureAdminApi implements AdminApi {
     const tenant = this.changeableTenant(tenantId);
     if (tenant.isSuspended) return;
     const now = new Date().toISOString();
-    if (takeBackup) {
-      backups.unshift({
-        id: uuid(200 + backups.length, 4),
-        productId: tenant.productId,
-        productName: tenant.productName,
-        tenantId,
-        externalId: tenant.externalId,
-        tenantName: tenant.name,
-        reason: "suspend",
-        sizeBytes: 200 * 1_048_576,
-        statusCode: StatusCode.Done,
-        dateCreated: now,
-        tenantDeletedAt: null,
-        expiresAt: null
-      });
-    }
+    if (takeBackup) this.addBackup(tenant, "suspend", now);
     Object.assign(tenant, { isSuspended: true, dateSuspended: now, dateChanged: now });
   }
 

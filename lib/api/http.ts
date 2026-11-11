@@ -357,6 +357,10 @@ export class HttpAdminApi implements AdminApi {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/import-reprint`, { siteUrl });
   }
 
+  async createBackup(tenantId: string): Promise<void> {
+    await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/backups`, {});
+  }
+
   async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/restore`, { backupId, takeBackup });
   }

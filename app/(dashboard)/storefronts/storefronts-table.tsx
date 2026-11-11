@@ -97,7 +97,7 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
           value={filter}
           onValueChange={(value) => value && setFilter(value as Filter)}
           aria-label="Show"
-          className="max-w-full justify-start overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          className="max-w-full flex-wrap justify-start">
           <ToggleGroupItem value="all" className="px-3">
             All <Count n={rows.length} />
           </ToggleGroupItem>
@@ -105,7 +105,9 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
             Sellers <Count n={sellers} />
           </ToggleGroupItem>
           <ToggleGroupItem value="resellers" className="px-3">
-            Reseller storefronts <Count n={rows.length - sellers} />
+            <span className="sm:hidden">Resellers</span>
+            <span className="max-sm:hidden">Reseller storefronts</span>
+            <Count n={rows.length - sellers} />
           </ToggleGroupItem>
           {stuck > 0 && (
             <ToggleGroupItem value="stuck" className="px-3">

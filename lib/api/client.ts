@@ -138,6 +138,8 @@ export interface AdminApi {
    * now is backed up first so the rollback can be undone.
    */
   restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void>;
+  /** Takes a backup of a live store now. */
+  createBackup(tenantId: string): Promise<void>;
   /** Takes a store offline; with takeBackup it is backed up first. Platform admin only. */
   suspendStore(tenantId: string, takeBackup: boolean): Promise<void>;
   /** Brings a suspended store back online. Platform admin only. */

@@ -36,23 +36,23 @@ export function SitePluginsCard({ plugins, highLevel }: { plugins: TenantPlugins
       </CardHeader>
       {plugins.plugins.length > 0 && (
         <CardContent className="space-y-4 p-0">
-          {/* The plugins' logos in one row; what each is for opens below, as tiles two across once there's room. */}
+          {/* Each plugin's logo with its name; what each is for opens below, as tiles two across once there's room. */}
           <Collapsible className="space-y-4 px-(--card-spacing)">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <ul className="flex flex-wrap gap-1.5" aria-label="Plugins">
-                {plugins.plugins.map((p) => (
-                  <li key={p.file} title={p.name}>
-                    <PluginIcon slug={p.file.split("/")[0]} name={p.name} className="size-9 rounded-xl" />
-                    <span className="sr-only">{p.name}</span>
-                  </li>
-                ))}
-              </ul>
-              <CollapsibleTrigger className="text-primary group inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline pointer-coarse:min-h-11">
-                <span className="group-data-[state=open]:hidden">What each one does</span>
-                <span className="hidden group-data-[state=open]:inline">Hide</span>
-                <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden />
-              </CollapsibleTrigger>
-            </div>
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-x-2 gap-y-3" aria-label="Plugins">
+              {plugins.plugins.map((p) => (
+                <li key={p.file} className="flex min-w-0 flex-col items-center gap-1.5 text-center">
+                  <PluginIcon slug={p.file.split("/")[0]} name={p.name} className="size-10 rounded-xl" />
+                  <span className="w-full truncate text-xs font-medium" title={p.name}>
+                    {p.name}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <CollapsibleTrigger className="text-primary group inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline pointer-coarse:min-h-11">
+              <span className="group-data-[state=open]:hidden">What each one does</span>
+              <span className="hidden group-data-[state=open]:inline">Hide</span>
+              <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden />
+            </CollapsibleTrigger>
             <CollapsibleContent>
               <ul className="grid gap-2 @xl/main:grid-cols-2">
                 {plugins.plugins.map((p) => (

@@ -253,6 +253,14 @@ export async function copyWithReprint(tenantId: string, siteUrl: string): Promis
   }, ["/stores"]);
 }
 
+/** Takes a backup of a live store now. */
+export async function createBackup(tenantId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().createBackup(uuid(tenantId, "store"));
+    return undefined;
+  }, ["/stores", "/backups", "/"]);
+}
+
 /** Rolls a live store back to one of its backups; with takeBackup, its current state is backed up first. */
 export async function restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<ActionResult> {
   return run(async () => {
