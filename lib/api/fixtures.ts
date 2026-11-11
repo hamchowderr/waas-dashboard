@@ -267,7 +267,7 @@ const versions: FixtureVersion[] = [
 ].map((v, i) => ({
   ...v,
   statusCode: StatusCode.Done,
-  domain: `${v.name.replace(/\./g, "-")}-${v.id.slice(-8)}.versions.waas.example`,
+  domain: `${v.name.replace(/\./g, "-")}-${v.id.slice(-8)}.versions.anypress.example`,
   dateCreated: iso(NOW - (90 - i * 20) * DAY),
   dateChanged: iso(NOW - (60 - i * 15) * DAY)
 }));
@@ -685,7 +685,7 @@ const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   const version = versions[i % 5 === 4 ? 2 : i % 4 === 1 ? 1 : 0];
   const product = products.find((p) => p.id === version.productId)!;
   const id = uuid(i + 1, 3);
-  const base = `t-${id.slice(-8)}.stores.waas.example`;
+  const base = `t-${id.slice(-8)}.stores.anypress.example`;
   const domains = [
     { domainName: base, isMain: !seed.custom, isBase: true },
     ...(seed.custom ? [{ domainName: seed.custom, isMain: true, isBase: false }] : []),
@@ -932,7 +932,7 @@ const webhooks: FixtureWebhook[] = [
     apiKeyId: uuid(1, 9)
   },
   {
-    url: "https://alerts.example.net/hooks/waas",
+    url: "https://alerts.example.net/hooks/anypress",
     description: "Failure alerts",
     eventTypes: ["tenant.failed", "tenant.backup_failed", "version.failed"],
     enabled: true,
@@ -1114,7 +1114,7 @@ const setupProgress: { created: number; done: Record<string, [daysAgo: number, d
   },
   {
     created: 40,
-    site: "summitsites-shop.stores.waas.example",
+    site: "summitsites-shop.stores.anypress.example",
     done: {
       approved: [40, "Approved"],
       "shop-connected": [1, "AnyPress Host last signed in yesterday"],
@@ -1468,7 +1468,7 @@ export class FixtureAdminApi implements AdminApi {
     const name = rawName.trim();
     if (!name) throw new FixtureError(400, "name is required");
     const id = uuid(500 + tenants.length, 3);
-    const base = `t-${id.slice(-8)}.stores.waas.example`;
+    const base = `t-${id.slice(-8)}.stores.anypress.example`;
     const now = new Date().toISOString();
     tenants.push({
       id,
@@ -1897,7 +1897,7 @@ export class FixtureAdminApi implements AdminApi {
       name: input.name,
       isProduction: false,
       statusCode: input.useCustomUpload ? StatusCode.Pending : StatusCode.Done,
-      domain: `${input.name.replace(/\./g, "-")}-${id.slice(-8)}.versions.waas.example`,
+      domain: `${input.name.replace(/\./g, "-")}-${id.slice(-8)}.versions.anypress.example`,
       dateCreated: new Date().toISOString(),
       dateChanged: new Date().toISOString()
     });

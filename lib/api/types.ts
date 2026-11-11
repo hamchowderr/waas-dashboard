@@ -430,7 +430,7 @@ export type Version = {
   name: string;
   isProduction: boolean;
   statusCode: StatusCode;
-  /** Where the version's shared site runs, e.g. v1-…versions.waas.example */
+  /** Where the version's shared site runs, e.g. v1-…versions.anypress.example */
   domain: string;
   dateCreated: string;
   dateChanged: string;
