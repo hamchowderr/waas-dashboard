@@ -28,9 +28,9 @@ import { createStore } from "../actions";
 import { NEW_SITE_TYPE_HELP, NEW_SITE_TYPES, siteTypeOf } from "@/components/admin/site-type";
 
 const SIZES = [
-  { value: "small", label: "Small (5 GB)" },
-  { value: "medium", label: "Medium (10 GB)" },
-  { value: "large", label: "Large (25 GB)" },
+  { value: "small", label: "Small (10 GB)" },
+  { value: "medium", label: "Medium (20 GB)" },
+  { value: "large", label: "Large (30 GB)" },
 ];
 
 /**
