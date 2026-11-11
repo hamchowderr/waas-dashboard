@@ -1,0 +1,97 @@
+{
+  "currency": "USD",
+  "siteTypes": [
+    {
+      "key": "website",
+      "name": "Website",
+      "monthly": {
+        "small": 12,
+        "medium": 24,
+        "large": 48
+      },
+      "yearly": {
+        "small": 120,
+        "medium": 240,
+        "large": 480
+      }
+    },
+    {
+      "key": "bookings",
+      "name": "Bookings",
+      "monthly": {
+        "small": 19,
+        "medium": 38,
+        "large": 76
+      },
+      "yearly": {
+        "small": 190,
+        "medium": 380,
+        "large": 760
+      }
+    },
+    {
+      "key": "online-store",
+      "name": "Online store",
+      "monthly": {
+        "small": 29,
+        "medium": 58,
+        "large": 116
+      },
+      "yearly": {
+        "small": 290,
+        "medium": 580,
+        "large": 1160
+      }
+    },
+    {
+      "key": "community",
+      "name": "Community & courses",
+      "monthly": {
+        "small": 49,
+        "medium": 98,
+        "large": 196
+      },
+      "yearly": {
+        "small": 490,
+        "medium": 980,
+        "large": 1960
+      }
+    },
+    {
+      "key": "everything",
+      "name": "Everything",
+      "monthly": {
+        "small": 79,
+        "medium": 158,
+        "large": 316
+      },
+      "yearly": {
+        "small": 790,
+        "medium": 1580,
+        "large": 3160
+      }
+    }
+  ],
+  "sizeTimes": {
+    "small": 1,
+    "medium": 2,
+    "large": 4
+  },
+  "yearlyMonths": 10,
+  "volumeTiers": [
+    {
+      "sites": 3,
+      "percent": 10
+    },
+    {
+      "sites": 10,
+      "percent": 20
+    },
+    {
+      "sites": 25,
+      "percent": 30
+    }
+  ],
+  "wholesalePercent": 40,
+  "affiliatePercent": 30
+}

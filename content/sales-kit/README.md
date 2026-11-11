@@ -11,6 +11,7 @@ What the dashboard's Sell page shows sellers and resellers: one playbook per cus
 | `{{price.website}}`, `{{price.bookings}}`, `{{price.store}}`, `{{price.community}}`, `{{price.everything}}` | The seller's own monthly price for each plan, or the suggested price when none is set |
 | `{{demo}}` | The live demo link for the playbook's plan |
 | `{{plan}}`, `{{price}}` | In the call script: the playbook's plan name and the seller's price for it |
+| `{{prices.costs}}`, `{{prices.suggested}}`, `{{prices.tiers}}`, `{{prices.sizes}}`, `{{prices.yearly}}`, `{{prices.free}}`, `{{prices.wholesale}}`, `{{prices.example}}` | Guides only: the cost and suggested price tables and the volume, size, yearly and reseller terms, from the price list, so a guide never types a price |
 | `{{prospect}}`, `{{business}}`, `{{city}}`, `{{day}}`, `{{marketplace}}` (where a shop sells today, such as Etsy) | Left for the seller to fill per message |
 
 ## Files

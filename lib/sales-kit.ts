@@ -6,6 +6,7 @@
 
 import type { ProspectAutomationInput } from "@/lib/api/types";
 import { DEMOS as SITE_DEMOS, playgroundUrl } from "./demos";
+import PRICES from "./pricing.json";
 
 export const PLANS = ["website", "bookings", "store", "community", "everything"] as const;
 export type Plan = (typeof PLANS)[number];
@@ -21,8 +22,78 @@ export const PLAN_NAMES: Record<Plan, string> = {
 /** Suggested monthly prices from guides/pricing.md, in whole dollars, used until the seller sets their own. */
 export const SUGGESTED_PRICES: Record<Plan, number> = { website: 49, bookings: 79, store: 99, community: 129, everything: 249 };
 
+/** A plan's Small monthly list price from AnyPress's one price list (the API's GET /pricing, copied into
+ * lib/pricing.json by `npm run prices`). The kit's `store` is the API's `online-store`. */
+function listPrice(plan: Plan): number {
+  const key = plan === "store" ? "online-store" : plan;
+  const type = PRICES.siteTypes.find((t) => t.key === key);
+  if (!type) throw new Error(`No price for ${plan} in lib/pricing.json`);
+  return type.monthly.small;
+}
+
 /** The seller's cost per site, Small, monthly, at list price, in whole dollars. */
-const LIST_COST: Record<Plan, number> = { website: 12, bookings: 19, store: 29, community: 49, everything: 79 };
+const LIST_COST = Object.fromEntries(PLANS.map((plan) => [plan, listPrice(plan)])) as Record<Plan, number>;
+
+/** The volume savings in words: "10%, 20% and 30% at 3, 10 and 25 live sites". */
+const and = (items: (string | number)[]) => `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+export const VOLUME_IN_WORDS = `${and(PRICES.volumeTiers.map((t) => `${t.percent}%`))} at ${and(PRICES.volumeTiers.map((t) => t.sites))} live sites`;
+
+/** What a seller's site costs after the volume saving for a number of live sites, in dollars. */
+function volumeCost(plan: Plan, sites: number): number {
+  const tier = [...PRICES.volumeTiers].reverse().find((t) => sites >= t.sites);
+  return Math.round(LIST_COST[plan] * (100 - (tier?.percent ?? 0))) / 100;
+}
+
+/** One-time setup fees the pricing guide suggests. */
+const SETUP_FEES: Record<Plan, string> = {
+  website: "$199 to $499 one-time",
+  bookings: "$299 to $699",
+  store: "$499 to $999",
+  community: "$499 to $999",
+  everything: "$999 to $2,499"
+};
+
+/**
+ * The guides' price placeholders, filled from the price list when a guide is read, so no guide types a price:
+ * {{prices.costs}} and {{prices.suggested}} are tables, the rest are words.
+ */
+function priceText(name: string): string | null {
+  const tiers = PRICES.volumeTiers;
+  const range = (i: number) => (tiers[i + 1] ? `${tiers[i].sites}-${tiers[i + 1].sites - 1} sites` : `${tiers[i].sites}+ sites`);
+  const exampleCost = (sites: number) => volumeCost("website", sites);
+  switch (name) {
+    case "prices.costs":
+      return [
+        `| Plan | Your cost | ${tiers.map((_, i) => range(i)).join(" | ")} |`,
+        `|---|---|${tiers.map(() => "---").join("|")}|`,
+        ...PLANS.map((plan) => `| ${PLAN_NAMES[plan]} | $${dollars(LIST_COST[plan])} | ${tiers.map((t) => `$${volumeCost(plan, t.sites).toFixed(2)}`).join(" | ")} |`)
+      ].join("\n");
+    case "prices.suggested":
+      return [
+        "| Plan | Suggested price | Your profit at list cost | With a setup fee |",
+        "|---|---|---|---|",
+        ...PLANS.map((plan) => `| ${PLAN_NAMES[plan]} | $${SUGGESTED_PRICES[plan]} a month | $${dollars(SUGGESTED_PRICES[plan] - LIST_COST[plan])} a month | ${SETUP_FEES[plan]} |`)
+      ].join("\n");
+    case "prices.tiers":
+      return and(tiers.map((t) => `${t.percent}%`));
+    case "prices.sizes":
+      return `Medium sites cost ${PRICES.sizeTimes.medium}x and Large ${PRICES.sizeTimes.large}x`;
+    case "prices.yearly":
+      return `${PRICES.yearlyMonths}x`;
+    case "prices.free":
+      return `${12 - PRICES.yearlyMonths} months free`;
+    case "prices.wholesale":
+      return `${PRICES.wholesalePercent}%`;
+    case "prices.example": {
+      const price = SUGGESTED_PRICES.website;
+      const low = tiers[0];
+      const ten = exampleCost(10);
+      return `Ten customers on Website at $${price} a month bring in $${price * 10} a month. At ${range(0)} your cost is $${exampleCost(low.sites).toFixed(2)} each; at 10 sites it drops to $${ten.toFixed(2)}, so ten sites cost you $${dollars(Math.round(ten * 1000) / 100)} and leave $${dollars(Math.round((price - ten) * 1000) / 100)} a month before your own time.`;
+    }
+    default:
+      return null;
+  }
+}
 
 /** The groups in the order the Sell page shows them; ids match the CRM's customer group field. */
 export const GROUP_IDS = ["shops", "regulated", "courses", "chambers", "churches", "franchises", "agencies", "developers"] as const;
@@ -112,7 +183,8 @@ export function parsePlaybook(source: string): Playbook {
 
 export function parseGuide(source: string): Guide {
   const { data, body } = frontMatter(source);
-  return { id: String(data.id), title: String(data.title ?? data.id), body: body.trim() };
+  const prices = body.replace(PLACEHOLDER, (all, name: string) => priceText(name) ?? all);
+  return { id: String(data.id), title: String(data.title ?? data.id), body: prices.trim() };
 }
 
 /** One message to copy: an email (with its subject), a text, or a social message. */
