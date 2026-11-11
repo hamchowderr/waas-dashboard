@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRightIcon, CircleDollarSignIcon, DownloadIcon } from "lucide-react";
 
 import { useSellPrices } from "@/hooks/use-sell-prices";
-import { PLANS, PLAN_NAMES, cost, dollars, fill, keep, type GroupId, type Guide, type KitContext, type Plan } from "@/lib/sales-kit";
+import { PLANS, PLAN_NAMES, VOLUME_IN_WORDS, cost, dollars, fill, keep, type GroupId, type Guide, type KitContext, type Plan } from "@/lib/sales-kit";
 import { KitMarkdown } from "@/components/admin/kit-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
@@ -147,7 +147,7 @@ function Prices({ prices, setPrice, wholesalePercent }: { prices: Record<Plan, n
         <p className="text-muted-foreground mt-3 text-xs">
           {wholesalePercent !== null
             ? `Costs are for a Small site a month: our list price less your ${wholesalePercent}% wholesale discount, as your monthly bill charges it. Medium costs 2× and Large 4×.`
-            : "Costs are for a Small site billed monthly, at our list price. Your cost drops 10%, 20% and 30% at 3, 10 and 25 live sites. Medium costs 2× and Large 4×."}
+            : `Costs are for a Small site billed monthly, at our list price. Your cost drops ${VOLUME_IN_WORDS}. Medium costs 2× and Large 4×.`}
         </p>
       </CardContent>
     </Card>
