@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { BellIcon, CircleAlertIcon, CircleCheckIcon, InfoIcon } from "lucide-react";
+import { BellIcon, CheckCheckIcon, CircleAlertIcon, CircleCheckIcon, InfoIcon } from "lucide-react";
 
 import { loadNotifications, readNotifications } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
@@ -52,20 +52,26 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
       if (document.visibilityState === "visible") void refresh();
     };
     document.addEventListener("visibilitychange", onVisible);
+    const onRead = () => setList((current) => current && { ...current, unread: 0, items: current.items.map((n) => ({ ...n, unread: false })) });
+    window.addEventListener(NOTIFICATIONS_READ, onRead);
     return () => {
       live = false;
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener(NOTIFICATIONS_READ, onRead);
     };
   }, []);
 
+  function markRead() {
+    if (!list || list.unread === 0) return;
+    setList({ ...list, unread: 0, items: list.items.map((n) => ({ ...n, unread: false })) });
+    void readNotifications().catch(() => undefined);
+  }
+
   function onOpenChange(next: boolean) {
     setOpen(next);
-    // Opening shows which ones are new; closing clears them.
-    if (!next && list && list.unread > 0) {
-      setList({ ...list, unread: 0, items: list.items.map((n) => ({ ...n, unread: false })) });
-      void readNotifications().catch(() => undefined);
-    }
+    // Opening shows which ones are new; closing clears them, as does Mark all as read.
+    if (!next) markRead();
   }
 
   const unread = list?.unread ?? 0;
@@ -86,7 +92,12 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
       <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <p className="text-sm font-medium">Notifications</p>
-          {unread > 0 && <span className="text-muted-foreground text-xs tabular-nums">{unread} new</span>}
+          {unread > 0 && (
+            <Button variant="ghost" size="xs" onClick={markRead} className="text-primary -me-2 font-medium">
+              <CheckCheckIcon data-icon="inline-start" />
+              Mark all as read
+            </Button>
+          )}
         </div>
         <ScrollArea className="max-h-[min(28rem,70vh)]">
           {error && !list ? (
@@ -116,6 +127,9 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
     </Popover>
   );
 }
+
+/** Sent on the window when notifications are marked read elsewhere on the page (the Notifications page). */
+export const NOTIFICATIONS_READ = "anypress:notifications-read";
 
 export function NotificationRow({ n, showStorefront, onPick }: { n: Notification; showStorefront: boolean; onPick?: () => void }) {
   const { Icon, className } = LEVEL_ICON[n.level] ?? LEVEL_ICON.info;

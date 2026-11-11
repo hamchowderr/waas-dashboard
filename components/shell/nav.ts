@@ -38,7 +38,8 @@ export type NavLink = {
  * page is its own sidebar link, named in Title Case, so nothing hides behind tabs. ⌘K search lists every page.
  * `description` says what the page is for: the sidebar shows it on hover, and search shows it under the name.
  */
-export type NavSection = { title: string; icon: LucideIcon; links: NavLink[] };
+/** inAccountMenu: a group about the person and their account, listed in the account menu at the bottom, not the sidebar. */
+export type NavSection = { title: string; icon: LucideIcon; links: NavLink[]; inAccountMenu?: boolean };
 
 export const NAV: NavSection[] = [
   {
@@ -83,6 +84,7 @@ export const NAV: NavSection[] = [
   {
     title: "Settings",
     icon: UsersIcon,
+    inAccountMenu: true,
     links: [
       { title: "Notifications", href: "/notifications", icon: BellIcon, global: true, description: "Everything the bell shows, and alerts on your phone or computer" },
       { title: "Team", href: "/team", icon: UsersIcon, description: "Who can sign in, and what each person may change" },
@@ -111,6 +113,18 @@ export const ALL_LINKS = NAV.flatMap((section) => section.links);
 export function navFor(isAdmin: boolean, isReseller = false) {
   const shown = (link: NavLink) => (link.adminOnly ? isAdmin : link.resellerOnly ? isReseller && !isAdmin : true);
   return NAV.map((group) => ({ ...group, links: group.links.filter(shown) })).filter((group) => group.links.length > 0);
+}
+
+/** The sidebar's groups: everything but the account settings, which open from the account menu. */
+export function sidebarNav(isAdmin: boolean, isReseller = false) {
+  return navFor(isAdmin, isReseller).filter((group) => !group.inAccountMenu);
+}
+
+/** The account settings pages (Notifications, Team, Branding), for the account menu at the bottom of the sidebar. */
+export function accountMenuLinks(isAdmin: boolean, isReseller = false): NavLink[] {
+  return navFor(isAdmin, isReseller)
+    .filter((group) => group.inAccountMenu)
+    .flatMap((group) => group.links);
 }
 
 /** A link's address, keeping the storefront picked in the header (?product=) unless the page is about all of them. */

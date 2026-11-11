@@ -327,27 +327,26 @@ function StoreCount({ row }: { row: StorefrontRow }) {
   );
 }
 
-/** Its stores, and how much of its limit they use; over the limit shows in red. */
+/**
+ * Its stores, and how much of its limit they use; over the limit shows in red. The same three lines as the Setup
+ * column (count, bar, caption), so the two bars sit level; with no limit the bar is an empty track.
+ */
 function StoreMeter({ row }: { row: StorefrontRow }) {
-  if (row.maxTenants === null) {
-    return (
-      <div className="text-sm">
-        <StoreCount row={row} />
-        <p className="text-muted-foreground text-xs">No limit</p>
-      </div>
-    );
-  }
-  const over = row.tenantCount > row.maxTenants;
-  const share = row.maxTenants === 0 ? 100 : Math.min(100, Math.round((row.tenantCount / row.maxTenants) * 100));
+  const limit = row.maxTenants;
+  const over = limit !== null && row.tenantCount > limit;
+  const share = limit === null ? 0 : limit === 0 ? 100 : Math.min(100, Math.round((row.tenantCount / limit) * 100));
+  const caption = limit === null ? "No limit" : over ? `${row.tenantCount - limit} over the limit` : `${limit - row.tenantCount} left`;
   return (
-    <div className="space-y-1.5 text-sm">
-      <div className="flex items-baseline justify-between gap-2">
-        <StoreCount row={row} />
-        {over && <span className="text-destructive text-xs font-medium">Over limit</span>}
+    <div className="text-sm">
+      <div className="space-y-1.5">
+        <div className="tabular-nums">
+          <StoreCount row={row} />
+        </div>
+        <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+          <div className={cn("h-full rounded-full", over ? "bg-destructive" : "bg-foreground/50")} style={{ width: `${share}%` }} />
+        </div>
       </div>
-      <div className="bg-muted h-1.5 overflow-hidden rounded-full">
-        <div className={cn("h-full rounded-full", over ? "bg-destructive" : "bg-foreground/50")} style={{ width: `${share}%` }} />
-      </div>
+      <p className={cn("mt-1 truncate text-xs", over ? "text-destructive font-medium" : "text-muted-foreground")}>{caption}</p>
     </div>
   );
 }

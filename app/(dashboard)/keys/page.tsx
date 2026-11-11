@@ -3,13 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { StoreIcon } from "lucide-react";
 
-import { getViewer } from "@/auth";
+import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
+import { StorefrontCard } from "./storefront-card";
 import { NewSellerButton } from "../storefronts/new-seller-dialog";
 
 export const metadata: Metadata = { title: "API Keys" };
@@ -23,7 +24,8 @@ export default async function KeysPage({
   const api = getAdminApi();
   const products = await api.products();
   // A customer has one storefront, so their pages open on it.
-  const isAdmin = (await getViewer())?.isAdmin === true;
+  const viewer = await getViewer();
+  const isAdmin = viewer?.isAdmin === true;
   const onlyOne = !isAdmin && products.length === 1 ? products[0] : undefined;
   const product = products.find((p) => p.id === productId) ?? onlyOne;
 
@@ -43,7 +45,7 @@ export default async function KeysPage({
     );
   }
 
-  const keys = await api.apiKeys(product.id);
+  const [keys, storefront] = await Promise.all([api.apiKeys(product.id), api.storefront(product.id)]);
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -62,6 +64,8 @@ export default async function KeysPage({
         productName={product.name}
         keys={keys}
       />
+      {/* The shop that sells this storefront's stores: one we build for them, or their own site with these keys. */}
+      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} canLogIn={!!viewer && canChange(viewer)} />
     </div>
   );
 }

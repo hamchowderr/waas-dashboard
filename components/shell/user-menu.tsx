@@ -39,10 +39,19 @@ const SUPPORT_EMAIL = "support@anypress.io";
 const DOCS_URL = "https://shop.anypress.io/docs/";
 
 /**
- * The signed-in person at the bottom of the sidebar, and the menu it opens: Appearance,
- * dark mode, the tour, help and sign out.
+ * The signed-in person at the bottom of the sidebar, and the menu it opens: Notifications, Team, Branding,
+ * Appearance, dark mode, the tour, help and sign out.
  */
-export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEmail?: string | null }) {
+export function UserMenu({
+  user,
+  supportEmail,
+  links = []
+}: {
+  user: SignedInUser;
+  supportEmail?: string | null;
+  /** The account's own pages (Notifications, Team, Branding), listed above Appearance. */
+  links?: { title: string; icon: LucideIcon; href: string }[];
+}) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const startTour = useStartTour();
@@ -105,6 +114,11 @@ export function UserMenu({ user, supportEmail }: { user: SignedInUser; supportEm
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">Settings</DropdownMenuLabel>
               <DropdownMenuGroup>
+                {links.map((link) => (
+                  <MenuItem key={link.href} icon={link.icon} href={link.href}>
+                    {link.title}
+                  </MenuItem>
+                ))}
                 <MenuItem icon={SlidersHorizontalIcon} onSelect={() => setAppearanceOpen(true)}>
                   Appearance
                 </MenuItem>

@@ -115,7 +115,7 @@ function BuildStorefrontButton({ productId, productName }: { productId: string; 
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
         Build a storefront
       </Button>
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>

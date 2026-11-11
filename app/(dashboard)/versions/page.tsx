@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { StoreIcon } from "lucide-react";
 
-import { canChange, getViewer } from "@/auth";
+import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Card } from "@/components/ui/card";
-import { StorefrontCard } from "../keys/storefront-card";
 import { VersionsManager } from "./versions-manager";
 
 export const metadata: Metadata = { title: "Templates" };
@@ -38,11 +37,7 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
     );
   }
 
-  const [versions, templates, storefront] = await Promise.all([
-    api.versions(product.id),
-    api.templates(product.id),
-    api.storefront(product.id)
-  ]);
+  const [versions, templates] = await Promise.all([api.versions(product.id), api.templates(product.id)]);
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -51,7 +46,6 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
         description={`The website every new store from ${product.name} starts as. Change it by building a new version, check it, then make it production.`}
       />
       <VersionsManager productId={product.id} versions={versions} templates={templates} />
-      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} canLogIn={!!viewer && canChange(viewer)} />
     </div>
   );
 }

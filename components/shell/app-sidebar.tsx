@@ -24,7 +24,7 @@ import {
 import { BrandMark, PlainMark } from "@/components/shell/brand-mark";
 import { CommandSearch } from "@/components/shell/command-search";
 
-import { isCurrent, linkHref, navFor, type NavLink } from "@/components/shell/nav";
+import { accountMenuLinks, isCurrent, linkHref, sidebarNav, type NavLink } from "@/components/shell/nav";
 import { sectionSlug } from "@/components/shell/tours";
 import { UserMenu, type SignedInUser } from "@/components/shell/user-menu";
 
@@ -100,7 +100,7 @@ export function AppSidebar({
         <ScrollArea className="h-full [&>[data-slot=scroll-area-scrollbar]]:hidden [&>[data-slot=scroll-area-viewport]]:scroll-fade">
           {/* Every page is a link, in small groups with a heading (Overview stands alone at the top). */}
           <nav aria-label="Main" data-tour-step-id="sidebar-nav">
-            {navFor(isAdmin, isReseller).map((section) => {
+            {sidebarNav(isAdmin, isReseller).map((section) => {
               const single = section.links.length === 1 && section.links[0].title === section.title;
               return (
                 <SidebarGroup key={section.title} data-tour-step-id={`group-${sectionSlug(section.title)}`} className="py-1">
@@ -128,7 +128,11 @@ export function AppSidebar({
         {brand && (
           <p className="text-muted-foreground px-2 text-xs group-data-[collapsible=icon]:hidden">Powered by AnyPress</p>
         )}
-        <UserMenu user={user} supportEmail={brand?.supportEmail} />
+        <UserMenu
+          user={user}
+          supportEmail={brand?.supportEmail}
+          links={accountMenuLinks(isAdmin, isReseller).map((link) => ({ title: link.title, icon: link.icon, href: linkHref(link, product) }))}
+        />
       </SidebarFooter>
     </Sidebar>
   );
