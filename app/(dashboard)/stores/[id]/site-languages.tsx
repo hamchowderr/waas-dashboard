@@ -17,7 +17,7 @@ const MAX_EXTRA = 9;
 
 function LanguageRow({ name, note, pages, onRemove, disabled }: { name: string; note?: string; pages?: number; onRemove?: () => void; disabled: boolean }) {
   return (
-    <li className="bg-muted flex min-h-11 items-center justify-between gap-3 rounded-xl px-3 py-1.5">
+    <li data-slot="tile" className="bg-muted flex min-h-11 items-center justify-between gap-3 rounded-xl px-3 py-1.5">
       <span>
         {name} {note && <span className="text-muted-foreground">{note}</span>}
       </span>

@@ -47,6 +47,7 @@ export function SiteTypeIcon({ siteTypes, className }: { siteTypes: string[]; cl
   const type = siteTypeOf(siteTypes);
   return (
     <span
+      data-slot="site-type-icon"
       title={type.label}
       className={cn(
         "bg-muted text-foreground/70 flex size-8 shrink-0 items-center justify-center rounded-full",

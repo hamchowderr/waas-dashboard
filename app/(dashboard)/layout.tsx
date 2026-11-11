@@ -7,6 +7,8 @@ import { canChange, canUseDashboard, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import type { StorefrontOption } from "@/components/shell/storefront-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { LookSwitcher } from "@/components/shell/look-switcher";
+import { LOOK_COOKIE, readLook } from "@/lib/looks";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SiteHeader } from "@/components/shell/site-header";
 import { DashboardTour } from "@/components/shell/dashboard-tour";
@@ -124,6 +126,7 @@ export default async function DashboardLayout({
             </div>
           </div>
         </SidebarInset>
+        {api.isFixture && <LookSwitcher initial={readLook(cookieStore.get(LOOK_COOKIE)?.value) ?? "current"} />}
       </SidebarProvider>
     </DashboardTour>
   );

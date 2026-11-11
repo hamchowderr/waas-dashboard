@@ -277,8 +277,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
               ) : (
                 <ul className="space-y-2">
                   {todos.map((todo) => (
-                    <li key={todo.key} className="bg-muted flex flex-wrap items-center gap-3 rounded-2xl p-3">
+                    <li key={todo.key} data-slot="tile" className="bg-muted flex flex-wrap items-center gap-3 rounded-2xl p-3">
                       <span
+                        data-slot="tile-icon"
                         className={cn(
                           "flex size-10 shrink-0 items-center justify-center rounded-full",
                           todo.tone === "critical"
@@ -510,7 +511,7 @@ function SetupTable({
   forCustomer?: boolean;
 }) {
   return (
-    <div className="bg-muted/60 overflow-hidden rounded-2xl">
+    <div data-slot="tile" className="bg-muted/60 overflow-hidden rounded-2xl">
       <Table>
         <TableHeader>
           <TableRow>

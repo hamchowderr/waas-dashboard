@@ -29,7 +29,7 @@ function StatTile({ stat }: { stat: Stat }) {
     <>
       {stat.icon && (
         <span className="flex items-center justify-between">
-          <span className={cn("flex size-10 items-center justify-center rounded-full", TONES[stat.tone ?? "neutral"])}>
+          <span data-slot="tile-icon" className={cn("flex size-10 items-center justify-center rounded-full", TONES[stat.tone ?? "neutral"])}>
             <stat.icon className="size-4.5" aria-hidden />
           </span>
           {stat.href && (
@@ -45,9 +45,10 @@ function StatTile({ stat }: { stat: Stat }) {
     </>
   );
   const shape = "bg-muted flex h-full flex-col gap-3 rounded-[1.125rem] p-4 sm:p-5";
-  if (!stat.href) return <div className={shape}>{body}</div>;
+  if (!stat.href) return <div data-slot="tile" className={shape}>{body}</div>;
   return (
     <Link
+      data-slot="tile"
       href={stat.href}
       className={cn(
         shape,
@@ -61,7 +62,7 @@ function StatTile({ stat }: { stat: Stat }) {
 /** A row of tiles: two across on a phone and the whole row from xl; three tiles always sit in one row. */
 export function StatTiles({ stats, label }: { stats: Stat[]; label: string }) {
   return (
-    <ul className={cn("grid grid-cols-2 gap-3 lg:gap-5", stats.length === 3 ? "grid-cols-3" : "xl:grid-cols-4")} aria-label={label}>
+    <ul data-slot="tiles" className={cn("grid grid-cols-2 gap-3 lg:gap-5", stats.length === 3 ? "grid-cols-3" : "xl:grid-cols-4")} aria-label={label}>
       {stats.map((stat) => (
         <li key={stat.label}>
           <StatTile stat={stat} />

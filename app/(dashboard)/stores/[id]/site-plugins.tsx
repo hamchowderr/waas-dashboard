@@ -56,7 +56,7 @@ export function SitePluginsCard({ plugins, highLevel }: { plugins: TenantPlugins
             <CollapsibleContent>
               <ul className="grid gap-2 @xl/main:grid-cols-2">
                 {plugins.plugins.map((p) => (
-                  <li key={p.file} className="bg-muted flex items-start gap-3 rounded-2xl p-3 text-sm">
+                  <li key={p.file} data-slot="tile" className="bg-muted flex items-start gap-3 rounded-2xl p-3 text-sm">
                     <PluginIcon slug={p.file.split("/")[0]} name={p.name} className="size-10 rounded-xl" />
                     <span className="min-w-0">
                       <span className="block font-semibold">{p.name}</span>

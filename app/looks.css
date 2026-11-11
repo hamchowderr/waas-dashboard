@@ -1,0 +1,350 @@
+/*
+ * Style directions to compare (sample data only: lib/looks.ts sets data-look on <html>).
+ * Unlayered, so these win over the components' Tailwind utilities. Once one is picked it becomes the
+ * real default and this file goes away.
+ *
+ *   flat      1 Flat: one open page, sections split by hairlines, no boxes, small corners (Linear, Vercel)
+ *   panels    2 Panels: grey page, white panels with a thin border and small corners, no shadows (Stripe)
+ *   document  3 Document: one white page, a centred column, big headings, space instead of boxes (Notion)
+ */
+
+/* ---------- Shared by all three: no icon chips, no shadows, quieter buttons and badges ---------- */
+
+[data-look] [data-slot="card-icon"] {
+  display: none;
+}
+[data-look] [data-slot="card"] [data-slot="card-header"] {
+  column-gap: 0;
+}
+[data-look] [data-slot="button"] {
+  border-radius: 0.5rem;
+}
+[data-look] [data-slot="button"][data-variant="outline"] {
+  box-shadow: none;
+  border-color: var(--border);
+  background: transparent;
+}
+[data-look] [data-slot="button"][data-variant="outline"]:hover {
+  background: var(--muted);
+}
+[data-look] body {
+  --primary-glow: none;
+  --primary-gradient: linear-gradient(var(--primary), var(--primary));
+  --shadow-card: none;
+}
+[data-look] [data-slot="badge"] {
+  border-radius: 0.3125rem;
+}
+[data-look] [data-slot="sidebar-menu-button"] {
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+[data-look] [data-slot="sidebar-menu-button"][data-active="true"] {
+  background: var(--muted);
+}
+[data-look] [data-slot="sidebar-inset"],
+[data-look] [data-variant="inset"] ~ [data-slot="sidebar-inset"] {
+  border-radius: 0;
+  box-shadow: none;
+}
+[data-look] [data-slot="sidebar-inset"] > header {
+  border-radius: 0;
+}
+[data-look] [data-slot="page-title"],
+[data-look] [data-slot="sidebar-inset"] h1 {
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+[data-look] [data-slot="card-title"] {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* Status icons stay coloured, without the round chip behind them. */
+[data-look] [data-slot="tile-icon"] {
+  background: transparent;
+  width: auto;
+  height: auto;
+  justify-content: flex-start;
+}
+[data-look] [data-slot="tiles"] [data-slot="tile"] {
+  gap: 0.5rem;
+}
+[data-look] [data-slot="tiles"] [data-slot="tile-icon"]:not([class*="rose"]):not([class*="amber"]):not([class*="green"]) {
+  color: var(--muted-foreground);
+}
+[data-look] [data-slot="tiles"] [data-slot="tile"] .text-3xl {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+[data-look] li[data-slot="tile"] {
+  margin-block: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* ---------- 1 Flat ---------- */
+
+[data-look="flat"] body {
+  --font-sans: var(--font-geist);
+  --background: var(--card);
+  --sidebar: var(--card);
+}
+[data-look="flat"] [data-slot="sidebar-container"],
+[data-look="flat"] [data-slot="sidebar-inner"] {
+  border-inline-end: 1px solid var(--border);
+}
+[data-look="flat"] [data-slot="sidebar-inset"] > header {
+  border-bottom-color: var(--border);
+  height: 3.25rem;
+}
+[data-look="flat"] [data-slot="page-title"],
+[data-look="flat"] [data-slot="sidebar-inset"] h1 {
+  font-size: 1.5rem;
+}
+[data-look="flat"] [data-slot="sidebar-inset"] [data-slot="card"] {
+  --card-spacing: 1rem;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  padding-bottom: 0.25rem;
+  overflow: visible;
+}
+/* Content runs to the section's edges: children see a zero card spacing for their own side padding. */
+[data-look="flat"] [data-slot="sidebar-inset"] [data-slot="card"] > * {
+  --card-spacing: 0px;
+  padding-inline: 0;
+}
+[data-look="flat"] [data-slot="card-title"] {
+  font-size: 0.9375rem;
+}
+[data-look="flat"] [data-slot="tiles"] {
+  gap: 0;
+  border-block: 1px solid var(--border);
+}
+[data-look="flat"] [data-slot="tiles"] [data-slot="tile"] {
+  background: transparent;
+  border-radius: 0;
+  padding: 1rem 1.25rem;
+}
+[data-look="flat"] [data-slot="tiles"] > li + li [data-slot="tile"] {
+  border-inline-start: 1px solid var(--border);
+}
+[data-look="flat"] [data-slot="tiles"] > li:first-child [data-slot="tile"] {
+  padding-inline-start: 0;
+}
+[data-look="flat"] [data-slot="tiles"] [data-slot="tile"]:hover {
+  background: var(--muted);
+}
+[data-look="flat"] li[data-slot="tile"] {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+}
+[data-look="flat"] div[data-slot="tile"] {
+  background: transparent;
+  border-radius: 0;
+}
+
+/* ---------- 2 Panels ---------- */
+
+[data-look="panels"] body {
+  --font-sans: var(--font-inter);
+}
+[data-look="panels"]:not(.dark) body {
+  --background: #f6f5f3;
+}
+[data-look="panels"] body {
+  --sidebar: var(--card);
+}
+[data-look="panels"] [data-slot="sidebar-container"],
+[data-look="panels"] [data-slot="sidebar-inner"] {
+  border-inline-end: 1px solid var(--border);
+}
+[data-look="panels"] [data-slot="sidebar-inset"] {
+  background: var(--background);
+}
+[data-look="panels"] [data-variant="inset"] ~ [data-slot="sidebar-inset"] {
+  margin: 0;
+}
+[data-look="panels"] [data-slot="sidebar-inset"] > header {
+  background: color-mix(in oklab, var(--background) 85%, transparent);
+  border-bottom-color: var(--border);
+  height: 3.25rem;
+}
+[data-look="panels"] [data-slot="page-title"],
+[data-look="panels"] [data-slot="sidebar-inset"] h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+[data-look="panels"] [data-slot="sidebar-inset"] [data-slot="card"] {
+  --card-spacing: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+[data-look="panels"] [data-slot="card"] > [data-slot="card-header"] {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.875rem;
+}
+[data-look="panels"] [data-slot="card-title"] {
+  font-size: 0.9375rem;
+}
+[data-look="panels"] [data-slot="card-description"] {
+  font-size: 0.8125rem;
+}
+[data-look="panels"] [data-slot="tiles"] {
+  gap: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+[data-look="panels"] [data-slot="tiles"] [data-slot="tile"] {
+  background: transparent;
+  border-radius: 0;
+  padding: 1rem 1.25rem;
+}
+[data-look="panels"] [data-slot="tiles"] > li + li [data-slot="tile"] {
+  border-inline-start: 1px solid var(--border);
+}
+[data-look="panels"] [data-slot="tiles"] [data-slot="tile"]:hover {
+  background: var(--muted);
+}
+[data-look="panels"] li[data-slot="tile"] {
+  padding: 0.75rem 0;
+}
+[data-look="panels"] li[data-slot="tile"] + li[data-slot="tile"] {
+  border-top: 1px solid var(--border);
+}
+[data-look="panels"] div[data-slot="tile"] {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+/* ---------- 3 Document ---------- */
+
+[data-look="document"] body {
+  --background: var(--card);
+  --sidebar: var(--card);
+}
+[data-look="document"] [data-slot="sidebar-container"],
+[data-look="document"] [data-slot="sidebar-inner"] {
+  border-inline-end: 1px solid var(--border);
+}
+[data-look="document"] [data-slot="sidebar-inset"] > div > div {
+  width: 100%;
+  max-width: 68rem;
+  margin-inline: auto;
+}
+@media (min-width: 1024px) {
+  [data-look="document"] [data-slot="sidebar-inset"] > div > div {
+    padding-top: 2.5rem;
+  }
+}
+[data-look="document"] [data-slot="page-title"],
+[data-look="document"] [data-slot="sidebar-inset"] h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+[data-look="document"] [data-slot="sidebar-inset"] [data-slot="card"] {
+  --card-spacing: 0.875rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding-block: 0.5rem 0;
+  overflow: visible;
+}
+/* Content runs to the section's edges: children see a zero card spacing for their own side padding. */
+[data-look="document"] [data-slot="sidebar-inset"] [data-slot="card"] > * {
+  --card-spacing: 0px;
+  padding-inline: 0;
+}
+[data-look="document"] [data-slot="card-title"] {
+  font-size: 1.3125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+[data-look="document"] [data-slot="tiles"] {
+  gap: 2rem;
+}
+[data-look="document"] [data-slot="tiles"] [data-slot="tile"] {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+}
+[data-look="document"] [data-slot="tiles"] [data-slot="tile-icon"] {
+  display: none;
+}
+[data-look="document"] [data-slot="tiles"] [data-slot="tile"] .text-3xl {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+[data-look="document"] li[data-slot="tile"] {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+[data-look="document"] li[data-slot="tile"]:first-child {
+  border-top: 1px solid var(--border);
+}
+[data-look="document"] div[data-slot="tile"] {
+  background: transparent;
+  border-radius: 0;
+}
+[data-look="document"] [data-slot="button"][data-variant="outline"] {
+  border-color: transparent;
+  background: var(--muted);
+}
+
+/* Room for the style switcher bar under the last section. */
+body:has([aria-label="Style to preview"]) [data-slot="sidebar-inset"] > div:last-child {
+  padding-bottom: 4rem;
+}
+
+/* Store type icons: a small outlined square instead of a filled circle. */
+[data-look] [data-slot="site-type-icon"] {
+  border-radius: 0.5rem;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+[data-look] [data-slot="site-type-icon"].size-14 {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+[data-look] [data-slot="site-type-icon"].size-14 svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  [data-look="document"] [data-slot="page-title"],
+  [data-look="document"] [data-slot="sidebar-inset"] h1 {
+    font-size: 2.25rem;
+  }
+}
+
+/* On a phone the actions under a row line up with its text, now that the icon is small. */
+@media (max-width: 639px) {
+  [data-look] li[data-slot="tile"] .max-sm\:ms-13 {
+    margin-inline-start: 1.875rem;
+  }
+}
+
+/* Two tiles across (below xl): a rule between the rows, none at the start of each row. */
+@media (max-width: 1279px) {
+  [data-look="flat"] [data-slot="tiles"]:not(.grid-cols-3) > li:nth-child(odd) [data-slot="tile"],
+  [data-look="panels"] [data-slot="tiles"]:not(.grid-cols-3) > li:nth-child(odd) [data-slot="tile"] {
+    border-inline-start: 0;
+  }
+  [data-look="flat"] [data-slot="tiles"]:not(.grid-cols-3) > li:nth-child(n + 3) [data-slot="tile"],
+  [data-look="panels"] [data-slot="tiles"]:not(.grid-cols-3) > li:nth-child(n + 3) [data-slot="tile"] {
+    border-top: 1px solid var(--border);
+  }
+  [data-look="flat"] [data-slot="tiles"]:not(.grid-cols-3) > li:nth-child(odd) [data-slot="tile"] {
+    padding-inline-start: 0;
+  }
+}

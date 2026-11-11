@@ -30,7 +30,7 @@ export function SetupSteps({ steps, productId, className }: { steps: SetupStep[]
         const link = stepLink(step, productId);
         const done = step.state === "done";
         return (
-          <li key={step.key} className="bg-muted flex items-center gap-3 rounded-2xl px-3.5 py-3">
+          <li key={step.key} data-slot="tile" className="bg-muted flex items-center gap-3 rounded-2xl px-3.5 py-3">
             <span
               className={cn(
                 "bg-card flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-step-ring shadow-xs",

@@ -4,12 +4,14 @@ import { cookies } from "next/headers";
 import { ThemeProvider } from "next-themes";
 
 import "./globals.css";
+import "./looks.css";
 
 import { cn } from "@/lib/utils";
 import { uiSans, fontVariables } from "@/lib/fonts";
 import { AppearanceProvider } from "@/components/appearance-provider";
 import { appearanceLetterSpacing, appearanceVars, readAppearance } from "@/lib/appearance";
 import { Toaster } from "@/components/ui/sonner";
+import { LOOK_COOKIE, readLook } from "@/lib/looks";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
@@ -40,7 +42,11 @@ export default async function RootLayout({
   } as React.CSSProperties;
 
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", uiSans.variable)}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn("font-sans", uiSans.variable)}
+      data-look={readLook(cookieStore.get(LOOK_COOKIE)?.value)}>
       <body
         suppressHydrationWarning
         className={cn("bg-background group/layout font-sans", fontVariables)}
