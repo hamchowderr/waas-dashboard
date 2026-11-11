@@ -23,6 +23,7 @@ import { MailSender } from "./mail-sender";
 import { RestoreBackup } from "./restore-backup";
 import { MoveInStatus } from "./move-in";
 import { StoreActions } from "./store-actions";
+import { DownloadSite } from "./download-site";
 import { WordPressLoginButton } from "../../wordpress-login";
 import { EmailOwner } from "./email-owner";
 import { HighLevelLinkPanel } from "./highlevel-link";
@@ -143,6 +144,8 @@ export default async function StorePage({ params, searchParams }: Params) {
             )}
           </>
         )}
+        {/* A copy of the whole site to take anywhere: for anyone who may change the store. */}
+        {!!viewer && canChange(viewer) && canRestore && !waitingForSite && <DownloadSite tenantId={tenant.id} storeName={tenant.name} />}
         <Button asChild variant="outline" size="sm">
           <Link href={viewer?.isAdmin ? `/requests?product=${tenant.productId}&store=${tenant.id}` : `/requests?store=${tenant.id}`}>API log</Link>
         </Button>

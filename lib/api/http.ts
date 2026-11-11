@@ -81,6 +81,7 @@ import type {
   WebhookFilter,
   WebhookSecret,
   WordPressLogin,
+  SiteDownload,
   NotificationList,
   PushSettings,
   PushSubscriptionInput
@@ -379,6 +380,14 @@ export class HttpAdminApi implements AdminApi {
 
   async wordPressLogin(tenantId: string): Promise<WordPressLogin> {
     return (await this.send<WordPressLogin>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/wp-login`, {}))!;
+  }
+
+  async siteDownload(tenantId: string): Promise<SiteDownload | null> {
+    return (await this.get<{ download: SiteDownload | null }>(`/admin/tenants/${encodeURIComponent(tenantId)}/download`))!.download;
+  }
+
+  async startSiteDownload(tenantId: string): Promise<SiteDownload> {
+    return (await this.send<{ download: SiteDownload }>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/download`, {}))!.download;
   }
 
   async notifyOwner(tenantId: string, email: string): Promise<void> {

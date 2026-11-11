@@ -43,6 +43,7 @@ import type {
   WebhookEventType,
   WebhookSecret,
   WordPressLogin,
+  SiteDownload,
   HighLevelCheck,
   SiteLanguages
 } from "@/lib/api/types";
@@ -306,6 +307,16 @@ export async function setTenantLanguages(tenantId: string, on: boolean, language
 /** A one-time link that opens the store's wp-admin signed in. Owners and admins (run refuses members). */
 export async function wordPressLogin(tenantId: string): Promise<ActionResult<WordPressLogin>> {
   return run(() => getAdminApi().wordPressLogin(uuid(tenantId, "store")), []);
+}
+
+/** The store's newest copy to download, with a fresh link when it is ready. */
+export async function siteDownloadStatus(tenantId: string): Promise<ActionResult<SiteDownload | null>> {
+  return run(() => getAdminApi().siteDownload(uuid(tenantId, "store")), []);
+}
+
+/** Starts a copy of the whole store to download (or gives the one being made or just made). */
+export async function startSiteDownload(tenantId: string): Promise<ActionResult<SiteDownload>> {
+  return run(() => getAdminApi().startSiteDownload(uuid(tenantId, "store")), []);
 }
 
 /** Emails the store's owner their "website is ready" sign-in link. Owners and admins (run refuses members). */

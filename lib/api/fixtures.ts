@@ -98,6 +98,7 @@ import {
   type WebhookFilter,
   type WebhookSecret,
   type WordPressLogin,
+  type SiteDownload,
   type Notification,
   type NotificationList,
   type PushSettings,
@@ -549,6 +550,8 @@ const seeds: TenantSeed[] = [
 
 /** When sample stores' owners were sent the "website is ready" email from the dashboard. */
 const ownerNotified = new Map<string, { at: string; to: string }>();
+/** Sample "Download site" copies, by store. */
+const siteDownloads = new Map<string, SiteDownload>();
 
 type FixtureTenant = Omit<Tenant, "progress"> & {
   /** A job the sample store is running, shown as moving through its steps (sampleProgress). */
@@ -1662,6 +1665,37 @@ export class FixtureAdminApi implements AdminApi {
     if (tenant.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; you can log in once it is Done");
     if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it to log in");
     return this.sampleLogin(tenant.mainDomain);
+  }
+
+  /** Sample data makes no real copy: it is Pending for a few seconds, then Done with a link to nowhere. */
+  async siteDownload(tenantId: string): Promise<SiteDownload | null> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const made = siteDownloads.get(tenantId);
+    if (!made) return null;
+    if (made.statusCode === StatusCode.Pending && Date.now() - Date.parse(made.dateCreated) > 4000) {
+      Object.assign(made, { statusCode: StatusCode.Done, statusName: "Done", sizeBytes: 48_300_000, dateDone: new Date().toISOString(), url: "#sample-download" });
+    }
+    return made;
+  }
+
+  async startSiteDownload(tenantId: string): Promise<SiteDownload> {
+    const tenant = this.changeableTenant(tenantId);
+    const last = await this.siteDownload(tenantId);
+    if (last && (last.statusCode === StatusCode.Pending || Date.now() - Date.parse(last.dateCreated) < 10 * 60_000)) return last;
+    const now = new Date();
+    const made: SiteDownload = {
+      id: crypto.randomUUID(),
+      statusCode: StatusCode.Pending,
+      statusName: "Pending",
+      sizeBytes: null,
+      dateCreated: now.toISOString(),
+      dateDone: null,
+      expiresAt: new Date(now.getTime() + 7 * 86_400_000).toISOString(),
+      fileName: `${tenant.mainDomain ?? tenant.externalId}-${now.toISOString().slice(0, 10)}.zip`,
+      url: null
+    };
+    siteDownloads.set(tenantId, made);
+    return made;
   }
 
   /** Sample data sends no email: it only checks what the API would. */

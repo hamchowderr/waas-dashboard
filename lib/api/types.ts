@@ -238,6 +238,7 @@ export type JobType =
   | "tenant.suspend"
   | "tenant.resume"
   | "tenant.backup"
+  | "tenant.download"
   | "tenant.restore"
   | "tenant.rollback"
   | "tenant.go-live";
@@ -789,6 +790,22 @@ export type NewSeller = {
  * false the site's plugin is older than one-click login and url is its ordinary login page.
  */
 export type WordPressLogin = { url: string; oneClick: boolean; expiresAt: string | null };
+
+/**
+ * "Download site": a copy of the whole store (WordPress, its files and database, and how to restore it) as a plain
+ * WordPress zip that restores on any host. Kept 7 days; `url` works for an hour once it is Done.
+ */
+export type SiteDownload = {
+  id: string;
+  statusCode: StatusCode;
+  statusName: string;
+  sizeBytes: number | null;
+  dateCreated: string;
+  dateDone: string | null;
+  expiresAt: string;
+  fileName: string;
+  url: string | null;
+};
 
 export type ReadyStorefront = { id: string; name: string; domain: string; statusCode: StatusCode; statusName: string };
 

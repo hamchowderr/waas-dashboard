@@ -23,6 +23,7 @@ export const jobTypeLabels: Record<JobType, string> = {
   "tenant.suspend": "Suspend store",
   "tenant.resume": "Resume store",
   "tenant.backup": "Back up store",
+  "tenant.download": "Make a copy to download",
   "tenant.restore": "Restore store",
   "tenant.rollback": "Restore from backup",
   "tenant.go-live": "Go live"
