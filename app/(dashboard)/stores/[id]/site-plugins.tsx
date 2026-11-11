@@ -34,8 +34,10 @@ export function SitePluginsCard({
   /** Whether the site runs the AnyPress theme: every store built from the template does; a site moved in keeps its own. */
   theme: boolean;
 }) {
-  // The theme leads the list: it is the site's design, and AnyPress Blocks only works inside it.
-  const plugins = theme && list.plugins.length > 0 ? { ...list, plugins: [ANYPRESS_THEME, ...list.plugins] } : list;
+  // Our own design pieces lead the list, side by side: the AnyPress theme, then AnyPress Blocks.
+  const ours = list.plugins.filter((p) => p.file.startsWith("anypress-blocks/"));
+  const rest = list.plugins.filter((p) => !ours.includes(p));
+  const plugins = list.plugins.length > 0 ? { ...list, plugins: [...(theme ? [ANYPRESS_THEME] : []), ...ours, ...rest] } : list;
   const types = plugins.siteTypes.map((t) => t.title).join(", ");
   const isHighLevel = plugins.siteTypes.some((t) => t.key === "highlevel");
   const has = (file: string) => plugins.plugins.some((p) => p.file === file);
