@@ -285,3 +285,41 @@ body {
   position: absolute;
   inset: -4px -2px;
 }
+
+/*
+ * A page whose main content is a table fits the screen on a laptop or desktop: the page stays put and the table's
+ * rows scroll inside it, under column names that stay in view, with the page numbers always at the bottom. On a
+ * short screen the table keeps room for a few rows and the page scrolls instead. Phones show the table as cards.
+ */
+@media (min-width: 64rem) and (min-height: 36rem) {
+  [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child,
+  [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child > div,
+  [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child > div > div:has([data-fit="table"]) {
+    display: flex;
+    flex: 1 1 0%;
+    flex-direction: column;
+    min-height: 0;
+  }
+  [data-fit="table"] {
+    flex: 1 1 0%;
+    min-height: 26rem;
+  }
+  /* Everything else on the page keeps its own height; only the table gives way. */
+  [data-slot="sidebar-inset"] > div:last-child > div > div:has([data-fit="table"]) > :not([data-fit="table"]) {
+    flex-shrink: 0;
+  }
+  [data-fit="table"] > [data-slot="card-content"] {
+    flex: 1 1 0%;
+    min-height: 0;
+  }
+  [data-fit="table"] [data-slot="table-container"] {
+    min-height: 0;
+    overflow-y: auto;
+  }
+  [data-fit="table"] [data-slot="table-header"] [data-slot="table-head"] {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--card);
+  }
+}

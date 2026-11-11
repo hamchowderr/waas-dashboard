@@ -183,7 +183,7 @@ export function AdminDataTable<T extends RowData>({
   const lastRow = Math.min((pageIndex + 1) * pageSize, rows.length);
 
   return (
-    <Card>
+    <Card data-fit="table">
       <CardContent className="flex flex-col p-0 [&_[data-slot=table-container]]:flex-1">
         <div className="flex min-h-14 flex-wrap items-center gap-2 border-b px-(--card-spacing) py-3">
           {selected.length > 0 && bulkActions ? (
