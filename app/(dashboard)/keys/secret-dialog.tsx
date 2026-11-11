@@ -74,7 +74,7 @@ export function SecretDialog({
           <DialogTitle>{secret?.title}</DialogTitle>
           <DialogDescription>
             {secret?.usage ??
-              "Enter these in WaaS → Settings → Connection on the storefront, or wherever the key is used."}
+              "Enter these in AnyPress → Settings → Connection on the storefront, or wherever the key is used."}
           </DialogDescription>
         </DialogHeader>
         {secret && (
