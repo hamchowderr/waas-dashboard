@@ -104,3 +104,11 @@ export function plainError(error: string | null): string | null {
     .trim();
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : null;
 }
+
+/** Care time: "30 min", "2 h", "1 h 20 min". */
+export function formatMinutes(minutes: number): string {
+  const h = Math.floor(Math.max(0, minutes) / 60);
+  const m = Math.max(0, minutes) % 60;
+  if (!h) return `${m} min`;
+  return m ? `${h} h ${m} min` : `${h} h`;
+}

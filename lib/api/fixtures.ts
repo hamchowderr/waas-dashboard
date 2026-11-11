@@ -1350,7 +1350,11 @@ export class FixtureAdminApi implements AdminApi {
       jobs: [...jobs, ...finishedJobs].filter((j) => j.tenantId === id),
       ...(tenant.moveIn && { snapshotName: "Moved in", wpOptionNames: [], phpConstantNames: [] }),
       keepsOwnCode: !!tenant.moveIn,
-      moveIn: tenant.moveIn ?? null
+      moveIn: tenant.moveIn ?? null,
+      // Sample care on every third store, so the store page shows it.
+      care: tenants.indexOf(tenant) % 3 === 0 && !tenant.moveIn
+        ? { package: "Care Plus", minutes: 120, used: 40, left: 80, extra: 60, answer: "1 business day" }
+        : null
     };
   }
 

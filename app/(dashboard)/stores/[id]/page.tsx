@@ -7,7 +7,7 @@ import { ArchiveIcon, ChevronDownIcon, ChevronLeft, CirclePauseIcon, ExternalLin
 
 import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import { backupReasonLabel, formatBytes, formatDate, formatDateTime, jobTypeLabel, plainError } from "@/lib/format";
+import { backupReasonLabel, formatBytes, formatDate, formatDateTime, formatMinutes, jobTypeLabel, plainError } from "@/lib/format";
 import { StatusCode } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { OnHoldBadge, StatusBadge, SuspendedBadge } from "@/components/admin/status-badge";
@@ -318,6 +318,19 @@ export default async function StorePage({ params, searchParams }: Params) {
                 <Row label="Last changed">{formatDateTime(tenant.dateChanged)}</Row>
                 {tenant.isSuspended && <Row label="Suspended">{formatDateTime(tenant.dateSuspended)}</Row>}
                 {tenant.ownerEmail && <Row label="Owner">{tenant.ownerEmail}</Row>}
+                <Row label="Care">
+                  {tenant.care ? (
+                    <span data-testid="store-care">
+                      <span className="font-medium">{tenant.care.package}</span>
+                      <span className="text-muted-foreground block text-xs">
+                        {formatMinutes(tenant.care.left)} of {formatMinutes(tenant.care.minutes)} left this month
+                        {tenant.care.extra > 0 && `, plus ${formatMinutes(tenant.care.extra)} extra`}
+                      </span>
+                    </span>
+                  ) : (
+                    "None"
+                  )}
+                </Row>
                 {!tenant.onHold && (
                   <Row label="Owner emailed">
                     {tenant.ownerNotifiedAt ? `${formatDateTime(tenant.ownerNotifiedAt)} to ${tenant.ownerNotifiedTo}` : "Not sent"}
