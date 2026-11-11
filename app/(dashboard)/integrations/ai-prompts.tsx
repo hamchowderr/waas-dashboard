@@ -17,12 +17,10 @@ export function AiPrompts({ apps }: { apps: AiApp[] }) {
 
   return (
     <div className="space-y-4" data-testid="ai-prompts">
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold">Prompts to copy</h3>
-        <p className="text-muted-foreground text-sm">
-          Pick your app, copy a prompt and paste it in. Replace the words in [brackets] with your own.
-        </p>
-      </div>
+      <p className="text-sm">
+        <span className="font-semibold">Prompts to copy. </span>
+        <span className="text-muted-foreground">Pick your app, copy a prompt and paste it in. Replace the words in [brackets] with your own.</span>
+      </p>
       <div role="tablist" aria-label="AI app" className="flex flex-wrap gap-2">
         {apps.map((a) => {
           const on = a.id === app.id;
@@ -57,14 +55,14 @@ export function AiPrompts({ apps }: { apps: AiApp[] }) {
           <span className="text-foreground font-medium">Add it to {app.name}: </span>
           {app.connect}
         </p>
-        <ul className="grid gap-3 lg:grid-cols-2">
+        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {app.prompts.map((p) => (
             <li key={p.title} className="bg-muted/50 flex min-w-0 flex-col gap-2 rounded-lg border p-3">
               <div className="flex items-center gap-2">
                 <p className="min-w-0 flex-1 text-sm font-semibold">{p.title}</p>
                 <CopyButton text={p.text} label={`the ${p.title} prompt`} />
               </div>
-              <p className="text-muted-foreground line-clamp-4 text-sm whitespace-pre-line" title={p.text}>
+              <p className="text-muted-foreground line-clamp-2 text-sm" title={p.text}>
                 {p.text}
               </p>
             </li>

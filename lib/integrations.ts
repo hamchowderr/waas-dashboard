@@ -35,13 +35,6 @@ export const INTEGRATION_GROUPS: IntegrationGroup[] = [
     items: [
       {
         id: "mcp",
-        logos: [
-          { src: "/integrations/claude.svg", alt: "Claude" },
-          { src: "/integrations/openai.svg", alt: "ChatGPT" },
-          { src: "/integrations/cursor.svg", alt: "Cursor" },
-          { src: "/integrations/githubcopilot.svg", alt: "GitHub Copilot" },
-          { src: "/integrations/gemini.svg", alt: "Gemini" }
-        ],
         name: "AnyPress connector (MCP)",
         summary:
           "Works in Claude, ChatGPT, Cursor, Copilot, Gemini, Devin Desktop and any other MCP app. Paste the address below and sign in, then ask it to make sites, back them up or edit their pages.",
