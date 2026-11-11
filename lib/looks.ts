@@ -9,7 +9,9 @@ export const LOOKS = [
   { id: "document", label: "3 Document" },
   { id: "tone", label: "4 Tone" },
   { id: "square", label: "5 Square" },
-  { id: "shaded", label: "6 Shaded" }
+  { id: "shaded", label: "6 Shaded" },
+  { id: "hosting", label: "7 Hosting" },
+  { id: "open", label: "8 Open" }
 ] as const;
 
 export type Look = (typeof LOOKS)[number]["id"];
