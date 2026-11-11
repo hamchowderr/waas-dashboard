@@ -14,7 +14,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: { default: "AnyPress", template: "%s · AnyPress" },
-  description: "Operations dashboard for the WaaS provisioning API.",
+  description: "Run your websites, stores and storefronts.",
   robots: { index: false, follow: false },
   // Installed on a phone's home screen, it opens in its own window (app/manifest.ts).
   appleWebApp: { capable: true, title: "AnyPress", statusBarStyle: "default" }

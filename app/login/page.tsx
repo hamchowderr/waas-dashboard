@@ -15,7 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const name = seller?.brand?.name ?? seller?.productName;
   return {
     title: name ? { absolute: `Sign in · ${name}` } : "Sign in",
-    ...(seller?.brand?.iconUrl ? { icons: { icon: seller.brand.iconUrl } } : {})
+    ...(name ? { appleWebApp: { capable: true, title: name, statusBarStyle: "default" as const } } : {}),
+    ...(seller?.brand?.iconUrl ? { icons: { icon: seller.brand.iconUrl, apple: seller.brand.iconUrl } } : {})
   };
 }
 
