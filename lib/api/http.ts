@@ -1007,7 +1007,7 @@ export class HttpAdminApi implements AdminApi {
       jobs,
       keepsOwnCode: t.keepsOwnCode ?? false,
       moveIn: t.moveIn ? toMoveIn(t.moveIn) : null,
-      care: t.care ?? null
+      care: t.care
     };
   }
 

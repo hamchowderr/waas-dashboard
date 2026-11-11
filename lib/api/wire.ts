@@ -137,7 +137,7 @@ export type WireTenantDetail = {
   failures: WireJobFailure[];
   keepsOwnCode?: boolean;
   moveIn?: WireMoveIn;
-  care?: Care | null;
+  care: Care | null;
 };
 
 export type WireMoveIn = {
