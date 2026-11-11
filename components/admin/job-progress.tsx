@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, LoaderCircleIcon, TriangleAlertIcon, XIcon } from "lucide-react";
 
 import type { JobProgress } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 
 /** What the job is doing, as the card's title. */
@@ -84,11 +84,11 @@ export function JobProgressCard({
     return (
       <Card data-testid="job-progress">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Spinner className="text-muted-foreground" />
-            Waiting to start
-          </CardTitle>
-          <CardDescription>This job is next in line. It starts in a moment, and this page updates on its own.</CardDescription>
+          <CardIcon className="bg-amber-500/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300">
+            <Spinner />
+          </CardIcon>
+          <CardTitle>Waiting to start</CardTitle>
+          <CardDescription>This task is next in line. It starts in a moment, and this page updates on its own.</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -101,6 +101,14 @@ export function JobProgressCard({
   return (
     <Card data-testid="job-progress" aria-live="polite">
       <CardHeader>
+        <CardIcon
+          className={
+            failed
+              ? "bg-rose-600/12 text-rose-700 dark:bg-rose-400/15 dark:text-rose-300"
+              : "bg-amber-500/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300"
+          }>
+          {failed ? <TriangleAlertIcon /> : <LoaderCircleIcon className="animate-spin motion-reduce:animate-none" />}
+        </CardIcon>
         <CardTitle>{failed ? `${jobTitle(progress.job)}: something went wrong` : jobTitle(progress.job)}</CardTitle>
         <CardDescription>
           {failed && gaveUp
@@ -132,7 +140,7 @@ export function JobProgressCard({
             <div
               className={cn(
                 "h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none",
-                failed ? "bg-rose-600 dark:bg-rose-400" : "bg-primary"
+                failed ? "bg-rose-600 dark:bg-rose-400" : "bg-amber-500 dark:bg-amber-400"
               )}
               style={{ width: `${share}%` }}
             />
@@ -182,7 +190,7 @@ export function JobProgressInline({ progress }: { progress: JobProgress }) {
           <div
             className={cn(
               "h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none",
-              failed ? "bg-rose-600 dark:bg-rose-400" : "bg-primary"
+              failed ? "bg-rose-600 dark:bg-rose-400" : "bg-amber-500 dark:bg-amber-400"
             )}
             style={{ width: `${progressShare(progress)}%` }}
           />

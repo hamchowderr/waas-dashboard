@@ -106,7 +106,7 @@ export function AlertsToggle({ variant = "bell" }: { variant?: "bell" | "card" }
         ? "This browser can't show alerts."
         : state.kind === "blocked"
           ? "Alerts are blocked for this site in your browser's settings."
-          : "Ready stores, failed jobs and backups, and new applications, even when the dashboard is closed.";
+          : "Ready stores, failed tasks and backups, and new applications, even when the dashboard is closed.";
 
   return (
     <div className={variant === "bell" ? "flex items-start gap-3 border-t px-4 py-3" : "flex items-start gap-3"}>

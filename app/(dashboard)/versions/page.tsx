@@ -2,18 +2,17 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { StoreIcon } from "lucide-react";
 
-import { canChange, getViewer } from "@/auth";
+import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Card } from "@/components/ui/card";
-import { StorefrontCard } from "../keys/storefront-card";
 import { VersionsManager } from "./versions-manager";
 
 export const metadata: Metadata = { title: "Templates" };
 
-export default async function VersionsPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
-  const { product: productId } = await searchParams;
+export default async function VersionsPage({ searchParams }: { searchParams: Promise<{ product?: string; tab?: string }> }) {
+  const { product: productId, tab } = await searchParams;
   const api = getAdminApi();
   const products = await api.products();
   // A customer has one storefront, so their pages open on it.
@@ -25,7 +24,7 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
   // These pages are about one storefront. With none picked, open the first rather than showing only a picker;
   // the switcher at the top moves between them.
   if (!product) {
-    if (products[0]) redirect(`/versions?product=${products[0].id}`);
+    if (products[0]) redirect(`/versions?product=${products[0].id}${tab ? `&tab=${encodeURIComponent(tab)}` : ""}`);
     return (
       <div className="space-y-4 lg:space-y-6">
         <PageHeader title="Templates" />
@@ -38,11 +37,7 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
     );
   }
 
-  const [versions, templates, storefront] = await Promise.all([
-    api.versions(product.id),
-    api.templates(product.id),
-    api.storefront(product.id)
-  ]);
+  const [versions, templates] = await Promise.all([api.versions(product.id), api.templates(product.id)]);
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -50,8 +45,7 @@ export default async function VersionsPage({ searchParams }: { searchParams: Pro
         title="Templates"
         description={`The website every new store from ${product.name} starts as. Change it by building a new version, check it, then make it production.`}
       />
-      <VersionsManager productId={product.id} versions={versions} templates={templates} />
-      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} canLogIn={!!viewer && canChange(viewer)} />
+      <VersionsManager productId={product.id} versions={versions} templates={templates} tab={tab} />
     </div>
   );
 }

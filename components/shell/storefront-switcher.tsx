@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckIcon, ChevronsUpDown, LayersIcon } from "lucide-react";
+import { CheckIcon, ChevronsUpDown, StoreIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -46,7 +46,7 @@ function Mark({ storefront, className }: { storefront: { name: string; markUrl?:
         "bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded-md border text-[0.6875rem] font-semibold",
         className
       )}>
-      {storefront ? (storefront.name.trim().charAt(0).toUpperCase() || "?") : <LayersIcon className="size-3/5" />}
+      {storefront ? (storefront.name.trim().charAt(0).toUpperCase() || "?") : <StoreIcon className="size-3/5" />}
     </span>
   );
 }

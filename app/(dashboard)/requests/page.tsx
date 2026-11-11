@@ -7,6 +7,7 @@ import type { RequestOutcome } from "@/lib/api/types";
 import { REQUEST_WINDOWS, isRequestWindow, windowStart, type RequestWindow } from "@/lib/requests";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestsTable } from "./requests-table";
 
 export const metadata: Metadata = { title: "API Log" };
@@ -55,21 +56,23 @@ export default async function RequestsPage({
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="API Log"
-        description={`${day.total} calls in the last 24 hours, ${day.clientErrors} refused and ${day.serverErrors} failed. ${kept}${shown}`}>
+        description={`Last 24 hours: ${day.total} calls, ${day.clientErrors} refused and ${day.serverErrors} failed.${since === "day" ? "" : ` ${since ? REQUEST_WINDOWS[since].label : `All ${log.retentionDays} days`}: ${log.total} calls.`} ${kept}${shown}`}>
         {storeName && (
           <Button asChild variant="outline" size="sm">
             <Link href={hrefWith(current, { store: undefined })}>All stores</Link>
           </Button>
         )}
       </PageHeader>
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Time">
-        {([...Object.keys(REQUEST_WINDOWS), undefined] as (RequestWindow | undefined)[]).map((w) => (
-          <Button key={w ?? "all"} asChild size="sm" variant={w === since ? "default" : "outline"}>
-            <Link href={hrefWith(current, { since: w })} aria-current={w === since ? "true" : undefined}>
-              {w ? REQUEST_WINDOWS[w].label : `All ${log.retentionDays} days`}
-            </Link>
-          </Button>
-        ))}
+      <div className="flex flex-wrap items-center gap-3">
+        <Tabs value={since ?? "all"}>
+          <TabsList aria-label="Time">
+            {([...Object.keys(REQUEST_WINDOWS), undefined] as (RequestWindow | undefined)[]).map((w) => (
+              <TabsTrigger key={w ?? "all"} value={w ?? "all"} asChild>
+                <Link href={hrefWith(current, { since: w })}>{w ? REQUEST_WINDOWS[w].label : `All ${log.retentionDays} days`}</Link>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
         {storeName && <span className="text-sm">Only calls about {storeName}.</span>}
       </div>
       <RequestsTable requests={log.items} showStorefront={isAdmin} />

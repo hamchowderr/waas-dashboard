@@ -11,7 +11,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-[1.375rem] bg-card py-(--card-spacing) text-sm text-card-foreground shadow-card dark:ring-1 dark:ring-white/6 [--card-spacing:--spacing(5.5)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-[1.375rem] *:[img:last-child]:rounded-b-[1.375rem]",
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-[1.125rem] bg-card py-(--card-spacing) text-sm text-card-foreground shadow-card dark:ring-1 dark:ring-white/6 [--card-spacing:--spacing(5.5)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-[1.125rem] *:[img:last-child]:rounded-b-[1.125rem]",
         className
       )}
       {...props}
@@ -24,7 +24,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)",
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] has-data-[slot=card-icon]:grid-cols-[auto_1fr] has-data-[slot=card-icon]:gap-x-3.5 has-data-[slot=card-icon]:has-data-[slot=card-action]:grid-cols-[auto_1fr_auto] [.border-b]:pb-(--card-spacing)",
         className
       )}
       {...props}
@@ -37,7 +37,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-title"
       className={cn(
-        "font-heading text-[1.05rem] leading-snug font-bold tracking-[-0.015em] group-data-[size=sm]/card:text-sm",
+        "font-heading row-start-1 text-[1.05rem] leading-snug font-bold tracking-[-0.015em] group-data-[size=sm]/card:text-sm group-has-data-[slot=card-icon]/card-header:col-start-2",
         className
       )}
       {...props}
@@ -49,18 +49,40 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("row-start-2 max-w-prose text-sm text-pretty text-muted-foreground group-has-data-[slot=card-icon]/card-header:col-start-2", className)}
       {...props}
     />
   )
 }
 
-function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+/** inline: a small text link that stays beside the title even on a narrow card. */
+function CardAction({ className, inline = false, ...props }: React.ComponentProps<"div"> & { inline?: boolean }) {
   return (
     <div
       data-slot="card-action"
       className={cn(
-        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        "col-start-[-2] row-span-2 row-start-1 self-start justify-self-end",
+        // On a narrow card a button moves to its own row under the text instead of squeezing it.
+        !inline &&
+          "@max-md/card-header:col-span-full @max-md/card-header:col-start-1 @max-md/card-header:row-span-1 @max-md/card-header:row-start-3 @max-md/card-header:mt-2 @max-md/card-header:justify-self-start",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+/**
+ * A round, neutral icon chip at the start of a card's header; the title and description sit beside it.
+ * Colour is kept for status and the main action (DESIGN.md, Icon chips), so the chip itself stays quiet.
+ */
+function CardIcon({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="card-icon"
+      aria-hidden
+      className={cn(
+        "col-start-1 row-span-2 row-start-1 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-foreground/70 [&_svg]:size-[1.125rem]",
         className
       )}
       {...props}
@@ -83,7 +105,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center rounded-b-[1.375rem] border-t bg-muted/60 p-(--card-spacing)",
+        "flex items-center rounded-b-[1.125rem] border-t bg-muted/60 p-(--card-spacing)",
         className
       )}
       {...props}
@@ -99,4 +121,5 @@ export {
   CardAction,
   CardDescription,
   CardContent,
+  CardIcon,
 }

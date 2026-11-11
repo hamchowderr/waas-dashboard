@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ALL_LINKS, NAV } from "@/components/shell/nav";
+import { NAV } from "@/components/shell/nav";
 import { sectionSlug, tourFor } from "@/components/shell/tours";
 
 const ids = (kind: "admin" | "seller" | "reseller", canChange = true, product: string | null = null) =>
@@ -25,7 +25,6 @@ describe("tourFor", () => {
       "group-websites",
       "store-actions",
       "group-store-setup",
-      "group-settings",
       "group-developers",
       "account-menu"
     ]);
@@ -50,8 +49,8 @@ describe("tourFor", () => {
 
   it("points at sidebar groups and links that exist", () => {
     const anchors = new Set([
-      ...NAV.map((section) => `group-${sectionSlug(section.title)}`),
-      ...ALL_LINKS.map((link) => `nav-${sectionSlug(link.title)}`)
+      ...NAV.filter((section) => !section.inAccountMenu).map((section) => `group-${sectionSlug(section.title)}`),
+      ...NAV.filter((section) => !section.inAccountMenu).flatMap((section) => section.links.map((link) => `nav-${sectionSlug(link.title)}`))
     ]);
     for (const kind of ["admin", "seller", "reseller"] as const) {
       for (const id of ids(kind)) if (id.startsWith("group-") || id.startsWith("nav-")) expect(anchors).toContain(id);

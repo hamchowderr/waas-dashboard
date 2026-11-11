@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { ThemeProvider } from "next-themes";
 
 import "./globals.css";
+import "./look.css";
 
 import { cn } from "@/lib/utils";
 import { uiSans, fontVariables } from "@/lib/fonts";
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" }
+    { media: "(prefers-color-scheme: dark)", color: "#141210" }
   ]
 };
 
@@ -40,7 +41,10 @@ export default async function RootLayout({
   } as React.CSSProperties;
 
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", uiSans.variable)}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn("font-sans", uiSans.variable)}>
       <body
         suppressHydrationWarning
         className={cn("bg-background group/layout font-sans", fontVariables)}

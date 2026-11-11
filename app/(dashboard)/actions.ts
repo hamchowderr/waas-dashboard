@@ -254,6 +254,14 @@ export async function copyWithReprint(tenantId: string, siteUrl: string): Promis
   }, ["/stores"]);
 }
 
+/** Takes a backup of a live store now. */
+export async function createBackup(tenantId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().createBackup(uuid(tenantId, "store"));
+    return undefined;
+  }, ["/stores", "/backups", "/"]);
+}
+
 /** Rolls a live store back to one of its backups; with takeBackup, its current state is backed up first. */
 export async function restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<ActionResult> {
   return run(async () => {
@@ -945,7 +953,7 @@ function optional(value: unknown, what: string, max: number): string | null {
 export async function saveBranding(of: TeamOf, fields: BrandingFields): Promise<ActionResult<BrandingView>> {
   return brandChange(of, (checked) => {
     const color = optional(fields?.color, "Color", 7);
-    if (color && !HEX_COLOR.test(color)) throw new InputError("Choose a color like #1d4ed8");
+    if (color && !HEX_COLOR.test(color)) throw new InputError("Choose a color like #c8264d");
     const supportEmail = optional(fields?.supportEmail, "Support email", 254);
     if (supportEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(supportEmail)) throw new InputError("Enter a support email address");
     const shopUrl = optional(fields?.shopUrl, "Shop link", 500);

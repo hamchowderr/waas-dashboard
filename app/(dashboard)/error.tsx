@@ -3,16 +3,16 @@
 import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
 
 export default function DashboardError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <Card className="mx-auto max-w-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="text-destructive size-5" />
-          Could not load this page
-        </CardTitle>
+        <CardIcon className="bg-rose-600/12 text-rose-700 dark:bg-rose-400/15 dark:text-rose-300">
+          <AlertTriangle />
+        </CardIcon>
+        <CardTitle>Could not load this page</CardTitle>
         <CardDescription>
           The provisioning API did not answer as expected. It may be down, or the dashboard&apos;s
           WAAS_API_URL or WAAS_ADMIN_TOKEN may be wrong.

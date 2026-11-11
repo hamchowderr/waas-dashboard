@@ -2,13 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRightIcon, DownloadIcon } from "lucide-react";
+import { ArrowRightIcon, CircleDollarSignIcon, DownloadIcon } from "lucide-react";
 
 import { useSellPrices } from "@/hooks/use-sell-prices";
 import { PLANS, PLAN_NAMES, cost, dollars, fill, keep, type GroupId, type Guide, type KitContext, type Plan } from "@/lib/sales-kit";
 import { KitMarkdown } from "@/components/admin/kit-markdown";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "cn";
@@ -43,7 +43,7 @@ export function SellHome({
   return (
     <Tabs value={tab} onValueChange={setTab} className="gap-4 lg:gap-6">
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-      <TabsList variant="line" className="border-b pb-0">
+      <TabsList className="max-w-full justify-start overflow-x-auto overflow-y-hidden [scrollbar-width:none] max-sm:[mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] [&::-webkit-scrollbar]:hidden">
         <TabsTrigger value="groups">Who to sell to</TabsTrigger>
         <TabsTrigger value="find">Find prospects</TabsTrigger>
         <TabsTrigger value="check">Website check</TabsTrigger>
@@ -58,14 +58,14 @@ export function SellHome({
             <Link
               key={g.id}
               href={`/sell/${g.id}?product=${encodeURIComponent(productId)}`}
-              className="group/card bg-card hover:border-foreground/20 focus-visible:ring-ring/50 flex flex-col rounded-xl border p-4 transition-colors outline-none focus-visible:ring-3"
+              className="group/card bg-card hover:border-foreground/20 focus-visible:ring-ring/50 flex flex-col rounded-[1.125rem] border p-4 transition-colors outline-none focus-visible:ring-3"
             >
               <div className="flex items-center gap-3">
                 <GroupIcon id={g.id} />
                 <h2 className="text-sm leading-snug font-semibold">{g.title}</h2>
               </div>
-              <p className="text-muted-foreground mt-3 line-clamp-3 text-sm">{g.who}</p>
-              <div className="mt-auto flex items-end justify-between gap-2 border-t pt-3 [margin-top:max(1rem,auto)]">
+              <p className="text-muted-foreground mt-3 pb-4 text-sm text-pretty">{g.who}</p>
+              <div className="mt-auto flex items-end justify-between gap-2 border-t pt-3 ">
                 <div>
                   <p className="text-muted-foreground text-xs">{PLAN_NAMES[g.plan]}</p>
                   <p className="text-sm font-medium tabular-nums">
@@ -102,6 +102,9 @@ function Prices({ prices, setPrice, wholesalePercent }: { prices: Record<Plan, n
   return (
     <Card className="max-w-3xl">
       <CardHeader>
+        <CardIcon>
+          <CircleDollarSignIcon />
+        </CardIcon>
         <CardTitle>What you charge</CardTitle>
         <CardDescription>
           Your monthly price for each plan. Every message, offer sheet and deck uses these. Suggested prices are filled in until you change them, and they&apos;re kept in this browser.

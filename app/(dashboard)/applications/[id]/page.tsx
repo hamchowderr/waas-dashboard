@@ -1,3 +1,4 @@
+import { GavelIcon, MessageSquareTextIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,7 +8,7 @@ import { getAdminApi } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/format";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { ApplicationStatusBadge } from "../status-badge";
 import { ApplicationDecision } from "./decision";
 
@@ -24,11 +25,11 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
 
   const rows: [string, React.ReactNode][] = [
     ["Name", a.name],
-    ["Email", <a key="email" href={`mailto:${a.email}`} className="hover:underline">{a.email}</a>],
+    ["Email", <a key="email" href={`mailto:${a.email}`} className="text-primary underline-offset-4 hover:underline">{a.email}</a>],
     [
       "Website",
       a.website ? (
-        <a key="site" href={a.website} target="_blank" rel="noreferrer" className="break-all hover:underline">
+        <a key="site" href={a.website} target="_blank" rel="noreferrer" className="text-primary break-all underline-offset-4 hover:underline">
           {a.website}
         </a>
       ) : (
@@ -61,6 +62,9 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
+            <CardIcon>
+              <MessageSquareTextIcon />
+            </CardIcon>
             <CardTitle>What they told us</CardTitle>
           </CardHeader>
           <CardContent>
@@ -76,6 +80,9 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
         </Card>
         <Card>
           <CardHeader>
+            <CardIcon>
+              <GavelIcon />
+            </CardIcon>
             <CardTitle>Decision</CardTitle>
           </CardHeader>
           <CardContent>

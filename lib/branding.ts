@@ -40,6 +40,7 @@ export function brandColorVars(color: string | null | undefined): Record<string,
     "--sidebar-primary-foreground": fg,
     // One flat colour on the main buttons in place of the ribbon gradient, with a matching glow.
     "--primary-gradient": `linear-gradient(${color}, ${color})`,
+    "--primary-strong": color,
     "--primary-glow": `0 6px 16px -6px color-mix(in oklab, ${color} 55%, transparent)`,
     "--sidebar-ring": color
   };

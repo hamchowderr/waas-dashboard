@@ -17,14 +17,14 @@ const MAX_EXTRA = 9;
 
 function LanguageRow({ name, note, pages, onRemove, disabled }: { name: string; note?: string; pages?: number; onRemove?: () => void; disabled: boolean }) {
   return (
-    <li className="flex items-center justify-between gap-3 px-3 py-2">
+    <li data-slot="tile" className="bg-muted flex min-h-11 items-center justify-between gap-3 rounded-xl px-3 py-1.5">
       <span>
         {name} {note && <span className="text-muted-foreground">{note}</span>}
       </span>
       <span className="flex items-center gap-2">
         {pages !== undefined && <span className="text-muted-foreground">{pages} pages</span>}
         {onRemove && (
-          <Button variant="ghost" size="icon" className="size-7" disabled={disabled} aria-label={`Remove ${name}`} onClick={onRemove}>
+          <Button variant="ghost" size="icon-sm" disabled={disabled} aria-label={`Remove ${name}`} onClick={onRemove}>
             <XIcon />
           </Button>
         )}
@@ -119,7 +119,7 @@ export function SiteLanguagesPanel({ tenantId, languages, canChange }: { tenantI
         </p>
       )}
 
-      <ul className="divide-y rounded-md border text-sm">
+      <ul className="space-y-1.5 text-sm">
         {own && <LanguageRow name={own.name} note="(the site's own)" pages={pagesOf(own.locale)} disabled={pending} />}
         {picked.map((locale) => (
           <LanguageRow
@@ -143,7 +143,7 @@ export function SiteLanguagesPanel({ tenantId, languages, canChange }: { tenantI
           )}
         </div>
       )}
-      <p className="text-muted-foreground text-xs">
+      <p className="text-muted-foreground text-sm">
         Buttons and screens of the site&apos;s plugins follow the visitor&apos;s language. Page text is translated per page, by you or the AI assistant.
       </p>
     </div>

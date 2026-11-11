@@ -61,7 +61,7 @@ function RetryButton({ delivery }: { delivery: WebhookDelivery }) {
           else toast.error(result.error);
         })
       }>
-      {pending ? <Spinner /> : <RotateCcwIcon />} Retry
+      {pending ? <Spinner /> : <RotateCcwIcon />} {delivery.status === "failed" ? "Retry" : "Send again"}
     </Button>
   );
 }
@@ -132,7 +132,7 @@ const columns: ColumnDef<WebhookDelivery>[] = [
       const d = row.original;
       const status = d.responseStatus;
       return (
-        <div className="flex w-56 flex-col items-start gap-1 whitespace-normal xl:w-64">
+        <div className="flex w-full min-w-0 flex-col items-start gap-1 whitespace-normal lg:w-56 xl:w-64">
           {status === null ? (
             <span className="text-muted-foreground text-xs">No answer</span>
           ) : (

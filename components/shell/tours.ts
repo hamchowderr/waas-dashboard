@@ -139,23 +139,6 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
           }
         ]
       : []),
-    ...(admin
-      ? []
-      : [
-          {
-            href: at("/team"),
-            steps: [
-              {
-                id: "group-settings",
-                title: "Your settings",
-                content:
-                  "Invite the people who work with you and choose who can change things and who can only look. Branding puts your own name, logo and color on this dashboard.",
-                side: "right",
-                align: "start"
-              } satisfies Step
-            ]
-          }
-        ]),
     {
       href: at("/integrations"),
       steps: [
@@ -170,7 +153,7 @@ export function tourFor({ kind, product, canChange }: Options): Tour {
         {
           id: "account-menu",
           title: "That's the tour",
-          content: "Your account menu is here at the bottom: Team, Branding, Appearance, dark mode, help and sign out. You can take the tour again from it too.",
+          content: "Your account menu is here at the bottom: Notifications, Team, Branding, Appearance, dark mode, help and sign out. You can take the tour again from it too.",
           side: "right",
           align: "end"
         }

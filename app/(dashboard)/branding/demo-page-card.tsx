@@ -2,7 +2,7 @@ import { ArrowUpRightIcon, MonitorPlayIcon } from "lucide-react";
 
 import { requestHost, sellerAddress } from "@/lib/dashboard-host";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardIcon, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyButton } from "../sell/kit-ui";
 
 /**
@@ -16,8 +16,10 @@ export async function DemoPageCard({ id, whose }: { id: string; whose: string })
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MonitorPlayIcon className="text-primary size-4" />
+        <CardIcon>
+          <MonitorPlayIcon />
+        </CardIcon>
+        <CardTitle>
           Demo page
         </CardTitle>
         <CardDescription>

@@ -9,7 +9,7 @@ export const statusMeta: Record<
   [StatusCode.Pending]: { label: "In progress", badge: "warning" },
   [StatusCode.Done]: { label: "Ready", badge: "success" },
   [StatusCode.Failed]: { label: "Failed", badge: "destructive" },
-  [StatusCode.Removing]: { label: "Removing", badge: "info" }
+  [StatusCode.Removing]: { label: "Removing", badge: "warning" }
 };
 
 export const jobTypeLabels: Record<JobType, string> = {
@@ -42,7 +42,7 @@ export const webhookEventLabels: Record<WebhookEventType, string> = {
   "tenant.rolled_back": "Store restored from backup",
   "tenant.backup_completed": "Backup finished",
   "tenant.backup_failed": "Backup failed",
-  "tenant.failed": "Store job failed",
+  "tenant.failed": "Store task failed",
   "version.ready": "Version ready",
   "version.deleted": "Version deleted",
   "version.failed": "Version failed",
@@ -95,47 +95,12 @@ export function formatBytes(bytes: number | null | undefined): string {
   return `${value.toFixed(value < 10 && unit > 0 ? 1 : 0)} ${units[unit]}`;
 }
 
-const settingLabels: Record<string, string> = {
-  blogname: "Site title",
-  blogdescription: "Tagline",
-  admin_email: "Owner email",
-  timezone_string: "Time zone",
-  date_format: "Date format",
-  time_format: "Time format",
-  WPLANG: "Language",
-  woocommerce_currency: "Currency",
-  fluent_cart_currency: "Currency",
-  WP_MEMORY_LIMIT: "Memory limit",
-  WP_MAX_MEMORY_LIMIT: "Admin memory limit",
-  DISALLOW_FILE_EDIT: "File editor turned off",
-  DISALLOW_FILE_MODS: "Plugin installs turned off",
-  WP_AUTO_UPDATE_CORE: "WordPress auto-updates",
-  WP_DEBUG: "Debug mode",
-  WP_POST_REVISIONS: "Post revisions kept",
-  WAAS_TENANT_ROLES: "Plan roles",
-  WAAS_PUBLIC_KEY: "One-click sign-in key",
-  WAAS_TENANT_NO_ADMINISTRATOR_PLUGIN_CAPS: "Plugins managed by the plan",
-  WAAS_API_BASE_URL: "API address",
-  WAAS_API_KEY: "API key",
-  WAAS_API_SECRET: "API secret",
-  WAAS_HOST_KEY_ENCRYPTION_KEY: "Sign-in key encryption",
-  waas_root_domain: "Website domain",
-};
-
-/** Names stores were given under the old platform's prefix, shown like their waas_ spelling. */
-const legacyNames: Record<string, string> = {
-  wpcs_host_settings_root_domain: "waas_root_domain",
-};
-
-/** Plain label for a WordPress option or PHP constant a store was made with; unknown names are spelled out. */
-export function settingLabel(name: string): string {
-  name = legacyNames[name] ?? name.replace(/^WPCS_/, "WAAS_");
-  const known = settingLabels[name];
-  if (known) return known;
-  const words = name
-    .replace(/^(WP|WAAS)_/, "")
-    .replace(/_/g, " ")
-    .toLowerCase()
+/** A task error as people read it: without the part of the API that raised it, or provider codes such as "(403 AccessDenied)". */
+export function plainError(error: string | null): string | null {
+  // Provider codes in brackets ("(403 AccessDenied)") stay in the task's details, not here.
+  const text = error
+    ?.replace(/^Provisioner:\s*/, "")
+    .replace(/\s*\(\d{3} [A-Za-z]+\)/g, "")
     .trim();
-  return words.charAt(0).toUpperCase() + words.slice(1);
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : null;
 }

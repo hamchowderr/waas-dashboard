@@ -6,8 +6,9 @@
 @import "shadcn/tailwind.css";
 
 /*
- * The Studio look (owner's pick, 2026-11-06): white panels floating on a warm canvas, soft shadows
- * instead of outlines, rounded shapes, and the logo's ribbon pink on the main actions. DESIGN.md.
+ * The Studio look (owner's pick, 2026-11-06), as reworked 2026-11-11: one white page sheet beside the warm canvas
+ * sidebar, hairline cards on the sheet, neutral icon chips, colour only for status and the main action, and the
+ * logo's ribbon pink on that action. DESIGN.md.
  */
 :root {
   --background: #f3efea;
@@ -18,7 +19,9 @@
   --popover-foreground: #1b1917;
   --primary: #c8264d;
   --primary-foreground: #ffffff;
-  --primary-gradient: linear-gradient(135deg, #ee2f5e 0%, #c8264d 55%, #a81e72 100%);
+  --primary-gradient: linear-gradient(135deg, #dc2a55 0%, #c8264d 55%, #a81e72 100%);
+  /* The ribbon behind white text (buttons, count pills): at least 4.5:1 in both themes. */
+  --primary-strong: #c8264d;
   --primary-glow: 0 6px 16px -6px rgb(200 38 77 / 0.55);
   --secondary: #efeae4;
   --secondary-foreground: #1b1917;
@@ -54,13 +57,14 @@
 .dark {
   --background: #141210;
   --foreground: #f4f1ee;
-  --card: #1f1c19;
+  --card: #211e1b;
   --card-foreground: #f4f1ee;
   --popover: #24211e;
   --popover-foreground: #f4f1ee;
   --primary: #f0476f;
   --primary-foreground: #ffffff;
-  --primary-gradient: linear-gradient(135deg, #ff5a82 0%, #e23a64 55%, #c02a85 100%);
+  --primary-gradient: linear-gradient(135deg, #d63360 0%, #c42a5a 55%, #a42479 100%);
+  --primary-strong: #c42a5a;
   --primary-glow: 0 6px 18px -6px rgb(240 71 111 / 0.45);
   --secondary: #2a2623;
   --secondary-foreground: #f4f1ee;
@@ -70,7 +74,7 @@
   --accent: #2a2623;
   --accent-foreground: #f4f1ee;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: rgb(255 255 255 / 0.08);
+  --border: rgb(255 255 255 / 0.1);
   --input: rgb(255 255 255 / 0.12);
   --ring: #f0476f;
   --chart-1: #ff5a82;
@@ -115,6 +119,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-strong: var(--primary-strong);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -155,7 +160,30 @@ body {
   @apply overscroll-none bg-transparent antialiased;
 }
 
-/* The page header floats on the canvas: no rule under it. (Its markup is in components/shell/site-header.tsx.) */
+/*
+ * The page sheet (2026-11-11): the sidebar stays on the warm canvas and each page is one white sheet beside it.
+ * Inside the sheet, cards are quiet sections with a hairline edge instead of white boxes floating on the canvas.
+ * Unlayered, so it wins over the card's own shadow utility; cards outside the sheet (sign-in, tour) keep it.
+ */
+[data-slot="sidebar-inset"] {
+  background: var(--card);
+}
+@media (min-width: 768px) {
+  [data-variant="inset"] ~ [data-slot="sidebar-inset"] {
+    border-radius: 1.375rem;
+    box-shadow: var(--shadow-card);
+  }
+  .dark [data-variant="inset"] ~ [data-slot="sidebar-inset"] {
+    box-shadow: var(--shadow-card), 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+}
+[data-slot="sidebar-inset"] [data-slot="card"] {
+  box-shadow: none;
+  border: 1px solid var(--border);
+  border-radius: 1.125rem;
+}
+
+/* The page header sits on the sheet: no rule under it. (Its markup is in components/shell/site-header.tsx.) */
 [data-slot="sidebar-inset"] > header {
   border-bottom-color: transparent;
 }
@@ -236,16 +264,66 @@ body {
   [data-slot="sidebar-trigger"] {
     min-width: 2.75rem;
   }
-  /* Radios and checkboxes stay 16px to look at; an invisible ring makes them 44px to tap. */
+  /* Radios, checkboxes and switches keep their size to look at; an invisible ring makes them 44px to tap. */
   [data-slot="radio-group-item"]::after,
   [data-slot="checkbox"]::after {
     content: "";
     position: absolute;
     inset: -14px;
   }
-  /* Checkboxes and radios keep their size and get a 44px hit area around them. */
-  [data-slot="checkbox"]::after,
-  [data-slot="radio-group-item"]::after {
-    inset: -14px;
+  [data-slot="switch"]::after {
+    inset: -13px -6px;
+  }
+}
+
+/* With a mouse too, a switch is at least 24px tall to click (WCAG 2.5.8), without growing the 18px track. */
+[data-slot="switch"] {
+  position: relative;
+}
+[data-slot="switch"]::after {
+  content: "";
+  position: absolute;
+  inset: -4px -2px;
+}
+
+/*
+ * A page whose main content is a table fits the screen on a laptop or desktop: the page stays put and the table's
+ * rows scroll inside it, under column names that stay in view, with the page numbers always at the bottom. On a
+ * short screen the table keeps room for a few rows and the page scrolls instead. Phones show the table as cards.
+ */
+@media (min-width: 64rem) and (min-height: 36rem) {
+  [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child,
+  [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child > div,
+  [data-slot="sidebar-inset"]:has([data-fit="table"]) > div:last-child > div > div:has([data-fit="table"]),
+  [data-slot="sidebar-inset"] [data-slot="tabs"]:has([data-fit="table"]),
+  [data-slot="sidebar-inset"] [data-slot="tabs-content"]:has([data-fit="table"]) {
+    display: flex;
+    flex: 1 1 0%;
+    flex-direction: column;
+    min-height: 0;
+  }
+  [data-fit="table"] {
+    flex: 1 1 0%;
+    min-height: 26rem;
+  }
+  /* Everything else on the page keeps its own height; only the table gives way. */
+  [data-slot="sidebar-inset"] > div:last-child > div > div:has([data-fit="table"]) > :not([data-fit="table"], :has([data-fit="table"])),
+  [data-slot="tabs"]:has([data-fit="table"]) > :not([data-slot="tabs-content"]),
+  [data-slot="tabs-content"]:has([data-fit="table"]) > :not([data-fit="table"]) {
+    flex-shrink: 0;
+  }
+  [data-fit="table"] > [data-slot="card-content"] {
+    flex: 1 1 0%;
+    min-height: 0;
+  }
+  [data-fit="table"] [data-slot="table-container"] {
+    min-height: 0;
+    overflow-y: auto;
+  }
+  [data-fit="table"] [data-slot="table-header"] [data-slot="table-head"] {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--card);
   }
 }

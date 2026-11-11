@@ -2,19 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  Check,
-  Copy,
-  KeyRoundIcon,
-  ListIcon,
-  MoreHorizontalIcon,
-  PlusIcon,
-  PowerIcon,
-  PowerOffIcon,
-  SendIcon,
-  Trash2Icon,
-  WebhookIcon
-} from "lucide-react";
+import { Check, Copy, KeyRoundIcon, ListIcon, MoreHorizontalIcon, PlusIcon, PowerIcon, PowerOffIcon, SendIcon, Trash2Icon, WebhookIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { WebhookEndpoint } from "@/lib/api/types";
@@ -24,7 +12,7 @@ import { ConfirmAction } from "@/components/admin/confirm-action";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -46,9 +34,6 @@ import { deleteWebhook, rotateWebhookSecret, testWebhook, updateWebhook } from "
 import { AddEndpointDialog } from "./add-endpoint-dialog";
 import { useCanChange } from "@/components/auth/can-change";
 
-/** Below sm the header's button moves under its text instead of squeezing it. */
-const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
-const actionClass = "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start";
 
 const tableClass =
   "[&_td:first-child]:ps-(--card-spacing) [&_td:last-child]:pe-(--card-spacing) [&_th:first-child]:ps-(--card-spacing) [&_th:last-child]:pe-(--card-spacing)";
@@ -109,13 +94,16 @@ export function WebhookEndpoints({
   return (
     <>
       <Card>
-        <CardHeader className={headerClass}>
+        <CardHeader>
+          <CardIcon>
+            <WebhookIcon />
+          </CardIcon>
           <CardTitle>Endpoints</CardTitle>
           <CardDescription>
             A storefront adds its own through the API, or add one here. Each has a secret the receiver uses to check
             the signature.
           </CardDescription>
-          <CardAction className={actionClass}>
+          <CardAction>
             <Button size="sm" onClick={() => setAdding(true)} disabled={!canChange || storefronts.length === 0}>
               <PlusIcon /> Add endpoint
             </Button>

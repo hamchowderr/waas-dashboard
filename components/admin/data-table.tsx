@@ -18,7 +18,6 @@ import type { RowData, SortingState, ColumnVisibilityState as VisibilityState } 
 import { ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon, Columns3Icon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -184,7 +183,7 @@ export function AdminDataTable<T extends RowData>({
   const lastRow = Math.min((pageIndex + 1) * pageSize, rows.length);
 
   return (
-    <Card>
+    <Card data-fit="table">
       <CardContent className="flex flex-col p-0 [&_[data-slot=table-container]]:flex-1">
         <div className="flex min-h-14 flex-wrap items-center gap-2 border-b px-(--card-spacing) py-3">
           {selected.length > 0 && bulkActions ? (
@@ -216,12 +215,13 @@ export function AdminDataTable<T extends RowData>({
           {tabs && (
             <Tabs value={tab} onValueChange={changeTab} className="hidden lg:block">
               <TabsList>
-                <TabsTrigger value="all" className="gap-2">
+                {/* These tabs filter the one table below, so they have no panels of their own to point at. */}
+                <TabsTrigger value="all" className="gap-2" aria-controls={undefined}>
                   All
                   {tabCounts && <TabCount count={filtered.length} />}
                 </TabsTrigger>
                 {tabs.map((t) => (
-                  <TabsTrigger key={t.value} value={t.value} className="gap-2">
+                  <TabsTrigger key={t.value} value={t.value} className="gap-2" aria-controls={undefined}>
                     {t.label}
                     {tabCounts && <TabCount count={filtered.filter(t.match).length} />}
                   </TabsTrigger>
@@ -464,8 +464,6 @@ export function pageWindow(current: number, count: number): (number | null)[] {
 
 function TabCount({ count }: { count: number }) {
   return (
-    <Badge variant="secondary" className="hidden h-5 min-w-5 px-1.5 tabular-nums sm:inline-flex">
-      {count}
-    </Badge>
+    <span className="text-muted-foreground hidden text-xs font-normal tabular-nums sm:inline">{count}</span>
   );
 }

@@ -1,13 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  KeyRoundIcon,
-  MoreHorizontalIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { ChevronDownIcon, KeyRoundIcon, MoreHorizontalIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 import type { ApiKey, ApiKeyState } from "@/lib/api/types";
@@ -16,14 +11,7 @@ import { ConfirmAction } from "@/components/admin/confirm-action";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -70,10 +58,6 @@ import {
 import { SecretDialog } from "./secret-dialog";
 import { useCanChange } from "@/components/auth/can-change";
 
-/** Below sm the header's button moves under its text instead of squeezing it. */
-const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
-const actionClass =
-  "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start";
 
 const tableClass =
   "[&_td:first-child]:ps-(--card-spacing) [&_td:last-child]:pe-(--card-spacing) [&_th:first-child]:ps-(--card-spacing) [&_th:last-child]:pe-(--card-spacing)";
@@ -189,7 +173,10 @@ export function KeysManager({
   return (
     <>
       <Card>
-        <CardHeader className={headerClass}>
+        <CardHeader>
+          <CardIcon>
+            <KeyRoundIcon />
+          </CardIcon>
           <CardTitle>{partner ? "Partner keys" : "Keys"}</CardTitle>
           <CardDescription>
             {partner
@@ -198,7 +185,7 @@ export function KeysManager({
                 ? "No active key: the storefront can't reach the API."
                 : `${activeCount} active ${activeCount === 1 ? "key" : "keys"}. Secrets are shown once, when a key is created.`}
           </CardDescription>
-          <CardAction className={actionClass}>
+          <CardAction>
             <Button size="sm" onClick={() => setCreating(true)} disabled={!canChange}>
               <PlusIcon /> New key
             </Button>
@@ -315,11 +302,14 @@ export function KeysManager({
           </Table>
           {deletedCount > 0 && (
             <div className="border-t px-(--card-spacing) py-2">
-              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setShowDeleted((was) => !was)}>
-                {showDeleted
-                  ? "Hide deleted keys"
-                  : `Show ${deletedCount} deleted ${deletedCount === 1 ? "key" : "keys"}`}
-              </Button>
+              <button
+                type="button"
+                className="text-primary inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline pointer-coarse:min-h-11"
+                aria-expanded={showDeleted}
+                onClick={() => setShowDeleted((was) => !was)}>
+                {showDeleted ? "Hide deleted keys" : `Show ${deletedCount} deleted ${deletedCount === 1 ? "key" : "keys"}`}
+                <ChevronDownIcon className={cn("size-4 transition-transform", showDeleted && "rotate-180")} aria-hidden />
+              </button>
             </div>
           )}
         </CardContent>

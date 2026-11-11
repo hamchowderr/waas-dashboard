@@ -1,22 +1,22 @@
 import Link from "next/link";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, FileTextIcon, ReceiptTextIcon } from "lucide-react";
 
 import type { ResellerBill, ResellerInvoice, ResellerInvoices, StoreSize } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDays, formatMoney, monthRange } from "./usage";
 import { BillDownload } from "./[id]/bill-download";
 
 const SIZE_LABELS: Record<StoreSize, string> = { small: "Small", medium: "Medium", large: "Large" };
 
-const INVOICE_STATUS: Record<ResellerInvoice["status"], { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const INVOICE_STATUS: Record<ResellerInvoice["status"], { label: string; variant: "success" | "secondary" | "destructive" | "outline" }> = {
   sending: { label: "Sending", variant: "secondary" },
   nothing_due: { label: "Nothing due", variant: "outline" },
   open: { label: "Waiting for payment", variant: "secondary" },
-  paid: { label: "Paid", variant: "default" },
+  paid: { label: "Paid", variant: "success" },
   void: { label: "Voided", variant: "outline" },
   uncollectible: { label: "Uncollectible", variant: "destructive" },
   failed: { label: "Not sent", variant: "destructive" }
@@ -46,9 +46,11 @@ export function BillCard({
 }) {
   return (
     <Card className="lg:col-span-2">
-      <CardHeader className="flex flex-row items-start justify-between gap-2">
-        <div className="space-y-1.5">
-          <CardTitle>
+      <CardHeader>
+        <CardIcon>
+          <ReceiptTextIcon />
+        </CardIcon>
+        <CardTitle>
             Bill for {month.label}
             {!bill.complete && <span className="text-muted-foreground font-normal"> (so far)</span>}
           </CardTitle>
@@ -61,41 +63,48 @@ export function BillCard({
               bill.billingEmail && <>Send it to {bill.billingEmail}.</>
             )}
           </CardDescription>
-        </div>
-        <div className="flex gap-1">
+        <CardAction className="flex flex-wrap justify-end gap-1">
           <BillDownload resellerName={resellerName} bill={bill} />
-          <Button asChild variant="outline" size="icon" aria-label="Previous month">
+          <Button asChild variant="outline" size="sm">
             <Link href={monthHref(month.previous)}>
-              <ChevronLeftIcon />
+              <ChevronLeftIcon data-icon="inline-start" />
+              {monthRange(month.previous).label.split(" ")[0]}
             </Link>
           </Button>
           {month.month < current && (
-            <Button asChild variant="outline" size="icon" aria-label="Next month">
+            <Button asChild variant="outline" size="sm">
               <Link href={monthHref(month.next)}>
-                <ChevronRightIcon />
+                {monthRange(month.next).label.split(" ")[0]}
+                <ChevronRightIcon data-icon="inline-end" />
               </Link>
             </Button>
           )}
-        </div>
+        </CardAction>
       </CardHeader>
       <CardContent className="px-0">
         <Table scrollLabel={`Bill for ${month.label}`}>
           <TableHeader>
             <TableRow>
               <TableHead className="pl-6">Storefront</TableHead>
-              <TableHead>Size</TableHead>
+              <TableHead className="max-sm:hidden">Size</TableHead>
               <TableHead className="text-right">Store-days</TableHead>
-              <TableHead className="text-right">Price each</TableHead>
+              <TableHead className="text-right max-sm:hidden">Price each</TableHead>
               <TableHead className="pr-6 text-right">Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {bill.lines.map((l) => (
               <TableRow key={`${l.productId}-${l.size}`}>
-                <TableCell className="pl-6">{l.name ?? <span className="text-muted-foreground">Deleted storefront</span>}</TableCell>
-                <TableCell>{SIZE_LABELS[l.size]}</TableCell>
+                <TableCell className="pl-6 whitespace-normal">
+                  {l.name ?? <span className="text-muted-foreground">Deleted storefront</span>}
+                  {/* On a phone, the size and price ride under the name instead of in their own columns. */}
+                  <span className="text-muted-foreground block text-xs sm:hidden">
+                    {SIZE_LABELS[l.size]} · {formatMoney(l.wholesalePriceCents)} each
+                  </span>
+                </TableCell>
+                <TableCell className="max-sm:hidden">{SIZE_LABELS[l.size]}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatDays(l.storeDays)}</TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right tabular-nums max-sm:hidden">
                   {formatMoney(l.wholesalePriceCents)}
                   <span className="text-muted-foreground"> of {formatMoney(l.listPriceCents)}</span>
                 </TableCell>
@@ -113,9 +122,10 @@ export function BillCard({
           {bill.lines.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell className="pl-6 font-medium" colSpan={4}>
-                  Total
-                </TableCell>
+                <TableCell className="pl-6 font-medium">Total</TableCell>
+                <TableCell className="max-sm:hidden" />
+                <TableCell />
+                <TableCell className="max-sm:hidden" />
                 <TableCell className="pr-6 text-right font-medium tabular-nums">{formatMoney(bill.totalCents)}</TableCell>
               </TableRow>
             </TableFooter>
@@ -140,12 +150,13 @@ export function InvoicesCard({
 }) {
   return (
     <Card className="lg:col-span-2">
-      <CardHeader className="flex flex-row items-start justify-between gap-2">
-        <div className="space-y-1.5">
-          <CardTitle>Invoices</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </div>
-        {action}
+      <CardHeader>
+        <CardIcon>
+          <FileTextIcon />
+        </CardIcon>
+        <CardTitle>Invoices</CardTitle>
+        <CardDescription>{description}</CardDescription>
+        {action && <CardAction>{action}</CardAction>}
       </CardHeader>
       <CardContent className="px-0">
         <Table scrollLabel="Invoices">

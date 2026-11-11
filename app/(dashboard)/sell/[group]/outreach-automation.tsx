@@ -6,7 +6,7 @@ import { CheckIcon, ExternalLinkIcon, MailIcon, RotateCwIcon, WorkflowIcon } fro
 import type { ProspectAutomation, ProspectAutomations, ProspectMailbox } from "@/lib/api/types";
 import { outreachEmails, type KitContext, type Step } from "@/lib/sales-kit";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { addOutreachAutomation, prospectAutomations, prospectMailbox } from "../actions";
 import { MailboxConnect } from "../crm-connect";
@@ -65,10 +65,10 @@ export function OutreachAutomation({ productId, group, steps, ctx }: { productId
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <WorkflowIcon className="text-muted-foreground size-4" aria-hidden />
-          Send these emails from FluentCRM
-        </CardTitle>
+        <CardIcon>
+          <WorkflowIcon />
+        </CardIcon>
+        <CardTitle>Send these emails from FluentCRM</CardTitle>
         <CardDescription>
           Adds the {input.emails.length} emails above to your storefront&apos;s FluentCRM as a draft automation, &ldquo;Outreach: {group}&rdquo;. Nothing is sent until you turn it on.
         </CardDescription>

@@ -4,7 +4,6 @@ import * as React from "react";
 import { ListFilterIcon, SearchIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -70,9 +69,7 @@ export function TableFilterMenu<T>({
         <Button variant="outline" size="sm">
           <ListFilterIcon /> Filters
           {active > 0 && (
-            <Badge variant="secondary" className="-me-1 h-4.5 min-w-4.5 px-1 tabular-nums">
-              {active}
-            </Badge>
+            <span className="text-muted-foreground font-normal tabular-nums">{active}</span>
           )}
         </Button>
       </DropdownMenuTrigger>
