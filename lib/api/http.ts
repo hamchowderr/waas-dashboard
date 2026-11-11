@@ -290,7 +290,8 @@ export class HttpAdminApi implements AdminApi {
       productionVersionId: p.productionVersionId,
       resellerId: p.resellerId ?? null,
       resellerName: p.resellerName ?? null,
-      highlevelAgency: p.highlevelAgency ?? false
+      highlevelAgency: p.highlevelAgency ?? false,
+      cleanDashboard: p.cleanDashboard ?? true
     }));
   }
 
@@ -639,6 +640,10 @@ export class HttpAdminApi implements AdminApi {
 
   async setHighLevelAgency(productId: string, on: boolean): Promise<void> {
     await this.send("PUT", this.productPath(productId, ""), { highlevelAgency: on });
+  }
+
+  async setCleanDashboard(productId: string, on: boolean): Promise<void> {
+    await this.send("PUT", this.productPath(productId, "/clean-dashboard"), { on });
   }
 
   async deleteStorefront(productId: string): Promise<void> {

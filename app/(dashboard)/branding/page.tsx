@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { Card } from "@/components/ui/card";
 import { BrandingEditor } from "./branding-editor";
 import { DashboardAddress } from "./dashboard-address";
+import { CleanDashboardCard } from "./clean-dashboard-card";
 import { DemoPageCard } from "./demo-page-card";
 
 export const metadata: Metadata = { title: "Branding" };
@@ -61,6 +62,7 @@ export default async function BrandingPage({
         inherits={product.resellerId ? (product.resellerName ?? "your reseller account") : undefined}
       />
       {address?.enabled && <DashboardAddress key={`address-${product.id}`} productId={product.id} initial={address} canEdit={canEdit} />}
+      <CleanDashboardCard key={`dashboard-${product.id}`} productId={product.id} initial={product.cleanDashboard} canEdit={canEdit} />
       <DemoPageCard id={product.id} whose="your" />
     </div>
   );

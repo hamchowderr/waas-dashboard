@@ -335,6 +335,8 @@ export type ProductDetail = Product & {
   resellerName: string | null;
   /** A HighLevel agency's storefront: its new sites default to the HighLevel site type. */
   highlevelAgency: boolean;
+  /** Its stores show their own wp-admin Dashboard home instead of WordPress's default boxes. */
+  cleanDashboard: boolean;
 };
 
 /** A partner that sells stores from one or more storefronts and pays a wholesale price for each live store. */

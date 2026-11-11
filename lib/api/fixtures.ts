@@ -294,6 +294,8 @@ const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; 
 };
 
 const highlevelAgencies = new Set<string>();
+/** Storefronts whose stores keep WordPress's own Dashboard boxes (the clean home turned off). */
+const plainDashboards = new Set<string>();
 
 /** Store limits by storefront; a storefront missing here has no limit. */
 const limits = new Map<string, number | null>([
@@ -1472,7 +1474,8 @@ export class FixtureAdminApi implements AdminApi {
       productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null,
       resellerId: resellerOf.get(p.id) ?? null,
       resellerName: resellers.find((r) => r.id === resellerOf.get(p.id))?.name ?? null,
-      highlevelAgency: highlevelAgencies.has(p.id)
+      highlevelAgency: highlevelAgencies.has(p.id),
+      cleanDashboard: !plainDashboards.has(p.id)
     }));
   }
 
@@ -2283,6 +2286,12 @@ export class FixtureAdminApi implements AdminApi {
     const id = this.product(productId).id;
     if (on) highlevelAgencies.add(id);
     else highlevelAgencies.delete(id);
+  }
+
+  async setCleanDashboard(productId: string, on: boolean): Promise<void> {
+    const id = this.product(productId).id;
+    if (on) plainDashboards.delete(id);
+    else plainDashboards.add(id);
   }
 
   async deleteStorefront(productId: string): Promise<void> {
