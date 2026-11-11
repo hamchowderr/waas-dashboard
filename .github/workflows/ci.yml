@@ -4,8 +4,16 @@ on:
   pull_request:
   push:
     branches: [main]
+  # The Update pins workflow starts CI on its pull request's branch this way.
+  workflow_dispatch:
 
 jobs:
+  pins:
+    # Fails when a pinned version (.github/pins.json) is behind an AnyPress release.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hamchowderr/waas-provisioning-api/.github/pins@main
   check:
     runs-on: ubuntu-latest
     steps:

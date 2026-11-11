@@ -118,7 +118,7 @@ describe("campaign", () => {
 describe("demosFor", () => {
   it("only lists finished demos, as Playground links", () => {
     for (const id of GROUP_IDS)
-      for (const d of demosFor(id)) expect(d.url).toMatch(/^https:\/\/playground\.wordpress\.net\/\?blueprint-url=/);
+      for (const d of demosFor(id)) expect(d.url).toMatch(/^https:\/\/demo\.anypress\.site\/\?mode=seamless#/);
     expect(demosFor("agencies").map((d) => d.kit)).toEqual(["ridge", "circuit"]);
     expect(demosFor("churches")).toEqual([]);
   });

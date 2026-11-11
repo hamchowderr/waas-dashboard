@@ -1,0 +1,16 @@
+name: Update pins
+# Every hour: moves the theme and AnyPress Blocks releases the demo pages use (.github/pins.json) to the newest ones,
+# opens a pull request, runs CI on it and merges it once CI passes.
+on:
+  schedule:
+    - cron: '35 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  pins:
+    uses: hamchowderr/waas-provisioning-api/.github/workflows/pins.yml@main

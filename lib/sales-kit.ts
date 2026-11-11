@@ -5,6 +5,7 @@
  */
 
 import type { ProspectAutomationInput } from "@/lib/api/types";
+import { DEMOS as SITE_DEMOS, playgroundUrl } from "./demos";
 
 export const PLANS = ["website", "bookings", "store", "community", "everything"] as const;
 export type Plan = (typeof PLANS)[number];
@@ -28,15 +29,19 @@ export const GROUP_IDS = ["shops", "regulated", "courses", "chambers", "churches
 export type GroupId = (typeof GROUP_IDS)[number];
 
 /** A live demo website: a sample business built on the theme, opened on WordPress Playground in the prospect's browser. */
-export type Demo = { kit: string; business: string; kind: string; url: string };
+export type KitDemo = { kit: string; business: string; kind: string; url: string };
 
-const playground = (kit: string, tag: string) =>
-  `https://playground.wordpress.net/?blueprint-url=${encodeURIComponent(`https://raw.githubusercontent.com/hamchowderr/anypress-theme/${tag}/demo/${kit}/blueprint.json`)}`;
+/** A kit's demo on our own Playground, built from the theme release the demo page uses (lib/demos.ts), never an old one. */
+const playground = (kit: string) => {
+  const demo = SITE_DEMOS.find((d) => d.id === kit);
+  if (!demo) throw new Error(`No demo for the ${kit} kit in lib/demos.ts`);
+  return playgroundUrl(demo);
+};
 
 /** Every finished demo. A kit gets one here once its demo passes the theme's kit checklist. */
-const DEMOS: Demo[] = [
-  { kit: "ridge", business: "Clearwater Plumbing & Heating", kind: "Plumber", url: playground("ridge", "v0.7.0") },
-  { kit: "circuit", business: "Brightline Electric", kind: "Electrician", url: playground("circuit", "v0.7.0") }
+const DEMOS: KitDemo[] = [
+  { kit: "ridge", business: "Clearwater Plumbing & Heating", kind: "Plumber", url: playground("ridge") },
+  { kit: "circuit", business: "Brightline Electric", kind: "Electrician", url: playground("circuit") }
 ];
 
 /** Which demos to show each group, best fit first. Groups without their own demo yet show none. */
@@ -51,7 +56,7 @@ const GROUP_DEMOS: Record<GroupId, string[]> = {
   developers: ["ridge", "circuit"]
 };
 
-export const demosFor = (group: GroupId): Demo[] => GROUP_DEMOS[group].map((kit) => DEMOS.find((d) => d.kit === kit)!).filter(Boolean);
+export const demosFor = (group: GroupId): KitDemo[] => GROUP_DEMOS[group].map((kit) => DEMOS.find((d) => d.kit === kit)!).filter(Boolean);
 
 /** Every playbook has these parts, in this order. */
 export const PARTS = ["Who", "Where to find them", "What to lead with", "Offer", "Outreach", "Objections", "Demo"] as const;
