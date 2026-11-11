@@ -14,7 +14,7 @@ You pay a fixed monthly cost per site (Small size, monthly billing). It drops 10
 | Website | $12 | $10.80 | $9.60 | $8.40 |
 | Bookings | $19 | $17.10 | $15.20 | $13.30 |
 | Store | $29 | $26.10 | $23.20 | $20.30 |
-| Community & courses | $39 | $35.10 | $31.20 | $27.30 |
+| Community & courses | $49 | $44.10 | $39.20 | $34.30 |
 | Everything | $79 | $71.10 | $63.20 | $55.30 |
 
 Medium sites cost 2x and Large 4x. Yearly billing costs 10x the monthly price, so customers get two months free. Resellers pay 40% less than these prices.
