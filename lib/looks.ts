@@ -6,7 +6,10 @@ export const LOOKS = [
   { id: "current", label: "Current" },
   { id: "flat", label: "1 Flat" },
   { id: "panels", label: "2 Panels" },
-  { id: "document", label: "3 Document" }
+  { id: "document", label: "3 Document" },
+  { id: "tone", label: "4 Tone" },
+  { id: "square", label: "5 Square" },
+  { id: "shaded", label: "6 Shaded" }
 ] as const;
 
 export type Look = (typeof LOOKS)[number]["id"];

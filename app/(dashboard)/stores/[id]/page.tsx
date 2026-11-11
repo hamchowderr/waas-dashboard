@@ -102,7 +102,7 @@ export default async function StorePage({ params, searchParams }: Params) {
   return (
     <div className="space-y-5 lg:space-y-7">
       {/* The store's own header: who it is, how it's doing, and what you can do with it, at the top of the sheet. */}
-      <header className="flex flex-col gap-5 border-b pb-5 lg:pb-7 xl:flex-row xl:items-center xl:justify-between">
+      <header data-slot="store-header" className="flex flex-col gap-5 border-b pb-5 lg:pb-7 xl:flex-row xl:items-center xl:justify-between">
       <div className="flex min-w-0 items-center gap-3 sm:gap-4">
         <Button asChild variant="outline" size="icon">
           <Link href={storesHref}>
@@ -308,7 +308,7 @@ export default async function StorePage({ params, searchParams }: Params) {
                   <TableRow>
                     <TableHead>Taken</TableHead>
                     <TableHead className="max-sm:hidden">Reason</TableHead>
-                    <TableHead className="text-end">Size</TableHead>
+                    <TableHead className="text-end max-sm:hidden">Size</TableHead>
                     <TableHead className="text-end">Status</TableHead>
                     <TableHead className="w-24">
                       <span className="sr-only">Restore</span>
@@ -329,10 +329,12 @@ export default async function StorePage({ params, searchParams }: Params) {
                       <TableRow key={backup.id}>
                         <TableCell>
                           {formatDateTime(backup.dateCreated)}
-                          <div className="text-muted-foreground text-xs sm:hidden">{backupReasonLabel(backup.reason)}</div>
+                          <div className="text-muted-foreground text-xs sm:hidden">
+                            {backupReasonLabel(backup.reason)} · {formatBytes(backup.sizeBytes)}
+                          </div>
                         </TableCell>
                         <TableCell className="max-sm:hidden">{backupReasonLabel(backup.reason)}</TableCell>
-                        <TableCell className="text-end tabular-nums">{formatBytes(backup.sizeBytes)}</TableCell>
+                        <TableCell className="text-end tabular-nums max-sm:hidden">{formatBytes(backup.sizeBytes)}</TableCell>
                         <TableCell className="text-end">
                           <StatusBadge statusCode={backup.statusCode} />
                         </TableCell>

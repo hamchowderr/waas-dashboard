@@ -19,7 +19,7 @@ export function LookSwitcher({ initial }: { initial: Look }) {
     <div
       role="group"
       aria-label="Style to preview"
-      className="bg-foreground text-background fixed bottom-4 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-1 rounded-full p-1 text-xs font-semibold shadow-lg">
+      className="bg-foreground text-background fixed bottom-4 left-1/2 z-[60] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-full p-1 text-xs font-semibold shadow-lg">
       <span className="px-2 max-sm:hidden">Style</span>
       {LOOKS.map((l) => (
         <button
