@@ -1006,7 +1006,8 @@ export class HttpAdminApi implements AdminApi {
       backups: t.backups.map((b) => this.toBackup(b, names, products)),
       jobs,
       keepsOwnCode: t.keepsOwnCode ?? false,
-      moveIn: t.moveIn ? toMoveIn(t.moveIn) : null
+      moveIn: t.moveIn ? toMoveIn(t.moveIn) : null,
+      care: t.care ?? null
     };
   }
 

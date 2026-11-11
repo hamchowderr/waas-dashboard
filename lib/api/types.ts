@@ -144,6 +144,21 @@ export type TenantDetail = {
   keepsOwnCode: boolean;
   /** Only for a store made to move a site in. It waits for the site while startedAt is null. */
   moveIn: MoveIn | null;
+  /** The care package bought for the store on the shop, and this month's care time; null without care. */
+  care: Care | null;
+};
+
+export type Care = {
+  package: string;
+  /** Minutes of changes a month. */
+  minutes: number;
+  /** Minutes used this month. */
+  used: number;
+  left: number;
+  /** Extra minutes bought, which never expire. */
+  extra: number;
+  /** How soon requests are answered, e.g. "1 business day". */
+  answer?: string;
 };
 
 export type MoveIn = {
