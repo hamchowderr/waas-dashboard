@@ -249,6 +249,8 @@ export type WireProduct = {
   resellerName?: string | null;
   /** A HighLevel agency's storefront: its sites default to the HighLevel site type. Absent from an older API. */
   highlevelAgency?: boolean;
+  /** Its stores show their own wp-admin Dashboard home. Absent from an older API (on). */
+  cleanDashboard?: boolean;
   dateCreated: string;
 };
 

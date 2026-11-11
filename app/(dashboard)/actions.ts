@@ -577,6 +577,17 @@ export async function setHighLevelAgency(productId: string, on: boolean): Promis
   }, ["/", "/stores"]);
 }
 
+/**
+ * The clean wp-admin Dashboard home on a storefront's stores, on or off. The storefront's own team may change it; the
+ * API writes it to its stores without restarting them.
+ */
+export async function setCleanDashboard(productId: string, on: boolean): Promise<ActionResult<null>> {
+  return run(async () => {
+    await getAdminApi().setCleanDashboard(uuid(productId, "storefront"), on === true);
+    return null;
+  }, ["/branding"]);
+}
+
 /** Sets a storefront's store limit; null is no limit (platform admin only). */
 export async function setStoreLimit(productId: string, maxTenants: number | null): Promise<ActionResult<null>> {
   return run(async () => {
