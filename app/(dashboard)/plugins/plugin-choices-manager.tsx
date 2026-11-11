@@ -93,8 +93,8 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
               {choices.map((choice) => (
                 <li key={choice.slug} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
                   <PluginIcon slug={choice.slug} name={choice.name} icon={choice.icon} className="size-10" />
-                  {/* At least 12rem, so on a phone the buttons go under it instead of squeezing it. */}
-                  <div className="min-w-48 flex-1">
+                  {/* At least 10rem, so on a phone a long row puts its buttons under it, at the right, instead of squeezing it. */}
+                  <div className="min-w-40 flex-1">
                     <p className="flex flex-wrap items-center gap-2 font-medium">
                       {choice.name}
                       {choice.version && <span className="text-muted-foreground text-xs tabular-nums">{choice.version}</span>}
@@ -112,7 +112,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
                     <p className="text-muted-foreground text-sm">{siteTypesLabel(choice.siteTypes)}</p>
                   </div>
                   {!choice.shared && canChange && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="ms-auto flex flex-wrap justify-end gap-2">
                       {choice.action === "add" && choice.latestVersion && choice.latestVersion !== choice.version && (
                         <Button
                           size="sm"
@@ -348,7 +348,7 @@ function DirectorySearch({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => event.key === "Escape" && setQuery("")}
-            placeholder="Start typing, like forms, events or SEO"
+            placeholder="Search plugins, e.g. forms"
             aria-label="Search wordpress.org plugins"
             maxLength={100}
           />

@@ -40,7 +40,7 @@ export function SellHome({
   return (
     <Tabs value={tab} onValueChange={setTab} className="gap-4 lg:gap-6">
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-      <TabsList className="max-w-full justify-start overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <TabsList className="max-w-full justify-start overflow-x-auto overflow-y-hidden [scrollbar-width:none] max-sm:[mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] [&::-webkit-scrollbar]:hidden">
         <TabsTrigger value="groups">Who to sell to</TabsTrigger>
         <TabsTrigger value="find">Find prospects</TabsTrigger>
         <TabsTrigger value="check">Website check</TabsTrigger>

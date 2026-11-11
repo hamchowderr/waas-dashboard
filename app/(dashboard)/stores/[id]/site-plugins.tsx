@@ -38,11 +38,11 @@ export function SitePluginsCard({ plugins, highLevel }: { plugins: TenantPlugins
         <CardContent className="space-y-4 p-0">
           {/* Each plugin's logo with its name; what each is for opens below, as tiles two across once there's room. */}
           <Collapsible className="space-y-4 px-(--card-spacing)">
-            <ul className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-x-2 gap-y-3" aria-label="Plugins">
+            <ul className="grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]" aria-label="Plugins">
               {plugins.plugins.map((p) => (
                 <li key={p.file} className="flex min-w-0 flex-col items-center gap-1.5 text-center">
                   <PluginIcon slug={p.file.split("/")[0]} name={p.name} className="size-10 rounded-xl" />
-                  <span className="w-full truncate text-xs font-medium" title={p.name}>
+                  <span className="w-full truncate text-[0.6875rem] font-medium sm:text-xs" title={p.name}>
                     {p.name}
                   </span>
                 </li>

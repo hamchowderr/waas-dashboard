@@ -105,7 +105,7 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
             Sellers <Count n={sellers} />
           </ToggleGroupItem>
           <ToggleGroupItem value="resellers" className="px-3">
-            <span className="sm:hidden">Resellers</span>
+            <span className="sm:hidden">Reseller-run</span>
             <span className="max-sm:hidden">Reseller storefronts</span>
             <Count n={rows.length - sellers} />
           </ToggleGroupItem>

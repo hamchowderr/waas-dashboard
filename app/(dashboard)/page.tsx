@@ -51,7 +51,11 @@ function withProduct(href: string, product?: string): string {
 
 /** The API prefixes errors with the part that failed; the person needs the cause, starting with a capital. */
 function plainError(error: string | null): string | null {
-  const text = error?.replace(/^Provisioner:\s*/, "").trim();
+  // Provider codes in brackets ("(403 AccessDenied)") stay in the task's details, not here.
+  const text = error
+    ?.replace(/^Provisioner:\s*/, "")
+    .replace(/\s*\(\d{3} [A-Za-z]+\)/g, "")
+    .trim();
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : null;
 }
 

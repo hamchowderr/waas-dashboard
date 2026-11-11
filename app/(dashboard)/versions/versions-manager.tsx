@@ -269,6 +269,8 @@ function TemplatesCard({
   /** Left out for someone who may only look. */
   onDelete?: (template: Template) => void;
 }) {
+  // The Group column only earns its place once a template is in a group.
+  const grouped = templates.some((t) => t.groupName);
   return (
     <Card>
       <CardHeader>
@@ -290,7 +292,7 @@ function TemplatesCard({
           <TableHeader>
             <TableRow>
               <TableHead>Template</TableHead>
-              <TableHead className="max-sm:hidden">Group</TableHead>
+              {grouped && <TableHead className="max-sm:hidden">Group</TableHead>}
               <TableHead className="w-12">
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -299,7 +301,7 @@ function TemplatesCard({
           <TableBody>
             {templates.length === 0 && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={3} className="p-0">
+                <TableCell colSpan={grouped ? 3 : 2} className="p-0">
                   <EmptyState icon={Icon} title={`No ${title.toLowerCase()} yet`} />
                 </TableCell>
               </TableRow>
@@ -317,7 +319,7 @@ function TemplatesCard({
                     <p className="text-muted-foreground text-xs sm:hidden">Group: {template.groupName}</p>
                   )}
                 </TableCell>
-                <TableCell className="text-muted-foreground max-sm:hidden">{template.groupName ?? "—"}</TableCell>
+                {grouped && <TableCell className="text-muted-foreground max-sm:hidden">{template.groupName ?? "—"}</TableCell>}
                 <TableCell>
                   <Button variant="ghost" size="icon-sm" onClick={() => onDelete?.(template)} disabled={!onDelete}>
                     <span className="sr-only">Delete {template.name}</span>
