@@ -93,5 +93,66 @@
     }
   ],
   "wholesalePercent": 40,
-  "affiliatePercent": 30
+  "affiliatePercent": 30,
+  "care": {
+    "packages": [
+      {
+        "key": "care",
+        "name": "Care",
+        "monthly": 79,
+        "minutes": 30,
+        "answer": "2 business days",
+        "call": false,
+        "yearly": 790
+      },
+      {
+        "key": "care-plus",
+        "name": "Care Plus",
+        "monthly": 199,
+        "minutes": 120,
+        "answer": "1 business day",
+        "call": false,
+        "yearly": 1990
+      },
+      {
+        "key": "care-pro",
+        "name": "Care Pro",
+        "monthly": 449,
+        "minutes": 300,
+        "answer": "the same business day",
+        "call": true,
+        "yearly": 4490
+      }
+    ],
+    "services": [
+      {
+        "key": "set-up-my-site",
+        "name": "Set up my site for me",
+        "price": 299,
+        "minutes": 0,
+        "careOnly": false
+      },
+      {
+        "key": "move-my-site-in",
+        "name": "Move my site in for me",
+        "price": 199,
+        "minutes": 0,
+        "careOnly": false
+      },
+      {
+        "key": "one-hour",
+        "name": "One hour of changes",
+        "price": 125,
+        "minutes": 60,
+        "careOnly": false
+      },
+      {
+        "key": "extra-hour",
+        "name": "Extra hour for care customers",
+        "price": 100,
+        "minutes": 60,
+        "careOnly": true
+      }
+    ]
+  }
 }
