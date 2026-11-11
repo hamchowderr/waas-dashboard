@@ -43,6 +43,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { RenameStorefrontButton } from "./rename-storefront-dialog";
 import { StoreLimitButton } from "./store-limit-dialog";
 import { DeleteStorefrontButton } from "./delete-storefront-dialog";
+import { BuildStorefrontDialog } from "./build-storefront-dialog";
 import { setHighLevelAgency } from "../actions";
 
 /** One storefront as this page lists it. domain: its ready-made shop's address; null when it sells from its own site. */
@@ -163,8 +164,8 @@ function Count({ n }: { n: number }) {
 function Row({ row }: { row: StorefrontRow }) {
   const q = `?product=${encodeURIComponent(row.id)}`;
   // Which dialog the row's menu opened; the key remounts it so it starts from the saved values each time.
-  const [dialog, setDialog] = React.useState<{ kind: "rename" | "limit" | "delete"; n: number } | null>(null);
-  const control = (kind: "rename" | "limit" | "delete") => ({
+  const [dialog, setDialog] = React.useState<{ kind: "rename" | "limit" | "delete" | "build"; n: number } | null>(null);
+  const control = (kind: "rename" | "limit" | "delete" | "build") => ({
     open: dialog?.kind === kind,
     onOpenChange: (open: boolean) => setDialog(open ? { kind, n: (dialog?.n ?? 0) + 1 } : null)
   });
@@ -261,6 +262,11 @@ function Row({ row }: { row: StorefrontRow }) {
               <DropdownMenuItem onSelect={() => control("limit").onOpenChange(true)}>
                 <GaugeIcon /> Store limit
               </DropdownMenuItem>
+              {!row.domain && (
+                <DropdownMenuItem onSelect={() => control("build").onOpenChange(true)}>
+                  <StoreIcon /> Build a storefront
+                </DropdownMenuItem>
+              )}
               <HighLevelAgencyItem productId={row.id} on={row.highlevelAgency} />
               {row.tenantCount === 0 && (
                 <>
@@ -281,6 +287,9 @@ function Row({ row }: { row: StorefrontRow }) {
           tenantCount={row.tenantCount}
           control={control("limit")}
         />
+        {!row.domain && (
+          <BuildStorefrontDialog key={`build-${dialog?.n}`} productId={row.id} productName={row.name} control={control("build")} />
+        )}
         {row.tenantCount === 0 && <DeleteStorefrontButton productId={row.id} name={row.name} control={control("delete")} />}
       </TableCell>
     </TableRow>

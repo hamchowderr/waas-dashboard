@@ -21,7 +21,8 @@ import {
 
 import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
-import type { Job, Overview, ResellerSetup, Setup, SetupStep, StorefrontSetup } from "@/lib/api/types";
+import { StatusCode, type Job, type Overview, type ResellerSetup, type Setup, type SetupStep, type StorefrontSetup } from "@/lib/api/types";
+import { WordPressLoginButton } from "./wordpress-login";
 import { cn } from "@/lib/utils";
 import { formatAgo, formatDateTime, jobTypeLabel, plainError } from "@/lib/format";
 import { EmptyState } from "@/components/admin/empty-state";
@@ -93,6 +94,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       ? overview.products[0]
       : undefined;
   // The checklists this page shows: the storefront in view, and on a reseller's team the reseller's own.
+  // Its ready-made shop, when we built one: the header signs them in to its WordPress.
+  const shop = storefront && !!viewer && canChange(viewer) ? await api.storefront(storefront.id).catch(() => null) : null;
   const storefrontSetup = storefront && setup?.storefronts.find((s) => s.productId === storefront.id);
   const resellerSetup = !isAdmin && viewer?.active?.resellerId ? setup?.resellers.find((r) => r.resellerId === viewer.active?.resellerId) : undefined;
   const showChecklist = !!storefrontSetup && storefrontSetup.done < storefrontSetup.total;
@@ -226,6 +229,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         <div className="flex flex-wrap items-center gap-2">
           <HealthBadge ok={health.ok} />
           <TakeTourButton />
+          {shop && shop.statusCode === StatusCode.Done && <WordPressLoginButton productId={storefront!.id} label="Your shop's WordPress" />}
           {newSiteChoices.length > 0 ? (
             <NewSite products={newSiteChoices} />
           ) : (

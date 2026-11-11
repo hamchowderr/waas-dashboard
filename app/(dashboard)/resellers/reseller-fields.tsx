@@ -94,6 +94,9 @@ function errors(f: ResellerForm) {
   };
 }
 
+/** Each field's problem, or null: the new-reseller questions check one step at a time. */
+export const resellerErrors = errors;
+
 /** True when the form can be sent. */
 export function resellerFormReady(f: ResellerForm) {
   return Boolean(f.name.trim()) && Object.values(errors(f)).every((e) => !e);

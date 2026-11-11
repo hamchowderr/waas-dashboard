@@ -7,7 +7,8 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
-import { INTEGRATION_GROUPS, publicApiUrl, type IntegrationLink } from "@/lib/integrations";
+import { AI_APPS, INTEGRATION_GROUPS, publicApiUrl, type IntegrationLink } from "@/lib/integrations";
+import { AiPrompts } from "./ai-prompts";
 import { CopyButton } from "../sell/kit-ui";
 
 /** Our own integrations have no company logo: their chip shows an icon instead. */
@@ -100,9 +101,12 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
                   <CardDescription>{item.summary}</CardDescription>
                 </CardHeader>
                 {item.id === "mcp" && (
-                  <CardContent className="grid gap-3 lg:grid-cols-2">
-                    <ConnectorAddress label="Connector address" url={`${api}/mcp`} />
-                    <ConnectorAddress label="Look-only address" url={`${api}/mcp/read-only`} />
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      <ConnectorAddress label="Connector address" url={`${api}/mcp`} />
+                      <ConnectorAddress label="Look-only address" url={`${api}/mcp/read-only`} />
+                    </div>
+                    <AiPrompts apps={AI_APPS} />
                   </CardContent>
                 )}
                 <CardFooter className="mt-auto flex flex-wrap gap-2">

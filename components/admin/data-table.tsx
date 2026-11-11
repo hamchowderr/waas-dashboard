@@ -18,7 +18,6 @@ import type { RowData, SortingState, ColumnVisibilityState as VisibilityState } 
 import { ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon, Columns3Icon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -465,8 +464,6 @@ export function pageWindow(current: number, count: number): (number | null)[] {
 
 function TabCount({ count }: { count: number }) {
   return (
-    <Badge variant="secondary" className="hidden h-5 min-w-5 px-1.5 tabular-nums sm:inline-flex">
-      {count}
-    </Badge>
+    <span className="text-muted-foreground hidden text-xs font-normal tabular-nums sm:inline">{count}</span>
   );
 }

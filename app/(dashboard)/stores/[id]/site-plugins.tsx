@@ -4,7 +4,7 @@ import { PluginIcon } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Card, CardContent, CardDescription, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
-import type { HighLevelLink, TenantPlugins } from "@/lib/api/types";
+import type { HighLevelLink, SitePlugin, TenantPlugins } from "@/lib/api/types";
 
 /** What a plugin is for, without its own name repeated in front ("FluentHub: one dashboard…"). */
 function aboutOf(p: { name: string; about?: string | null }) {
@@ -13,11 +13,29 @@ function aboutOf(p: { name: string; about?: string | null }) {
   return p.about.startsWith(prefix) ? p.about.charAt(prefix.length).toUpperCase() + p.about.slice(prefix.length + 1) : p.about;
 }
 
+/** The theme every store is built with, shown with the plugins so owners see what designs their site. */
+const ANYPRESS_THEME: SitePlugin = {
+  file: "anypress-theme",
+  name: "AnyPress theme",
+  about: "The site's design: its pages, header, footer, colours and fonts, with an industry kit to start from. Restyled in WordPress under Appearance > Editor."
+};
+
 /**
  * What comes installed on the store: the plugins its site type turns on and what each is for, whether the owner may
  * add plugins, and on a HighLevel site what is connected. The same the owner sees in WordPress on Dashboard > Your plan.
  */
-export function SitePluginsCard({ plugins, highLevel }: { plugins: TenantPlugins; highLevel: HighLevelLink | null }) {
+export function SitePluginsCard({
+  plugins: list,
+  highLevel,
+  theme
+}: {
+  plugins: TenantPlugins;
+  highLevel: HighLevelLink | null;
+  /** Whether the site runs the AnyPress theme: every store built from the template does; a site moved in keeps its own. */
+  theme: boolean;
+}) {
+  // The theme leads the list: it is the site's design, and AnyPress Blocks only works inside it.
+  const plugins = theme && list.plugins.length > 0 ? { ...list, plugins: [ANYPRESS_THEME, ...list.plugins] } : list;
   const types = plugins.siteTypes.map((t) => t.title).join(", ");
   const isHighLevel = plugins.siteTypes.some((t) => t.key === "highlevel");
   const has = (file: string) => plugins.plugins.some((p) => p.file === file);
@@ -30,7 +48,7 @@ export function SitePluginsCard({ plugins, highLevel }: { plugins: TenantPlugins
         <CardTitle>What comes installed</CardTitle>
         <CardDescription>
           {plugins.plugins.length > 0
-            ? `The plugins included with this site (${types}) and what each is for. The owner sees the same list in WordPress, under Dashboard > Your plan.`
+            ? `The theme and plugins included with this site (${types}) and what each is for. The owner sees the same list in WordPress, under Dashboard > Your plan.`
             : "This site has no site type, so every plugin of the store template stays on."}
         </CardDescription>
       </CardHeader>
@@ -38,7 +56,7 @@ export function SitePluginsCard({ plugins, highLevel }: { plugins: TenantPlugins
         <CardContent className="space-y-4 p-0">
           {/* Each plugin's logo with its name; what each is for opens below, as tiles two across once there's room. */}
           <Collapsible className="space-y-4 px-(--card-spacing)">
-            <ul className="grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]" aria-label="Plugins">
+            <ul className="grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]" aria-label="Theme and plugins">
               {plugins.plugins.map((p) => (
                 <li key={p.file} className="flex min-w-0 flex-col items-center gap-1.5 text-center">
                   <PluginIcon slug={p.file.split("/")[0]} name={p.name} className="size-10 rounded-xl" />

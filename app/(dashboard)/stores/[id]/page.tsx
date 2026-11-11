@@ -287,7 +287,7 @@ export default async function StorePage({ params, searchParams }: Params) {
               )}
             </CardContent>
           </Card>
-          {plugins && <SitePluginsCard plugins={plugins} highLevel={tenant.highLevel} />}
+          {plugins && <SitePluginsCard plugins={plugins} highLevel={tenant.highLevel} theme={!tenant.keepsOwnCode} />}
 
           <Card>
             <CardHeader>

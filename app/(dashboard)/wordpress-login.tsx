@@ -16,11 +16,13 @@ import { storefrontWordPressLogin, wordPressLogin } from "./actions";
 export function WordPressLoginButton({
   tenantId,
   productId,
-  variant = "outline"
+  variant = "outline",
+  label = "Log in to WordPress"
 }: {
   tenantId?: string;
   productId?: string;
   variant?: "default" | "outline";
+  label?: string;
 }) {
   const [pending, setPending] = React.useState(false);
 
@@ -52,7 +54,7 @@ export function WordPressLoginButton({
   return (
     <Button variant={variant} size="sm" disabled={pending} onClick={open}>
       {pending && <Spinner />}
-      Log in to WordPress
+      {label}
       {!pending && <ExternalLinkIcon />}
     </Button>
   );

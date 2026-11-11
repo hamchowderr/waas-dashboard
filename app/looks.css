@@ -10,10 +10,10 @@
 
 /* ---------- Shared by all three: no icon chips, no shadows, quieter buttons and badges ---------- */
 
-[data-look] [data-slot="card-icon"] {
+[data-look] [data-slot="card-icon"]:not(:has(img)) {
   display: none;
 }
-[data-look] [data-slot="card"] [data-slot="card-header"] {
+[data-look] [data-slot="card"] [data-slot="card-header"]:not(:has([data-slot="card-icon"] img)) {
   column-gap: 0;
 }
 [data-look] [data-slot="button"] {

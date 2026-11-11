@@ -3,14 +3,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { StoreIcon } from "lucide-react";
 
-import { canChange, getViewer } from "@/auth";
+import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { KeysManager } from "./keys-manager";
-import { StorefrontCard } from "./storefront-card";
 import { NewSellerButton } from "../storefronts/new-seller-dialog";
 
 export const metadata: Metadata = { title: "API Keys" };
@@ -45,7 +44,7 @@ export default async function KeysPage({
     );
   }
 
-  const [keys, storefront] = await Promise.all([api.apiKeys(product.id), api.storefront(product.id)]);
+  const keys = await api.apiKeys(product.id);
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -64,8 +63,6 @@ export default async function KeysPage({
         productName={product.name}
         keys={keys}
       />
-      {/* The shop that sells this storefront's stores: one we build for them, or their own site with these keys. */}
-      <StorefrontCard productId={product.id} productName={product.name} storefront={storefront} canBuild={isAdmin} canLogIn={!!viewer && canChange(viewer)} />
     </div>
   );
 }
