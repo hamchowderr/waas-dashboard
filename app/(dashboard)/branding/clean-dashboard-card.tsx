@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { LayoutDashboardIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardDescription, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
+import { Card, CardIcon, CardDescription, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { setCleanDashboard } from "../actions";
 
@@ -31,8 +31,10 @@ export function CleanDashboardCard({ productId, initial, canEdit }: { productId:
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <LayoutDashboardIcon className="text-primary size-4" />
+        <CardIcon tone="teal">
+          <LayoutDashboardIcon />
+        </CardIcon>
+        <CardTitle>
           Clean WordPress Dashboard
         </CardTitle>
         <CardDescription>

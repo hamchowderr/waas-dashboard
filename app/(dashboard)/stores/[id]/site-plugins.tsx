@@ -1,5 +1,8 @@
+import { BlocksIcon } from "lucide-react";
+
+import { PluginIcon } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
 import type { HighLevelLink, TenantPlugins } from "@/lib/api/types";
 
 /**
@@ -13,6 +16,9 @@ export function SitePluginsCard({ plugins, highLevel }: { plugins: TenantPlugins
   return (
     <Card data-testid="site-plugins">
       <CardHeader>
+        <CardIcon tone="ribbon">
+          <BlocksIcon />
+        </CardIcon>
         <CardTitle>What comes installed</CardTitle>
         <CardDescription>
           {plugins.plugins.length > 0
@@ -22,11 +28,15 @@ export function SitePluginsCard({ plugins, highLevel }: { plugins: TenantPlugins
       </CardHeader>
       {plugins.plugins.length > 0 && (
         <CardContent className="space-y-4 p-0">
-          <ul className="divide-y border-y">
+          {/* Each plugin as a tile with its wordpress.org icon, two across once there's room. */}
+          <ul className="grid gap-2 px-(--card-spacing) @xl/main:grid-cols-2">
             {plugins.plugins.map((p) => (
-              <li key={p.file} className="grid gap-1 px-(--card-spacing) py-3 text-sm sm:grid-cols-[12rem_1fr] sm:gap-4">
-                <span className="font-medium">{p.name}</span>
-                <span className="text-muted-foreground">{p.about ?? "Included with the site."}</span>
+              <li key={p.file} className="bg-muted flex items-start gap-3 rounded-2xl p-3 text-sm">
+                <PluginIcon slug={p.file.split("/")[0]} name={p.name} className="size-10 rounded-xl" />
+                <span className="min-w-0">
+                  <span className="block font-semibold">{p.name}</span>
+                  <span className="text-muted-foreground block">{p.about ?? "Included with the site."}</span>
+                </span>
               </li>
             ))}
           </ul>

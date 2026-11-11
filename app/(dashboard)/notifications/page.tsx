@@ -6,7 +6,7 @@ import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { AlertsToggle } from "@/components/shell/alerts-toggle";
 import { NotificationRow } from "@/components/shell/notification-bell";
 
@@ -26,6 +26,9 @@ export default async function NotificationsPage() {
       <PageHeader title="Notifications" description="What happened to your stores and versions in the last 30 days, and alerts on this device." />
       <Card>
         <CardHeader>
+          <CardIcon tone="ribbon">
+            <BellIcon />
+          </CardIcon>
           <CardTitle>Phone and Computer Alerts</CardTitle>
           <CardDescription>Turn this on in each browser or phone you want alerts on. Opening the bell marks notifications read.</CardDescription>
         </CardHeader>

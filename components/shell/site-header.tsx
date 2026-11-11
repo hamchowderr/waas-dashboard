@@ -32,7 +32,7 @@ export function SiteHeader({
   const { open, toggleSidebar } = useSidebar();
 
   return (
-    <header className="bg-background/40 sticky top-0 z-50 flex h-(--header-height) shrink-0 items-center gap-2 border-b backdrop-blur-md md:rounded-t-xl">
+    <header className="bg-card/80 sticky top-0 z-50 flex h-(--header-height) shrink-0 items-center gap-2 border-b backdrop-blur-md md:rounded-t-[1.375rem]">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2">
         <Button variant="ghost" size="icon" onClick={toggleSidebar}>
           {open ? <PanelLeftClose /> : <PanelLeftOpen />}

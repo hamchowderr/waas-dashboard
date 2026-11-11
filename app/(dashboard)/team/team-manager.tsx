@@ -9,7 +9,7 @@ import { formatDate } from "@/lib/format";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -36,9 +36,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cancelInvitation, inviteTeammate, removeMember, setMemberRole } from "../actions";
 import { EmptyState } from "@/components/admin/empty-state";
 
-/** Below sm the header's button moves under its text instead of squeezing it. */
-const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
-const actionClass = "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start";
 const tableClass =
   "[&_td:first-child]:ps-(--card-spacing) [&_td:last-child]:pe-(--card-spacing) [&_th:first-child]:ps-(--card-spacing) [&_th:last-child]:pe-(--card-spacing)";
 
@@ -139,7 +136,10 @@ export function TeamManager({
   return (
     <>
       <Card>
-        <CardHeader className={headerClass}>
+        <CardHeader>
+          <CardIcon tone="sky">
+            <UsersIcon />
+          </CardIcon>
           <CardTitle>{reseller ? "Team" : "People"}</CardTitle>
           <CardDescription>
             {reseller && "Everyone here signs in to all of this reseller's storefronts. "}
@@ -148,7 +148,7 @@ export function TeamManager({
               : "Owners and admins can make changes. Members can only look."}
           </CardDescription>
           {canChange && (
-            <CardAction className={actionClass}>
+            <CardAction>
               <Button size="sm" onClick={() => setInviting(true)}>
                 <UserPlusIcon /> Invite
               </Button>
@@ -251,6 +251,9 @@ export function TeamManager({
       {team.invitations.length > 0 && (
         <Card>
           <CardHeader>
+            <CardIcon tone="violet">
+              <MailIcon />
+            </CardIcon>
             <CardTitle>Invitations</CardTitle>
             <CardDescription>
               Waiting to be accepted. Each was emailed, and lasts 7 days. Copy a link to send it yourself.

@@ -1,3 +1,4 @@
+import { StoreIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,7 +7,7 @@ import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KeysManager } from "../../keys/keys-manager";
 import { BrandingEditor } from "../../branding/branding-editor";
@@ -84,6 +85,9 @@ export default async function ResellerPage({
         />
         <Card>
           <CardHeader>
+            <CardIcon tone="sky">
+              <StoreIcon />
+            </CardIcon>
             <CardTitle>Storefronts</CardTitle>
             <CardDescription>Each keeps its keys, team and stores. Its live stores count toward this bill.</CardDescription>
             <CardAction>

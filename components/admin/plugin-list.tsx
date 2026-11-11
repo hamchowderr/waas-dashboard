@@ -42,7 +42,7 @@ export function PluginIcon({ slug, name, icon, className = "size-6" }: { slug: s
   if (attempt >= sources.length) {
     return (
       <span
-        className={`bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded text-xs font-semibold ${className}`}
+        className={`bg-card text-muted-foreground ring-border flex shrink-0 items-center justify-center rounded text-xs font-semibold ring-1 ${className}`}
         aria-hidden={true}>
         {name.charAt(0)}
       </span>

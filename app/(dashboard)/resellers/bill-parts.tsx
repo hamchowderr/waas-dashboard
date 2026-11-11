@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, ReceiptTextIcon } from "lucide-react";
 
 import type { ResellerBill, ResellerInvoice, ResellerInvoices, StoreSize } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDays, formatMoney, monthRange } from "./usage";
 import { BillDownload } from "./[id]/bill-download";
@@ -142,6 +142,9 @@ export function InvoicesCard({
     <Card className="lg:col-span-2">
       <CardHeader className="flex flex-row items-start justify-between gap-2">
         <div className="space-y-1.5">
+          <CardIcon tone="violet">
+            <ReceiptTextIcon />
+          </CardIcon>
           <CardTitle>Invoices</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>

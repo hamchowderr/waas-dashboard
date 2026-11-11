@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { ImageIcon, ServerCogIcon, Trash2Icon, UploadIcon } from "lucide-react";
+import { ImageIcon, ServerCogIcon, Trash2Icon, UploadIcon, EyeIcon, PaletteIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { BrandImage, Branding, BrandingView, TeamOf } from "@/lib/api/types";
 import { BRAND_IMAGE_LIMITS, BRAND_IMAGE_TYPES, brandColorVars } from "@/lib/branding";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -95,6 +95,9 @@ export function BrandingEditor({
       <div className="space-y-4 lg:col-span-2">
         <Card>
           <CardHeader>
+            <CardIcon tone="ribbon">
+              <PaletteIcon />
+            </CardIcon>
             <CardTitle>Name, color and help</CardTitle>
             <CardDescription>
               What your team sees in place of AnyPress. Leave a field empty to keep {inherits ? `${inherits}'s` : "the standard"} look.
@@ -244,6 +247,9 @@ export function BrandingEditor({
 
       <Card className="h-fit">
         <CardHeader>
+          <CardIcon tone="sky">
+            <EyeIcon />
+          </CardIcon>
           <CardTitle>Preview</CardTitle>
           <CardDescription>How the top of the sidebar looks to your team.</CardDescription>
         </CardHeader>

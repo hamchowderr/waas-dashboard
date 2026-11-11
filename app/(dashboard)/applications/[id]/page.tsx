@@ -1,3 +1,4 @@
+import { GavelIcon, MessageSquareTextIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,7 +8,7 @@ import { getAdminApi } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/format";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { ApplicationStatusBadge } from "../status-badge";
 import { ApplicationDecision } from "./decision";
 
@@ -61,6 +62,9 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
+            <CardIcon tone="sky">
+              <MessageSquareTextIcon />
+            </CardIcon>
             <CardTitle>What they told us</CardTitle>
           </CardHeader>
           <CardContent>
@@ -76,6 +80,9 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
         </Card>
         <Card>
           <CardHeader>
+            <CardIcon tone="ribbon">
+              <GavelIcon />
+            </CardIcon>
             <CardTitle>Decision</CardTitle>
           </CardHeader>
           <CardContent>

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpCircleIcon, KeyRoundIcon, LayersIcon, PencilIcon, PlusIcon, PowerOffIcon, SearchIcon, StarIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
+import { ArrowUpCircleIcon, KeyRoundIcon, LayersIcon, PencilIcon, PlusIcon, PowerOffIcon, SearchIcon, StarIcon, Trash2Icon, UploadIcon, XIcon, PlugIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { DirectoryPlugin, PluginChoice, PluginChoiceInput, PluginUpload } from "@/lib/api/types";
@@ -14,7 +14,7 @@ import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PluginIcon } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,9 +25,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { checkPluginUpload, removePluginChoice, searchPlugins, setPluginChoice, startPluginUpload } from "../actions";
 import { useCanChange } from "@/components/auth/can-change";
 
-/** Below sm the header's button moves under its text instead of squeezing it. */
-const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
-const actionClass = "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start";
 
 /** What the site types dialog is choosing for. uploadId: a checked upload being added. */
 type Editing = {
@@ -77,7 +74,10 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
       )}
 
       <Card>
-        <CardHeader className={headerClass}>
+        <CardHeader>
+          <CardIcon tone="ribbon">
+            <PlugIcon />
+          </CardIcon>
           <CardTitle>Your plugins</CardTitle>
           <CardDescription>
             Plugins your stores get on top of the template, and template plugins you switch off. Each one is pinned to a
@@ -155,7 +155,10 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
       )}
 
       <Card>
-        <CardHeader className={headerClass}>
+        <CardHeader>
+          <CardIcon tone="violet">
+            <LayersIcon />
+          </CardIcon>
           <CardTitle>Template plugins</CardTitle>
           <CardDescription>What the AnyPress template comes with. Switch off the ones your stores don&apos;t need.</CardDescription>
         </CardHeader>
@@ -303,14 +306,17 @@ function DirectorySearch({
 
   return (
     <Card>
-      <CardHeader className={headerClass}>
+      <CardHeader>
+        <CardIcon tone="sky">
+          <SearchIcon />
+        </CardIcon>
         <CardTitle>Add from wordpress.org</CardTitle>
         <CardDescription>
           Search the free plugins on wordpress.org. Plugins that clash with the hosting (caching, backups, email sending)
           can&apos;t be added.
         </CardDescription>
         {full && (
-          <CardAction className={actionClass}>
+          <CardAction>
             <Badge variant="warning">25 plugins added: the most a storefront can have</Badge>
           </CardAction>
         )}
@@ -631,13 +637,16 @@ function PremiumUpload({
 
   return (
     <Card>
-      <CardHeader className={headerClass}>
+      <CardHeader>
+        <CardIcon tone="orange">
+          <UploadIcon />
+        </CardIcon>
         <CardTitle>Upload a premium plugin</CardTitle>
         <CardDescription>
           For plugins you buy elsewhere, or your own. Upload the zip from the vendor&apos;s download page (up to{" "}
           {formatBytes(MAX_PLUGIN_ZIP)}). It is checked before your stores can get it, and a new release is a new upload.
         </CardDescription>
-        <CardAction className={actionClass}>
+        <CardAction>
           <Button disabled={full || step !== null} onClick={() => input.current?.click()}>
             {step ? <Spinner /> : <UploadIcon />}
             Upload a zip

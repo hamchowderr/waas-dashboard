@@ -155,7 +155,30 @@ body {
   @apply overscroll-none bg-transparent antialiased;
 }
 
-/* The page header floats on the canvas: no rule under it. (Its markup is in components/shell/site-header.tsx.) */
+/*
+ * The page sheet (2026-11-11): the sidebar stays on the warm canvas and each page is one white sheet beside it.
+ * Inside the sheet, cards are quiet sections with a hairline edge instead of white boxes floating on the canvas.
+ * Unlayered, so it wins over the card's own shadow utility; cards outside the sheet (sign-in, tour) keep it.
+ */
+[data-slot="sidebar-inset"] {
+  background: var(--card);
+}
+@media (min-width: 768px) {
+  [data-variant="inset"] ~ [data-slot="sidebar-inset"] {
+    border-radius: 1.375rem;
+    box-shadow: var(--shadow-card);
+  }
+  .dark [data-variant="inset"] ~ [data-slot="sidebar-inset"] {
+    box-shadow: var(--shadow-card), 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+}
+[data-slot="sidebar-inset"] [data-slot="card"] {
+  box-shadow: none;
+  border: 1px solid var(--border);
+  border-radius: 1.125rem;
+}
+
+/* The page header sits on the sheet: no rule under it. (Its markup is in components/shell/site-header.tsx.) */
 [data-slot="sidebar-inset"] > header {
   border-bottom-color: transparent;
 }

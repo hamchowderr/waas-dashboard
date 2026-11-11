@@ -14,7 +14,7 @@ import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PluginList } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,9 +28,6 @@ import { CreateVersionDialog } from "./create-version-dialog";
 import { CreateTemplateDialog } from "./create-template-dialog";
 import { useCanChange } from "@/components/auth/can-change";
 
-/** Below sm the header's button moves under its text instead of squeezing it. */
-const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
-const actionClass = "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start";
 
 const tableClass =
   "[&_td:first-child]:ps-(--card-spacing) [&_td:last-child]:pe-(--card-spacing) [&_th:first-child]:ps-(--card-spacing) [&_th:last-child]:pe-(--card-spacing)";
@@ -75,14 +72,17 @@ export function VersionsManager({
 
       <div className="space-y-4 lg:space-y-6">
           <Card>
-            <CardHeader className={headerClass}>
+            <CardHeader>
+              <CardIcon tone="violet">
+                <LayersIcon />
+              </CardIcon>
               <CardTitle>Versions</CardTitle>
               <CardDescription>
                 {production
                   ? `New stores are created on ${production.name}, the production version.`
                   : "No production version yet: the storefront can't create stores until one is set."}
               </CardDescription>
-              <CardAction className={actionClass}>
+              <CardAction>
                 <Button size="sm" onClick={() => setCreatingVersion(true)} disabled={!canChange}>
                   <PlusIcon /> New version
                 </Button>
@@ -270,11 +270,11 @@ function TemplatesCard({
 }) {
   return (
     <Card>
-      <CardHeader className={headerClass}>
+      <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
         {onAdd && (
-          <CardAction className={actionClass}>
+          <CardAction>
             <Button size="sm" onClick={onAdd}>
               <UploadIcon /> Upload template
             </Button>

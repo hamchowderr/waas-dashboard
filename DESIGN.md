@@ -1,6 +1,6 @@
 ---
 name: AnyPress Dashboard
-description: Operations dashboard for the AnyPress store-provisioning platform. The Studio look: soft white panels on a warm canvas.
+description: Operations dashboard for the AnyPress store-provisioning platform. The Studio look: one white page sheet beside a warm canvas.
 colors:
   background: "#f3efea"
   foreground: "#1b1917"
@@ -50,7 +50,8 @@ rounded:
   control: "999px"
   input: "12px"
   tile: "16px"
-  card: "22px"
+  sheet: "22px"
+  card: "18px"
 spacing:
   card: "22px"
   content: "24px"
@@ -69,11 +70,13 @@ The look the owner picked on 2026-11-06 ("Studio", out of Sketchbook, Console an
 
 **Creative North Star: "The Studio"**
 
-White panels float on a warm, paper-coloured canvas. There are no outlines around panels: each one lifts off the canvas with a soft shadow. Shapes are round and friendly (pill buttons, 22px panels, round icon chips), the type is Plus Jakarta Sans with heavy, tight headings, and the logo's ribbon pink is the colour of the main action on every page. It should feel like a calm, well-made product for website owners, not an admin console.
+The sidebar sits on a warm, paper-coloured canvas and each page is one white sheet beside it, lifted off the canvas with a soft shadow (2026-11-11, replacing a field of white cards floating on the canvas). Inside the sheet, cards are quiet sections with a hairline edge, each led by a tinted icon chip. Shapes are round and friendly (pill buttons, 22px panels, round icon chips), the type is Plus Jakarta Sans with heavy, tight headings, and the logo's ribbon pink is the colour of the main action on every page. It should feel like a calm, well-made product for website owners, not an admin console.
 
 **Key characteristics:**
-- Warm canvas (`background`) behind everything; the sidebar sits on the same canvas, with no panel of its own.
-- White cards with `shadow-card`, no border (dark mode adds a faint white ring).
+- Warm canvas (`background`) behind the sidebar, which has no panel of its own. The page area (`sidebar-inset`) is one white sheet: 22px radius and `shadow-card` from `md`, full white on phone.
+- Cards inside the sheet: white, 1px `border` hairline, 18px radius, no shadow (`globals.css`, "The page sheet"). Cards outside the sheet (sign-in, tour) keep `shadow-card`.
+- Every card header starts with a `CardIcon`: a round tinted chip (ribbon, violet, sky, teal, orange, stone) saying what the section is about.
+- Plugins show their wordpress.org logo (`PluginIcon`) wherever they are listed.
 - Inside cards, grouped items are soft `muted` tiles (16px radius), not bordered boxes.
 - Main buttons are pills with the ribbon gradient and a pink glow; other buttons are white pills with `shadow-raised`.
 - Icons sit in round, softly tinted chips whose colour says what kind of thing it is.
@@ -104,15 +107,16 @@ Plus Jakarta Sans (variable, `lib/fonts.ts`, `--font-sans`) for everything; syst
 
 - **Shell:** inset sidebar on the canvas, 256px, collapsing to icons; off-canvas sheet on phone. The header has no rule under it.
 - **Sidebar:** group headings 11.5px bold muted; the active page is a white pill with `shadow-card`, bold text and a ribbon-coloured icon.
-- **Overview:** page header, then four stat tiles (Live, Being built, Need a look, Backups; 2 across on phone, 4 from `xl`), then a 2:1 row: "Needs you" and the setup checklists on the left, a Stores ring chart on the right (sticky on wide screens). Setup checklists show the open steps first and fold the done ones under "N done".
-- **Store page:** one header panel with the site-type chip, name, status and every action, then the detail cards.
+- **Overview:** page header, then four stat tiles (`muted` tiles on the sheet) (Live, Being built, Need a look, Backups; 2 across on phone, 4 from `xl`), then a 2:1 row: "Needs you" and the setup checklists on the left, a Stores ring chart on the right (sticky on wide screens). Setup checklists show the open steps first and fold the done ones under "N done".
+- **Store page:** an open header on the sheet (site-type chip, name, status and every action) above a hairline, then two columns from `lg`: domains, what comes installed (plugin tiles with logos, two across), backups and activity in the main column; the store's details, HighLevel, languages and email sender in a side column on the right. Each column stacks on its own, so neither leaves a gap. On phone the side column comes first.
+- **Card headers:** icon chip, title and description; an action sits on the right, and on a narrow card (under 28rem) a button moves to its own row under the text (`CardAction inline` keeps a small text link beside the title).
 - **Lists:** one card per page with toolbar, table and pagination (`components/admin/data-table.tsx`). Tables show from `lg`; below that rows become cards.
 - **Touch:** under `pointer: coarse` every control grows to 44px (unlayered rule in `globals.css`). Keep it.
 
 ## Shapes and depth
 
-- Buttons, tabs and badges: full pills. Inputs: 12px. Tiles: 16px. Cards and stat tiles: 22px. Icon chips: circles.
-- Depth comes from shadows only: `shadow-card` on panels, `shadow-raised` on white buttons, `--primary-glow` under main buttons. No borders around panels, and no cards inside cards (use tiles).
+- Buttons, tabs and badges: full pills. Inputs: 12px. Tiles: 16px. The page sheet: 22px. Cards and stat tiles: 18px. Icon chips: circles.
+- Depth: `shadow-card` on the page sheet, `shadow-raised` on white buttons, `--primary-glow` under main buttons. Cards on the sheet have a hairline, not a shadow. No cards inside cards (use tiles).
 - Stat tiles lift 2px on hover (not under reduced motion).
 
 ## Components
@@ -128,7 +132,8 @@ Plus Jakarta Sans (variable, `lib/fonts.ts`, `--font-sans`) for everything; syst
 - **Do** use the tokens (`bg-card`, `bg-muted`, `text-muted-foreground`, `shadow-card`), never raw greys or hex in pages.
 - **Do** check light, dark and phone width for every change, with sample data (`WAAS_API_FIXTURES=1`).
 - **Do** keep the Appearance panel and brand colours working: they change `--primary` and the gradient.
-- **Don't** put borders around cards or nest cards; use tiles.
+- **Don't** give cards on the sheet a shadow, or nest cards; use tiles.
+- **Do** start a new card's header with its icon chip.
 - **Don't** use status colours as decoration, or the ribbon for status.
 - **Don't** add a second typeface.
 - **Don't** hide table columns on phone; reflow them into row cards.

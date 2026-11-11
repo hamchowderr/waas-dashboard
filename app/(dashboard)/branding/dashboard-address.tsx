@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, ExternalLinkIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import { Check, Copy, ExternalLinkIcon, RefreshCwIcon, Trash2Icon, GlobeIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { DashboardDomainView } from "@/lib/api/types";
@@ -9,7 +9,7 @@ import { formatDateTime } from "@/lib/format";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -52,6 +52,9 @@ export function DashboardAddress({ productId, initial, canEdit }: { productId: s
   return (
     <Card>
       <CardHeader>
+        <CardIcon tone="teal">
+          <GlobeIcon />
+        </CardIcon>
         <CardTitle>Your own dashboard address</CardTitle>
         <CardDescription>
           Your team signs in at an address on your own domain, like dashboard.yourbusiness.com, instead of ours.

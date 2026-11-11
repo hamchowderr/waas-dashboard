@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   AlertTriangle,
+  BellIcon,
   ArchiveIcon,
   Check,
   ChevronDown,
   ChevronRight,
   GlobeIcon,
   HammerIcon,
+  HourglassIcon,
   InboxIcon,
+  ListChecksIcon,
   Loader2Icon,
   ServerIcon,
   StoreIcon,
@@ -26,7 +29,7 @@ import { TakeTourButton } from "@/components/shell/dashboard-tour";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardIcon, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Overview" };
@@ -229,6 +232,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         <div className="min-w-0 space-y-5 lg:space-y-7 xl:col-span-2">
           <Card data-tour-step-id={isAdmin || showChecklist ? "needs-you" : "needs-you start-here"}>
             <CardHeader>
+              <CardIcon tone="ribbon">
+                <BellIcon />
+              </CardIcon>
               <CardTitle className="text-lg">{todos.length ? "Needs you" : "Nothing needs you"}</CardTitle>
               <CardDescription>
                 {todos.length
@@ -294,9 +300,12 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
         <Card className="xl:sticky xl:top-20">
           <CardHeader>
+            <CardIcon tone="sky">
+              <StoreIcon />
+            </CardIcon>
             <CardTitle>Stores</CardTitle>
             <CardDescription>{plural(t.total, "store")}</CardDescription>
-            <CardAction>
+            <CardAction inline>
               <Link
                 href={withProduct("/stores", product)}
                 className="text-primary inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline pointer-coarse:min-h-11">
@@ -343,7 +352,7 @@ function StatTileCard({ tile }: { tile: StatTile }) {
   return (
     <Link
       href={tile.href}
-      className="bg-card shadow-card group flex h-full flex-col gap-3 rounded-[1.375rem] p-4 transition-transform hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none sm:p-5 dark:ring-1 dark:ring-white/6">
+      className="bg-muted hover:bg-accent group flex h-full flex-col gap-3 rounded-[1.125rem] p-4 transition-[transform,background-color] hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none sm:p-5">
       <span className="flex items-center justify-between">
         <span className={cn("flex size-10 items-center justify-center rounded-full", TONES[tile.tone])}>
           <tile.icon className="size-4.5" aria-hidden />
@@ -428,6 +437,9 @@ function StorefrontChecklist({ setup, productId }: { setup: StorefrontSetup; pro
   return (
     <Card data-tour-step-id="start-here">
       <CardHeader>
+        <CardIcon tone="violet">
+          <ListChecksIcon />
+        </CardIcon>
         <CardTitle className="text-lg">Set up {setup.name}</CardTitle>
         <CardDescription>
           Each step ticks itself when it&apos;s done.{setup.next ? ` Next: ${setup.next}.` : ""}
@@ -448,6 +460,9 @@ function ResellerChecklist({ setup, storefronts }: { setup: ResellerSetup; store
   return (
     <Card>
       <CardHeader>
+        <CardIcon tone="violet">
+          <ListChecksIcon />
+        </CardIcon>
         <CardTitle className="text-lg">Set up {setup.name}</CardTitle>
         <CardDescription>Your reseller account, and how far each of your storefronts has got.</CardDescription>
         <CardAction>
@@ -494,6 +509,9 @@ function StuckCard({ stuck, setup }: { stuck: (StorefrontSetup | ResellerSetup)[
   return (
     <Card>
       <CardHeader>
+        <CardIcon tone="orange">
+          <HourglassIcon />
+        </CardIcon>
         <CardTitle className="text-lg">Stuck in setup</CardTitle>
         <CardDescription>
           {stuck.length
@@ -501,7 +519,7 @@ function StuckCard({ stuck, setup }: { stuck: (StorefrontSetup | ResellerSetup)[
             : "Nobody is stuck: every account in setup moved forward this week."}{" "}
           {finished} of {plural(setup.storefronts.length, "storefront")} fully set up.
         </CardDescription>
-        <CardAction>
+        <CardAction inline>
           <Link
             href="/storefronts"
             className="text-primary inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline pointer-coarse:min-h-11">
