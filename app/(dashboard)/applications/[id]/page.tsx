@@ -11,8 +11,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { ApplicationStatusBadge } from "../status-badge";
 import { ApplicationDecision } from "./decision";
+import PRICES from "@/lib/pricing.json";
 
 export const metadata: Metadata = { title: "Application" };
+
+/** The storefront's Who we help groups (the API's AUDIENCES). */
+const AUDIENCES: Record<string, string> = {
+  shops: "Shops and makers",
+  specialty: "Specialty retailers",
+  courses: "Course creators",
+  associations: "Chambers and associations",
+  churches: "Churches",
+  locations: "Franchises and multi-location businesses",
+  freelancers: "Freelancers and studios",
+  software: "Software companies"
+};
+
+const withOther = (list: string, other: string | null) => (other ? `${list}. Also: ${other}` : list);
 
 const STORE_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "anypress.site";
 
@@ -38,6 +53,8 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
     ],
     ["Who they sell to", <p key="clients" className="whitespace-pre-wrap">{a.clients}</p>],
     ["Sites in their first year", a.expectedSites],
+    ["Kinds of sites", withOther(a.siteTypes ? a.siteTypes.map((k) => PRICES.siteTypes.find((t) => t.key === k)?.name ?? k).join(", ") : "Not sure yet (every kind)", a.siteTypesOther)],
+    ["Their customers", withOther(a.audiences?.length ? a.audiences.map((k) => AUDIENCES[k] ?? k).join(", ") : "None of the listed groups", a.audiencesOther)],
     [
       "Sells from",
       a.wantsStorefront

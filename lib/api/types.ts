@@ -850,6 +850,12 @@ export type SellerApplication = {
   storefrontSubdomain: string | null;
   /** They run a HighLevel agency, so they'll want the AnyPress app for their sub-accounts. */
   highLevelAgency: boolean;
+  /** The kinds of sites they sell (price list keys); null when they weren't sure, which keeps every kind. */
+  siteTypes: string[] | null;
+  siteTypesOther: string | null;
+  /** The kinds of customers they serve (their storefront's Who we help pages); empty when none fit. */
+  audiences: string[];
+  audiencesOther: string | null;
   status: ApplicationStatus;
   /** The storefront made when it was approved. */
   productId: string | null;
