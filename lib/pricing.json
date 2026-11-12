@@ -78,6 +78,7 @@
     "large": 4
   },
   "yearlyMonths": 10,
+  "trialDays": 7,
   "volumeTiers": [
     {
       "sites": 3,
@@ -154,5 +155,15 @@
         "careOnly": true
       }
     ]
+  },
+  "packs": {
+    "email": {
+      "emails": 10000,
+      "price": 5
+    },
+    "storage": {
+      "gb": 25,
+      "monthly": 5
+    }
   }
 }
