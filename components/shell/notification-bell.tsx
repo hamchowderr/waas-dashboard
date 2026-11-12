@@ -7,7 +7,6 @@ import { BellIcon, CheckCheckIcon, CircleAlertIcon, CircleCheckIcon, InfoIcon } 
 import { loadNotifications, readNotifications } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertsToggle } from "@/components/shell/alerts-toggle";
 import { formatAgo } from "@/lib/format";
 import type { Notification, NotificationList } from "@/lib/api/types";
@@ -89,8 +88,13 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
-        <div className="flex items-center justify-between border-b px-4 py-3">
+      {/* A column the height of the room below the bell: header, alerts and footer keep their size and
+          only the list scrolls, so a long list never runs under the alerts switch. */}
+      <PopoverContent
+        align="end"
+        className="flex max-h-[min(36rem,var(--radix-popover-content-available-height))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden p-0"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
           <p className="text-sm font-medium">Notifications</p>
           {unread > 0 && (
             <Button variant="ghost" size="xs" onClick={markRead} className="text-primary -me-2 font-medium">
@@ -99,7 +103,7 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-[min(28rem,70vh)]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="notification-list">
           {error && !list ? (
             <p className="text-muted-foreground px-4 py-6 text-sm">{error}</p>
           ) : !list ? (
@@ -115,9 +119,11 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
               ))}
             </ul>
           )}
-        </ScrollArea>
-        <AlertsToggle />
-        <div className="text-muted-foreground flex items-center justify-between gap-3 border-t px-4 py-2 text-xs">
+        </div>
+        <div className="shrink-0">
+          <AlertsToggle />
+        </div>
+        <div className="text-muted-foreground flex shrink-0 items-center justify-between gap-3 border-t px-4 py-2 text-xs">
           <span>Kept for 30 days.</span>
           <Link href="/notifications" onClick={() => onOpenChange(false)} className="text-foreground font-medium underline-offset-4 hover:underline">
             See all and alert settings
