@@ -9,7 +9,7 @@ import demoPhotos from "./demo-photos.json";
  * photos (in the repository, not the zip) come from the same tag, file by file, so a visitor downloads only the demo
  * they open. The Update pins workflow (`.github/pins.json`) moves it to each new theme release and reruns `node scripts/demo-photos.mjs`.
  */
-export const THEME_TAG = "v0.20.0";
+export const THEME_TAG = "v0.21.0";
 /** The AnyPress Blocks release the demos use (blocks such as the before-and-after slider and the phone bar). */
 const BLOCKS_TAG = "v0.4.3";
 
