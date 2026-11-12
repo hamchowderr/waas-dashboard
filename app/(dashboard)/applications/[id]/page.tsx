@@ -5,14 +5,41 @@ import { notFound } from "next/navigation";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
+import type { SellerApplication } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { ApplicationStatusBadge } from "../status-badge";
 import { ApplicationDecision } from "./decision";
+import PRICES from "@/lib/pricing.json";
 
 export const metadata: Metadata = { title: "Application" };
+
+/** The storefront's Who we help groups (the API's AUDIENCES). */
+const AUDIENCES: Record<string, string> = {
+  shops: "Shops and makers",
+  specialty: "Specialty retailers",
+  courses: "Course creators",
+  associations: "Chambers and associations",
+  churches: "Churches",
+  locations: "Franchises and multi-location businesses",
+  freelancers: "Freelancers and studios",
+  software: "Software companies"
+};
+
+const withOther = (list: string, other: string | null) => (other ? `${list}. Also: ${other}` : list);
+const typeName = (key: string) => PRICES.siteTypes.find((t) => t.key === key)?.name ?? key;
+
+/** The kinds of sites they sell and who their customers are, as they answered on the form. */
+function kindsRows(a: SellerApplication): [string, string][] {
+  const types = a.siteTypes ? a.siteTypes.map(typeName).join(", ") : "Not sure yet (every kind)";
+  const customers = a.audiences?.length ? a.audiences.map((k) => AUDIENCES[k] ?? k).join(", ") : "None of the listed groups";
+  return [
+    ["Kinds of sites", withOther(types, a.siteTypesOther)],
+    ["Their customers", withOther(customers, a.audiencesOther)]
+  ];
+}
 
 const STORE_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "anypress.site";
 
@@ -38,6 +65,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
     ],
     ["Who they sell to", <p key="clients" className="whitespace-pre-wrap">{a.clients}</p>],
     ["Sites in their first year", a.expectedSites],
+    ...kindsRows(a),
     [
       "Sells from",
       a.wantsStorefront
