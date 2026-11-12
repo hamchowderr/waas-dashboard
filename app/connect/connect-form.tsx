@@ -59,7 +59,7 @@ export function ConnectForm({
       {newStorefront ? (
         <div className="space-y-1.5">
           <Label htmlFor="new-storefront">Storefront name</Label>
-          <Input id="new-storefront" value={newName} maxLength={100} placeholder="Your agency's name" onChange={(e) => setNewName(e.target.value)} />
+          <Input id="new-storefront" value={newName} maxLength={100} placeholder="Your business name" onChange={(e) => setNewName(e.target.value)} />
           <p className="text-muted-foreground text-xs">It holds your sites, with room for 3 to start.</p>
         </div>
       ) : storefronts.length > 1 ? (
