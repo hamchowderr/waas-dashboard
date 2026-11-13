@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
   // The alerts service worker (public/sw.js): always fetched fresh, so a fix reaches every device.
   async headers() {
     return [
+      // No other site may show the dashboard in a frame, so its buttons can't be clicked through a disguise.
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" }
+        ]
+      },
       {
         source: "/sw.js",
         headers: [
