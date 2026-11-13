@@ -51,9 +51,10 @@ export default async function BrandingPage({
   }
 
   // An API without own addresses yet answers 404: leave the card out.
-  const [branding, address] = await Promise.all([
+  const [branding, address, shop] = await Promise.all([
     api.branding(product.id),
     api.dashboardDomain(product.id).catch(() => null),
+    api.storefront(product.id).catch(() => null),
   ]);
   const canEdit = !!viewer && canChange(viewer);
 
@@ -61,7 +62,11 @@ export default async function BrandingPage({
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="Branding"
-        description={`${product.name}: the name, logo and color your team sees in this dashboard, and that prospects see on your demo page.`}
+        description={
+          shop
+            ? `${product.name}: the name, logo and color of your shop, this dashboard and your demo page.`
+            : `${product.name}: the name, logo and color your team sees in this dashboard, and that prospects see on your demo page.`
+        }
       />
       {/* Tabs, so each part fits on one screen: the brand itself, then where and how the team sees it. */}
       <PageTabs
@@ -79,6 +84,7 @@ export default async function BrandingPage({
             of={product.id}
             initial={branding}
             canEdit={canEdit}
+            shop={shop?.domain}
             inherits={
               product.resellerId
                 ? (product.resellerName ?? "your reseller account")
