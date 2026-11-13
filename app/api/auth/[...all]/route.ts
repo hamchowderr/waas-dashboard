@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import type { NextRequest } from "next/server";
 
 // Sign-in runs on the provisioning API (Better Auth). Its routes are served here, on the
@@ -8,6 +9,21 @@ import type { NextRequest } from "next/server";
 const DROP_REQUEST = ["host", "connection", "content-length", "transfer-encoding", "keep-alive", "upgrade"];
 /** fetch has already decoded the body, so its encoding and length no longer apply. */
 const DROP_RESPONSE = ["content-encoding", "content-length", "transfer-encoding", "connection", "keep-alive"];
+
+/**
+ * The API counts sign-in attempts per person. Requests from here reach it from Vercel's address, so
+ * the browser's address goes along, signed with the admin token so nobody else can set it.
+ */
+function vouchForClientIp(request: NextRequest, headers: Headers): void {
+  headers.delete("x-anypress-client-ip");
+  headers.delete("x-anypress-client-ip-signature");
+  const secret = process.env.WAAS_ADMIN_TOKEN;
+  // Vercel sets x-real-ip to the address that connected to it, replacing anything the browser sent.
+  const ip = request.headers.get("x-real-ip")?.trim();
+  if (!secret || !ip) return;
+  headers.set("x-anypress-client-ip", ip);
+  headers.set("x-anypress-client-ip-signature", createHmac("sha256", secret).update(ip).digest("hex"));
+}
 
 async function forward(request: NextRequest): Promise<Response> {
   const baseUrl = process.env.WAAS_API_URL;
@@ -21,6 +37,7 @@ async function forward(request: NextRequest): Promise<Response> {
   // API's sign-in redirects a browser that navigates to it (an AI app's sign-in) and answers scripts JSON.
   const mode = request.headers.get("sec-fetch-mode");
   if (mode) headers.set("x-forwarded-sec-fetch-mode", mode);
+  vouchForClientIp(request, headers);
   let upstream: Response;
   try {
     upstream = await fetch(url, {
