@@ -100,7 +100,8 @@ export function TeamManager({
 
   const [inviting, setInviting] = React.useState(false);
   const [email, setEmail] = React.useState("");
-  const [role, setRole] = React.useState<TeamRole>(team.members.length === 0 ? "owner" : "member");
+  // Only the platform admin starting an empty team invites its first owner; a customer's team grows with members by default.
+  const [role, setRole] = React.useState<TeamRole>(team.members.length === 0 && myRole === null ? "owner" : "member");
   const [unsent, setUnsent] = React.useState<{ email: string; url: string } | null>(null);
   const [removing, setRemoving] = React.useState<TeamMember | null>(null);
   const [cancelling, setCancelling] = React.useState<TeamInvitation | null>(null);

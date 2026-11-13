@@ -250,7 +250,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <div className="grid grid-cols-1 items-start gap-5 lg:gap-7 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
         <div className="min-w-0">
           {/* What needs you, and how setup is going, each in a tab, so the page fits on one screen. */}
-          <PageTabs label="Overview" initial={tab} tabs={[{ value: "needs-you", label: "Needs you", count: todos.length }, ...(hasSetup ? [{ value: "setup", label: "Setup" }] : [])]}>
+          <PageTabs label="Overview" initial={tab ?? (showChecklist && !todos.length ? "setup" : undefined)} tabs={[{ value: "needs-you", label: "Needs you", count: todos.length }, ...(hasSetup ? [{ value: "setup", label: "Setup" }] : [])]}>
           <TabsContent value="needs-you" forceMount className="data-[state=inactive]:hidden">
           <Card data-tour-step-id={isAdmin || showChecklist ? "needs-you" : "needs-you start-here"}>
             {/* The tab names it; the title stays for screen readers. */}
