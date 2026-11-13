@@ -1052,3 +1052,51 @@ export type NotificationList = { unread: number; readUntil: string | null; items
 export type PushSettings = { enabled: boolean; publicKey: string | null };
 /** What PushManager.subscribe() gives, as JSON. */
 export type PushSubscriptionInput = { endpoint: string; keys: { p256dh: string; auth: string } };
+
+/** What a prospect demo shows: a client's site (seller), one of their locations (reseller), a site for their customers (affiliate), their own member site (chamber) or their own site (owner). */
+export type ProspectRoute = "seller" | "reseller" | "affiliate" | "chamber" | "owner";
+
+/** What was read from a prospect's website. Images are AnyPress's own copies; a price only where their site prints one. */
+export type ProspectBrand = {
+  source: string;
+  name: string | null;
+  tagline: string | null;
+  about: string | null;
+  phone: string | null;
+  city: string | null;
+  address: string | null;
+  hours: string[];
+  colors: Record<string, string>;
+  fonts: { heading: string | null; body: string | null };
+  colorScheme: "light" | "dark" | null;
+  logo: string | null;
+  photos: string[];
+  items: { name: string; description: string | null; price: string | null; image: string | null }[];
+};
+
+/** A business AnyPress may contact, with a branded demo made from its own website. Platform admin only. */
+export type ProspectDemo = {
+  id: string;
+  /** The private code in its demo link, anypress.io/try?for=<code>. */
+  code: string;
+  company: string;
+  website: string | null;
+  route: ProspectRoute;
+  siteType: string;
+  kit: string | null;
+  /** The group on the board, such as Agency. */
+  label: string | null;
+  city: string | null;
+  priority: number | null;
+  notes: string | null;
+  /** 0 reading the website, 1 ready, 2 couldn't be read (see error). */
+  statusCode: 0 | 1 | 2;
+  error: string | null;
+  creditsUsed: number;
+  brand: ProspectBrand | null;
+  createdAt: string;
+  gatheredAt: string | null;
+};
+
+export type NewProspectDemo = Pick<ProspectDemo, "company" | "route" | "siteType"> &
+  Partial<Pick<ProspectDemo, "website" | "kit" | "label" | "city" | "priority" | "notes">>;

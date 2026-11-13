@@ -30,6 +30,8 @@ import type {
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
+  ProspectDemo,
+  NewProspectDemo,
   AddedStorefront,
   AddStorefrontInput,
   NewSeller,
@@ -711,6 +713,22 @@ export class HttpAdminApi implements AdminApi {
 
   async declineApplication(id: string): Promise<void> {
     await this.send("POST", `/admin/applications/${encodeURIComponent(id)}/decline`);
+  }
+
+  async prospectDemos(): Promise<ProspectDemo[]> {
+    return (await this.get<ProspectDemo[]>("/admin/prospect-demos"))!;
+  }
+
+  async addProspectDemos(prospects: NewProspectDemo[]): Promise<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }> {
+    return (await this.send<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }>("POST", "/admin/prospect-demos", { prospects }))!;
+  }
+
+  async gatherProspectDemo(id: string): Promise<ProspectDemo> {
+    return (await this.send<ProspectDemo>("POST", `/admin/prospect-demos/${encodeURIComponent(id)}/gather`))!;
+  }
+
+  async deleteProspectDemo(id: string): Promise<void> {
+    await this.send("DELETE", `/admin/prospect-demos/${encodeURIComponent(id)}`);
   }
 
   private resellerPath(id: string, rest = ""): string {
