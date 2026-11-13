@@ -114,6 +114,11 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
                               )}
                               <span className="sm:hidden"> · {ROUTE_LABELS[d.route]}</span>
                             </div>
+                            {d.brand?.site && (
+                              <div className="text-muted-foreground text-xs">
+                                {[d.brand.site.platform ?? "Platform not shown", d.brand.site.features.length ? `has ${d.brand.site.features.join(", ")}` : "pages only"].join(" · ")}
+                              </div>
+                            )}
                             {d.notes && <div className="text-muted-foreground max-w-xs text-xs">{d.notes}</div>}
                             <div className="mt-1 sm:hidden">
                               <Status demo={d} />

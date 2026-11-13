@@ -361,13 +361,13 @@ const prospects: ProspectDemo[] = [
   {
     id: uuid(1, 17), code: "p_SampleHarborTea01", company: "Harbor Tea House", website: "https://harbor-tea.anypress.example/",
     route: "affiliate", siteType: "online-store", kit: "parcel", label: "Point of sale", city: "Long Beach", priority: 1, notes: "Met at the farmers market",
-    statusCode: 1, error: null, creditsUsed: 5, brand: prospectBrand("Harbor Tea House", "#2f6f62", "Loose-leaf tea, brewed slowly", "Long Beach", ["Jasmine Green", "Oolong Flight", "Chai Latte"]),
+    statusCode: 1, error: null, creditsUsed: 5, brand: { ...prospectBrand("Harbor Tea House", "#2f6f62", "Loose-leaf tea, brewed slowly", "Long Beach", ["Jasmine Green", "Oolong Flight", "Chai Latte"])!, site: { platform: "Shopify", features: ["shop", "blog"] } },
     createdAt: iso(NOW - 2 * DAY), gatheredAt: iso(NOW - 2 * DAY + 60_000)
   },
   {
     id: uuid(2, 17), code: "p_SampleChamber0002", company: "Valley Business Chamber", website: "https://valley-chamber.anypress.example/",
     route: "chamber", siteType: "everything", kit: "commons", label: "Chamber", city: "Fresno", priority: 2, notes: null,
-    statusCode: 1, error: null, creditsUsed: 5, brand: prospectBrand("Valley Business Chamber", "#1d4e89", "Local business, stronger together", "Fresno", ["Leads Lunch", "Ribbon Cuttings"]),
+    statusCode: 1, error: null, creditsUsed: 5, brand: { ...prospectBrand("Valley Business Chamber", "#1d4e89", "Local business, stronger together", "Fresno", ["Leads Lunch", "Ribbon Cuttings"])!, site: { platform: "WordPress", features: ["events", "members"] } },
     createdAt: iso(NOW - DAY), gatheredAt: iso(NOW - DAY + 90_000)
   },
   {

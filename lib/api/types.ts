@@ -1068,6 +1068,8 @@ export type ProspectBrand = {
   hours: string[];
   colors: Record<string, string>;
   fonts: { heading: string | null; body: string | null };
+  /** What their website is now; missing on prospects read before it was recorded. */
+  site?: { platform: string | null; features: ("shop" | "bookings" | "events" | "members" | "blog" | "donations")[] };
   colorScheme: "light" | "dark" | null;
   logo: string | null;
   photos: string[];
