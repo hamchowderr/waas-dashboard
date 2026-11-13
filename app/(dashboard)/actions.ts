@@ -692,6 +692,56 @@ export async function declineApplication(id: string): Promise<ActionResult> {
   }, ["/applications"]);
 }
 
+const PROSPECT_ROUTES = ["seller", "reseller", "affiliate", "chamber", "owner"] as const;
+
+/** Adds one business to the prospect board; the API reads its website in the background. Platform admin only. */
+export async function addProspectDemo(input: {
+  company: string;
+  website: string;
+  route: string;
+  siteType: string;
+  city: string;
+  label: string;
+}): Promise<ActionResult<{ added: boolean; reason?: string }>> {
+  return run(async () => {
+    await adminOnly("add prospects");
+    const route = PROSPECT_ROUTES.find((r) => r === input.route);
+    if (!route) throw new InputError("Choose how they would use AnyPress");
+    const siteType = NEW_SITE_TYPES.find((t) => t === input.siteType);
+    if (!siteType) throw new InputError("Choose a site type");
+    const optional = (value: string, what: string) => (value.trim() ? text(value, what) : undefined);
+    const { created, skipped } = await getAdminApi().addProspectDemos([
+      {
+        company: text(input.company, "Business name"),
+        website: optional(input.website, "Website"),
+        route,
+        siteType,
+        city: optional(input.city, "City"),
+        label: optional(input.label, "Group")
+      }
+    ]);
+    return created.length ? { added: true } : { added: false, reason: skipped[0]?.reason };
+  }, ["/prospects"]);
+}
+
+/** Reads a prospect's website again, for a new logo, colours or menu. Platform admin only. */
+export async function gatherProspectDemo(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("read prospects' websites");
+    await getAdminApi().gatherProspectDemo(uuid(id, "prospect"));
+    return undefined;
+  }, ["/prospects"]);
+}
+
+/** Removes a prospect and its copied images; its demo link stops working. Platform admin only. */
+export async function deleteProspectDemo(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("remove prospects");
+    await getAdminApi().deleteProspectDemo(uuid(id, "prospect"));
+    return undefined;
+  }, ["/prospects"]);
+}
+
 async function adminOnly(what = "review applications") {
   if (!(await getViewer())?.isAdmin) throw new InputError(`Only the platform admin can ${what}.`);
 }

@@ -13,6 +13,8 @@ import type {
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
+  ProspectDemo,
+  NewProspectDemo,
   AddedStorefront,
   AddStorefrontInput,
   NewSeller,
@@ -287,6 +289,15 @@ export interface AdminApi {
   approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication>;
   /** Declines and emails the applicant. */
   declineApplication(id: string): Promise<void>;
+
+  // Branded demos for businesses AnyPress may contact (docs/prospect-demos.md in the API). Platform admin only.
+  prospectDemos(): Promise<ProspectDemo[]>;
+  /** Adds businesses and reads their websites in the background; a website already on the list is skipped. */
+  addProspectDemos(prospects: NewProspectDemo[]): Promise<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }>;
+  /** Reads the website again. */
+  gatherProspectDemo(id: string): Promise<ProspectDemo>;
+  /** Removes the business and its copied images; its demo link stops working. */
+  deleteProspectDemo(id: string): Promise<void>;
 
   // Reseller accounts: storefronts grouped under one partner. Platform admin only.
   resellers(): Promise<Reseller[]>;
