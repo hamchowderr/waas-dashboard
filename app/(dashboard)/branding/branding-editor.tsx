@@ -82,6 +82,7 @@ export function BrandingEditor({
   canEdit,
   inherits,
   brandName,
+  shop,
 }: {
   of: TeamOf;
   initial: BrandingView;
@@ -89,6 +90,8 @@ export function BrandingEditor({
   inherits?: string;
   /** A reseller's brand name from its settings. The dashboard name falls back to it, so the name isn't asked twice. */
   brandName?: string | null;
+  /** The ready-made storefront's address: the look goes there too. */
+  shop?: string;
 }) {
   const [view, setView] = React.useState(initial);
   const [form, setForm] = React.useState(() => toForm(initial));
@@ -159,8 +162,11 @@ export function BrandingEditor({
             </CardIcon>
             <CardTitle>Name, color and help</CardTitle>
             <CardDescription>
-              What your team sees in place of AnyPress. Leave a field empty to
-              keep {inherits ? `${inherits}'s` : "the standard"} look.
+              {shop
+                ? `Your shop at ${shop} and this dashboard use them. Changes reach your shop within a few minutes. `
+                : "What your team sees in place of AnyPress. "}
+              Leave a field empty to keep{" "}
+              {inherits ? `${inherits}'s` : "the standard"} look.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
