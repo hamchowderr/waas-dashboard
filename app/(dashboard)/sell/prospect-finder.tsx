@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { CheckIcon, ClockIcon, DownloadIcon, PlusIcon, FacebookIcon, InstagramIcon, LinkedinIcon, MusicIcon, TwitterIcon, YoutubeIcon, ExternalLinkIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { CheckIcon, ClockIcon, DownloadIcon, PlusIcon, ExternalLinkIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SearchIcon, StarIcon } from "lucide-react";
 
 import type { CrmProspect, CrmTarget, Prospect, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectMailbox, ProspectUsage, SocialNetwork } from "@/lib/api/types";
 import type { GroupId } from "@/lib/sales-kit";
@@ -14,19 +15,21 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "cn";
 import { prospectsCsv } from "@/lib/prospects";
 import { toast } from "sonner";
+import { SiFacebook, SiInstagram, SiTiktok, SiX, SiYoutube } from "@icons-pack/react-simple-icons";
+import { LinkedinIcon } from "@/components/brand-icons";
 import { addToCrm, findProspects, readWebsites, prospectContacts, prospectCrm, prospectMailbox, prospectUsage } from "./actions";
 import { HighLevelConnect, MailboxConnect } from "./crm-connect";
 
 export type FinderGroup = { id: GroupId; title: string; finder: string[] };
 
 const NETWORK_LABEL: Record<SocialNetwork, string> = { facebook: "Facebook", instagram: "Instagram", linkedin: "LinkedIn", x: "X", youtube: "YouTube", tiktok: "TikTok" };
-const NETWORK_ICON: Record<SocialNetwork, typeof FacebookIcon> = {
-  facebook: FacebookIcon,
-  instagram: InstagramIcon,
+const NETWORK_ICON: Record<SocialNetwork, ComponentType<SVGProps<SVGSVGElement>>> = {
+  facebook: SiFacebook,
+  instagram: SiInstagram,
   linkedin: LinkedinIcon,
-  x: TwitterIcon,
-  youtube: YoutubeIcon,
-  tiktok: MusicIcon
+  x: SiX,
+  youtube: SiYoutube,
+  tiktok: SiTiktok
 };
 
 const CRM_LABEL: Record<CrmTarget, string> = { fluentcrm: "FluentCRM", highlevel: "HighLevel" };
