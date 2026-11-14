@@ -25,21 +25,31 @@ export type ReadResult = { ok: true; added: number; skipped: string[]; reads: Pr
 
 const str = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
 
+type Business = { company: string; website: string; placeId?: string | null; details?: CrmProspect | null };
+
+/** What the finder found, without its own id and name (they travel as placeId and company). */
+const detailsOf = (details: CrmProspect | null | undefined): NewProspectDemo["details"] =>
+  details ? (Object.fromEntries(Object.entries(details).filter(([key]) => key !== "id" && key !== "name")) as NewProspectDemo["details"]) : null;
+
+function newProspect(b: Business): NewProspectDemo[] {
+  const company = str(b.company, 200);
+  const website = str(b.website, 2000);
+  if (!company || !website) return [];
+  return [{ company, website, placeId: str(b.placeId, 300) ?? null, details: detailsOf(b.details) }];
+}
+
 /**
  * Adds businesses to the storefront's prospects and reads their websites: the website check, what kind of site it
  * is and a branded demo, one read each from the month's allowance. From the finder (with what it found) or typed in.
  */
-export async function readWebsites(productId: string, businesses: { company: string; website: string; placeId?: string | null; details?: CrmProspect | null }[]): Promise<ReadResult> {
+export async function readWebsites(productId: string, businesses: Business[]): Promise<ReadResult> {
   const viewer = await getViewer().catch(() => null);
   if (!viewer) return { ok: false, error: "Sign in again to read websites." };
-  const list = (Array.isArray(businesses) ? businesses : []).slice(0, 60).flatMap((b): NewProspectDemo[] => {
-    const company = str(b?.company, 200);
-    const website = str(b?.website, 2000);
-    if (!company || !website) return [];
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the id and name travel as placeId and company
-    const { id, name, ...details } = b.details ?? ({} as CrmProspect);
-    return [{ company, website, placeId: str(b.placeId, 300) ?? null, details: b.details ? details : null }];
-  });
+  const list = [businesses]
+    .flat()
+    .filter((b): b is Business => typeof b === "object" && b !== null)
+    .slice(0, 60)
+    .flatMap(newProspect);
   if (!list.length) return { ok: false, error: "Enter the business's name and website." };
   try {
     const { created, skipped, reads } = await getAdminApi().addProspectDemos(String(productId), list);

@@ -14,6 +14,10 @@ const noSubscribe = () => () => {};
 const browserOrigin = () => window.location.origin;
 const noOrigin = () => null;
 
+/** Our Playground, loading this business's blueprint from this dashboard; null until the page knows its address. */
+const playgroundSrc = (origin: string | null, code: string) =>
+  origin ? `${PLAYGROUND_SITE}/?mode=seamless&blueprint-url=${encodeURIComponent(new URL(`/demo/blueprint/${code}`, origin).href)}` : null;
+
 /**
  * A demo website made for one business, in the seller's look around it: their site type's demo, with the business's
  * own name, colours, fonts, logo and offer, built in the visitor's browser from the blueprint at /demo/blueprint/<code>.
@@ -21,9 +25,7 @@ const noOrigin = () => null;
 export function ProspectDemo({ look, code, company, home }: { look: DemoLook; code: string; company: string; home: string }) {
   const origin = React.useSyncExternalStore(noSubscribe, browserOrigin, noOrigin);
   const [loaded, setLoaded] = React.useState(false);
-  const src = origin
-    ? `${PLAYGROUND_SITE}/?mode=seamless&blueprint-url=${encodeURIComponent(new URL(`/demo/blueprint/${code}`, origin).href)}`
-    : null;
+  const src = playgroundSrc(origin, code);
 
   return (
     <div className="bg-background text-foreground flex h-dvh flex-col">

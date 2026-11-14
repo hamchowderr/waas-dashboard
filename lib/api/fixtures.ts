@@ -361,30 +361,34 @@ const prospectBrand = (name: string, primary: string, tagline: string, city: str
   photos: [],
   items: items.map((item) => ({ name: item, description: null, price: null, image: null }))
 });
+const CREDIT: Record<WebsiteCheckReport["checks"][number]["status"], number> = { pass: 1, warn: 0.5, fail: 0 };
 /** A typical dated small-business website's check, scored a little differently for each. */
 const sampleReport = (host: string, builder: string | null, at: number): WebsiteCheckReport => {
   const n = host.length % 3;
   const checks: WebsiteCheckReport["checks"] = [
     { id: "secure", title: "Secure connection", weight: 3, status: "pass", detail: "The site uses a secure connection (https)." },
-    { id: "speed", title: "Loads quickly", weight: 3, status: n ? "warn" : "fail", detail: `The page took ${n ? "3.1" : "5.4"} seconds to arrive. Slow pages lose visitors, most of all on phones.` },
-    { id: "mobile", title: "Works on phones", weight: 3, status: n === 2 ? "fail" : "pass", detail: n === 2 ? "The site isn't set up for phones, so visitors on a phone have to pinch and zoom." : "The site is set up to fit phone screens." },
+    { id: "speed", title: "Loads quickly", weight: 3, status: (["fail", "warn", "warn"] as const)[n]!, detail: `The page took ${["5.4", "3.1", "3.1"][n]} seconds to arrive. Slow pages lose visitors, most of all on phones.` },
+    [
+      { id: "mobile", title: "Works on phones", weight: 3, status: "pass" as const, detail: "The site is set up to fit phone screens." },
+      { id: "mobile", title: "Works on phones", weight: 3, status: "fail" as const, detail: "The site isn't set up for phones, so visitors on a phone have to pinch and zoom." }
+    ][Number(n === 2)]!,
     { id: "search", title: "Ready for Google", weight: 2, status: "warn", detail: "The title is \"Home\", but there's no description for Google to show under it." },
     { id: "fresh", title: "Kept up to date", weight: 2, status: "fail", detail: "The footer still says 2019, so the site looks like it hasn't been updated in 7 years." },
     { id: "contact", title: "Easy to contact", weight: 2, status: "pass", detail: "Visitors can tap to call, email or send a message." },
-    { id: "online", title: "Customers can act online", weight: 2, status: n === 1 ? "pass" : "warn", detail: n === 1 ? "Visitors can book, buy, give or sign up online." : "Visitors can't book, buy, give or sign up from the page, so they have to call or leave." }
+    [
+      { id: "online", title: "Customers can act online", weight: 2, status: "warn" as const, detail: "Visitors can't book, buy, give or sign up from the page, so they have to call or leave." },
+      { id: "online", title: "Customers can act online", weight: 2, status: "pass" as const, detail: "Visitors can book, buy, give or sign up online." }
+    ][Number(n === 1)]!
   ];
   const total = checks.reduce((sum, c) => sum + c.weight, 0);
-  const got = checks.reduce((sum, c) => sum + c.weight * (c.status === "pass" ? 1 : c.status === "warn" ? 0.5 : 0), 0);
+  const got = checks.reduce((sum, c) => sum + c.weight * CREDIT[c.status], 0);
   return { url: `https://${host}/`, host, checkedAt: iso(at), score: Math.round((got / total) * 100), builder, checks };
 };
-const sampleDemo = (d: Omit<ProspectDemo, "placeId" | "siteTypeAuto" | "details" | "report" | "demoUrl">): ProspectDemo => ({
-  placeId: null,
-  siteTypeAuto: false,
-  details: null,
-  report: d.statusCode === 1 && d.website ? sampleReport(new URL(d.website).hostname, d.brand?.site?.platform ?? null, Date.parse(d.gatheredAt ?? d.createdAt)) : null,
-  demoUrl: null,
-  ...d
-});
+type SampleDemo = Omit<ProspectDemo, "placeId" | "siteTypeAuto" | "details" | "report" | "demoUrl">;
+const readAt = (d: { gatheredAt: string | null; createdAt: string }) => Date.parse(d.gatheredAt ?? d.createdAt);
+const platformOf = (d: SampleDemo) => d.brand?.site?.platform ?? null;
+const reportOf = (d: SampleDemo) => (d.statusCode === 1 && d.website ? sampleReport(new URL(d.website).hostname, platformOf(d), readAt(d)) : null);
+const sampleDemo = (d: SampleDemo): ProspectDemo => ({ placeId: null, siteTypeAuto: false, details: null, report: reportOf(d), demoUrl: null, ...d });
 const sampleProspectDemos = (): ProspectDemo[] => [
   sampleDemo({
     id: crypto.randomUUID(), code: "p_SampleHarborTea1", company: "Harbor Tea House", website: "https://harbor-tea.anypress.example/",
@@ -410,18 +414,41 @@ const sampleProspectDemos = (): ProspectDemo[] => [
     createdAt: iso(NOW - 3 * DAY), gatheredAt: iso(NOW - 3 * DAY + 30_000)
   })
 ];
+const rank = (d: ProspectDemo) => d.priority ?? 99;
+const byPriority = (a: ProspectDemo, b: ProspectDemo) => rank(a) - rank(b) || b.createdAt.localeCompare(a.createdAt);
+const withDemoLink = (productId: string, d: ProspectDemo): ProspectDemo => ({ ...d, demoUrl: d.statusCode === 1 ? `/demo/${productId}?for=${d.code}` : null });
+const hostOf = (url: string | null | undefined) => (url ? url.replace(/^https?:\/\//i, "").replace(/[/?#].*$/, "").toLowerCase() : null);
+const OPTIONAL = ["placeId", "kit", "label", "city", "priority", "notes", "details"] as const;
+/** A business added in sample mode, before its website is read. */
+function newSampleDemo(p: NewProspectDemo): ProspectDemo {
+  const host = hostOf(p.website);
+  const optional = Object.fromEntries(OPTIONAL.map((key) => [key, p[key] ?? null])) as Pick<ProspectDemo, (typeof OPTIONAL)[number]>;
+  return {
+    id: crypto.randomUUID(), code: `p_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`, company: p.company,
+    website: host && `https://${host}/`, route: p.route ?? "owner", siteType: p.siteType ?? "website", siteTypeAuto: !p.siteType, ...optional,
+    statusCode: 2, error: "No website to read", creditsUsed: 0, brand: null, report: null, demoUrl: null, createdAt: new Date().toISOString(), gatheredAt: null
+  };
+}
+/** The look a sample read finds: made from the business's name, with a builder and features picked from its address. */
+function sampleReadBrand(d: ProspectDemo, host: string) {
+  type Features = NonNullable<NonNullable<ProspectDemo["brand"]>["site"]>["features"];
+  const features = ([["events"], ["bookings", "blog"]] as Features[])[host.length % 2]!;
+  const n = host.length % 3;
+  return { ...prospectBrand(d.company, ["#2f6f62", "#1d4e89", "#8a3b12"][n]!, "", d.city ?? "", [])!, tagline: null, site: { platform: ["WordPress", "Wix", "Squarespace"][n]!, features } };
+}
 const prospectDemoLists = new Map<string, ProspectDemo[]>();
 /** Sample mode's answer to the API's public GET /demos/prospects/{code}: a demo read on a storefront's list. */
-export function samplePublicProspectDemo(code: string): PublicProspectDemo | null {
+function readDemo(code: string): PublicProspectDemo | null {
   for (const [productId, list] of prospectDemoLists) {
     const d = list.find((p) => p.code === code && p.statusCode === 1);
     if (d) return { company: d.company, productId, route: d.route, siteType: d.siteType, kit: d.kit, brand: d.brand };
   }
+  return null;
+}
+export function samplePublicProspectDemo(code: string): PublicProspectDemo | null {
   // A request that reaches this before any list was opened (another server bundle): the first storefront's samples.
-  const first = products[0];
-  if (!first || prospectDemoLists.size > 0) return null;
-  prospectDemoLists.set(first.id, sampleProspectDemos());
-  return samplePublicProspectDemo(code);
+  if (!prospectDemoLists.size) prospectDemoLists.set(products[0]!.id, sampleProspectDemos());
+  return readDemo(code);
 }
 const prospectReads = new Map<string, number>();
 /** Sample reads finish a few seconds after they start, like the API's job. */
@@ -2528,46 +2555,34 @@ export class FixtureAdminApi implements AdminApi {
   async prospectDemos(productId: string): Promise<ProspectDemoList> {
     this.product(productId);
     const list = this.prospectList(productId);
-    for (const d of list) if (d.statusCode === 0 && Date.now() - Date.parse(d.gatheredAt ?? d.createdAt) > READ_MS) this.finishRead(d);
-    return {
-      prospects: [...list]
-        .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99) || b.createdAt.localeCompare(a.createdAt))
-        .map((d) => ({ ...d, demoUrl: d.statusCode === 1 ? `/demo/${productId}?for=${d.code}` : null })),
-      reads: this.readUsage(productId)
-    };
+    list.filter((d) => d.statusCode === 0 && Date.now() - readAt(d) > READ_MS).forEach((d) => this.finishRead(d));
+    return { prospects: [...list].sort(byPriority).map((d) => withDemoLink(productId, d)), reads: this.readUsage(productId) };
   }
 
   async addProspectDemos(productId: string, input: NewProspectDemo[]): Promise<AddedProspectDemos> {
     this.product(productId);
     const list = this.prospectList(productId);
-    const created: ProspectDemo[] = [];
     const skipped: { company: string; reason: string }[] = [];
-    const host = (url: string | null | undefined) => (url ? url.replace(/^https?:\/\//i, "").replace(/[/?#].*$/, "").toLowerCase() : null);
-    for (const p of input) {
-      if (p.website && list.some((d) => host(d.website) === host(p.website))) {
+    const created = input.flatMap((p) => {
+      if (list.some((d) => d.website && hostOf(d.website) === hostOf(p.website))) {
         skipped.push({ company: p.company, reason: "This website is on your list already" });
-        continue;
+        return [];
       }
-      const demo: ProspectDemo = {
-        id: crypto.randomUUID(), code: `p_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`, company: p.company,
-        website: p.website ? `https://${host(p.website)}/` : null, placeId: p.placeId ?? null, route: p.route ?? "owner",
-        siteType: p.siteType ?? "website", siteTypeAuto: !p.siteType, kit: p.kit ?? null, label: p.label ?? null, city: p.city ?? null,
-        priority: p.priority ?? null, notes: p.notes ?? null, details: p.details ?? null, statusCode: 2, error: "No website to read",
-        creditsUsed: 0, brand: null, report: null, demoUrl: null, createdAt: new Date().toISOString(), gatheredAt: null
-      };
+      const demo = newSampleDemo(p);
       list.push(demo);
       if (demo.website) this.startRead(productId, demo);
-      created.push(demo);
-    }
+      return [demo];
+    });
     return { created, skipped, reads: this.readUsage(productId) };
   }
 
   async readProspectDemo(productId: string, id: string): Promise<ProspectDemo> {
     const demo = this.findProspect(productId, id);
-    if (!demo.website) throw new AdminApiError(400, `/prospects/demos/${id}/read`, "This prospect has no website to read");
-    if (demo.statusCode === 0) throw new AdminApiError(409, `/prospects/demos/${id}/read`, "Its website is being read now.");
+    const path = `/prospects/demos/${id}/read`;
+    if (!demo.website) throw new AdminApiError(400, path, "This prospect has no website to read");
+    if (demo.statusCode === 0) throw new AdminApiError(409, path, "Its website is being read now.");
     this.startRead(productId, demo);
-    if (demo.statusCode === 2) throw new AdminApiError(429, `/prospects/demos/${id}/read`, demo.error ?? "No reads left");
+    if (demo.statusCode === 2) throw new AdminApiError(429, path, String(demo.error));
     return demo;
   }
 
@@ -2597,9 +2612,8 @@ export class FixtureAdminApi implements AdminApi {
   /** A sample read: a look made from the business's name, and a typical dated small-business website's check. */
   private finishRead(d: ProspectDemo) {
     const host = new URL(d.website!).hostname;
-    const features: NonNullable<NonNullable<ProspectDemo["brand"]>["site"]>["features"] = host.length % 2 ? ["bookings", "blog"] : ["events"];
-    const brand = { ...prospectBrand(d.company, ["#2f6f62", "#1d4e89", "#8a3b12"][host.length % 3]!, "", d.city ?? "", [])!, tagline: null, site: { platform: ["WordPress", "Wix", "Squarespace"][host.length % 3]!, features } };
-    const siteType = d.siteTypeAuto ? (features.includes("bookings") ? "bookings" : "website") : d.siteType;
+    const brand = sampleReadBrand(d, host);
+    const siteType = d.siteTypeAuto ? (["website", "bookings"] as const)[host.length % 2]! : d.siteType;
     Object.assign(d, { statusCode: 1, error: null, creditsUsed: d.creditsUsed + 5, brand, siteType, report: sampleReport(host, brand.site.platform, Date.now()), gatheredAt: new Date().toISOString() });
   }
 
