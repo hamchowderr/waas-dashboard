@@ -1,13 +1,11 @@
 name: Delete merged branches
 
-# Branches pile up otherwise: every pull request leaves its branch behind. A merged pull request's branch is deleted
-# as soon as it merges, and once a week (or by hand) every branch whose work is finished goes too: one with no open
-# pull request whose newest commit is the head of a merged or closed one. A branch with commits no pull request has
-# seen, or with an open pull request, is never touched.
+# GitHub's "Automatically delete head branches" setting removes a branch when its pull request merges. This weekly
+# sweep (or a manual run) removes the rest whose work is finished: a branch with no open pull request whose newest
+# commit is the head of a merged or closed one. A branch with commits no pull request has seen, or with an open pull
+# request, is never touched.
 
 on:
-  pull_request:
-    types: [closed]
   schedule:
     - cron: '23 4 * * 1'
   workflow_dispatch:
@@ -17,26 +15,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  merged:
-    if: github.event_name == 'pull_request' && github.event.pull_request.merged && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete the merged branch
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ github.event.pull_request.head.ref }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          open=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&head=${GITHUB_REPOSITORY_OWNER}:${BRANCH}" --jq length)
-          tip=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$BRANCH" --jq .object.sha 2>/dev/null || true)
-          if [ "$open" = "0" ] && [ "$tip" = "$SHA" ]; then
-            gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$BRANCH" && echo "Deleted $BRANCH"
-          else
-            echo "Kept $BRANCH (open pull requests: $open, tip $tip, merged $SHA)"
-          fi
-
   sweep:
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Delete branches whose work is finished
