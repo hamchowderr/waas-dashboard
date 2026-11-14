@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { GithubIcon, MailIcon } from "lucide-react";
+import { MailIcon } from "lucide-react";
+import { SiGithub } from "@icons-pack/react-simple-icons";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,7 +172,7 @@ export function SignInButtons({ providers, returnTo }: { providers: Provider[]; 
               className="h-11 w-full lg:h-8"
               disabled={pending !== null}
               onClick={() => void start(provider)}>
-              {provider === "github" ? <GithubIcon /> : <GoogleIcon />}
+              {provider === "github" ? <SiGithub /> : <GoogleIcon />}
               {pending === provider ? "Opening…" : labels[provider]}
             </Button>
           ))}
