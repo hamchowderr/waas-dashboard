@@ -14,6 +14,7 @@ import {
   PanelsTopLeftIcon,
   ScrollTextIcon,
   StoreIcon,
+  TargetIcon,
   UsersIcon,
   WebhookIcon,
   type LucideIcon
@@ -68,7 +69,8 @@ export const NAV: NavSection[] = [
     title: "Selling",
     icon: MegaphoneIcon,
     links: [
-      { title: "Sales Kit", href: "/sell", icon: MegaphoneIcon, description: "Where to find customers, what to say and what to charge" }
+      { title: "Sales Kit", href: "/sell", icon: MegaphoneIcon, description: "Where to find customers, what to say and what to charge" },
+      { title: "Prospects", href: "/prospects", icon: TargetIcon, adminOnly: true, global: true, description: "Businesses to contact, each with a demo in its own brand" }
     ]
   },
   {

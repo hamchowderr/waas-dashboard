@@ -39,6 +39,8 @@ import {
   type ApprovedApplication,
   type ApproveApplicationInput,
   type SellerApplication,
+  type ProspectDemo,
+  type NewProspectDemo,
   type AddedStorefront,
   type AddStorefrontInput,
   type NewSeller,
@@ -337,6 +339,49 @@ type FixtureKey = ApiKey & { productId: string };
 const storefronts = new Map<string, ReadyStorefront>([
   [uuid(2, 1), { id: uuid(1, 16), name: "Summit Sites", domain: "summit-sites.anypress.site", statusCode: StatusCode.Done, statusName: "Done" }]
 ]);
+
+/** Businesses AnyPress may contact, each with a demo made from its own website. */
+const prospectBrand = (name: string, primary: string, tagline: string, city: string, items: string[]): ProspectDemo["brand"] => ({
+  source: `https://${name.toLowerCase().replace(/[^a-z]+/g, "-")}.anypress.example/`,
+  name,
+  tagline,
+  about: null,
+  phone: null,
+  city,
+  address: null,
+  hours: [],
+  colors: { primary },
+  fonts: { heading: null, body: null },
+  colorScheme: "light",
+  logo: null,
+  photos: [],
+  items: items.map((item) => ({ name: item, description: null, price: null, image: null }))
+});
+const prospects: ProspectDemo[] = [
+  {
+    id: uuid(1, 17), code: "p_SampleHarborTea01", company: "Harbor Tea House", website: "https://harbor-tea.anypress.example/",
+    route: "affiliate", siteType: "online-store", kit: "parcel", label: "Point of sale", city: "Long Beach", priority: 1, notes: "Met at the farmers market",
+    statusCode: 1, error: null, creditsUsed: 5, brand: { ...prospectBrand("Harbor Tea House", "#2f6f62", "Loose-leaf tea, brewed slowly", "Long Beach", ["Jasmine Green", "Oolong Flight", "Chai Latte"])!, site: { platform: "Shopify", features: ["shop", "blog"] } },
+    createdAt: iso(NOW - 2 * DAY), gatheredAt: iso(NOW - 2 * DAY + 60_000)
+  },
+  {
+    id: uuid(2, 17), code: "p_SampleChamber0002", company: "Valley Business Chamber", website: "https://valley-chamber.anypress.example/",
+    route: "chamber", siteType: "everything", kit: "commons", label: "Chamber", city: "Fresno", priority: 2, notes: null,
+    statusCode: 1, error: null, creditsUsed: 5, brand: { ...prospectBrand("Valley Business Chamber", "#1d4e89", "Local business, stronger together", "Fresno", ["Leads Lunch", "Ribbon Cuttings"])!, site: { platform: "WordPress", features: ["events", "members"] } },
+    createdAt: iso(NOW - DAY), gatheredAt: iso(NOW - DAY + 90_000)
+  },
+  {
+    id: uuid(3, 17), code: "p_SampleStudio00003", company: "Northlight Web Studio", website: "https://northlight.anypress.example/",
+    route: "seller", siteType: "website", kit: null, label: "Web studio", city: "Sacramento", priority: 3, notes: null,
+    statusCode: 0, error: null, creditsUsed: 0, brand: null, createdAt: iso(NOW - HOUR / 4), gatheredAt: null
+  },
+  {
+    id: uuid(4, 17), code: "p_SampleBakery00004", company: "Rise Bakery", website: "https://rise-bakery.anypress.example/",
+    route: "owner", siteType: "online-store", kit: null, label: null, city: "Oakland", priority: null, notes: null,
+    statusCode: 2, error: "rise-bakery.anypress.example couldn't be read: Request failed with status 403", creditsUsed: 0, brand: null,
+    createdAt: iso(NOW - 3 * DAY), gatheredAt: iso(NOW - 3 * DAY + 30_000)
+  }
+];
 
 /** Applications to sell, as the marketing site's form sends them. */
 const applications: SellerApplication[] = [
@@ -2434,6 +2479,48 @@ export class FixtureAdminApi implements AdminApi {
     if (!application) throw new AdminApiError(404, `/admin/applications/${id}`, `Application ${id} not found`);
     if (application.status !== "pending") throw new AdminApiError(409, `/admin/applications/${id}`, "This application was already decided");
     return application;
+  }
+
+  async prospectDemos(): Promise<ProspectDemo[]> {
+    return [...prospects].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99) || a.company.localeCompare(b.company));
+  }
+
+  async addProspectDemos(input: NewProspectDemo[]): Promise<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }> {
+    const created: ProspectDemo[] = [];
+    const skipped: { company: string; reason: string }[] = [];
+    const host = (url: string | null | undefined) => (url ? url.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").toLowerCase() : null);
+    for (const p of input) {
+      if (p.website && prospects.some((d) => host(d.website) === host(p.website))) {
+        skipped.push({ company: p.company, reason: "A prospect with this website is already on the list" });
+        continue;
+      }
+      const demo: ProspectDemo = {
+        id: crypto.randomUUID(), code: `p_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`, company: p.company,
+        website: p.website ? `https://${host(p.website)}/` : null, route: p.route, siteType: p.siteType, kit: p.kit ?? null,
+        label: p.label ?? null, city: p.city ?? null, priority: p.priority ?? null, notes: p.notes ?? null,
+        statusCode: p.website ? 0 : 2, error: p.website ? null : "No website to read", creditsUsed: 0, brand: null,
+        createdAt: new Date().toISOString(), gatheredAt: null
+      };
+      prospects.push(demo);
+      created.push(demo);
+    }
+    return { created, skipped };
+  }
+
+  async gatherProspectDemo(id: string): Promise<ProspectDemo> {
+    const demo = this.findProspect(id);
+    if (!demo.website) throw new AdminApiError(400, `/admin/prospect-demos/${id}/gather`, "This prospect has no website to read");
+    return Object.assign(demo, { statusCode: 0, error: null });
+  }
+
+  async deleteProspectDemo(id: string): Promise<void> {
+    prospects.splice(prospects.indexOf(this.findProspect(id)), 1);
+  }
+
+  private findProspect(id: string): ProspectDemo {
+    const demo = prospects.find((d) => d.id === id);
+    if (!demo) throw new AdminApiError(404, `/admin/prospect-demos/${id}`, "Prospect not found");
+    return demo;
   }
 
   private toReseller(r: FixtureReseller): Reseller {
