@@ -43,6 +43,7 @@ import type {
   WebhookEventType,
   WebhookSecret,
   WordPressLogin,
+  SiteDownload,
   HighLevelCheck,
   SiteLanguages
 } from "@/lib/api/types";
@@ -253,6 +254,14 @@ export async function copyWithReprint(tenantId: string, siteUrl: string): Promis
   }, ["/stores"]);
 }
 
+/** Takes a backup of a live store now. */
+export async function createBackup(tenantId: string): Promise<ActionResult> {
+  return run(async () => {
+    await getAdminApi().createBackup(uuid(tenantId, "store"));
+    return undefined;
+  }, ["/stores", "/backups", "/"]);
+}
+
 /** Rolls a live store back to one of its backups; with takeBackup, its current state is backed up first. */
 export async function restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<ActionResult> {
   return run(async () => {
@@ -306,6 +315,16 @@ export async function setTenantLanguages(tenantId: string, on: boolean, language
 /** A one-time link that opens the store's wp-admin signed in. Owners and admins (run refuses members). */
 export async function wordPressLogin(tenantId: string): Promise<ActionResult<WordPressLogin>> {
   return run(() => getAdminApi().wordPressLogin(uuid(tenantId, "store")), []);
+}
+
+/** The store's newest copy to download, with a fresh link when it is ready. */
+export async function siteDownloadStatus(tenantId: string): Promise<ActionResult<SiteDownload | null>> {
+  return run(() => getAdminApi().siteDownload(uuid(tenantId, "store")), []);
+}
+
+/** Starts a copy of the whole store to download (or gives the one being made or just made). */
+export async function startSiteDownload(tenantId: string): Promise<ActionResult<SiteDownload>> {
+  return run(() => getAdminApi().startSiteDownload(uuid(tenantId, "store")), []);
 }
 
 /** Emails the store's owner their "website is ready" sign-in link. Owners and admins (run refuses members). */
@@ -583,6 +602,17 @@ export async function setHighLevelAgency(productId: string, on: boolean): Promis
   }, ["/", "/stores"]);
 }
 
+/**
+ * The clean wp-admin Dashboard home on a storefront's stores, on or off. The storefront's own team may change it; the
+ * API writes it to its stores without restarting them.
+ */
+export async function setCleanDashboard(productId: string, on: boolean): Promise<ActionResult<null>> {
+  return run(async () => {
+    await getAdminApi().setCleanDashboard(uuid(productId, "storefront"), on === true);
+    return null;
+  }, ["/branding"]);
+}
+
 /** Sets a storefront's store limit; null is no limit (platform admin only). */
 export async function setStoreLimit(productId: string, maxTenants: number | null): Promise<ActionResult<null>> {
   return run(async () => {
@@ -660,6 +690,56 @@ export async function declineApplication(id: string): Promise<ActionResult> {
     await getAdminApi().declineApplication(uuid(id, "application"));
     return undefined;
   }, ["/applications"]);
+}
+
+const PROSPECT_ROUTES = ["seller", "reseller", "affiliate", "chamber", "owner"] as const;
+
+/** Adds one business to the prospect board; the API reads its website in the background. Platform admin only. */
+export async function addProspectDemo(input: {
+  company: string;
+  website: string;
+  route: string;
+  siteType: string;
+  city: string;
+  label: string;
+}): Promise<ActionResult<{ added: boolean; reason?: string }>> {
+  return run(async () => {
+    await adminOnly("add prospects");
+    const route = PROSPECT_ROUTES.find((r) => r === input.route);
+    if (!route) throw new InputError("Choose how they would use AnyPress");
+    const siteType = NEW_SITE_TYPES.find((t) => t === input.siteType);
+    if (!siteType) throw new InputError("Choose a site type");
+    const optional = (value: string, what: string) => (value.trim() ? text(value, what) : undefined);
+    const { created, skipped } = await getAdminApi().addProspectDemos([
+      {
+        company: text(input.company, "Business name"),
+        website: optional(input.website, "Website"),
+        route,
+        siteType,
+        city: optional(input.city, "City"),
+        label: optional(input.label, "Group")
+      }
+    ]);
+    return created.length ? { added: true } : { added: false, reason: skipped[0]?.reason };
+  }, ["/prospects"]);
+}
+
+/** Reads a prospect's website again, for a new logo, colours or menu. Platform admin only. */
+export async function gatherProspectDemo(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("read prospects' websites");
+    await getAdminApi().gatherProspectDemo(uuid(id, "prospect"));
+    return undefined;
+  }, ["/prospects"]);
+}
+
+/** Removes a prospect and its copied images; its demo link stops working. Platform admin only. */
+export async function deleteProspectDemo(id: string): Promise<ActionResult> {
+  return run(async () => {
+    await adminOnly("remove prospects");
+    await getAdminApi().deleteProspectDemo(uuid(id, "prospect"));
+    return undefined;
+  }, ["/prospects"]);
 }
 
 async function adminOnly(what = "review applications") {
@@ -923,7 +1003,7 @@ function optional(value: unknown, what: string, max: number): string | null {
 export async function saveBranding(of: TeamOf, fields: BrandingFields): Promise<ActionResult<BrandingView>> {
   return brandChange(of, (checked) => {
     const color = optional(fields?.color, "Color", 7);
-    if (color && !HEX_COLOR.test(color)) throw new InputError("Choose a color like #1d4ed8");
+    if (color && !HEX_COLOR.test(color)) throw new InputError("Choose a color like #c8264d");
     const supportEmail = optional(fields?.supportEmail, "Support email", 254);
     if (supportEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(supportEmail)) throw new InputError("Enter a support email address");
     const shopUrl = optional(fields?.shopUrl, "Shop link", 500);

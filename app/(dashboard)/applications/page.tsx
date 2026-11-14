@@ -48,17 +48,17 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Business</TableHead>
-                <TableHead>Applicant</TableHead>
-                <TableHead>Sites in year one</TableHead>
-                <TableHead>Sells from</TableHead>
-                <TableHead>Applied</TableHead>
+                <TableHead className="max-sm:hidden">Applicant</TableHead>
+                <TableHead className="max-lg:hidden">Sites in year one</TableHead>
+                <TableHead className="max-lg:hidden">Sells from</TableHead>
+                <TableHead className="max-sm:hidden">Applied</TableHead>
                 <TableHead className="pr-4">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {applications.map((a) => (
                 <TableRow key={a.id}>
-                  <TableCell className="pl-4 font-medium">
+                  <TableCell className="pl-4 font-medium whitespace-normal">
                     <Link href={`/applications/${a.id}`} className="hover:underline">
                       {a.business}
                     </Link>
@@ -67,14 +67,18 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
                         HighLevel
                       </Badge>
                     )}
+                    {/* On a phone the applicant and date ride under the business instead of in their own columns. */}
+                    <span className="text-muted-foreground block text-xs font-normal sm:hidden">
+                      {a.name} · {formatAgo(a.dateCreated)}
+                    </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-sm:hidden">
                     <div>{a.name}</div>
                     <div className="text-muted-foreground text-xs">{a.email}</div>
                   </TableCell>
-                  <TableCell>{a.expectedSites}</TableCell>
-                  <TableCell>{a.wantsStorefront ? "Ready-made storefront" : "Their own site"}</TableCell>
-                  <TableCell title={a.dateCreated}>{formatAgo(a.dateCreated)}</TableCell>
+                  <TableCell className="max-lg:hidden">{a.expectedSites}</TableCell>
+                  <TableCell className="max-lg:hidden">{a.wantsStorefront ? "Ready-made storefront" : "Their own site"}</TableCell>
+                  <TableCell className="max-sm:hidden" title={a.dateCreated}>{formatAgo(a.dateCreated)}</TableCell>
                   <TableCell className="pr-4">
                     <ApplicationStatusBadge status={a.status} />
                   </TableCell>

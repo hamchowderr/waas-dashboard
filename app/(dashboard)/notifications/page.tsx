@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { BellIcon } from "lucide-react";
+import { BellIcon, InboxIcon } from "lucide-react";
 
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { EmptyState } from "@/components/admin/empty-state";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { AlertsToggle } from "@/components/shell/alerts-toggle";
 import { NotificationRow } from "@/components/shell/notification-bell";
+import { MarkAllRead } from "./mark-all-read";
 
 export const metadata: Metadata = { title: "Notifications" };
 
@@ -26,8 +27,11 @@ export default async function NotificationsPage() {
       <PageHeader title="Notifications" description="What happened to your stores and versions in the last 30 days, and alerts on this device." />
       <Card>
         <CardHeader>
-          <CardTitle>Phone and Computer Alerts</CardTitle>
-          <CardDescription>Turn this on in each browser or phone you want alerts on. Opening the bell marks notifications read.</CardDescription>
+          <CardIcon>
+            <BellIcon />
+          </CardIcon>
+          <CardTitle>Phone and computer alerts</CardTitle>
+          <CardDescription>Turn this on in each browser or phone you want alerts on.</CardDescription>
         </CardHeader>
         <CardContent>
           <AlertsToggle variant="card" />
@@ -35,15 +39,29 @@ export default async function NotificationsPage() {
       </Card>
       <Card className="gap-0 overflow-hidden py-0">
         {list.items.length === 0 ? (
-          <EmptyState icon={BellIcon} title="Nothing yet">
-            When a store is ready, goes live or a job fails, it shows up here.
+          <EmptyState icon={BellIcon} title="No notifications in the last 30 days">
+            When a store is ready, goes live or a task fails, it shows up here.
           </EmptyState>
         ) : (
-          <ul className="divide-y">
+          <>
+            <CardHeader className="border-b py-(--card-spacing)">
+              <CardIcon>
+                <InboxIcon />
+              </CardIcon>
+              <CardTitle>Recent</CardTitle>
+              <CardDescription>{list.unread > 0 ? `${list.unread} new` : "All read"}</CardDescription>
+              {list.unread > 0 && (
+                <CardAction>
+                  <MarkAllRead />
+                </CardAction>
+              )}
+            </CardHeader>
+            <ul className="divide-y">
             {list.items.map((n) => (
               <NotificationRow key={n.id} n={n} showStorefront={!!viewer.isAdmin} />
             ))}
-          </ul>
+            </ul>
+          </>
         )}
       </Card>
     </div>

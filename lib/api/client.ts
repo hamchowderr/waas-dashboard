@@ -13,6 +13,8 @@ import type {
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
+  ProspectDemo,
+  NewProspectDemo,
   AddedStorefront,
   AddStorefrontInput,
   NewSeller,
@@ -81,7 +83,8 @@ import type {
   WebhookEndpointInput,
   WebhookFilter,
   WebhookSecret,
-  WordPressLogin
+  WordPressLogin,
+  SiteDownload
 } from "./types";
 import { FixtureAdminApi } from "./fixtures";
 import { fixtureScope, getViewer, sessionHeaders } from "@/auth";
@@ -138,6 +141,8 @@ export interface AdminApi {
    * now is backed up first so the rollback can be undone.
    */
   restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void>;
+  /** Takes a backup of a live store now. */
+  createBackup(tenantId: string): Promise<void>;
   /** Takes a store offline; with takeBackup it is backed up first. Platform admin only. */
   suspendStore(tenantId: string, takeBackup: boolean): Promise<void>;
   /** Brings a suspended store back online. Platform admin only. */
@@ -154,6 +159,10 @@ export interface AdminApi {
   checkHighLevel(tenantId: string): Promise<HighLevelCheck>;
   /** A one-time link that opens the store's wp-admin signed in. Owners and admins only. */
   wordPressLogin(tenantId: string): Promise<WordPressLogin>;
+  /** The store's newest copy to download from the last 7 days, or null. */
+  siteDownload(tenantId: string): Promise<SiteDownload | null>;
+  /** Starts a copy of the whole store to download, or gives the one being made or just made. */
+  startSiteDownload(tenantId: string): Promise<SiteDownload>;
   /** The same for the product's ready-made storefront. */
   storefrontWordPressLogin(productId: string): Promise<WordPressLogin>;
   /**
@@ -255,6 +264,8 @@ export interface AdminApi {
   /** Sets the most stores a storefront may have; null is no limit. Lowering it deletes nothing. Platform admin only. */
   setStoreLimit(productId: string, maxTenants: number | null): Promise<void>;
   setHighLevelAgency(productId: string, on: boolean): Promise<void>;
+  /** Turns the clean wp-admin Dashboard home on or off on a storefront's stores. Its seller or reseller may too. */
+  setCleanDashboard(productId: string, on: boolean): Promise<void>;
   /** Deletes a storefront with no stores and no ready-made storefront, with its keys. Platform admin only. */
   deleteStorefront(productId: string): Promise<void>;
   /** The product's ready-made storefront, or null. */
@@ -278,6 +289,15 @@ export interface AdminApi {
   approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication>;
   /** Declines and emails the applicant. */
   declineApplication(id: string): Promise<void>;
+
+  // Branded demos for businesses AnyPress may contact (docs/prospect-demos.md in the API). Platform admin only.
+  prospectDemos(): Promise<ProspectDemo[]>;
+  /** Adds businesses and reads their websites in the background; a website already on the list is skipped. */
+  addProspectDemos(prospects: NewProspectDemo[]): Promise<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }>;
+  /** Reads the website again. */
+  gatherProspectDemo(id: string): Promise<ProspectDemo>;
+  /** Removes the business and its copied images; its demo link stops working. */
+  deleteProspectDemo(id: string): Promise<void>;
 
   // Reseller accounts: storefronts grouped under one partner. Platform admin only.
   resellers(): Promise<Reseller[]>;

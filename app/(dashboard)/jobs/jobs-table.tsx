@@ -22,11 +22,11 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import type { Job } from "@/lib/api/types";
-import { formatAgo, formatDateTime, jobTypeLabel, jobTypeLabels } from "@/lib/format";
+import { formatAgo, formatDateTime, jobTypeLabel, jobTypeLabels, plainError } from "@/lib/format";
 import { useCanChange } from "@/components/auth/can-change";
 
 const columnLabels: Record<string, string> = {
-  type: "Job",
+  type: "Task",
   targetName: "Store or version",
   productName: "Storefront",
   attempts: "Attempts",
@@ -56,7 +56,7 @@ function readField(row: Job, path: string): unknown {
 const columns: ColumnDef<Job>[] = [
   {
     accessorKey: "type",
-    header: "Job",
+    header: "Task",
     cell: ({ row }) => (
       <div className="min-w-0">
         <div className="font-medium">{jobTypeLabel(row.original.type)}</div>
@@ -97,7 +97,7 @@ const columns: ColumnDef<Job>[] = [
     cell: ({ row }) => (
       // Two lines here; a click on the row opens the whole error.
       <span className="text-muted-foreground line-clamp-2 block max-w-80 whitespace-normal break-words">
-        {row.original.error ?? "—"}
+        {plainError(row.original.error) ?? "—"}
       </span>
     )
   },
@@ -110,12 +110,12 @@ const columns: ColumnDef<Job>[] = [
 
 /** Retries failed jobs and reports the outcome; true when every one was accepted. */
 async function retry(ids: string[]): Promise<boolean> {
-  return report(await retryFailures(ids), (n) => (n === 1 ? "Job queued again" : `${n} jobs queued again`));
+  return report(await retryFailures(ids), (n) => (n === 1 ? "Task queued again" : `${n} tasks queued again`));
 }
 
 /** Dismisses failed jobs and reports the outcome; true when every one was accepted. */
 async function dismiss(ids: string[]): Promise<boolean> {
-  return report(await dismissFailures(ids), (n) => (n === 1 ? "Failed job dismissed" : `${n} failed jobs dismissed`));
+  return report(await dismissFailures(ids), (n) => (n === 1 ? "Failed task dismissed" : `${n} failed tasks dismissed`));
 }
 
 function report(result: Awaited<ReturnType<typeof retryFailures>>, success: (n: number) => string): boolean {
@@ -137,7 +137,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
   const facets: TableFacet[] = [
     {
       id: "type",
-      label: "Job type",
+      label: "Task type",
       options: Object.entries(jobTypeLabels).map(([value, label]) => ({ value, label })),
       icon: <ListChecksIcon />
     },
@@ -158,7 +158,7 @@ export function JobsTable({ jobs, initialTab }: { jobs: Job[]; initialTab: strin
         columns={columns}
         columnLabels={columnLabels}
         getRowId={(j) => j.id}
-        searchPlaceholder="Job, store, error..."
+        searchPlaceholder="Task, store, error..."
       facets={facets}
         readField={readField}
         tabs={tabs}

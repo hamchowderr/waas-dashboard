@@ -57,6 +57,7 @@ export default async function SellGroupPage({ params, searchParams }: { params: 
         demos={demosFor(playbook.id)}
         callScript={callScript?.body ?? ""}
         context={kit.context}
+        wholesalePercent={kit.wholesalePercent}
       />
     </div>
   );

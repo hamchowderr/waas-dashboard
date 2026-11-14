@@ -39,11 +39,13 @@ export default async function ResellersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Reseller</TableHead>
-                <TableHead>Storefronts</TableHead>
-                <TableHead>Stores</TableHead>
-                <TableHead className="w-44">Setup</TableHead>
-                <TableHead>Wholesale</TableHead>
-                <TableHead className="pr-4 text-right">Store-days in {month.label}</TableHead>
+                <TableHead className="max-sm:hidden">Storefronts</TableHead>
+                <TableHead className="max-sm:hidden">Stores</TableHead>
+                <TableHead className="w-44 max-md:hidden">Setup</TableHead>
+                <TableHead className="max-sm:hidden">Wholesale</TableHead>
+                <TableHead className="pr-4 text-right">
+                  Store-days<span className="max-sm:hidden"> in {month.label}</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -53,17 +55,21 @@ export default async function ResellersPage() {
                     <Link href={`/resellers/${r.id}`} className="hover:underline">
                       {r.name}
                     </Link>
+                    {/* On a phone the counts ride under the name instead of in their own columns. */}
+                    <span className="text-muted-foreground block text-xs font-normal sm:hidden">
+                      {r.products.length} storefronts · {r.liveTenantCount} live stores · {r.wholesalePercent}% off
+                    </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-sm:hidden">
                     {r.products.length} <span className="text-muted-foreground text-xs">({limit(r.maxProducts)})</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-sm:hidden">
                     {r.liveTenantCount} live of {r.tenantCount} <span className="text-muted-foreground text-xs">({limit(r.maxTenants)})</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-md:hidden">
                     <ResellerSetupCell setup={setupOf.get(r.id)} />
                   </TableCell>
-                  <TableCell>{r.wholesalePercent}% off</TableCell>
+                  <TableCell className="max-sm:hidden">{r.wholesalePercent}% off</TableCell>
                   <TableCell className="pr-4 text-right tabular-nums">{formatDays(totalDays(usage[i]!.storeDays))}</TableCell>
                 </TableRow>
               ))}

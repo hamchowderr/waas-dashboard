@@ -89,7 +89,7 @@ export function ChangeAddress({ tenantId, mainDomain }: { tenantId: string; main
               {confirming && (
                 <p
                   role="alert"
-                  className="rounded-md border border-orange-400 bg-orange-50 p-2.5 text-sm text-orange-800 dark:bg-orange-900/70 dark:text-white/80">
+                  className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-2.5 text-sm text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
                   <span className="font-medium">Are you sure?</span> The site won&apos;t load at {setup.domainName} until
                   these records are in place. Move now only if you have just added them and the check hasn&apos;t caught
                   up yet.

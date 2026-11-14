@@ -63,7 +63,7 @@ export function useStartTour() {
 export function TakeTourButton() {
   const start = useStartTour();
   return (
-    <Button variant="outline" size="sm" onClick={start}>
+    <Button variant="ghost" size="sm" onClick={start}>
       <CompassIcon />
       Take the tour
     </Button>

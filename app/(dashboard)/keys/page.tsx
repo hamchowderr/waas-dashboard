@@ -23,7 +23,8 @@ export default async function KeysPage({
   const api = getAdminApi();
   const products = await api.products();
   // A customer has one storefront, so their pages open on it.
-  const isAdmin = (await getViewer())?.isAdmin === true;
+  const viewer = await getViewer();
+  const isAdmin = viewer?.isAdmin === true;
   const onlyOne = !isAdmin && products.length === 1 ? products[0] : undefined;
   const product = products.find((p) => p.id === productId) ?? onlyOne;
 
@@ -49,7 +50,7 @@ export default async function KeysPage({
     <div className="space-y-4 lg:space-y-6">
       <PageHeader
         title="API Keys"
-        description={`${product.name}: the keys its storefront and integrations sign in to the API with.`}>
+        description={`The keys ${product.name}'s storefront and integrations sign in to the API with.`}>
         {/* Renaming, the store limit and new sellers are on the Storefronts page. */}
         {isAdmin && (
           <Button asChild variant="outline" size="sm">

@@ -39,6 +39,8 @@ import {
   type ApprovedApplication,
   type ApproveApplicationInput,
   type SellerApplication,
+  type ProspectDemo,
+  type NewProspectDemo,
   type AddedStorefront,
   type AddStorefrontInput,
   type NewSeller,
@@ -98,6 +100,7 @@ import {
   type WebhookFilter,
   type WebhookSecret,
   type WordPressLogin,
+  type SiteDownload,
   type Notification,
   type NotificationList,
   type PushSettings,
@@ -154,146 +157,72 @@ const sampleMarks: Record<string, string> = {
 };
 
 /** Storefronts marked as a HighLevel agency's. */
+/** Every plugin the site types below turn on, with what it is for. */
+const SITE_PLUGIN_INFO = {
+  fluentSecurity: { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
+  fluentSmtp: { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
+  fluentCrm: { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
+  fluentform: { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
+  fluentPlayer: { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
+  easyCodeManager: { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
+  seoByRankMath: { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
+  automatorwp: { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
+  wpFusionLite: { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
+  fluentToolkit: { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "One dashboard to install and update the Fluent plugins." },
+  anypressBlocks: { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." },
+  fluentBooking: { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
+  fluentCart: { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
+  fluentSupport: { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
+  fluentAffiliate: { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
+  fluentCommunity: { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
+  wpFusionLiteHighLevel: { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Sends new users and sign-ups to your HighLevel sub-account as contacts. Connected for you." },
+  leadconnector: { file: "leadconnector/leadconnector.php", name: "LeadConnector", about: "HighLevel's own plugin: your HighLevel forms, chat widget and calendars on this site." }
+} satisfies Record<string, SitePlugin>;
+
+const sitePlugins = (...keys: (keyof typeof SITE_PLUGIN_INFO)[]): SitePlugin[] => keys.map((k) => SITE_PLUGIN_INFO[k]);
+
 /** The store template's site types (its roles.json): what each turns on and what each plugin is for. */
 const SAMPLE_SITE_PLUGINS: Record<string, { title: string; ownPlugins: boolean; plugins: SitePlugin[] }> = {
   website: {
     title: "Website",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentPlayer", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   bookings: {
     title: "Bookings",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentBooking", "fluentCart", "fluentPlayer", "fluentSupport", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   "online-store": {
     title: "Online store",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
-      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentCart", "fluentPlayer", "fluentAffiliate", "fluentSupport", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   community: {
     title: "Community & courses",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentCart", "fluentCommunity", "fluentPlayer", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   everything: {
     title: "Everything",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
-      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentBooking", "fluentCart", "fluentCommunity", "fluentPlayer", "fluentAffiliate", "fluentSupport", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   store: {
     title: "Everything (stores bought before site types)",
     ownPlugins: false,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-smtp/fluent-smtp.php", name: "FluentSMTP", about: "Email delivery: makes sure the site's emails (receipts, password resets, forms) arrive. Set up for you." },
-      { file: "fluent-crm/fluent-crm.php", name: "FluentCRM", about: "Contacts and email marketing: your customers and sign-ups in one list, with newsletters and automations." },
-      { file: "fluentform/fluentform.php", name: "Fluent Forms", about: "Forms: contact, quote, sign-up and survey forms, with entries kept on the site." },
-      { file: "fluent-booking/fluent-booking.php", name: "FluentBooking", about: "Online booking: let visitors book calls and appointments in your calendar." },
-      { file: "fluent-cart/fluent-cart.php", name: "FluentCart", about: "Your shop: products, checkout, payments, orders and subscriptions." },
-      { file: "fluent-community/fluent-community.php", name: "FluentCommunity", about: "Members' community and courses: spaces, posts, lessons and member profiles." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "fluent-affiliate/fluent-affiliate.php", name: "FluentAffiliate", about: "Affiliates: people who send you customers get a link and earn commission." },
-      { file: "fluent-support/fluent-support.php", name: "Fluent Support", about: "Help desk: customer questions come in as tickets you answer from the site." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Keeps your contacts in step: new users and buyers go to FluentCRM with tags." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentSmtp", "fluentCrm", "fluentform", "fluentBooking", "fluentCart", "fluentCommunity", "fluentPlayer", "fluentAffiliate", "fluentSupport", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLite", "fluentToolkit", "anypressBlocks")
   },
   highlevel: {
     title: "HighLevel site",
     ownPlugins: true,
-    plugins: [
-      { file: "fluent-security/fluent-security.php", name: "FluentAuth", about: "Login protection: blocks password guessing and adds two-step sign-in." },
-      { file: "fluent-player/fluent-player.php", name: "FluentPlayer", about: "Video and audio player for pages and posts." },
-      { file: "easy-code-manager/easy-code-manager.php", name: "FluentSnippets", about: "Code snippets and shortcodes: add PHP, CSS, JavaScript or a shortcode without another plugin." },
-      { file: "seo-by-rank-math/rank-math.php", name: "Rank Math SEO", about: "SEO: page titles, descriptions, sitemaps and search previews." },
-      { file: "automatorwp/automatorwp.php", name: "AutomatorWP", about: "Automations between WordPress and its plugins: when this happens, do that." },
-      { file: "wp-fusion-lite/wp-fusion-lite.php", name: "WP Fusion Lite", about: "Sends new users and sign-ups to your HighLevel sub-account as contacts. Connected for you." },
-      { file: "leadconnector/leadconnector.php", name: "LeadConnector", about: "HighLevel's own plugin: your HighLevel forms, chat widget and calendars on this site." },
-      { file: "fluent-toolkit/fluent-toolkit.php", name: "FluentHub", about: "FluentHub: one dashboard to install and update the Fluent plugins." },
-      { file: "anypress-blocks/anypress-blocks.php", name: "AnyPress Blocks", about: "Extra blocks for pages: carousels, popups, maps, countdowns, counters, before-and-after images and more." }
-    ]
+    plugins: sitePlugins("fluentSecurity", "fluentPlayer", "easyCodeManager", "seoByRankMath", "automatorwp", "wpFusionLiteHighLevel", "leadconnector", "fluentToolkit", "anypressBlocks")
   }
 };
 
 const highlevelAgencies = new Set<string>();
+/** Storefronts whose stores keep WordPress's own Dashboard boxes (the clean home turned off). */
+const plainDashboards = new Set<string>();
 
 /** Store limits by storefront; a storefront missing here has no limit. */
 const limits = new Map<string, number | null>([
@@ -340,7 +269,7 @@ const versions: FixtureVersion[] = [
 ].map((v, i) => ({
   ...v,
   statusCode: StatusCode.Done,
-  domain: `${v.name.replace(/\./g, "-")}-${v.id.slice(-8)}.versions.waas.example`,
+  domain: `${v.name.replace(/\./g, "-")}-${v.id.slice(-8)}.versions.anypress.example`,
   dateCreated: iso(NOW - (90 - i * 20) * DAY),
   dateChanged: iso(NOW - (60 - i * 15) * DAY)
 }));
@@ -411,6 +340,49 @@ const storefronts = new Map<string, ReadyStorefront>([
   [uuid(2, 1), { id: uuid(1, 16), name: "Summit Sites", domain: "summit-sites.anypress.site", statusCode: StatusCode.Done, statusName: "Done" }]
 ]);
 
+/** Businesses AnyPress may contact, each with a demo made from its own website. */
+const prospectBrand = (name: string, primary: string, tagline: string, city: string, items: string[]): ProspectDemo["brand"] => ({
+  source: `https://${name.toLowerCase().replace(/[^a-z]+/g, "-")}.anypress.example/`,
+  name,
+  tagline,
+  about: null,
+  phone: null,
+  city,
+  address: null,
+  hours: [],
+  colors: { primary },
+  fonts: { heading: null, body: null },
+  colorScheme: "light",
+  logo: null,
+  photos: [],
+  items: items.map((item) => ({ name: item, description: null, price: null, image: null }))
+});
+const prospects: ProspectDemo[] = [
+  {
+    id: uuid(1, 17), code: "p_SampleHarborTea01", company: "Harbor Tea House", website: "https://harbor-tea.anypress.example/",
+    route: "affiliate", siteType: "online-store", kit: "parcel", label: "Point of sale", city: "Long Beach", priority: 1, notes: "Met at the farmers market",
+    statusCode: 1, error: null, creditsUsed: 5, brand: { ...prospectBrand("Harbor Tea House", "#2f6f62", "Loose-leaf tea, brewed slowly", "Long Beach", ["Jasmine Green", "Oolong Flight", "Chai Latte"])!, site: { platform: "Shopify", features: ["shop", "blog"] } },
+    createdAt: iso(NOW - 2 * DAY), gatheredAt: iso(NOW - 2 * DAY + 60_000)
+  },
+  {
+    id: uuid(2, 17), code: "p_SampleChamber0002", company: "Valley Business Chamber", website: "https://valley-chamber.anypress.example/",
+    route: "chamber", siteType: "everything", kit: "commons", label: "Chamber", city: "Fresno", priority: 2, notes: null,
+    statusCode: 1, error: null, creditsUsed: 5, brand: { ...prospectBrand("Valley Business Chamber", "#1d4e89", "Local business, stronger together", "Fresno", ["Leads Lunch", "Ribbon Cuttings"])!, site: { platform: "WordPress", features: ["events", "members"] } },
+    createdAt: iso(NOW - DAY), gatheredAt: iso(NOW - DAY + 90_000)
+  },
+  {
+    id: uuid(3, 17), code: "p_SampleStudio00003", company: "Northlight Web Studio", website: "https://northlight.anypress.example/",
+    route: "seller", siteType: "website", kit: null, label: "Web studio", city: "Sacramento", priority: 3, notes: null,
+    statusCode: 0, error: null, creditsUsed: 0, brand: null, createdAt: iso(NOW - HOUR / 4), gatheredAt: null
+  },
+  {
+    id: uuid(4, 17), code: "p_SampleBakery00004", company: "Rise Bakery", website: "https://rise-bakery.anypress.example/",
+    route: "owner", siteType: "online-store", kit: null, label: null, city: "Oakland", priority: null, notes: null,
+    statusCode: 2, error: "rise-bakery.anypress.example couldn't be read: Request failed with status 403", creditsUsed: 0, brand: null,
+    createdAt: iso(NOW - 3 * DAY), gatheredAt: iso(NOW - 3 * DAY + 30_000)
+  }
+];
+
 /** Applications to sell, as the marketing site's form sends them. */
 const applications: SellerApplication[] = [
   {
@@ -424,6 +396,7 @@ const applications: SellerApplication[] = [
     wantsStorefront: false,
     storefrontSubdomain: null,
     highLevelAgency: true,
+    siteTypes: ["website", "bookings"], siteTypesOther: null, audiences: ["freelancers"], audiencesOther: "Dentists and vets",
     status: "pending",
     productId: null,
     resellerId: null,
@@ -441,6 +414,7 @@ const applications: SellerApplication[] = [
     wantsStorefront: true,
     storefrontSubdomain: "eastside-chamber",
     highLevelAgency: false,
+    siteTypes: null, siteTypesOther: null, audiences: ["churches", "associations"], audiencesOther: null,
     status: "pending",
     productId: null,
     resellerId: null,
@@ -458,6 +432,7 @@ const applications: SellerApplication[] = [
     wantsStorefront: false,
     storefrontSubdomain: null,
     highLevelAgency: false,
+    siteTypes: ["online-store"], siteTypesOther: "Restaurant menus", audiences: [], audiencesOther: null,
     status: "declined",
     productId: null,
     resellerId: null,
@@ -547,6 +522,29 @@ const seeds: TenantSeed[] = [
 
 /** When sample stores' owners were sent the "website is ready" email from the dashboard. */
 const ownerNotified = new Map<string, { at: string; to: string }>();
+/** Sample "Download site" copies, by store. */
+const siteDownloads = new Map<string, SiteDownload>();
+
+/** A sample copy is made 4 seconds after it was asked for. */
+const sampleCopyFinished = (copy: SiteDownload) => copy.statusCode === StatusCode.Pending && Date.now() - Date.parse(copy.dateCreated) > 4000;
+
+/** As the API: a second press while one is made, or within 10 minutes of one, gives that one. */
+const sampleCopyReused = (copy: SiteDownload) => copy.statusCode === StatusCode.Pending || Date.now() - Date.parse(copy.dateCreated) < 10 * 60_000;
+
+function newSampleCopy(name: string): SiteDownload {
+  const now = new Date();
+  return {
+    id: crypto.randomUUID(),
+    statusCode: StatusCode.Pending,
+    statusName: "Pending",
+    sizeBytes: null,
+    dateCreated: now.toISOString(),
+    dateDone: null,
+    expiresAt: new Date(now.getTime() + 7 * 86_400_000).toISOString(),
+    fileName: `${name}-${now.toISOString().slice(0, 10)}.zip`,
+    url: null
+  };
+}
 
 type FixtureTenant = Omit<Tenant, "progress"> & {
   /** A job the sample store is running, shown as moving through its steps (sampleProgress). */
@@ -735,7 +733,7 @@ const tenants: FixtureTenant[] = seeds.map((seed, i) => {
   const version = versions[i % 5 === 4 ? 2 : i % 4 === 1 ? 1 : 0];
   const product = products.find((p) => p.id === version.productId)!;
   const id = uuid(i + 1, 3);
-  const base = `t-${id.slice(-8)}.stores.waas.example`;
+  const base = `t-${id.slice(-8)}.stores.anypress.example`;
   const domains = [
     { domainName: base, isMain: !seed.custom, isBase: true },
     ...(seed.custom ? [{ domainName: seed.custom, isMain: true, isBase: false }] : []),
@@ -982,7 +980,7 @@ const webhooks: FixtureWebhook[] = [
     apiKeyId: uuid(1, 9)
   },
   {
-    url: "https://alerts.example.net/hooks/waas",
+    url: "https://alerts.example.net/hooks/anypress",
     description: "Failure alerts",
     eventTypes: ["tenant.failed", "tenant.backup_failed", "version.failed"],
     enabled: true,
@@ -1164,7 +1162,7 @@ const setupProgress: { created: number; done: Record<string, [daysAgo: number, d
   },
   {
     created: 40,
-    site: "summitsites-shop.stores.waas.example",
+    site: "summitsites-shop.stores.anypress.example",
     done: {
       approved: [40, "Approved"],
       "shop-connected": [1, "AnyPress Host last signed in yesterday"],
@@ -1329,7 +1327,7 @@ function sampleNotifications(): Notification[] {
   });
   const rows = [
     entry(1, "tenant.ready", "success", `${store(0).name} is ready`, 4, store(0)),
-    entry(2, "tenant.failed", "error", `A job on ${store(3).name} failed`, 38, store(3)),
+    entry(2, "tenant.failed", "error", `A task on ${store(3).name} failed`, 38, store(3)),
     entry(3, "tenant.live", "success", `${store(1).name} is live`, 95, store(1)),
     entry(4, "tenant.backup_failed", "error", `A backup of ${store(5).name} failed`, 60 * 7, store(5)),
     entry(5, "tenant.ready", "success", `${store(2).name} is ready`, 60 * 26, store(2)),
@@ -1400,7 +1398,11 @@ export class FixtureAdminApi implements AdminApi {
       jobs: [...jobs, ...finishedJobs].filter((j) => j.tenantId === id),
       ...(tenant.moveIn && { snapshotName: "Moved in", wpOptionNames: [], phpConstantNames: [] }),
       keepsOwnCode: !!tenant.moveIn,
-      moveIn: tenant.moveIn ?? null
+      moveIn: tenant.moveIn ?? null,
+      // Sample care on every third store, so the store page shows it.
+      care: tenants.indexOf(tenant) % 3 === 0 && !tenant.moveIn
+        ? { package: "Care Plus", minutes: 120, used: 40, left: 80, extra: 60, answer: "1 business day" }
+        : null
     };
   }
 
@@ -1472,7 +1474,8 @@ export class FixtureAdminApi implements AdminApi {
       productionVersionId: versions.find((v) => v.productId === p.id && v.isProduction)?.id ?? null,
       resellerId: resellerOf.get(p.id) ?? null,
       resellerName: resellers.find((r) => r.id === resellerOf.get(p.id))?.name ?? null,
-      highlevelAgency: highlevelAgencies.has(p.id)
+      highlevelAgency: highlevelAgencies.has(p.id),
+      cleanDashboard: !plainDashboards.has(p.id)
     }));
   }
 
@@ -1517,7 +1520,7 @@ export class FixtureAdminApi implements AdminApi {
     const name = rawName.trim();
     if (!name) throw new FixtureError(400, "name is required");
     const id = uuid(500 + tenants.length, 3);
-    const base = `t-${id.slice(-8)}.stores.waas.example`;
+    const base = `t-${id.slice(-8)}.stores.anypress.example`;
     const now = new Date().toISOString();
     tenants.push({
       id,
@@ -1584,6 +1587,28 @@ export class FixtureAdminApi implements AdminApi {
     return { tenantId, externalId: tenantId, importCode: `AP1.${code}`, pluginUrl: "https://api.example/imports/plugin.zip" };
   }
 
+  async createBackup(tenantId: string): Promise<void> {
+    this.addBackup(this.changeableTenant(tenantId), "manual", new Date().toISOString());
+  }
+
+  /** A finished backup of a store, newest first like the API lists them. */
+  private addBackup(tenant: FixtureTenant, reason: Backup["reason"], dateCreated: string): void {
+    backups.unshift({
+      id: uuid(200 + backups.length, 4),
+      productId: tenant.productId,
+      productName: tenant.productName,
+      tenantId: tenant.id,
+      externalId: tenant.externalId,
+      tenantName: tenant.name,
+      reason,
+      sizeBytes: 200 * 1_048_576,
+      statusCode: StatusCode.Done,
+      dateCreated,
+      tenantDeletedAt: null,
+      expiresAt: null
+    });
+  }
+
   async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
     const tenant = tenants.find((t) => t.id === tenantId);
     if (!tenant) throw new FixtureError(404, `Tenant ${tenantId} not found`);
@@ -1604,22 +1629,7 @@ export class FixtureAdminApi implements AdminApi {
     const tenant = this.changeableTenant(tenantId);
     if (tenant.isSuspended) return;
     const now = new Date().toISOString();
-    if (takeBackup) {
-      backups.unshift({
-        id: uuid(200 + backups.length, 4),
-        productId: tenant.productId,
-        productName: tenant.productName,
-        tenantId,
-        externalId: tenant.externalId,
-        tenantName: tenant.name,
-        reason: "suspend",
-        sizeBytes: 200 * 1_048_576,
-        statusCode: StatusCode.Done,
-        dateCreated: now,
-        tenantDeletedAt: null,
-        expiresAt: null
-      });
-    }
+    if (takeBackup) this.addBackup(tenant, "suspend", now);
     Object.assign(tenant, { isSuspended: true, dateSuspended: now, dateChanged: now });
   }
 
@@ -1659,6 +1669,25 @@ export class FixtureAdminApi implements AdminApi {
     if (tenant.statusCode !== StatusCode.Done) throw new FixtureError(409, "This site isn't ready yet; you can log in once it is Done");
     if (tenant.isSuspended) throw new FixtureError(409, "This site is suspended; resume it to log in");
     return this.sampleLogin(tenant.mainDomain);
+  }
+
+  /** Sample data makes no real copy: it is Pending for a few seconds, then Done with a link to nowhere. */
+  async siteDownload(tenantId: string): Promise<SiteDownload | null> {
+    if (!tenants.some((t) => t.id === tenantId)) throw new FixtureError(404, `Tenant ${tenantId} not found`);
+    const made = siteDownloads.get(tenantId) ?? null;
+    if (made && sampleCopyFinished(made)) {
+      Object.assign(made, { statusCode: StatusCode.Done, statusName: "Done", sizeBytes: 48_300_000, dateDone: new Date().toISOString(), url: "#sample-download" });
+    }
+    return made;
+  }
+
+  async startSiteDownload(tenantId: string): Promise<SiteDownload> {
+    const tenant = this.changeableTenant(tenantId);
+    const last = await this.siteDownload(tenantId);
+    if (last && sampleCopyReused(last)) return last;
+    const made = newSampleCopy(tenant.mainDomain ?? tenant.externalId);
+    siteDownloads.set(tenantId, made);
+    return made;
   }
 
   /** Sample data sends no email: it only checks what the API would. */
@@ -1920,7 +1949,7 @@ export class FixtureAdminApi implements AdminApi {
       name: input.name,
       isProduction: false,
       statusCode: input.useCustomUpload ? StatusCode.Pending : StatusCode.Done,
-      domain: `${input.name.replace(/\./g, "-")}-${id.slice(-8)}.versions.waas.example`,
+      domain: `${input.name.replace(/\./g, "-")}-${id.slice(-8)}.versions.anypress.example`,
       dateCreated: new Date().toISOString(),
       dateChanged: new Date().toISOString()
     });
@@ -2285,6 +2314,12 @@ export class FixtureAdminApi implements AdminApi {
     else highlevelAgencies.delete(id);
   }
 
+  async setCleanDashboard(productId: string, on: boolean): Promise<void> {
+    const id = this.product(productId).id;
+    if (on) plainDashboards.delete(id);
+    else plainDashboards.add(id);
+  }
+
   async deleteStorefront(productId: string): Promise<void> {
     this.product(productId);
     if (tenants.some((t) => t.productId === productId)) throw new FixtureError(409, "Delete its stores first");
@@ -2444,6 +2479,48 @@ export class FixtureAdminApi implements AdminApi {
     if (!application) throw new AdminApiError(404, `/admin/applications/${id}`, `Application ${id} not found`);
     if (application.status !== "pending") throw new AdminApiError(409, `/admin/applications/${id}`, "This application was already decided");
     return application;
+  }
+
+  async prospectDemos(): Promise<ProspectDemo[]> {
+    return [...prospects].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99) || a.company.localeCompare(b.company));
+  }
+
+  async addProspectDemos(input: NewProspectDemo[]): Promise<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }> {
+    const created: ProspectDemo[] = [];
+    const skipped: { company: string; reason: string }[] = [];
+    const host = (url: string | null | undefined) => (url ? url.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").toLowerCase() : null);
+    for (const p of input) {
+      if (p.website && prospects.some((d) => host(d.website) === host(p.website))) {
+        skipped.push({ company: p.company, reason: "A prospect with this website is already on the list" });
+        continue;
+      }
+      const demo: ProspectDemo = {
+        id: crypto.randomUUID(), code: `p_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`, company: p.company,
+        website: p.website ? `https://${host(p.website)}/` : null, route: p.route, siteType: p.siteType, kit: p.kit ?? null,
+        label: p.label ?? null, city: p.city ?? null, priority: p.priority ?? null, notes: p.notes ?? null,
+        statusCode: p.website ? 0 : 2, error: p.website ? null : "No website to read", creditsUsed: 0, brand: null,
+        createdAt: new Date().toISOString(), gatheredAt: null
+      };
+      prospects.push(demo);
+      created.push(demo);
+    }
+    return { created, skipped };
+  }
+
+  async gatherProspectDemo(id: string): Promise<ProspectDemo> {
+    const demo = this.findProspect(id);
+    if (!demo.website) throw new AdminApiError(400, `/admin/prospect-demos/${id}/gather`, "This prospect has no website to read");
+    return Object.assign(demo, { statusCode: 0, error: null });
+  }
+
+  async deleteProspectDemo(id: string): Promise<void> {
+    prospects.splice(prospects.indexOf(this.findProspect(id)), 1);
+  }
+
+  private findProspect(id: string): ProspectDemo {
+    const demo = prospects.find((d) => d.id === id);
+    if (!demo) throw new AdminApiError(404, `/admin/prospect-demos/${id}`, "Prospect not found");
+    return demo;
   }
 
   private toReseller(r: FixtureReseller): Reseller {

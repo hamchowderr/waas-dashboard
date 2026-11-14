@@ -90,7 +90,7 @@ export function MailSender({
   if (!mailDomain) {
     return (
       <div className="space-y-3 text-sm">
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-pretty">
           Sends from the platform&apos;s address. With its own domain, the store&apos;s receipts and password resets come
           from no-reply at that domain.
         </p>
@@ -145,7 +145,7 @@ export function MailSender({
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>
       {mailDomain.status === "pending" && (
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-pretty">
           Add these records at the domain&apos;s DNS host. They are checked every 10 minutes; the store switches over
           on its own once they are found. Until then it sends from the platform&apos;s address.
         </p>
@@ -159,7 +159,7 @@ export function MailSender({
         </Button>
       )}
       {mailDomain.status === "pending" && connect?.conflict && (
-        <p className="rounded-md border border-orange-400 bg-orange-50 p-2.5 text-orange-800 dark:bg-orange-900/70 dark:text-white/80">
+        <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-2.5 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
           <span className="font-medium">One-click setup is off for this domain.</span> {connect.conflict}
         </p>
       )}
@@ -184,7 +184,7 @@ export function MailSender({
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground">The DNS records could not be loaded from toSend. Reload to try again.</p>
+          <p className="text-muted-foreground text-pretty">The DNS records could not be loaded from toSend. Reload to try again.</p>
         ))}
       {mailDomain.status !== "removing" && (
         <Button variant="outline" size="sm" onClick={() => setRemoving(true)}>

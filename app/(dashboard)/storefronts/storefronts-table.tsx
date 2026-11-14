@@ -43,6 +43,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { RenameStorefrontButton } from "./rename-storefront-dialog";
 import { StoreLimitButton } from "./store-limit-dialog";
 import { DeleteStorefrontButton } from "./delete-storefront-dialog";
+import { BuildStorefrontDialog } from "./build-storefront-dialog";
 import { setHighLevelAgency } from "../actions";
 
 /** One storefront as this page lists it. domain: its ready-made shop's address; null when it sells from its own site. */
@@ -96,7 +97,8 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
           size="sm"
           value={filter}
           onValueChange={(value) => value && setFilter(value as Filter)}
-          aria-label="Show">
+          aria-label="Show"
+          className="max-w-full flex-wrap justify-start">
           <ToggleGroupItem value="all" className="px-3">
             All <Count n={rows.length} />
           </ToggleGroupItem>
@@ -104,7 +106,9 @@ export function StorefrontsTable({ rows }: { rows: StorefrontRow[] }) {
             Sellers <Count n={sellers} />
           </ToggleGroupItem>
           <ToggleGroupItem value="resellers" className="px-3">
-            Resellers <Count n={rows.length - sellers} />
+            <span className="sm:hidden">Reseller-run</span>
+            <span className="max-sm:hidden">Reseller storefronts</span>
+            <Count n={rows.length - sellers} />
           </ToggleGroupItem>
           {stuck > 0 && (
             <ToggleGroupItem value="stuck" className="px-3">
@@ -160,8 +164,8 @@ function Count({ n }: { n: number }) {
 function Row({ row }: { row: StorefrontRow }) {
   const q = `?product=${encodeURIComponent(row.id)}`;
   // Which dialog the row's menu opened; the key remounts it so it starts from the saved values each time.
-  const [dialog, setDialog] = React.useState<{ kind: "rename" | "limit" | "delete"; n: number } | null>(null);
-  const control = (kind: "rename" | "limit" | "delete") => ({
+  const [dialog, setDialog] = React.useState<{ kind: "rename" | "limit" | "delete" | "build"; n: number } | null>(null);
+  const control = (kind: "rename" | "limit" | "delete" | "build") => ({
     open: dialog?.kind === kind,
     onOpenChange: (open: boolean) => setDialog(open ? { kind, n: (dialog?.n ?? 0) + 1 } : null)
   });
@@ -172,11 +176,11 @@ function Row({ row }: { row: StorefrontRow }) {
         <div className="flex items-center gap-3">
           <span
             aria-hidden
-            className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold">
+            className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
             {row.name.slice(0, 1).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <Link href={`/stores${q}`} className="block truncate font-medium hover:underline">
+            <Link href={`/stores${q}`} className="block truncate py-0.5 font-medium hover:underline">
               {row.name}
             </Link>
             {row.domain ? (
@@ -198,7 +202,7 @@ function Row({ row }: { row: StorefrontRow }) {
             {row.setup && (
               <p className="text-muted-foreground mt-0.5 text-xs lg:hidden">
                 Setup {row.setup.done} of {row.setup.total}
-                {row.setup.stuck && <span className="font-medium text-orange-700 dark:text-orange-400"> · Stuck</span>}
+                {row.setup.stuck && <span className="font-medium text-rose-700 dark:text-rose-400"> · Stuck</span>}
               </p>
             )}
           </div>
@@ -258,6 +262,11 @@ function Row({ row }: { row: StorefrontRow }) {
               <DropdownMenuItem onSelect={() => control("limit").onOpenChange(true)}>
                 <GaugeIcon /> Store limit
               </DropdownMenuItem>
+              {!row.domain && (
+                <DropdownMenuItem onSelect={() => control("build").onOpenChange(true)}>
+                  <StoreIcon /> Build a storefront
+                </DropdownMenuItem>
+              )}
               <HighLevelAgencyItem productId={row.id} on={row.highlevelAgency} />
               {row.tenantCount === 0 && (
                 <>
@@ -278,6 +287,9 @@ function Row({ row }: { row: StorefrontRow }) {
           tenantCount={row.tenantCount}
           control={control("limit")}
         />
+        {!row.domain && (
+          <BuildStorefrontDialog key={`build-${dialog?.n}`} productId={row.id} productName={row.name} control={control("build")} />
+        )}
         {row.tenantCount === 0 && <DeleteStorefrontButton productId={row.id} name={row.name} control={control("delete")} />}
       </TableCell>
     </TableRow>
@@ -324,27 +336,26 @@ function StoreCount({ row }: { row: StorefrontRow }) {
   );
 }
 
-/** Its stores, and how much of its limit they use; over the limit shows in red. */
+/**
+ * Its stores, and how much of its limit they use; over the limit shows in red. The same three lines as the Setup
+ * column (count, bar, caption), so the two bars sit level; with no limit the bar is an empty track.
+ */
 function StoreMeter({ row }: { row: StorefrontRow }) {
-  if (row.maxTenants === null) {
-    return (
-      <div className="text-sm">
-        <StoreCount row={row} />
-        <p className="text-muted-foreground text-xs">No limit</p>
-      </div>
-    );
-  }
-  const over = row.tenantCount > row.maxTenants;
-  const share = row.maxTenants === 0 ? 100 : Math.min(100, Math.round((row.tenantCount / row.maxTenants) * 100));
+  const limit = row.maxTenants;
+  const over = limit !== null && row.tenantCount > limit;
+  const share = limit === null ? 0 : limit === 0 ? 100 : Math.min(100, Math.round((row.tenantCount / limit) * 100));
+  const caption = limit === null ? "No limit" : over ? `${row.tenantCount - limit} over the limit` : `${limit - row.tenantCount} left`;
   return (
-    <div className="space-y-1.5 text-sm">
-      <div className="flex items-baseline justify-between gap-2">
-        <StoreCount row={row} />
-        {over && <span className="text-destructive text-xs font-medium">Over limit</span>}
+    <div className="text-sm">
+      <div className="space-y-1.5">
+        <div className="tabular-nums">
+          <StoreCount row={row} />
+        </div>
+        <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+          <div className={cn("h-full rounded-full", over ? "bg-destructive" : "bg-foreground/50")} style={{ width: `${share}%` }} />
+        </div>
       </div>
-      <div className="bg-muted h-1.5 overflow-hidden rounded-full">
-        <div className={cn("h-full rounded-full", over ? "bg-destructive" : "bg-primary")} style={{ width: `${share}%` }} />
-      </div>
+      <p className={cn("mt-1 truncate text-xs", over ? "text-destructive font-medium" : "text-muted-foreground")}>{caption}</p>
     </div>
   );
 }

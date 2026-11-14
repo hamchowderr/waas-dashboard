@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ALL_LINKS, NAV, linkHref, navFor } from "./nav";
+import { ALL_LINKS, NAV, accountMenuLinks, linkHref, navFor, sidebarNav } from "./nav";
 
 const link = (href: string) => ALL_LINKS.find((l) => l.href === href)!;
 
@@ -20,6 +20,13 @@ describe("navFor", () => {
   it("gives a reseller's team its Reseller Account, and none of the admin's accounts pages", () => {
     const accounts = navFor(false, true).find((g) => g.title === "Accounts");
     expect(accounts?.links.map((l) => l.title)).toEqual(["Reseller Account"]);
+  });
+});
+
+describe("account menu", () => {
+  it("puts Notifications, Team and Branding in the account menu instead of the sidebar", () => {
+    expect(accountMenuLinks(false).map((l) => l.title)).toEqual(["Notifications", "Team", "Branding"]);
+    expect(sidebarNav(false).map((g) => g.title)).not.toContain("Settings");
   });
 });
 

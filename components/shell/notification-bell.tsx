@@ -2,12 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { BellIcon, CircleAlertIcon, CircleCheckIcon, InfoIcon } from "lucide-react";
+import { BellIcon, CheckCheckIcon, CircleAlertIcon, CircleCheckIcon, InfoIcon } from "lucide-react";
 
 import { loadNotifications, readNotifications } from "@/app/(dashboard)/actions";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertsToggle } from "@/components/shell/alerts-toggle";
 import { formatAgo } from "@/lib/format";
 import type { Notification, NotificationList } from "@/lib/api/types";
@@ -52,20 +51,26 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
       if (document.visibilityState === "visible") void refresh();
     };
     document.addEventListener("visibilitychange", onVisible);
+    const onRead = () => setList((current) => current && { ...current, unread: 0, items: current.items.map((n) => ({ ...n, unread: false })) });
+    window.addEventListener(NOTIFICATIONS_READ, onRead);
     return () => {
       live = false;
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener(NOTIFICATIONS_READ, onRead);
     };
   }, []);
 
+  function markRead() {
+    if (!list || list.unread === 0) return;
+    setList({ ...list, unread: 0, items: list.items.map((n) => ({ ...n, unread: false })) });
+    void readNotifications().catch(() => undefined);
+  }
+
   function onOpenChange(next: boolean) {
     setOpen(next);
-    // Opening shows which ones are new; closing clears them.
-    if (!next && list && list.unread > 0) {
-      setList({ ...list, unread: 0, items: list.items.map((n) => ({ ...n, unread: false })) });
-      void readNotifications().catch(() => undefined);
-    }
+    // Opening shows which ones are new; closing clears them, as does Mark all as read.
+    if (!next) markRead();
   }
 
   const unread = list?.unread ?? 0;
@@ -77,25 +82,35 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
         <Button variant="ghost" size="icon" className="relative" aria-label={label} data-tour-step-id="notifications">
           <BellIcon />
           {unread > 0 && (
-            <span className="bg-foreground text-background absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-medium tabular-nums">
+            <span className="bg-primary-strong text-primary-foreground ring-card absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[0.6875rem] leading-none font-semibold tabular-nums ring-2">
               {unread > 9 ? "9+" : unread}
             </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
-        <div className="flex items-center justify-between border-b px-4 py-3">
+      {/* A column the height of the room below the bell: header, alerts and footer keep their size and
+          only the list scrolls, so a long list never runs under the alerts switch. */}
+      <PopoverContent
+        align="end"
+        className="flex max-h-[min(36rem,var(--radix-popover-content-available-height))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden p-0"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
           <p className="text-sm font-medium">Notifications</p>
-          {unread > 0 && <span className="text-muted-foreground text-xs tabular-nums">{unread} new</span>}
+          {unread > 0 && (
+            <Button variant="ghost" size="xs" onClick={markRead} className="text-primary -me-2 font-medium">
+              <CheckCheckIcon data-icon="inline-start" />
+              Mark all as read
+            </Button>
+          )}
         </div>
-        <ScrollArea className="max-h-[min(28rem,70vh)]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="notification-list">
           {error && !list ? (
             <p className="text-muted-foreground px-4 py-6 text-sm">{error}</p>
           ) : !list ? (
             <p className="text-muted-foreground px-4 py-6 text-sm">Loading…</p>
           ) : list.items.length === 0 ? (
             <p className="text-muted-foreground px-4 py-6 text-sm">
-              Nothing yet. When a store is ready, goes live or a job fails, it shows up here.
+              Nothing yet. When a store is ready, goes live or a task fails, it shows up here.
             </p>
           ) : (
             <ul className="divide-y">
@@ -104,9 +119,11 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
               ))}
             </ul>
           )}
-        </ScrollArea>
-        <AlertsToggle />
-        <div className="text-muted-foreground flex items-center justify-between gap-3 border-t px-4 py-2 text-xs">
+        </div>
+        <div className="shrink-0">
+          <AlertsToggle />
+        </div>
+        <div className="text-muted-foreground flex shrink-0 items-center justify-between gap-3 border-t px-4 py-2 text-xs">
           <span>Kept for 30 days.</span>
           <Link href="/notifications" onClick={() => onOpenChange(false)} className="text-foreground font-medium underline-offset-4 hover:underline">
             See all and alert settings
@@ -116,6 +133,9 @@ export function NotificationBell({ showStorefront = false }: { showStorefront?: 
     </Popover>
   );
 }
+
+/** Sent on the window when notifications are marked read elsewhere on the page (the Notifications page). */
+export const NOTIFICATIONS_READ = "anypress:notifications-read";
 
 export function NotificationRow({ n, showStorefront, onPick }: { n: Notification; showStorefront: boolean; onPick?: () => void }) {
   const { Icon, className } = LEVEL_ICON[n.level] ?? LEVEL_ICON.info;
@@ -130,7 +150,7 @@ export function NotificationRow({ n, showStorefront, onPick }: { n: Notification
           {showStorefront && n.productName ? ` · ${n.productName}` : ""}
         </p>
       </div>
-      {n.unread && <span className="bg-foreground mt-1.5 size-2 shrink-0 rounded-full" aria-label="New" />}
+      {n.unread && <span className="bg-primary mt-1.5 size-2 shrink-0 rounded-full" aria-label="New" />}
     </div>
   );
   return (

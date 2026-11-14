@@ -1,10 +1,11 @@
+import { StoreIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { canChange, getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { PageHeader } from "@/components/admin/page-header";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KeysManager } from "../keys/keys-manager";
 import { BillCard, InvoicesCard } from "../resellers/bill-parts";
@@ -61,6 +62,9 @@ export default async function ResellerAccountPage({ searchParams }: { searchPara
           />
           <Card>
             <CardHeader>
+              <CardIcon>
+                <StoreIcon />
+              </CardIcon>
               <CardTitle>Storefronts</CardTitle>
               <CardDescription>
                 {count > 1 ? "Switch between them at the top of the page. " : ""}Each one&apos;s live stores count toward this bill.

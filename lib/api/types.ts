@@ -144,6 +144,21 @@ export type TenantDetail = {
   keepsOwnCode: boolean;
   /** Only for a store made to move a site in. It waits for the site while startedAt is null. */
   moveIn: MoveIn | null;
+  /** The care package bought for the store on the shop, and this month's care time; null without care. */
+  care: Care | null;
+};
+
+export type Care = {
+  package: string;
+  /** Minutes of changes a month. */
+  minutes: number;
+  /** Minutes used this month. */
+  used: number;
+  left: number;
+  /** Extra minutes bought, which never expire. */
+  extra: number;
+  /** How soon requests are answered, e.g. "1 business day". */
+  answer?: string;
 };
 
 export type MoveIn = {
@@ -238,6 +253,7 @@ export type JobType =
   | "tenant.suspend"
   | "tenant.resume"
   | "tenant.backup"
+  | "tenant.download"
   | "tenant.restore"
   | "tenant.rollback"
   | "tenant.go-live";
@@ -335,6 +351,8 @@ export type ProductDetail = Product & {
   resellerName: string | null;
   /** A HighLevel agency's storefront: its new sites default to the HighLevel site type. */
   highlevelAgency: boolean;
+  /** Its stores show their own wp-admin Dashboard home instead of WordPress's default boxes. */
+  cleanDashboard: boolean;
 };
 
 /** A partner that sells stores from one or more storefronts and pays a wholesale price for each live store. */
@@ -427,7 +445,7 @@ export type Version = {
   name: string;
   isProduction: boolean;
   statusCode: StatusCode;
-  /** Where the version's shared site runs, e.g. v1-…versions.waas.example */
+  /** Where the version's shared site runs, e.g. v1-…versions.anypress.example */
   domain: string;
   dateCreated: string;
   dateChanged: string;
@@ -788,6 +806,22 @@ export type NewSeller = {
  */
 export type WordPressLogin = { url: string; oneClick: boolean; expiresAt: string | null };
 
+/**
+ * "Download site": a copy of the whole store (WordPress, its files and database, and how to restore it) as a plain
+ * WordPress zip that restores on any host. Kept 7 days; `url` works for an hour once it is Done.
+ */
+export type SiteDownload = {
+  id: string;
+  statusCode: StatusCode;
+  statusName: string;
+  sizeBytes: number | null;
+  dateCreated: string;
+  dateDone: string | null;
+  expiresAt: string;
+  fileName: string;
+  url: string | null;
+};
+
 export type ReadyStorefront = { id: string; name: string; domain: string; statusCode: StatusCode; statusName: string };
 
 /** The owner signs in to WordPress with this email; the site answers on <subdomain>.<platform domain>. */
@@ -816,6 +850,12 @@ export type SellerApplication = {
   storefrontSubdomain: string | null;
   /** They run a HighLevel agency, so they'll want the AnyPress app for their sub-accounts. */
   highLevelAgency: boolean;
+  /** The kinds of sites they sell (price list keys); null when they weren't sure, which keeps every kind. */
+  siteTypes: string[] | null;
+  siteTypesOther: string | null;
+  /** The kinds of customers they serve (their storefront's Who we help pages); empty when none fit. */
+  audiences: string[];
+  audiencesOther: string | null;
   status: ApplicationStatus;
   /** The storefront made when it was approved. */
   productId: string | null;
@@ -1012,3 +1052,53 @@ export type NotificationList = { unread: number; readUntil: string | null; items
 export type PushSettings = { enabled: boolean; publicKey: string | null };
 /** What PushManager.subscribe() gives, as JSON. */
 export type PushSubscriptionInput = { endpoint: string; keys: { p256dh: string; auth: string } };
+
+/** What a prospect demo shows: a client's site (seller), one of their locations (reseller), a site for their customers (affiliate), their own member site (chamber) or their own site (owner). */
+export type ProspectRoute = "seller" | "reseller" | "affiliate" | "chamber" | "owner";
+
+/** What was read from a prospect's website. Images are AnyPress's own copies; a price only where their site prints one. */
+export type ProspectBrand = {
+  source: string;
+  name: string | null;
+  tagline: string | null;
+  about: string | null;
+  phone: string | null;
+  city: string | null;
+  address: string | null;
+  hours: string[];
+  colors: Record<string, string>;
+  fonts: { heading: string | null; body: string | null };
+  /** What their website is now; missing on prospects read before it was recorded. */
+  site?: { platform: string | null; features: ("shop" | "bookings" | "events" | "members" | "blog" | "donations")[] };
+  colorScheme: "light" | "dark" | null;
+  logo: string | null;
+  photos: string[];
+  items: { name: string; description: string | null; price: string | null; image: string | null }[];
+};
+
+/** A business AnyPress may contact, with a branded demo made from its own website. Platform admin only. */
+export type ProspectDemo = {
+  id: string;
+  /** The private code in its demo link, anypress.io/try?for=<code>. */
+  code: string;
+  company: string;
+  website: string | null;
+  route: ProspectRoute;
+  siteType: string;
+  kit: string | null;
+  /** The group on the board, such as Agency. */
+  label: string | null;
+  city: string | null;
+  priority: number | null;
+  notes: string | null;
+  /** 0 reading the website, 1 ready, 2 couldn't be read (see error). */
+  statusCode: 0 | 1 | 2;
+  error: string | null;
+  creditsUsed: number;
+  brand: ProspectBrand | null;
+  createdAt: string;
+  gatheredAt: string | null;
+};
+
+export type NewProspectDemo = Pick<ProspectDemo, "company" | "route" | "siteType"> &
+  Partial<Pick<ProspectDemo, "website" | "kit" | "label" | "city" | "priority" | "notes">>;

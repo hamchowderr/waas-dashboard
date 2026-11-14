@@ -50,7 +50,7 @@ function ReportRow({ item }: { item: SiteReportItem }) {
       </div>
       <RouteBadge item={item} />
       {item.blockers.length > 0 && (
-        <div className="space-y-1 rounded-lg border border-orange-400 bg-orange-50 p-3 text-orange-800 dark:bg-orange-900/70 dark:text-white/80">
+        <div className="space-y-1 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
           <p className="flex items-center gap-1.5 font-medium">
             <AlertTriangle className="size-4 shrink-0" aria-hidden />
             Before switching

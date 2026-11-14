@@ -1,4 +1,4 @@
-import type { ApiRequest, FluentRoute, HighLevelLink, JobProgress, MoveIn, SiteReport, SiteReportArea, SiteReportItem, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
+import type { ApiRequest, Care, FluentRoute, HighLevelLink, JobProgress, MoveIn, SiteReport, SiteReportArea, SiteReportItem, WebhookDelivery, WebhookEndpoint, WebhookEndpointInfo } from "./types";
 
 /**
  * The admin API's response bodies, exactly as openapi/admin/admin-api.yaml (v0.1.0) in
@@ -137,6 +137,7 @@ export type WireTenantDetail = {
   failures: WireJobFailure[];
   keepsOwnCode?: boolean;
   moveIn?: WireMoveIn;
+  care: Care | null;
 };
 
 export type WireMoveIn = {
@@ -249,6 +250,8 @@ export type WireProduct = {
   resellerName?: string | null;
   /** A HighLevel agency's storefront: its sites default to the HighLevel site type. Absent from an older API. */
   highlevelAgency?: boolean;
+  /** Its stores show their own wp-admin Dashboard home. Absent from an older API (on). */
+  cleanDashboard?: boolean;
   dateCreated: string;
 };
 

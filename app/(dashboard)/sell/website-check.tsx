@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { CircleAlertIcon, CircleCheckIcon, CircleXIcon, FileTextIcon, SearchIcon } from "lucide-react";
+import { CircleAlertIcon, CircleCheckIcon, CircleXIcon, FileTextIcon, ScanSearchIcon, SearchIcon } from "lucide-react";
 
 import { reportEmail, type CheckStatus, type Report } from "@/lib/website-check";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "cn";
@@ -14,7 +14,7 @@ import { CopyButton } from "./kit-ui";
 
 export const STATUS_ICON: Record<CheckStatus, { icon: typeof CircleCheckIcon; className: string; label: string }> = {
   pass: { icon: CircleCheckIcon, className: "text-green-600", label: "Good" },
-  warn: { icon: CircleAlertIcon, className: "text-orange-500", label: "Could be better" },
+  warn: { icon: CircleAlertIcon, className: "text-amber-600 dark:text-amber-400", label: "Could be better" },
   fail: { icon: CircleXIcon, className: "text-rose-600", label: "Needs fixing" }
 };
 
@@ -32,7 +32,7 @@ export function ScoreRing({ score, size = 96 }: { score: number; size?: number }
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl leading-none font-bold tabular-nums">{score}</span>
-        <span className="text-muted-foreground text-[0.65rem]">of 100</span>
+        <span className="text-muted-foreground text-xs">of 100</span>
       </div>
     </div>
   );
@@ -81,6 +81,9 @@ export function WebsiteCheck({
     <div className="space-y-4 lg:space-y-6">
       <Card>
         <CardHeader>
+          <CardIcon>
+            <ScanSearchIcon />
+          </CardIcon>
           <CardTitle>Check a prospect&apos;s website</CardTitle>
           <CardDescription>
             Enter their address for a free report on what&apos;s holding their site back. Send it with the email below, in your name. It&apos;s often the easiest way to start the conversation.

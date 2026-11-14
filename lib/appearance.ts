@@ -139,6 +139,7 @@ export function appearanceVars(appearance: Appearance): Record<string, string> {
       "--sidebar-primary-foreground": "var(--color-white)",
       // One flat colour on the main buttons in place of the ribbon gradient, with a matching glow.
       "--primary-gradient": `linear-gradient(${color}, ${color})`,
+      "--primary-strong": color,
       "--primary-glow": `0 6px 16px -6px color-mix(in oklab, ${color} 55%, transparent)`,
       "--sidebar-ring": color
     });

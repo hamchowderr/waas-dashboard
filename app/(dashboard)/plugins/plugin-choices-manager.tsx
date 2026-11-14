@@ -3,18 +3,21 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpCircleIcon, KeyRoundIcon, LayersIcon, PencilIcon, PlusIcon, PowerOffIcon, SearchIcon, StarIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
+import { ArrowUpCircleIcon, KeyRoundIcon, LayersIcon, PencilIcon, PlusIcon, SearchIcon, StarIcon, Trash2Icon, TriangleAlertIcon, UploadIcon, XIcon, PlugIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { DirectoryPlugin, PluginChoice, PluginChoiceInput, PluginUpload } from "@/lib/api/types";
 import { formatBytes } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { installsLabel, MAX_PLUGIN_ZIP, SITE_TYPES, siteTypesLabel, TEMPLATE_PLUGINS } from "@/lib/plugin-choices";
 import { uploadArchive } from "@/lib/upload-archive";
 import { ConfirmAction } from "@/components/admin/confirm-action";
 import { PluginIcon } from "@/components/admin/plugin-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageTabs } from "@/components/admin/page-tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, CardIcon } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,9 +28,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { checkPluginUpload, removePluginChoice, searchPlugins, setPluginChoice, startPluginUpload } from "../actions";
 import { useCanChange } from "@/components/auth/can-change";
 
-/** Below sm the header's button moves under its text instead of squeezing it. */
-const headerClass = "max-sm:has-data-[slot=card-action]:grid-cols-1";
-const actionClass = "max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start";
 
 /** What the site types dialog is choosing for. uploadId: a checked upload being added. */
 type Editing = {
@@ -42,7 +42,7 @@ type Editing = {
   licenceConstants: string[];
 } | null;
 
-export function PluginChoicesManager({ productId, choices }: { productId: string; choices: PluginChoice[] }) {
+export function PluginChoicesManager({ productId, choices, tab }: { productId: string; choices: PluginChoice[]; tab?: string }) {
   const router = useRouter();
   const canChange = useCanChange();
   const [editing, setEditing] = React.useState<Editing>(null);
@@ -64,8 +64,8 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
   return (
     <>
       {waiting > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-orange-400 bg-orange-50 px-4 py-3 text-sm text-orange-900 dark:bg-orange-900/40 dark:text-white/85">
-          <LayersIcon className="size-4 shrink-0" />
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
+          <TriangleAlertIcon className="size-4 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden />
           <p className="min-w-0 flex-1">
             {waiting === 1 ? "1 change isn't" : `${waiting} changes aren't`} in your stores yet. Build a new version and make it
             production, and your stores get them when they move to it.
@@ -76,8 +76,21 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
         </div>
       )}
 
+      {/* One tab per job, so each fits on one screen. */}
+      <PageTabs
+        label="Plugins"
+        initial={tab}
+        tabs={[
+          { value: "yours", label: "Your plugins", count: choices.length },
+          ...(canChange ? [{ value: "add", label: "Add a plugin" }] : []),
+          { value: "template", label: "Template plugins", count: TEMPLATE_PLUGINS.length }
+        ]}>
+        <TabsContent value="yours">
       <Card>
-        <CardHeader className={headerClass}>
+        <CardHeader>
+          <CardIcon>
+            <PlugIcon />
+          </CardIcon>
           <CardTitle>Your plugins</CardTitle>
           <CardDescription>
             Plugins your stores get on top of the template, and template plugins you switch off. Each one is pinned to a
@@ -92,8 +105,8 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
               {choices.map((choice) => (
                 <li key={choice.slug} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
                   <PluginIcon slug={choice.slug} name={choice.name} icon={choice.icon} className="size-10" />
-                  {/* At least 12rem, so on a phone the buttons go under it instead of squeezing it. */}
-                  <div className="min-w-48 flex-1">
+                  {/* At least 10rem, so on a phone a long row puts its buttons under it, at the right, instead of squeezing it. */}
+                  <div className="min-w-40 flex-1">
                     <p className="flex flex-wrap items-center gap-2 font-medium">
                       {choice.name}
                       {choice.version && <span className="text-muted-foreground text-xs tabular-nums">{choice.version}</span>}
@@ -111,7 +124,7 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
                     <p className="text-muted-foreground text-sm">{siteTypesLabel(choice.siteTypes)}</p>
                   </div>
                   {!choice.shared && canChange && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="ms-auto flex flex-wrap justify-end gap-2">
                       {choice.action === "add" && choice.latestVersion && choice.latestVersion !== choice.version && (
                         <Button
                           size="sm"
@@ -144,45 +157,16 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
           )}
         </CardContent>
       </Card>
+        </TabsContent>
 
       {canChange && (
+        <TabsContent value="add" className="grid items-start gap-4 lg:grid-cols-2 lg:gap-6">
         <DirectorySearch
           productId={productId}
           chosen={bySlug}
           full={added.filter((c) => !c.shared).length >= 25}
           onAdd={(plugin) => setEditing({ slug: plugin.slug, name: plugin.name, icon: plugin.icon, action: "add", siteTypes: [], licenceConstants: [] })}
         />
-      )}
-
-      <Card>
-        <CardHeader className={headerClass}>
-          <CardTitle>Template plugins</CardTitle>
-          <CardDescription>What the AnyPress template comes with. Switch off the ones your stores don&apos;t need.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="flex flex-wrap gap-2">
-            {TEMPLATE_PLUGINS.map((plugin) => {
-              const off = bySlug.get(plugin.slug)?.action === "off";
-              return (
-                <li key={plugin.slug}>
-                  <button
-                    type="button"
-                    className="hover:bg-muted/60 flex items-center gap-2 rounded-md border py-1 ps-1 pe-2.5 text-sm transition-colors disabled:cursor-default"
-                    disabled={!canChange || bySlug.has(plugin.slug)}
-                    title={off ? "Switched off" : `Switch off ${plugin.name}`}
-                    onClick={() => setEditing({ slug: plugin.slug, name: plugin.name, icon: null, action: "off", siteTypes: [], licenceConstants: [] })}>
-                    <PluginIcon slug={plugin.slug} name={plugin.name} />
-                    <span className={off ? "text-muted-foreground line-through" : undefined}>{plugin.name}</span>
-                    {!bySlug.has(plugin.slug) && <PowerOffIcon className="text-muted-foreground size-3.5" aria-hidden={true} />}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </CardContent>
-      </Card>
-
-      {canChange && (
         <PremiumUpload
           productId={productId}
           full={added.filter((c) => !c.shared).length >= 25}
@@ -201,7 +185,62 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
             });
           }}
         />
+        </TabsContent>
       )}
+
+        <TabsContent value="template">
+      <Card>
+        <CardHeader>
+          <CardIcon>
+            <LayersIcon />
+          </CardIcon>
+          <CardTitle>Template plugins</CardTitle>
+          <CardDescription>What the AnyPress template comes with. Switch off the ones your stores don&apos;t need.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {TEMPLATE_PLUGINS.map((plugin) => {
+              const off = bySlug.get(plugin.slug)?.action === "off";
+              return (
+                <li key={plugin.slug} className="bg-muted flex min-h-14 items-center gap-3 rounded-2xl py-2 ps-2 pe-3 text-sm">
+                  <PluginIcon slug={plugin.slug} name={plugin.name} className="size-9 rounded-xl" />
+                  <span className={cn("min-w-0 flex-1 font-medium", off && "text-muted-foreground")}>{plugin.name}</span>
+                  {off ? (
+                    <>
+                      <Badge variant="outline">Off</Badge>
+                      {canChange && (
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          className="pointer-coarse:h-11"
+                          aria-label={`Switch on ${plugin.name}`}
+                          onClick={() => setRemoving(bySlug.get(plugin.slug)!)}>
+                          Switch on
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    canChange &&
+                    !bySlug.has(plugin.slug) && (
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        className="pointer-coarse:h-11"
+                        aria-label={`Switch off ${plugin.name}`}
+                        onClick={() => setEditing({ slug: plugin.slug, name: plugin.name, icon: null, action: "off", siteTypes: [], licenceConstants: [] })}>
+                        Switch off
+                      </Button>
+                    )
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </CardContent>
+      </Card>
+        </TabsContent>
+      </PageTabs>
+
 
       <SiteTypesDialog
         editing={editing}
@@ -223,18 +262,18 @@ export function PluginChoicesManager({ productId, choices }: { productId: string
       <ConfirmAction
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Remove ${removing?.name ?? "plugin"}?`}
+        title={removing?.action === "off" ? `Switch ${removing.name} back on?` : `Remove ${removing?.name ?? "plugin"}?`}
         description={
           removing?.action === "off"
             ? "Your next version has it as the template does."
             : "Your next version leaves it out. Stores keep it until they move to that version."
         }
-        confirmLabel="Remove"
-        destructive
+        confirmLabel={removing?.action === "off" ? "Switch on" : "Remove"}
+        destructive={removing?.action !== "off"}
         onConfirm={async () => {
           const result = await removePluginChoice(productId, removing!.slug);
           if (result.ok) {
-            toast.success(`${removing!.name} removed`);
+            toast.success(removing!.action === "off" ? `${removing!.name} will be back on in your next version` : `${removing!.name} removed`);
             router.refresh();
           } else toast.error(result.error);
           return result.ok;
@@ -303,14 +342,17 @@ function DirectorySearch({
 
   return (
     <Card>
-      <CardHeader className={headerClass}>
+      <CardHeader>
+        <CardIcon>
+          <SearchIcon />
+        </CardIcon>
         <CardTitle>Add from wordpress.org</CardTitle>
         <CardDescription>
           Search the free plugins on wordpress.org. Plugins that clash with the hosting (caching, backups, email sending)
           can&apos;t be added.
         </CardDescription>
         {full && (
-          <CardAction className={actionClass}>
+          <CardAction>
             <Badge variant="warning">25 plugins added: the most a storefront can have</Badge>
           </CardAction>
         )}
@@ -322,7 +364,7 @@ function DirectorySearch({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => event.key === "Escape" && setQuery("")}
-            placeholder="Start typing, like forms, events or SEO"
+            placeholder="Search plugins, e.g. forms"
             aria-label="Search wordpress.org plugins"
             maxLength={100}
           />
@@ -631,13 +673,16 @@ function PremiumUpload({
 
   return (
     <Card>
-      <CardHeader className={headerClass}>
+      <CardHeader>
+        <CardIcon>
+          <UploadIcon />
+        </CardIcon>
         <CardTitle>Upload a premium plugin</CardTitle>
         <CardDescription>
           For plugins you buy elsewhere, or your own. Upload the zip from the vendor&apos;s download page (up to{" "}
           {formatBytes(MAX_PLUGIN_ZIP)}). It is checked before your stores can get it, and a new release is a new upload.
         </CardDescription>
-        <CardAction className={actionClass}>
+        <CardAction>
           <Button disabled={full || step !== null} onClick={() => input.current?.click()}>
             {step ? <Spinner /> : <UploadIcon />}
             Upload a zip

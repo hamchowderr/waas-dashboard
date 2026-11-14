@@ -1,23 +1,23 @@
 ---
 id: agencies
-title: Agencies and freelancers
+title: Web designers and freelancers
 plan: website
 finder: [marketing agency, web design, advertising agency, social media agency, SEO agency, graphic designer, consultant]
 ---
 
 ## Who
 
-Marketers, designers and consultants whose clients need websites, but who don't want to host, update or fix them. That includes marketing and ad agencies, social media managers, SEO consultants, designers, business coaches, and agencies on HighLevel who sell a sub-account to every client.
+Marketers, designers and consultants whose clients need websites, but who don't want to host, update or fix them. That includes marketing and ad firms, social media managers, SEO consultants, designers, business coaches, and HighLevel agencies who sell a sub-account to every client.
 
 The best prospects already have clients paying them monthly, and turn down website work or hand it to someone else.
 
 ## Where to find them
 
-- Marketing, social media and SEO agencies on Google Maps and LinkedIn
+- Marketing, social media and SEO businesses on Google Maps and LinkedIn
 - HighLevel Facebook groups and communities
 - Freelance platforms: designers and marketers offering "website" as an add-on
 - Local business networking groups (BNI, chamber mixers)
-- Agency owner communities and podcasts
+- Communities and podcasts for marketers and designers
 
 ## What to lead with
 
@@ -34,7 +34,7 @@ Three things to show:
 
 ## Offer
 
-Sites at {{price.website}} a month each for their clients, or a partner price for agencies bringing several clients.
+Sites at {{price.website}} a month each for their clients, or a partner price for those bringing several clients.
 
 ## Outreach
 
@@ -46,7 +46,7 @@ Hi {{prospect}},
 
 When your clients ask {{business}} for a website, what do you do today?
 
-I provide websites agencies can offer under their own name: I host, update and back them up, and you set the price to your client. It turns a job you might turn down into monthly income.
+I provide websites you can offer your clients under your own name: I host, update and back them up, and you set the price to your client. It turns a job you might turn down into monthly income.
 
 Want to see how it works?
 
@@ -99,15 +99,15 @@ I'll leave it here. If you ever want to add websites to what you sell, reply and
 
 ### Texts
 
-1. Hi {{prospect}}, {{sender}} from {{brand}}. I provide websites agencies can sell under their own name; I host and maintain them. Worth a look?
+1. Hi {{prospect}}, {{sender}} from {{brand}}. I provide websites you can sell under your own name; I host and maintain them. Worth a look?
 2. Here's an example client site: {{demo}}. Your brand on the login, your price to the client.
 3. Last note from me. If clients ever ask for sites, just reply.
 
 ### Social and direct messages
 
-**LinkedIn message:** Hi {{prospect}}, do your clients ask you for websites? I provide sites agencies sell under their own name, and I handle hosting and maintenance. Happy to share how it works.
+**LinkedIn message:** Hi {{prospect}}, do your clients ask you for websites? I provide sites you can sell under your own name, and I handle hosting and maintenance. Happy to share how it works.
 
-**HighLevel group post:** Selling sub-accounts? Each one can come with a real WordPress site, made by your workflow and connected to the sub-account. I set it up for agencies; message me.
+**HighLevel group post:** Selling sub-accounts? Each one can come with a real WordPress site, made by your workflow and connected to the sub-account. I set it up for HighLevel agencies; message me.
 
 ## Objections
 

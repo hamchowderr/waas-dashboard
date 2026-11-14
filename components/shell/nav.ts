@@ -1,5 +1,4 @@
 import {
-  ActivityIcon,
   BellIcon,
   ArchiveIcon,
   GaugeIcon,
@@ -12,8 +11,10 @@ import {
   BlocksIcon,
   PaletteIcon,
   PlugIcon,
-  ShoppingBagIcon,
+  PanelsTopLeftIcon,
+  ScrollTextIcon,
   StoreIcon,
+  TargetIcon,
   UsersIcon,
   WebhookIcon,
   type LucideIcon
@@ -38,7 +39,8 @@ export type NavLink = {
  * page is its own sidebar link, named in Title Case, so nothing hides behind tabs. ⌘K search lists every page.
  * `description` says what the page is for: the sidebar shows it on hover, and search shows it under the name.
  */
-export type NavSection = { title: string; icon: LucideIcon; links: NavLink[] };
+/** inAccountMenu: a group about the person and their account, listed in the account menu at the bottom, not the sidebar. */
+export type NavSection = { title: string; icon: LucideIcon; links: NavLink[]; inAccountMenu?: boolean };
 
 export const NAV: NavSection[] = [
   {
@@ -50,7 +52,7 @@ export const NAV: NavSection[] = [
     title: "Websites",
     icon: StoreIcon,
     links: [
-      { title: "Stores", href: "/stores", icon: StoreIcon, description: "Every customer website, its status and address" },
+      { title: "Stores", href: "/stores", icon: PanelsTopLeftIcon, description: "Every customer website, its status and address" },
       { title: "Backups", href: "/backups", icon: ArchiveIcon, description: "Saved copies of each store, to restore" },
       { title: "Activity Log", href: "/jobs", icon: ListChecksIcon, description: "Every task run on a store, and any that failed" }
     ]
@@ -67,14 +69,15 @@ export const NAV: NavSection[] = [
     title: "Selling",
     icon: MegaphoneIcon,
     links: [
-      { title: "Sales Kit", href: "/sell", icon: MegaphoneIcon, description: "Where to find customers, what to say and what to charge" }
+      { title: "Sales Kit", href: "/sell", icon: MegaphoneIcon, description: "Where to find customers, what to say and what to charge" },
+      { title: "Prospects", href: "/prospects", icon: TargetIcon, adminOnly: true, global: true, description: "Businesses to contact, each with a demo in its own brand" }
     ]
   },
   {
     title: "Accounts",
-    icon: ShoppingBagIcon,
+    icon: StoreIcon,
     links: [
-      { title: "Storefronts", href: "/storefronts", icon: ShoppingBagIcon, adminOnly: true, global: true, description: "Every seller and reseller shop" },
+      { title: "Storefronts", href: "/storefronts", icon: StoreIcon, adminOnly: true, global: true, description: "Every seller and reseller shop" },
       { title: "Applications", href: "/applications", icon: InboxIcon, adminOnly: true, global: true, description: "People asking to sell, waiting for an answer" },
       { title: "Resellers", href: "/resellers", icon: HandshakeIcon, adminOnly: true, global: true, description: "Partners with several storefronts and one bill" },
       { title: "Reseller Account", href: "/reseller", icon: HandshakeIcon, resellerOnly: true, global: true, description: "Your bill, storefronts, invoices and partner keys" }
@@ -83,6 +86,7 @@ export const NAV: NavSection[] = [
   {
     title: "Settings",
     icon: UsersIcon,
+    inAccountMenu: true,
     links: [
       { title: "Notifications", href: "/notifications", icon: BellIcon, global: true, description: "Everything the bell shows, and alerts on your phone or computer" },
       { title: "Team", href: "/team", icon: UsersIcon, description: "Who can sign in, and what each person may change" },
@@ -96,7 +100,7 @@ export const NAV: NavSection[] = [
       { title: "Integrations", href: "/integrations", icon: BlocksIcon, description: "n8n, Zapier, Make, HighLevel, AI apps and the API, with how-to guides" },
       { title: "API Keys", href: "/keys", icon: KeyRoundIcon, description: "Keys that let your shop or an automation make stores" },
       { title: "Webhooks", href: "/webhooks", icon: WebhookIcon, description: "Tell other apps when something happens to a store" },
-      { title: "API Log", href: "/requests", icon: ActivityIcon, description: "Every call made to the API, kept 30 days" }
+      { title: "API Log", href: "/requests", icon: ScrollTextIcon, description: "Every call made to the API, kept 30 days" }
     ]
   }
 ];
@@ -111,6 +115,18 @@ export const ALL_LINKS = NAV.flatMap((section) => section.links);
 export function navFor(isAdmin: boolean, isReseller = false) {
   const shown = (link: NavLink) => (link.adminOnly ? isAdmin : link.resellerOnly ? isReseller && !isAdmin : true);
   return NAV.map((group) => ({ ...group, links: group.links.filter(shown) })).filter((group) => group.links.length > 0);
+}
+
+/** The sidebar's groups: everything but the account settings, which open from the account menu. */
+export function sidebarNav(isAdmin: boolean, isReseller = false) {
+  return navFor(isAdmin, isReseller).filter((group) => !group.inAccountMenu);
+}
+
+/** The account settings pages (Notifications, Team, Branding), for the account menu at the bottom of the sidebar. */
+export function accountMenuLinks(isAdmin: boolean, isReseller = false): NavLink[] {
+  return navFor(isAdmin, isReseller)
+    .filter((group) => group.inAccountMenu)
+    .flatMap((group) => group.links);
 }
 
 /** A link's address, keeping the storefront picked in the header (?product=) unless the page is about all of them. */

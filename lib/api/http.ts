@@ -30,6 +30,8 @@ import type {
   ApprovedApplication,
   ApproveApplicationInput,
   SellerApplication,
+  ProspectDemo,
+  NewProspectDemo,
   AddedStorefront,
   AddStorefrontInput,
   NewSeller,
@@ -81,6 +83,7 @@ import type {
   WebhookFilter,
   WebhookSecret,
   WordPressLogin,
+  SiteDownload,
   NotificationList,
   PushSettings,
   PushSubscriptionInput
@@ -290,7 +293,8 @@ export class HttpAdminApi implements AdminApi {
       productionVersionId: p.productionVersionId,
       resellerId: p.resellerId ?? null,
       resellerName: p.resellerName ?? null,
-      highlevelAgency: p.highlevelAgency ?? false
+      highlevelAgency: p.highlevelAgency ?? false,
+      cleanDashboard: p.cleanDashboard ?? true
     }));
   }
 
@@ -356,6 +360,10 @@ export class HttpAdminApi implements AdminApi {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/import-reprint`, { siteUrl });
   }
 
+  async createBackup(tenantId: string): Promise<void> {
+    await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/backups`, {});
+  }
+
   async restoreBackup(tenantId: string, backupId: string, takeBackup: boolean): Promise<void> {
     await this.send("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/restore`, { backupId, takeBackup });
   }
@@ -378,6 +386,14 @@ export class HttpAdminApi implements AdminApi {
 
   async wordPressLogin(tenantId: string): Promise<WordPressLogin> {
     return (await this.send<WordPressLogin>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/wp-login`, {}))!;
+  }
+
+  async siteDownload(tenantId: string): Promise<SiteDownload | null> {
+    return (await this.get<{ download: SiteDownload | null }>(`/admin/tenants/${encodeURIComponent(tenantId)}/download`))!.download;
+  }
+
+  async startSiteDownload(tenantId: string): Promise<SiteDownload> {
+    return (await this.send<{ download: SiteDownload }>("POST", `/admin/tenants/${encodeURIComponent(tenantId)}/download`, {}))!.download;
   }
 
   async notifyOwner(tenantId: string, email: string): Promise<void> {
@@ -641,6 +657,10 @@ export class HttpAdminApi implements AdminApi {
     await this.send("PUT", this.productPath(productId, ""), { highlevelAgency: on });
   }
 
+  async setCleanDashboard(productId: string, on: boolean): Promise<void> {
+    await this.send("PUT", this.productPath(productId, "/clean-dashboard"), { on });
+  }
+
   async deleteStorefront(productId: string): Promise<void> {
     await this.send("DELETE", this.productPath(productId, ""));
   }
@@ -693,6 +713,22 @@ export class HttpAdminApi implements AdminApi {
 
   async declineApplication(id: string): Promise<void> {
     await this.send("POST", `/admin/applications/${encodeURIComponent(id)}/decline`);
+  }
+
+  async prospectDemos(): Promise<ProspectDemo[]> {
+    return (await this.get<ProspectDemo[]>("/admin/prospect-demos"))!;
+  }
+
+  async addProspectDemos(prospects: NewProspectDemo[]): Promise<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }> {
+    return (await this.send<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }>("POST", "/admin/prospect-demos", { prospects }))!;
+  }
+
+  async gatherProspectDemo(id: string): Promise<ProspectDemo> {
+    return (await this.send<ProspectDemo>("POST", `/admin/prospect-demos/${encodeURIComponent(id)}/gather`))!;
+  }
+
+  async deleteProspectDemo(id: string): Promise<void> {
+    await this.send("DELETE", `/admin/prospect-demos/${encodeURIComponent(id)}`);
   }
 
   private resellerPath(id: string, rest = ""): string {
@@ -988,7 +1024,8 @@ export class HttpAdminApi implements AdminApi {
       backups: t.backups.map((b) => this.toBackup(b, names, products)),
       jobs,
       keepsOwnCode: t.keepsOwnCode ?? false,
-      moveIn: t.moveIn ? toMoveIn(t.moveIn) : null
+      moveIn: t.moveIn ? toMoveIn(t.moveIn) : null,
+      care: t.care
     };
   }
 

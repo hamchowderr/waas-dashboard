@@ -80,6 +80,17 @@ describe("guides", () => {
     expect(g.title).toBe("What to charge");
     expect(g.body).toContain("## Suggested prices");
   });
+
+  it("fills the pricing guide's prices from the price list", () => {
+    const g = parseGuide(read("guides", "pricing.md"));
+    expect(g.body).not.toMatch(/\{\{\s*prices\./);
+    expect(g.body).toContain("It drops 10%, 20% and 30% as you add sites:");
+    expect(g.body).toContain("| Plan | Your cost | 3-9 sites | 10-24 sites | 25+ sites |");
+    expect(g.body).toContain("| Community & courses | $49 | $44.10 | $39.20 | $34.30 |");
+    expect(g.body).toContain("| Community & courses | $129 a month | $80 a month | $499 to $999 |");
+    expect(g.body).toContain("Medium sites cost 2x and Large 4x. Yearly billing costs 10x the monthly price, so customers get 2 months free. Resellers pay 40% less");
+    expect(g.body).toContain("ten sites cost you $96 and leave $394 a month");
+  });
 });
 
 describe("pitch", () => {

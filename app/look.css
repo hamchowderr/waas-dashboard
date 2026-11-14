@@ -1,0 +1,202 @@
+/*
+ * The dashboard's look (DESIGN.md): a warm page, white panels with no border and a whisper of shadow, quiet
+ * buttons and badges, status-only colour. Unlayered, so these win over the components' Tailwind utilities;
+ * :root keeps each rule's specificity the same as an attribute selector.
+ */
+
+:root [data-slot="card-icon"]:not(:has(img)) {
+  display: none;
+}
+:root [data-slot="card"] [data-slot="card-header"]:not(:has([data-slot="card-icon"] img)) {
+  column-gap: 0;
+}
+:root [data-slot="button"] {
+  border-radius: 0.5rem;
+}
+:root [data-slot="button"][data-variant="outline"] {
+  box-shadow: none;
+  border-color: var(--border);
+  background: transparent;
+}
+:root [data-slot="button"][data-variant="outline"]:hover {
+  background: var(--muted);
+}
+:root body {
+  --primary-glow: none;
+  --primary-gradient: linear-gradient(var(--primary), var(--primary));
+  --shadow-card: none;
+}
+:root [data-slot="badge"] {
+  border-radius: 0.3125rem;
+}
+:root [data-slot="sidebar-menu-button"] {
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+:root [data-slot="sidebar-menu-button"][data-active="true"] {
+  background: var(--muted);
+}
+:root [data-slot="sidebar-inset"],
+:root [data-variant="inset"] ~ [data-slot="sidebar-inset"] {
+  border-radius: 0;
+  box-shadow: none;
+}
+:root [data-slot="sidebar-inset"] > header {
+  border-radius: 0;
+}
+:root [data-slot="page-title"],
+:root [data-slot="sidebar-inset"] h1 {
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+:root [data-slot="card-title"] {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* Status icons stay coloured, without the round chip behind them. */
+:root [data-slot="tile-icon"] {
+  background: transparent;
+  width: auto;
+  height: auto;
+  justify-content: flex-start;
+}
+:root [data-slot="tiles"] [data-slot="tile"] {
+  gap: 0.5rem;
+}
+:root [data-slot="tiles"] [data-slot="tile-icon"]:not([class*="rose"]):not([class*="amber"]):not([class*="green"]) {
+  color: var(--muted-foreground);
+}
+:root [data-slot="tiles"] [data-slot="tile"] .text-3xl {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+:root li[data-slot="tile"] {
+  margin-block: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Store type icons: a small outlined square instead of a filled circle. */
+:root [data-slot="site-type-icon"] {
+  border-radius: 0.5rem;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+:root [data-slot="site-type-icon"].size-14 {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+:root [data-slot="site-type-icon"].size-14 svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* On a phone the actions under a row line up with its text, now that the icon is small. */
+@media (max-width: 639px) {
+  :root li[data-slot="tile"] .max-sm\:ms-13 {
+    margin-inline-start: 1.875rem;
+  }
+}
+
+/* The page: warm canvas, Inter, and the "whisper" shadow that lifts white panels off it. */
+:root body {
+  --font-sans: var(--font-inter);
+  --whisper: 0 1px 2px rgb(60 40 20 / 0.06), 0 0 0 1px rgb(60 40 20 / 0.03);
+}
+:root:not(.dark) body {
+  --background: #f5f0ea;
+  --sidebar: #f5f0ea;
+  --muted: #f3eee8;
+}
+:root.dark body {
+  --whisper: 0 0 0 1px rgb(255 255 255 / 0.04);
+}
+:root [data-slot="sidebar-inset"] {
+  background: var(--background);
+}
+:root [data-slot="sidebar-inset"] > header {
+  background: color-mix(in oklab, var(--background) 85%, transparent);
+  border-bottom-color: transparent;
+}
+:root [data-slot="sidebar-menu-button"][data-active="true"] {
+  background: color-mix(in oklab, var(--foreground) 7%, transparent);
+}
+:root [data-slot="page-title"],
+:root [data-slot="sidebar-inset"] h1 {
+  font-size: 1.875rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+:root [data-slot="store-header"] {
+  border-bottom-color: transparent;
+}
+:root [data-slot="sidebar-inset"] [data-slot="card"] {
+  --card-spacing: 1.125rem;
+  background: var(--card);
+  border: 0;
+  border-radius: 0.3125rem;
+  box-shadow: var(--whisper);
+}
+:root [data-slot="card-title"] {
+  font-size: 0.9375rem;
+}
+:root [data-slot="card-description"] {
+  font-size: 0.8125rem;
+}
+:root [data-slot="sidebar-inset"] :is(th, td, tr, thead, tbody) {
+  border-color: color-mix(in oklab, var(--border) 60%, transparent);
+}
+:root [data-slot="tiles"] {
+  gap: 0;
+  background: var(--card);
+  border-radius: 0.3125rem;
+  box-shadow: var(--whisper);
+  overflow: hidden;
+}
+:root [data-slot="tiles"] [data-slot="tile"] {
+  background: transparent;
+  border-radius: 0;
+  padding: 1rem 1.25rem;
+}
+:root [data-slot="tiles"] > li + li [data-slot="tile"] {
+  border-inline-start: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+}
+:root [data-slot="tiles"] [data-slot="tile"]:hover {
+  background: var(--muted);
+}
+:root li[data-slot="tile"] {
+  padding: 0.75rem 0;
+}
+:root li[data-slot="tile"] + li[data-slot="tile"] {
+  border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+}
+:root div[data-slot="tile"] {
+  background: transparent;
+}
+:root [data-slot="button"] {
+  border-radius: 0.3125rem;
+}
+:root [data-slot="button"][data-variant="outline"] {
+  border-color: transparent;
+  background: var(--card);
+  box-shadow: var(--whisper);
+}
+:root [data-slot="badge"] {
+  border-radius: 999px;
+}
+:root [data-slot="badge"][data-variant="outline"] {
+  border-color: transparent;
+  background: var(--muted);
+}
+:root [data-slot="site-type-icon"] {
+  box-shadow: var(--whisper);
+  background: var(--card);
+}
+@media (max-width: 1279px) {
+  :root [data-slot="tiles"]:not(.grid-cols-3) > li:nth-child(odd) [data-slot="tile"] {
+    border-inline-start: 0;
+  }
+  :root [data-slot="tiles"]:not(.grid-cols-3) > li:nth-child(n + 3) [data-slot="tile"] {
+    border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  }
+}
