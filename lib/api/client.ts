@@ -14,7 +14,9 @@ import type {
   ApproveApplicationInput,
   SellerApplication,
   ProspectDemo,
+  ProspectDemoList,
   NewProspectDemo,
+  AddedProspectDemos,
   AddedStorefront,
   AddStorefrontInput,
   NewSeller,
@@ -233,6 +235,14 @@ export interface AdminApi {
   addProspectAutomation(productId: string, input: ProspectAutomationInput): Promise<ProspectAutomations>;
   /** Sends businesses into FluentCRM, HighLevel or both; each goes to each CRM once. */
   addProspectsToCrm(productId: string, prospects: CrmProspect[], group: string | null, targets: CrmTarget[]): Promise<ProspectCrmResult>;
+  /** The storefront's prospects: each website read once for the website check and a branded demo (docs/prospect-demos.md in the API). */
+  prospectDemos(productId: string): Promise<ProspectDemoList>;
+  /** Adds businesses and reads their websites in the background, one read each from the month's allowance; a website already on the list is skipped. */
+  addProspectDemos(productId: string, prospects: NewProspectDemo[]): Promise<AddedProspectDemos>;
+  /** Reads the website again (one read). */
+  readProspectDemo(productId: string, id: string): Promise<ProspectDemo>;
+  /** Removes the business and its copied files; its demo link stops working. */
+  deleteProspectDemo(productId: string, id: string): Promise<void>;
   /** The wordpress.org plugin directory's search, 24 a page. */
   searchPlugins(productId: string, query: string, page: number): Promise<PluginSearch>;
   /** Adds a plugin (pinned to version, or the newest) or switches a template plugin off; replaces an earlier choice. */
@@ -289,15 +299,6 @@ export interface AdminApi {
   approveApplication(id: string, input: ApproveApplicationInput): Promise<ApprovedApplication>;
   /** Declines and emails the applicant. */
   declineApplication(id: string): Promise<void>;
-
-  // Branded demos for businesses AnyPress may contact (docs/prospect-demos.md in the API). Platform admin only.
-  prospectDemos(): Promise<ProspectDemo[]>;
-  /** Adds businesses and reads their websites in the background; a website already on the list is skipped. */
-  addProspectDemos(prospects: NewProspectDemo[]): Promise<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }>;
-  /** Reads the website again. */
-  gatherProspectDemo(id: string): Promise<ProspectDemo>;
-  /** Removes the business and its copied images; its demo link stops working. */
-  deleteProspectDemo(id: string): Promise<void>;
 
   // Reseller accounts: storefronts grouped under one partner. Platform admin only.
   resellers(): Promise<Reseller[]>;

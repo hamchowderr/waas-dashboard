@@ -31,7 +31,9 @@ import type {
   ApproveApplicationInput,
   SellerApplication,
   ProspectDemo,
+  ProspectDemoList,
   NewProspectDemo,
+  AddedProspectDemos,
   AddedStorefront,
   AddStorefrontInput,
   NewSeller,
@@ -715,20 +717,20 @@ export class HttpAdminApi implements AdminApi {
     await this.send("POST", `/admin/applications/${encodeURIComponent(id)}/decline`);
   }
 
-  async prospectDemos(): Promise<ProspectDemo[]> {
-    return (await this.get<ProspectDemo[]>("/admin/prospect-demos"))!;
+  async prospectDemos(productId: string): Promise<ProspectDemoList> {
+    return (await this.get<ProspectDemoList>(this.productPath(productId, "/prospects/demos")))!;
   }
 
-  async addProspectDemos(prospects: NewProspectDemo[]): Promise<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }> {
-    return (await this.send<{ created: ProspectDemo[]; skipped: { company: string; reason: string }[] }>("POST", "/admin/prospect-demos", { prospects }))!;
+  async addProspectDemos(productId: string, prospects: NewProspectDemo[]): Promise<AddedProspectDemos> {
+    return (await this.send<AddedProspectDemos>("POST", this.productPath(productId, "/prospects/demos"), { prospects }))!;
   }
 
-  async gatherProspectDemo(id: string): Promise<ProspectDemo> {
-    return (await this.send<ProspectDemo>("POST", `/admin/prospect-demos/${encodeURIComponent(id)}/gather`))!;
+  async readProspectDemo(productId: string, id: string): Promise<ProspectDemo> {
+    return (await this.send<ProspectDemo>("POST", this.productPath(productId, `/prospects/demos/${encodeURIComponent(id)}/read`)))!;
   }
 
-  async deleteProspectDemo(id: string): Promise<void> {
-    await this.send("DELETE", `/admin/prospect-demos/${encodeURIComponent(id)}`);
+  async deleteProspectDemo(productId: string, id: string): Promise<void> {
+    await this.send("DELETE", this.productPath(productId, `/prospects/demos/${encodeURIComponent(id)}`));
   }
 
   private resellerPath(id: string, rest = ""): string {

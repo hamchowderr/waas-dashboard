@@ -14,7 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "cn";
 import { prospectsCsv } from "@/lib/prospects";
 import { toast } from "sonner";
-import { addToCrm, findProspects, prospectContacts, prospectCrm, prospectMailbox, prospectUsage } from "./actions";
+import { addToCrm, findProspects, readWebsites, prospectContacts, prospectCrm, prospectMailbox, prospectUsage } from "./actions";
 import { HighLevelConnect, MailboxConnect } from "./crm-connect";
 
 export type FinderGroup = { id: GroupId; title: string; finder: string[] };
@@ -58,13 +58,13 @@ export function ProspectFinder({
   productId,
   groups,
   initialGroup,
-  onCheck
+  onRead
 }: {
   productId: string;
   groups: FinderGroup[];
   initialGroup?: GroupId;
-  /** Opens the website check on a prospect's site. */
-  onCheck: (url: string) => void;
+  /** Shows the storefront's prospects, after a website was sent to be read. */
+  onRead: () => void;
 }) {
   const [groupId, setGroupId] = React.useState<GroupId>(initialGroup ?? groups[0]!.id);
   const group = groups.find((g) => g.id === groupId) ?? groups[0]!;
@@ -168,6 +168,21 @@ export function ProspectFinder({
       contactPage: found?.contactPage ?? null,
       socials: found?.socials ?? []
     };
+  };
+
+  // Reads the business's website (the check, what kind of site it is and its demo) and adds it to Your prospects.
+  const [readingSite, setReadingSite] = React.useState<string | null>(null);
+  const read = async (p: Prospect) => {
+    if (!p.website) return;
+    setReadingSite(p.id);
+    try {
+      const res = await readWebsites(productId, [{ company: p.name, website: p.website, placeId: p.id, details: crmProspect(p) }]);
+      if (!res.ok) return void toast.error(res.error);
+      toast.success(res.added ? `Reading ${p.name}'s website. Its check and demo will be on Your prospects in about a minute.` : `${p.name} is on Your prospects already.`);
+      onRead();
+    } finally {
+      setReadingSite(null);
+    }
   };
 
   // Sends businesses to every CRM this storefront has, then marks the ones each took.
@@ -367,9 +382,10 @@ export function ProspectFinder({
                               <GlobeIcon />
                             </a>
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => onCheck(p.website!)}>
-                            <span className="sm:hidden">Check</span>
-                            <span className="max-sm:hidden">Check website</span>
+                          <Button variant="outline" size="sm" disabled={readingSite === p.id} onClick={() => void read(p)}>
+                            {readingSite === p.id && <Spinner data-icon="inline-start" />}
+                            <span className="sm:hidden">Read</span>
+                            <span className="max-sm:hidden">Read Website</span>
                           </Button>
                         </>
                       )}
