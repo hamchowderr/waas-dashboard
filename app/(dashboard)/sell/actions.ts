@@ -3,20 +3,75 @@
 import { getViewer } from "@/auth";
 import { getAdminApi } from "@/lib/api/client";
 import { AdminApiError } from "@/lib/api/http";
-import type { CrmProspect, CrmTarget, ProspectContacts, ProspectCrm, ProspectCrmResult, ProspectAutomationInput, ProspectAutomations, ProspectMailbox, ProspectMailboxInput, ProspectSearch, ProspectUsage } from "@/lib/api/types";
-import type { Report } from "@/lib/website-check";
-import { CheckError, checkWebsite, findContacts } from "@/lib/website-check-fetch";
+import type { CrmProspect, CrmTarget, NewProspectDemo, ProspectContacts, ProspectDemoList, ProspectReadUsage, ProspectCrm, ProspectCrmResult, ProspectAutomationInput, ProspectAutomations, ProspectMailbox, ProspectMailboxInput, ProspectSearch, ProspectUsage } from "@/lib/api/types";
+import { findContacts } from "@/lib/website-check-fetch";
 
-export type CheckResult = { ok: true; report: Report } | { ok: false; error: string };
+const failed = (err: unknown, fallback: string) => (err instanceof AdminApiError && err.apiMessage ? err.apiMessage : fallback);
 
-/** Runs the website check on a prospect's site for a signed-in seller. */
-export async function checkProspectSite(url: string): Promise<CheckResult> {
+export type ProspectListResult = { ok: true; list: ProspectDemoList } | { ok: false; error: string };
+
+/** The storefront's prospects, each with its website check and branded demo once its website is read. */
+export async function prospectList(productId: string): Promise<ProspectListResult> {
   const viewer = await getViewer().catch(() => null);
-  if (!viewer) return { ok: false, error: "Sign in again to run a check." };
+  if (!viewer) return { ok: false, error: "Sign in again to see your prospects." };
   try {
-    return { ok: true, report: await checkWebsite(String(url).slice(0, 500)) };
+    return { ok: true, list: await getAdminApi().prospectDemos(String(productId)) };
   } catch (err) {
-    return { ok: false, error: err instanceof CheckError ? err.message : "Something went wrong checking that website. Try again." };
+    return { ok: false, error: failed(err, "Your prospects couldn't be loaded. Try again.") };
+  }
+}
+
+export type ReadResult = { ok: true; added: number; skipped: string[]; reads: ProspectReadUsage } | { ok: false; error: string };
+
+const str = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
+
+/**
+ * Adds businesses to the storefront's prospects and reads their websites: the website check, what kind of site it
+ * is and a branded demo, one read each from the month's allowance. From the finder (with what it found) or typed in.
+ */
+export async function readWebsites(productId: string, businesses: { company: string; website: string; placeId?: string | null; details?: CrmProspect | null }[]): Promise<ReadResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return { ok: false, error: "Sign in again to read websites." };
+  const list = (Array.isArray(businesses) ? businesses : []).slice(0, 60).flatMap((b): NewProspectDemo[] => {
+    const company = str(b?.company, 200);
+    const website = str(b?.website, 2000);
+    if (!company || !website) return [];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the id and name travel as placeId and company
+    const { id, name, ...details } = b.details ?? ({} as CrmProspect);
+    return [{ company, website, placeId: str(b.placeId, 300) ?? null, details: b.details ? details : null }];
+  });
+  if (!list.length) return { ok: false, error: "Enter the business's name and website." };
+  try {
+    const { created, skipped, reads } = await getAdminApi().addProspectDemos(String(productId), list);
+    return { ok: true, added: created.length, skipped: skipped.map((s) => s.company), reads };
+  } catch (err) {
+    return { ok: false, error: failed(err, "Those websites couldn't be read. Try again.") };
+  }
+}
+
+export type ProspectActionResult = { ok: true } | { ok: false; error: string };
+
+/** Reads a prospect's website again (one read), for a site that changed or a read that failed. */
+export async function readAgain(productId: string, id: string): Promise<ProspectActionResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return { ok: false, error: "Sign in again." };
+  try {
+    await getAdminApi().readProspectDemo(String(productId), String(id));
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: failed(err, "That website couldn't be read again. Try again.") };
+  }
+}
+
+/** Removes a prospect, its check and its demo; the demo link stops working. */
+export async function removeProspect(productId: string, id: string): Promise<ProspectActionResult> {
+  const viewer = await getViewer().catch(() => null);
+  if (!viewer) return { ok: false, error: "Sign in again." };
+  try {
+    await getAdminApi().deleteProspectDemo(String(productId), String(id));
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: failed(err, "That prospect couldn't be removed. Try again.") };
   }
 }
 

@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "cn";
 import { GroupIcon, download, slug } from "./kit-ui";
 import { ProspectFinder } from "./prospect-finder";
-import { WebsiteCheck } from "./website-check";
+import { ProspectList } from "./prospect-list";
 
 export type GroupSummary = { id: GroupId; title: string; plan: Plan; who: string; finder: string[] };
 
@@ -23,9 +23,12 @@ export function SellHome({
   groups,
   guides,
   context,
-  wholesalePercent
+  wholesalePercent,
+  initialTab
 }: {
   productId: string;
+  /** The tab to open on (the old prospect board's address opens Prospects). */
+  initialTab?: string;
   groups: GroupSummary[];
   guides: Guide[];
   context: Omit<KitContext, "prices" | "plan">;
@@ -33,11 +36,12 @@ export function SellHome({
   wholesalePercent: number | null;
 }) {
   const [prices, setPrice] = useSellPrices(productId);
-  const [tab, setTab] = React.useState("groups");
-  const [checkUrl, setCheckUrl] = React.useState<{ url: string; n: number } | null>(null);
-  const openCheck = (url: string) => {
-    setCheckUrl((prev) => ({ url, n: (prev?.n ?? 0) + 1 }));
-    setTab("check");
+  const [tab, setTab] = React.useState(initialTab === "prospects" ? "prospects" : "groups");
+  // Bumped when the finder reads websites, so the Prospects tab shows them.
+  const [added, setAdded] = React.useState(0);
+  const openProspects = () => {
+    setAdded((n) => n + 1);
+    setTab("prospects");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   return (
@@ -46,7 +50,7 @@ export function SellHome({
       <TabsList className="max-w-full justify-start overflow-x-auto overflow-y-hidden [scrollbar-width:none] max-sm:[mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] [&::-webkit-scrollbar]:hidden">
         <TabsTrigger value="groups">Who to sell to</TabsTrigger>
         <TabsTrigger value="find">Find prospects</TabsTrigger>
-        <TabsTrigger value="check">Website check</TabsTrigger>
+        <TabsTrigger value="prospects">Your prospects</TabsTrigger>
         <TabsTrigger value="prices">Your prices</TabsTrigger>
         <TabsTrigger value="guides">Guides</TabsTrigger>
       </TabsList>
@@ -80,11 +84,11 @@ export function SellHome({
       </TabsContent>
 
       <TabsContent value="find" forceMount className="data-[state=inactive]:hidden">
-        <ProspectFinder productId={productId} groups={groups} onCheck={openCheck} />
+        <ProspectFinder productId={productId} groups={groups} onRead={openProspects} />
       </TabsContent>
 
-      <TabsContent value="check">
-        <WebsiteCheck key={checkUrl?.n ?? 0} productId={productId} sender={context.sender} brand={context.brand} initialUrl={checkUrl?.url} />
+      <TabsContent value="prospects">
+        <ProspectList productId={productId} sender={context.sender} brand={context.brand} refresh={added} />
       </TabsContent>
 
       <TabsContent value="prices">

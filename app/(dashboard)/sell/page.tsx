@@ -13,13 +13,13 @@ export const metadata: Metadata = { title: "Sales Kit" };
 /** The first sentence of a playbook's Who: the card's one line about the group. */
 const firstSentence = (text: string) => /^[^\n]*?[.!?](?=\s|$)/.exec(text.trim())?.[0] ?? text.split("\n")[0]!;
 
-export default async function SellPage({ searchParams }: { searchParams: Promise<{ product?: string; group?: string }> }) {
-  const { product: productId, group } = await searchParams;
+export default async function SellPage({ searchParams }: { searchParams: Promise<{ product?: string; group?: string; tab?: string }> }) {
+  const { product: productId, group, tab } = await searchParams;
   const { product, first } = await pickProduct(productId);
   if (group && product) redirect(`/sell/${group}?product=${product.id}`);
 
   if (!product) {
-    if (first) redirect(`/sell?product=${first.id}`);
+    if (first) redirect(`/sell?product=${first.id}${tab ? `&tab=${encodeURIComponent(tab)}` : ""}`);
     return (
       <div className="space-y-4 lg:space-y-6">
         <PageHeader title="Sales Kit" />
@@ -46,6 +46,7 @@ export default async function SellPage({ searchParams }: { searchParams: Promise
         guides={kit.guides}
         context={kit.context}
         wholesalePercent={kit.wholesalePercent}
+        initialTab={tab}
       />
     </div>
   );

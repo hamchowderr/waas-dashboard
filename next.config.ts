@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
       }
     ];
   },
+  // The prospect board moved into the Sales Kit (its Prospects tab).
+  async redirects() {
+    return [{ source: "/prospects", destination: "/sell?tab=prospects", permanent: true }];
+  },
   // The Sales Kit page reads its playbooks from content/sales-kit at request time.
   outputFileTracingIncludes: {
     "/sell": ["./content/sales-kit/**/*"],

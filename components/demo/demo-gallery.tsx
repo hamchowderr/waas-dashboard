@@ -90,7 +90,7 @@ export function DemoGallery({ look, initialDemo }: { look: DemoLook; initialDemo
   );
 }
 
-function BrandLink({ look, onHome }: { look: DemoLook; onHome: () => void }) {
+export function BrandLink({ look, onHome }: { look: DemoLook; onHome: () => void }) {
   // A square logo is a mark, so the name goes beside it; a wide one usually spells the name already.
   const [square, setSquare] = React.useState(false);
   const logo = React.useRef<HTMLImageElement>(null);

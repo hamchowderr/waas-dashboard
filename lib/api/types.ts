@@ -953,7 +953,9 @@ export type ResellerSetup = SetupChecklist & { resellerId: string; name: string;
 export type Setup = { storefronts: StorefrontSetup[]; resellers: ResellerSetup[] };
 
 /** The Sales Kit prospect finder's searches this month for one storefront (the API's src/prospects.ts). */
-export type ProspectUsage = { available: boolean; used: number; limit: number; resetsAt: string };
+export type ProspectUsage = { available: boolean; used: number; limit: number; resetsAt: string; reads?: ProspectReadUsage };
+/** Website reads this month (each prospect's website check and branded demo); limit null means no allowance. */
+export type ProspectReadUsage = { used: number; limit: number | null; resetsAt: string };
 
 /** A local business from Google Places, for a seller to contact. */
 export type Prospect = {
@@ -1076,29 +1078,56 @@ export type ProspectBrand = {
   items: { name: string; description: string | null; price: string | null; image: string | null }[];
 };
 
-/** A business AnyPress may contact, with a branded demo made from its own website. Platform admin only. */
+/** The website check of a prospect's site (the API's src/websitecheck.ts), run when its website is read. */
+export type CheckStatus = "pass" | "warn" | "fail";
+export type WebsiteCheckReport = {
+  url: string;
+  host: string;
+  checkedAt: string;
+  /** 0 to 100. */
+  score: number;
+  builder: string | null;
+  checks: { id: string; title: string; status: CheckStatus; detail: string; weight: number }[];
+};
+
+/** What the prospect finder found about a business, kept with it and sent on to the CRM. */
+export type ProspectDetails = Partial<Omit<CrmProspect, "id" | "name">>;
+
+/** A business on a storefront's Sales Kit list, its website read once for the check and a branded demo. */
 export type ProspectDemo = {
   id: string;
-  /** The private code in its demo link, anypress.io/try?for=<code>. */
+  /** The private code in its demo link. */
   code: string;
   company: string;
   website: string | null;
+  /** The prospect finder's id, when it came from the finder. */
+  placeId: string | null;
   route: ProspectRoute;
   siteType: string;
+  /** True until someone picks the site type: the read picks it from what their website has. */
+  siteTypeAuto: boolean;
   kit: string | null;
-  /** The group on the board, such as Agency. */
   label: string | null;
   city: string | null;
   priority: number | null;
   notes: string | null;
+  details: ProspectDetails | null;
   /** 0 reading the website, 1 ready, 2 couldn't be read (see error). */
   statusCode: 0 | 1 | 2;
   error: string | null;
   creditsUsed: number;
   brand: ProspectBrand | null;
+  report: WebsiteCheckReport | null;
+  /** The demo link to send them, once read. */
+  demoUrl: string | null;
   createdAt: string;
   gatheredAt: string | null;
 };
+export type ProspectDemoList = { prospects: ProspectDemo[]; reads: ProspectReadUsage };
 
-export type NewProspectDemo = Pick<ProspectDemo, "company" | "route" | "siteType"> &
-  Partial<Pick<ProspectDemo, "website" | "kit" | "label" | "city" | "priority" | "notes">>;
+export type NewProspectDemo = Pick<ProspectDemo, "company"> &
+  Partial<Pick<ProspectDemo, "website" | "placeId" | "details" | "route" | "siteType" | "kit" | "label" | "city" | "priority" | "notes">>;
+export type AddedProspectDemos = { created: ProspectDemo[]; skipped: { company: string; reason: string }[]; reads: ProspectReadUsage };
+
+/** What a demo page reads for one prospect demo (the API's public GET /demos/prospects/{code}). */
+export type PublicProspectDemo = { company: string; productId: string | null; route: ProspectRoute; siteType: string; kit: string | null; brand: ProspectBrand | null };
